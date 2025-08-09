@@ -1,0 +1,1 @@
+"""Configuration management for the market sentiment forecasting service.""" 
