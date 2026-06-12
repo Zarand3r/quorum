@@ -1,4 +1,30 @@
-__pycache__
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .coverage
-.pytest_cache
-htmlcov
+htmlcov/
+
+# Data + runtime artifacts
+data/
+*.duckdb
+*.duckdb.wal
+*.parquet
+logs/
+.env
+.env.*
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Elves runtime artifacts (kept out of source control by default; flip if you want them committed)
+.elves/
+docs/plans/*.draft.md

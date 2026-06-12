@@ -1,0 +1,14 @@
+{
+  "//": "Auto-install the eng-skills plugin from the claude-skills marketplace on folder trust. Anyone (including future-you on a new machine) who opens this repo and trusts the folder will be prompted by Claude Code to install — no manual /plugin commands required. See: https://github.com/Zarand3r/claude-skills",
+  "extraKnownMarketplaces": {
+    "claude-skills": {
+      "source": {
+        "source": "github",
+        "repo": "Zarand3r/claude-skills"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "eng-skills@claude-skills": true
+  }
+}
