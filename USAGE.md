@@ -1,93 +1,56 @@
-# Pelosi - Usage Guide
+# Usage
 
-Simple guide for using the LLM Market Fetch functionality.
+Concrete how-to. For the *design*, see `PLAN.md`.
 
-## 🚀 Quick Start
+## Install
 
-### 1. Set up Environment
 ```bash
-export OPENAI_API_KEY="your-openai-api-key-here"
-```
-
-### 2. Install Dependencies
-```bash
+poetry lock                 # regenerate after a dependency prune
 poetry install
+export OPENAI_API_KEY="..."
 ```
 
-### 3. Run the System
-```bash
-# Main demo
-python demo_market_fetch.py
-
-# Or use the CLI
-python -m pelosi.main
-```
-
-## 🛠️ What It Does
-
-The system:
-
-1. **Fetches Market Data**: Gets real-time prices for major indices (SPY, QQQ, IWM, DIA)
-2. **Analyzes with LLM**: Uses GPT-4 to analyze market conditions
-3. **Extracts Embeddings**: Converts analysis into 10 sentiment scores:
-   - `tech_earnings_momentum`
-   - `AI_optimism`
-   - `interest_rate_expectations`
-   - `tariff_risk`
-   - `retail_investor_sentiment`
-   - `institutional_caution`
-   - `valuation_concerns`
-   - `macro_stability`
-   - `market_liquidity`
-   - `crowded_trades_risk`
-
-## 📊 Example Output
-
-```
-🎯 MARKET SENTIMENT ANALYSIS RESULTS
-============================================================
-Date: 2024-01-15 14:30
-Model: gpt-4
-
-📊 Top Market Sentiments:
-  1. AI Optimism: +0.85 🟢 Bullish (confidence: 90%)
-  2. Valuation Concerns: -0.65 🔴 Bearish (confidence: 75%)
-  3. Tech Earnings Momentum: +0.72 🟢 Bullish (confidence: 85%)
-```
-
-## 🧪 Running Tests
+## Tests
 
 ```bash
-# All tests
-poetry run pytest
-
-# Just the core tests
-poetry run pytest tests/unit/test_core.py -v
-
-# Interactive test runner
-python run_tests.py
+poetry run pytest                                # full suite
+poetry run pytest tests/unit                     # unit only
+poetry run pytest tests/integration              # integration only
+poetry run pytest tests/unit/test_invariants.py  # PLAN.md I8 / I10
 ```
 
-## 🔍 Troubleshooting
+Coverage HTML lands in `htmlcov/index.html`.
 
-### Common Issues
+## Legacy demo
 
-1. **"OpenAI API error"**
-   - Check your API key: `export OPENAI_API_KEY='your-key'`
-   - Verify you have API credits
+`quorum.legacy` is the pre-refinement sentiment-vector pipeline. The demo runs it end-to-end against the legacy `MarketContextFetcher` + `EmbeddingParser`:
 
-2. **"No market data"**
-   - Check internet connection
-   - Try during market hours for better data
+```bash
+poetry run python demo_market_fetch.py
+```
 
-3. **Import errors**
-   - Run from project root directory
-   - Ensure `poetry install` completed successfully
+What it does:
+1. Loads `quorum.config.settings.AppConfig` from environment variables.
+2. Tests LLM and market-data connectivity.
+3. Fetches market data for the configured target symbols (default `SPY, QQQ, IWM, DIA`) via yfinance.
+4. Calls the LLM for a market analysis.
+5. Extracts the legacy 10-dimension sentiment embedding from that analysis.
+6. Prints the most-significant dimensions.
 
-## 💰 API Costs
+What it does *not* do:
+- No news ingestion — the legacy news/economic-indicator paths returned hardcoded mocks before review M3/M4 and were removed; until PLAN.md §19 picks a real source, those paths return empty.
+- No persistence — nothing is written to a database.
+- No closed loop — predictions are not logged, outcomes are not scored.
 
-Typical cost per analysis: **$0.07-0.20**
-- Market analysis: ~$0.05-0.15
-- Embedding extraction: ~$0.02-0.05
+The refined Slice 0 pipeline (PLAN.md §12.1) supersedes all of the above and is not yet built.
 
-Monthly cost for daily analysis: **~$2-6** 
+## Cost
+
+Per legacy demo invocation: ≈ $0.07–0.20 (one analysis call + one extraction call against `gpt-4`). Override with `OPENAI_MODEL=gpt-3.5-turbo` for ≈ 100× cheaper. PLAN.md I4 will require a persisted cost meter before this is wired into a daily cron.
+
+## Troubleshooting
+
+- **`OpenAI API error`** — confirm `OPENAI_API_KEY` is set and the account has credits.
+- **`No market data`** — yfinance occasionally fails on outside-hours queries; retry during market hours or stub yfinance in your environment.
+- **`Import errors`** — run from the project root (`cd /path/to/quorum && poetry run ...`) so the `quorum/` package resolves.
+- **`poetry install` mismatch with lock** — `poetry.lock` was deleted as part of the dependency prune; run `poetry lock` once to regenerate.

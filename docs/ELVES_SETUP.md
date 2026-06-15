@@ -27,13 +27,13 @@ git push -u origin main
 
 elves auto-discovers `pytest` / `npm test` / `cargo test` / `go test` / `Makefile` and runs it after every batch. The gate must **exist and pass on a clean checkout**.
 
-This repo currently has no code, so there is no gate yet. For batch 1 of the first elves run, tell elves to:
+The gate exists: `poetry run pytest` runs the unit + integration suite, including `tests/unit/test_invariants.py` which exercises PLAN.md **I8** (no look-ahead in abnormal return) and **I10** (monotonic-in-time scoring) against `quorum.scoring.abnormal_return` on synthetic data.
 
-1. Stand up the Slice 0 package skeleton per `PLAN.md` §12.1.
-2. Create a minimal `pytest` harness with the unit tests for invariants **I8** (no look-ahead in abnormal return) and **I10** (monotonic-in-time scoring) — both have concrete synthetic-data tests defined in `PLAN.md` §14.
-3. Wire `pytest -q` into the gate.
+For batch 1 of the first elves run, expect the agent to:
 
-After batch 1 the gate exists; elves uses it for every subsequent batch.
+1. Run `poetry lock && poetry install` once (the lock was regenerated when deps were pruned).
+2. Confirm `poetry run pytest -q` exits 0.
+3. Build the Slice 0 pipeline per `PLAN.md` §12.1 against the existing scaffolding (`quorum/scoring/`, `quorum/config/`).
 
 For anything with a UI later (the static HTML event-trace report in §12.1 is not interactive, so this is M6 territory at earliest), add Playwright/Cypress so the gate verifies behavior, not just imports.
 

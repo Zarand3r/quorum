@@ -466,14 +466,14 @@ Temporal convolution, GRU/LSTM, temporal fusion transformer, small causal transf
 - **Universe:** NVDA only.
 - **Source:** one feed (e.g., a curated press-release RSS, or one news API key — pick in §19).
 - **Market data:** yfinance daily bars for NVDA + QQQ (sector benchmark).
-- **Storage:** one DuckDB file at `data/pelosi.duckdb`. Schemas per §8.
+- **Storage:** one DuckDB file at `data/quorum.duckdb`. Schemas per §8.
 - **LLM extraction:** structured JSON per §8.3, with schema validation; cached by `article_hash + prompt_version`.
 - **Dedup:** URL + headline normalization only (no embedding yet).
 - **Entity linking:** hard-coded `{"NVDA": ["nvidia", "nvda"]}`. Reject mentions that don't match.
 - **Filter:** EWMA sentiment + EWMA abnormal-return baseline. No Kalman.
 - **Prediction:** 5d abnormal return vs QQQ, point estimate + confidence proxy = current state uncertainty.
 - **Scoring:** after 5 trading days, compute realized abnormal return, write `outcomes.row`.
-- **Runtime:** `python -m pelosi.run` invoked from cron every 15 min. Single process, in-process queue.
+- **Runtime:** `python -m quorum.run` invoked from cron every 15 min. Single process, in-process queue.
 - **Output:** CLI summary + static HTML "event trace" report per event (article → extraction → state → prediction → outcome).
 
 ### 12.2 What slice 0 proves
