@@ -26,31 +26,30 @@ Slice 0 (PLAN.md §12.1) is the next thing to build; it is not built yet.
 
 ## Install
 
-Requires Python ≥ 3.10 and [Poetry](https://python-poetry.org/).
+Requires [uv](https://docs.astral.sh/uv/) (the project pins Python 3.12 via `.python-version`; uv will fetch it if missing).
 
 ```bash
-poetry lock          # regenerate the lock file after the recent dep prune
-poetry install
+uv sync --extra dev          # create .venv, install runtime + dev deps from uv.lock
 export OPENAI_API_KEY="..."
 ```
 
 ## Tests
 
 ```bash
-poetry run pytest                       # all
-poetry run pytest tests/unit            # unit only
-poetry run pytest tests/integration     # integration only
-poetry run pytest tests/unit/test_invariants.py    # PLAN.md I8/I10
+uv run pytest                                # all
+uv run pytest tests/unit                     # unit only
+uv run pytest tests/integration              # integration only
+uv run pytest tests/unit/test_invariants.py  # PLAN.md I8 / I10
 ```
 
-Coverage is reported in `htmlcov/index.html` when the `--cov-report=html` flag is included (pytest.ini does so by default).
+Coverage is written to `htmlcov/index.html` (pytest.ini enables it by default).
 
 ## Legacy demo (pre-refinement)
 
 For reference only — this is the original 10-dimension sentiment pipeline, **not** Slice 0:
 
 ```bash
-poetry run python demo_market_fetch.py
+uv run python demo_market_fetch.py
 ```
 
 ## Disclaimer

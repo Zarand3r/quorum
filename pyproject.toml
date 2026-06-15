@@ -10,35 +10,39 @@ license = {text = "MIT"}
 requires-python = ">=3.10,<4.0"
 dependencies = [
     # LLM + market data — needed by quorum.legacy and the refined event-extraction stage (PLAN.md §4.4).
-    "openai (>=1.88.0,<2.0.0)",
-    "yfinance (>=0.2.65,<0.3.0)",
+    "openai>=1.88.0,<2.0.0",
+    "yfinance>=0.2.65,<0.3.0",
     # Storage + math for Slice 0 (PLAN.md §8, §11).
-    "duckdb (>=1.1.0,<2.0.0)",
-    "numpy (>=1.26.0,<3.0.0)",
-    "pandas (>=2.2.0,<3.0.0)",
-    "pydantic (>=2.7.0,<3.0.0)",
+    "duckdb>=1.1.0,<2.0.0",
+    "numpy>=1.26.0,<3.0.0",
+    "pandas>=2.2.0,<3.0.0",
+    "pydantic>=2.7.0,<3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "pytest-mock>=3.14.1",
+    "pytest-cov>=6.2.1",
 ]
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.poetry]
-packages = [{include = "quorum"}]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.4.1"
-pytest-asyncio = "^1.1.0"
-pytest-mock = "^3.14.1"
-pytest-cov = "^6.2.1"
+[tool.hatch.build.targets.wheel]
+packages = ["quorum"]
 
 # Removed dependencies (and why):
-#  - flask          : never imported (zero usages); web API is deferred to M6+.
-#  - sqlalchemy     : never imported (zero usages); v0 storage is DuckDB.
+#  - flask          : never imported; web API is deferred to M6+.
+#  - sqlalchemy     : never imported; v0 storage is DuckDB.
 #  - aiohttp        : only used by the mock-news scraper in the legacy market_fetcher,
 #                    which was removed (review M3 — was injecting hardcoded fake
 #                    articles into the LLM prompt, violating PLAN.md I5).
 #  - beautifulsoup4 : same — only the deleted mock-news code imported it.
 #
-# After this prune, run `poetry lock` to regenerate poetry.lock against the
-# new dependency set.
+# Dependency tool: this project uses `uv` (https://docs.astral.sh/uv/).
+#   uv sync                    # create .venv and install everything (incl. dev extra)
+#   uv run pytest -q           # run the test suite
+#   uv lock --upgrade          # regenerate uv.lock against the latest compatible versions

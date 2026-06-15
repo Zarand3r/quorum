@@ -4,19 +4,27 @@ Concrete how-to. For the *design*, see `PLAN.md`.
 
 ## Install
 
+[uv](https://docs.astral.sh/uv/) is the only required tool. Python 3.12 is pinned via `.python-version` and is fetched automatically.
+
 ```bash
-poetry lock                 # regenerate after a dependency prune
-poetry install
+uv sync --extra dev          # create .venv + install everything (runtime + dev)
 export OPENAI_API_KEY="..."
+```
+
+If you ever change `pyproject.toml`, regenerate the lock:
+
+```bash
+uv lock                      # write uv.lock from current pyproject
+uv lock --upgrade            # bump pinned versions to latest compatible
 ```
 
 ## Tests
 
 ```bash
-poetry run pytest                                # full suite
-poetry run pytest tests/unit                     # unit only
-poetry run pytest tests/integration              # integration only
-poetry run pytest tests/unit/test_invariants.py  # PLAN.md I8 / I10
+uv run pytest                                    # full suite
+uv run pytest tests/unit                         # unit only
+uv run pytest tests/integration                  # integration only
+uv run pytest tests/unit/test_invariants.py      # PLAN.md I8 / I10
 ```
 
 Coverage HTML lands in `htmlcov/index.html`.
@@ -26,7 +34,7 @@ Coverage HTML lands in `htmlcov/index.html`.
 `quorum.legacy` is the pre-refinement sentiment-vector pipeline. The demo runs it end-to-end against the legacy `MarketContextFetcher` + `EmbeddingParser`:
 
 ```bash
-poetry run python demo_market_fetch.py
+uv run python demo_market_fetch.py
 ```
 
 What it does:
@@ -52,5 +60,5 @@ Per legacy demo invocation: ≈ $0.07–0.20 (one analysis call + one extraction
 
 - **`OpenAI API error`** — confirm `OPENAI_API_KEY` is set and the account has credits.
 - **`No market data`** — yfinance occasionally fails on outside-hours queries; retry during market hours or stub yfinance in your environment.
-- **`Import errors`** — run from the project root (`cd /path/to/quorum && poetry run ...`) so the `quorum/` package resolves.
-- **`poetry install` mismatch with lock** — `poetry.lock` was deleted as part of the dependency prune; run `poetry lock` once to regenerate.
+- **`Import errors`** — run from the project root so the `quorum/` package resolves: `cd /path/to/quorum && uv run ...`.
+- **`uv: command not found`** — install uv: `curl -LsSf https://astral.sh/uv/install.sh | sh` (Linux/macOS) or `pipx install uv`.
