@@ -4,11 +4,12 @@ This is a polyglot monorepo. Each project lives in `projects/<name>/` with its o
 
 ## Active projects
 
-| Project | Language | Brief |
+| Project | Language / build | Brief |
 |---|---|---|
-| [`projects/quorum/`](projects/quorum/) | Python | Real-time news-impact market state estimator. See `projects/quorum/PLAN.md`. |
+| [`projects/market/`](projects/market/) | Python (uv) | Real-time news-impact market state estimator. See `projects/market/PLAN.md`. |
+| [`projects/quorum/`](projects/quorum/) | Bazel | Empty Bzlmod workspace bootstrap. No targets yet. |
 
-When working on a specific project, also load its own `CLAUDE.md` (e.g. `projects/quorum/CLAUDE.md`) for project-specific framing, invariants, and document pointers. Claude Code merges all CLAUDE.md files on the path to cwd; the two are additive.
+When working on a specific project, also load its own `CLAUDE.md` (e.g. `projects/market/CLAUDE.md`) for project-specific framing, invariants, and document pointers. Claude Code merges all CLAUDE.md files on the path to cwd; the two are additive.
 
 ## Skill library + harness
 

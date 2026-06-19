@@ -4,11 +4,12 @@ A polyglot monorepo. Each project lives in `projects/<name>/` with its own depen
 
 ## Active projects
 
-| Project | Language | Brief |
+| Project | Language / build | Brief |
 |---|---|---|
-| [`projects/quorum/`](projects/quorum/) | Python | Real-time news-impact market state estimator. The LLM extracts evidence; a filter updates beliefs; predictions are logged before outcomes and joined to realized returns to grow a training dataset. **The LLM never decides trades.** Read [`projects/quorum/PLAN.md`](projects/quorum/PLAN.md) and [`projects/quorum/README.md`](projects/quorum/README.md). |
+| [`projects/market/`](projects/market/) | Python (uv) | Real-time news-impact market state estimator. The LLM extracts evidence; a filter updates beliefs; predictions are logged before outcomes and joined to realized returns to grow a training dataset. **The LLM never decides trades.** Read [`projects/market/PLAN.md`](projects/market/PLAN.md) and [`projects/market/README.md`](projects/market/README.md). |
+| [`projects/quorum/`](projects/quorum/) | Bazel | Empty bootstrap. Bzlmod (`MODULE.bazel`) workspace with `.bazelversion` and `.bazelrc` wired; no targets yet. Designed to grow into whatever needs the hermetic build / polyglot strengths bazel is good at. |
 
-Add a new project by creating `projects/<name>/` with whatever toolchain it needs (`pyproject.toml` for Python via uv, `Cargo.toml` for Rust, `go.mod` for Go, `package.json` for TS, etc.). Python projects are picked up automatically by the uv workspace via the glob in the root `pyproject.toml`.
+Add a new project by creating `projects/<name>/` with whatever toolchain it needs (`pyproject.toml` for Python via uv, `MODULE.bazel` for Bazel, `Cargo.toml` for Rust, `go.mod` for Go, `package.json` for TS, etc.). Python projects are picked up automatically by the uv workspace via the glob in the root `pyproject.toml`; bazel and other toolchains govern themselves within their own subdir.
 
 ## Tooling
 
@@ -28,21 +29,34 @@ uv sync --all-extras                          # install every Python member + al
 
 ## Working on a specific project
 
+### `market` (Python via uv)
+
 From the repo root:
 
 ```bash
-uv run --package quorum pytest -q             # run pytest in the quorum member
-uv sync --package quorum --extra dev          # install only quorum + its dev deps
+uv run --package market pytest projects/market -q   # run pytest in the market member
+uv sync --package market --extra dev                # install only market + its dev deps
 ```
 
 Or equivalently from within the project directory:
 
 ```bash
-cd projects/quorum
+cd projects/market
 uv run pytest -q
 ```
 
-Both forms use the workspace lock at the root.
+Both forms use the shared workspace lock at the root.
+
+### `quorum` (Bazel)
+
+```bash
+cd projects/quorum
+bazel build //...        # build everything (none yet)
+bazel test //...         # test everything (none yet)
+bazel mod graph          # inspect the Bzlmod dep graph
+```
+
+Bazel manages its own deps via `MODULE.bazel`. It does not interact with the uv workspace.
 
 ## Repo layout
 
@@ -56,17 +70,24 @@ Both forms use the workspace lock at the root.
 ├── pyproject.toml                  # uv workspace root (no runtime deps)
 ├── uv.lock                         # shared resolution for all Python members
 └── projects/
-    └── quorum/
-        ├── CLAUDE.md               # project-specific anchors
-        ├── README.md               # project quickstart
-        ├── PLAN.md                 # design source of truth
-        ├── USAGE.md                # how-to
-        ├── pyproject.toml          # project's own deps (isolated)
-        ├── quorum/                 # package
-        ├── tests/
-        └── docs/
-            ├── constitution.md     # ungameable promises (elves Judge enforces)
-            └── ELVES_SETUP.md      # overnight harness prerequisites
+    ├── market/                     # Python: news-impact market state estimator
+    │   ├── CLAUDE.md               # project-specific anchors
+    │   ├── README.md               # project quickstart
+    │   ├── PLAN.md                 # design source of truth
+    │   ├── USAGE.md                # how-to
+    │   ├── pyproject.toml          # project's own deps (isolated)
+    │   ├── market/                 # package
+    │   ├── tests/
+    │   └── docs/
+    │       ├── constitution.md     # ungameable promises (elves Judge enforces)
+    │       └── ELVES_SETUP.md      # overnight harness prerequisites
+    └── quorum/                     # Bazel: empty bootstrap
+        ├── MODULE.bazel            # Bzlmod workspace declaration
+        ├── BUILD.bazel             # root build file (empty)
+        ├── .bazelversion           # bazel version pin
+        ├── .bazelrc                # build config
+        ├── CLAUDE.md
+        └── README.md
 ```
 
 ## License

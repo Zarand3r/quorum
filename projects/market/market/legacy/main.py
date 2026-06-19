@@ -6,10 +6,10 @@ This is the original 10-dimension sentiment-vector pipeline from before the
 project was refined to the news-impact market state estimator described in
 PLAN.md. It is preserved for reference; it is NOT on the path for Slice 0 or
 any milestone M1-M6. Do not extend it; build new functionality under
-``quorum/`` (not ``quorum/legacy/``).
+``market/`` (not ``market/legacy/``).
 
 Why kept: the JSON-extraction and rate-limiting plumbing in
-``quorum.legacy.embedding_agent`` is reusable for the event-extraction stage
+``market.legacy.embedding_agent`` is reusable for the event-extraction stage
 of PLAN.md section 4.4 once the new pipeline lands.
 """
 
@@ -98,7 +98,7 @@ def main():
     setup_logging()
     logger = logging.getLogger(__name__)
 
-    print("quorum.legacy.main — LEGACY market sentiment analysis")
+    print("market.legacy.main — LEGACY market sentiment analysis")
     print("(For the refined pipeline, see PLAN.md Slice 0.)")
     print()
 

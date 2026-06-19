@@ -1,6 +1,6 @@
 """Shared pytest fixtures.
 
-Scoped to the legacy embedding pipeline (the new ``quorum.scoring`` invariant
+Scoped to the legacy embedding pipeline (the new ``market.scoring`` invariant
 tests are pure and need no fixtures).
 """
 
@@ -8,15 +8,15 @@ from datetime import datetime, timezone
 
 import pytest
 
-from quorum.config.settings import (
+from market.config.settings import (
     AppConfig,
     APIConfig,
     DatabaseConfig,
     MarketConfig,
 )
-from quorum.legacy.embedding_agent.llm_client import LLMResponse
-from quorum.legacy.embedding_agent.market_fetcher import MarketContext
-from quorum.legacy.embedding_agent.embedding_parser import SentimentEmbedding
+from market.legacy.embedding_agent.llm_client import LLMResponse
+from market.legacy.embedding_agent.market_fetcher import MarketContext
+from market.legacy.embedding_agent.embedding_parser import SentimentEmbedding
 
 
 @pytest.fixture

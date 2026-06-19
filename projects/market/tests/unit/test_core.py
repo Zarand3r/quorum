@@ -5,19 +5,19 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 
-from quorum.legacy.embedding_agent.embedding_parser import EmbeddingParser
-from quorum.legacy.embedding_agent.llm_client import LLMClient
-from quorum.legacy.embedding_agent.market_fetcher import MarketContextFetcher
+from market.legacy.embedding_agent.embedding_parser import EmbeddingParser
+from market.legacy.embedding_agent.llm_client import LLMClient
+from market.legacy.embedding_agent.market_fetcher import MarketContextFetcher
 
 
 @pytest.mark.unit
 class TestLLMClient:
     def test_llm_client_creation(self, mock_app_config):
-        with patch('quorum.legacy.embedding_agent.llm_client.OpenAI'):
+        with patch('market.legacy.embedding_agent.llm_client.OpenAI'):
             client = LLMClient(mock_app_config.api)
             assert client.config == mock_app_config.api
 
-    @patch('quorum.legacy.embedding_agent.llm_client.OpenAI')
+    @patch('market.legacy.embedding_agent.llm_client.OpenAI')
     def test_successful_completion(self, mock_openai_class, mock_app_config):
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
@@ -41,7 +41,7 @@ class TestLLMClient:
 @pytest.mark.unit
 class TestMarketFetcher:
     def test_market_fetcher_creation(self, mock_app_config):
-        with patch('quorum.legacy.embedding_agent.market_fetcher.LLMClient'):
+        with patch('market.legacy.embedding_agent.market_fetcher.LLMClient'):
             fetcher = MarketContextFetcher(mock_app_config)
             assert fetcher.config == mock_app_config
 
@@ -54,7 +54,7 @@ class TestMarketFetcher:
         })
         mock_ticker_class.return_value = mock_ticker
 
-        with patch('quorum.legacy.embedding_agent.market_fetcher.LLMClient'):
+        with patch('market.legacy.embedding_agent.market_fetcher.LLMClient'):
             fetcher = MarketContextFetcher(mock_app_config)
             data = fetcher.data_collector.get_market_data(['SPY'])
 
@@ -66,12 +66,12 @@ class TestMarketFetcher:
 @pytest.mark.unit
 class TestEmbeddingParser:
     def test_embedding_parser_creation(self, mock_app_config):
-        with patch('quorum.legacy.embedding_agent.embedding_parser.LLMClient'):
+        with patch('market.legacy.embedding_agent.embedding_parser.LLMClient'):
             parser = EmbeddingParser(mock_app_config)
             assert parser.config == mock_app_config
 
     def test_embedding_validation(self, mock_app_config, sample_sentiment_embedding):
-        with patch('quorum.legacy.embedding_agent.embedding_parser.LLMClient'):
+        with patch('market.legacy.embedding_agent.embedding_parser.LLMClient'):
             parser = EmbeddingParser(mock_app_config)
 
             assert parser.validate_embedding(sample_sentiment_embedding) is True
@@ -85,7 +85,7 @@ class TestEmbeddingParser:
         """Review M1 / PLAN.md I5: failure paths must not return a zero vector
         that looks valid. They return empty dicts so a caller who ignores
         `success` gets a fail-fast KeyError, not silent neutral data."""
-        from quorum.legacy.embedding_agent.embedding_parser import _failure
+        from market.legacy.embedding_agent.embedding_parser import _failure
 
         result = _failure(
             date=__import__('datetime').datetime(2026, 6, 1, tzinfo=__import__('datetime').timezone.utc),

@@ -1,60 +1,40 @@
 # quorum
 
-A real-time **news-impact market state estimator**. Ingests news, filings, and other market-relevant text; extracts structured event-impact signals with an LLM; updates latent market-state estimates with filtering; logs predictions before outcomes are known; and joins them to realized returns to build a growing training dataset.
+Empty Bazel workspace bootstrap. No targets, no language rules wired yet — just the minimum scaffolding needed for `bazel` to recognize this as a workspace and for future build files to land in a sane place.
 
-> News is treated as an exogenous measurement or shock. Prices and returns are noisy observations. The system maintains a latent belief state over expected return, sentiment, volatility, correlation, and uncertainty. **The LLM never decides trades.**
+## Files
 
-## What to read
+| File | Purpose |
+|---|---|
+| `MODULE.bazel` | Bzlmod module declaration. Add `bazel_dep(...)` lines as you bring in external rules (rules_python, rules_rust, rules_go, rules_oci, …). |
+| `BUILD.bazel` | Root package marker; no targets yet. |
+| `.bazelversion` | Pins the bazel version (currently `7.4.1`). Bumping it is a deliberate act, not drift. |
+| `.bazelrc` | Build/test config: Bzlmod on, strict action env for cache hygiene, sensible test output, optional per-user overrides via `.bazelrc.user`. |
 
-- **`PLAN.md`** — full system design: invariants I1–I10, risks R1–R10, architecture, schemas, vertical Slice 0, milestones M1–M6. **Read this first.**
-- **`docs/constitution.md`** — the ungameable promises the elves Judge enforces every batch; derived from PLAN.md §5 and must stay in sync.
-- **`docs/ELVES_SETUP.md`** — prerequisites checklist for running the autonomous overnight harness on this project.
-- **`CLAUDE.md`** (here) and the repo root `CLAUDE.md` — both are loaded by Claude Code; the root has the universal skill routing, this one has the quorum-specific anchors.
-
-## Current state
-
-- `quorum/scoring/` — pure-numpy abnormal-return computation and outcome scoring (PLAN.md §11.4); the I8/I10 invariants are unit-tested against it.
-- `quorum/config/` — environment-driven configuration (DuckDB by default per PLAN.md §8).
-- `quorum/legacy/` — the pre-refinement 10-dimension sentiment pipeline, preserved for reference. **Not** on the path for Slice 0 or any milestone; do not extend it.
-- `tests/` — 52 tests (unit + integration), including `tests/unit/test_invariants.py` for I8/I10.
-
-Slice 0 (PLAN.md §12.1) is the next thing to build; it is not built yet.
-
-## Install + test
-
-The Python deps live in `pyproject.toml` here; the lock is shared at the workspace root.
-
-From the workspace root:
+## Run
 
 ```bash
-uv sync --package quorum --extra dev   # install quorum + its dev deps
-uv run --package quorum pytest -q      # run quorum's tests
+cd projects/quorum
+bazel build //...     # builds every target (none yet)
+bazel test //...      # runs every test (none yet)
+bazel mod graph       # show the Bzlmod dep graph
 ```
 
-From this directory:
+## Adding a language
 
-```bash
-uv sync --extra dev
-uv run pytest                                    # all
-uv run pytest tests/unit                         # unit only
-uv run pytest tests/integration                  # integration only
-uv run pytest tests/unit/test_invariants.py      # PLAN.md I8 / I10
+Bazel doesn't ship language rules in the core; you bring them in via Bzlmod. Examples to paste into `MODULE.bazel`:
+
+```python
+bazel_dep(name = "rules_python", version = "0.40.0")
+bazel_dep(name = "rules_rust",   version = "0.55.0")
+bazel_dep(name = "rules_go",     version = "0.51.0")
+bazel_dep(name = "rules_oci",    version = "2.0.0")
 ```
 
-```bash
-export OPENAI_API_KEY="..."     # required for any LLM-touching code
-```
+Then write `BUILD.bazel` files in your source subdirectories that `load()` the rules and declare targets.
 
-Coverage HTML lands in `htmlcov/` next to wherever you ran pytest from.
+## Why bazel here
 
-## Legacy demo (pre-refinement)
+This project shares a repo with [`projects/market/`](../market/), which is Python under `uv` and lives in its own dependency-isolated world. They do not interact — uv governs the Python workspace, bazel governs this one. The repo is set up so each project picks the build system that fits.
 
-For reference only — the original 10-dimension sentiment pipeline, **not** Slice 0:
-
-```bash
-uv run python demo_market_fetch.py
-```
-
-## Disclaimer
-
-This project is for research and educational purposes only. Outputs must not be used as the sole basis for any financial decision.
+See the [repo root README](../../README.md) for the full multi-project layout.

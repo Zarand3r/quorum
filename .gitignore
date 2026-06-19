@@ -28,3 +28,8 @@ logs/
 # Elves runtime artifacts (kept out of source control by default; flip if you want them committed)
 .elves/
 docs/plans/*.draft.md
+
+# Bazel
+bazel-*
+.bazelrc.user
+MODULE.bazel.lock

@@ -9,7 +9,7 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "quorum",
+    "market",
 ]
 
 [[package]]
@@ -676,6 +676,43 @@ wheels = [
 ]
 
 [[package]]
+name = "market"
+version = "0.2.0"
+source = { editable = "projects/market" }
+dependencies = [
+    { name = "duckdb" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "openai" },
+    { name = "pandas" },
+    { name = "pydantic" },
+    { name = "yfinance" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "duckdb", specifier = ">=1.1.0,<2.0.0" },
+    { name = "numpy", specifier = ">=1.26.0,<3.0.0" },
+    { name = "openai", specifier = ">=1.88.0,<2.0.0" },
+    { name = "pandas", specifier = ">=2.2.0,<3.0.0" },
+    { name = "pydantic", specifier = ">=2.7.0,<3.0.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.1.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.2.1" },
+    { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.14.1" },
+    { name = "yfinance", specifier = ">=0.2.65,<0.3.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
 name = "mdurl"
 version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1200,43 +1237,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/ff/46/dd499ec9038423421
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ec/dd/96da98f892250475bdf2328112d7468abdd4acc7b902b6af23f4ed958ea0/pytz-2026.2-py2.py3-none-any.whl", hash = "sha256:04156e608bee23d3792fd45c94ae47fae1036688e75032eea2e3bf0323d1f126", size = 510141, upload-time = "2026-05-04T01:35:27.408Z" },
 ]
-
-[[package]]
-name = "quorum"
-version = "0.2.0"
-source = { editable = "projects/quorum" }
-dependencies = [
-    { name = "duckdb" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "openai" },
-    { name = "pandas" },
-    { name = "pydantic" },
-    { name = "yfinance" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "pytest-mock" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "duckdb", specifier = ">=1.1.0,<2.0.0" },
-    { name = "numpy", specifier = ">=1.26.0,<3.0.0" },
-    { name = "openai", specifier = ">=1.88.0,<2.0.0" },
-    { name = "pandas", specifier = ">=2.2.0,<3.0.0" },
-    { name = "pydantic", specifier = ">=2.7.0,<3.0.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.1.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.2.1" },
-    { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.14.1" },
-    { name = "yfinance", specifier = ">=0.2.65,<0.3.0" },
-]
-provides-extras = ["dev"]
 
 [[package]]
 name = "requests"

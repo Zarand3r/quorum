@@ -1,0 +1,16 @@
+# Build config for the quorum bazel workspace.
+#
+# Bzlmod is on by default in bazel 7+; we set it explicitly so the workspace
+# stays reproducible if a future bazel version flips the default again.
+common --enable_bzlmod
+
+# Reproducible builds — strip environment variables that would otherwise leak
+# into action keys and bust the cache spuriously.
+build --incompatible_strict_action_env
+
+# Reasonable defaults for local dev.
+build --show_timestamps
+test  --test_output=errors
+
+# Per-user overrides live here (gitignored, optional).
+try-import %workspace%/.bazelrc.user

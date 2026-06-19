@@ -27,13 +27,13 @@ git push -u origin main
 
 elves auto-discovers `pytest` / `npm test` / `cargo test` / `go test` / `Makefile` and runs it after every batch. The gate must **exist and pass on a clean checkout**.
 
-The gate exists: `uv run pytest` runs the unit + integration suite, including `tests/unit/test_invariants.py` which exercises PLAN.md **I8** (no look-ahead in abnormal return) and **I10** (monotonic-in-time scoring) against `quorum.scoring.abnormal_return` on synthetic data.
+The gate exists: `uv run pytest` runs the unit + integration suite, including `tests/unit/test_invariants.py` which exercises PLAN.md **I8** (no look-ahead in abnormal return) and **I10** (monotonic-in-time scoring) against `market.scoring.abnormal_return` on synthetic data.
 
 For batch 1 of the first elves run, expect the agent to:
 
 1. Run `uv sync --extra dev` once (creates `.venv` from `uv.lock`).
 2. Confirm `uv run pytest -q` exits 0.
-3. Build the Slice 0 pipeline per `PLAN.md` §12.1 against the existing scaffolding (`quorum/scoring/`, `quorum/config/`).
+3. Build the Slice 0 pipeline per `PLAN.md` §12.1 against the existing scaffolding (`market/scoring/`, `market/config/`).
 
 For anything with a UI later (the static HTML event-trace report in §12.1 is not interactive, so this is M6 territory at earliest), add Playwright/Cypress so the gate verifies behavior, not just imports.
 

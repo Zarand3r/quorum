@@ -8,7 +8,7 @@ only ships *real* yfinance data; the news and indicator paths return empty
 collections with a logged warning, so the LLM prompt no longer contains
 hallucinated inputs.
 
-Build new functionality under ``quorum/``, not here.
+Build new functionality under ``market/``, not here.
 """
 
 import logging
@@ -97,7 +97,7 @@ class MarketDataCollector:
         news source, this returns an empty list with a visible warning.
         """
         logger.warning(
-            "quorum.legacy.market_fetcher.get_financial_news: no news source is wired; "
+            "market.legacy.market_fetcher.get_financial_news: no news source is wired; "
             "returning []. Resolve PLAN.md §19 question 1 before relying on this path."
         )
         return []
@@ -110,7 +110,7 @@ class MarketDataCollector:
         Returns an empty dict with a visible warning.
         """
         logger.warning(
-            "quorum.legacy.market_fetcher.get_economic_indicators: no provider is wired; "
+            "market.legacy.market_fetcher.get_economic_indicators: no provider is wired; "
             "returning {}. Wire a real source (FRED / Polygon) before relying on this path."
         )
         return {}

@@ -1,0 +1,20 @@
+# quorum — Bazel workspace declaration (Bzlmod).
+#
+# This is the modern Bazel dependency system; it replaces the legacy
+# WORKSPACE file. Add ``bazel_dep(...)`` calls below as you wire in
+# external rules / libraries (rules_python, rules_rust, rules_go,
+# rules_oci, etc.).
+#
+# See https://bazel.build/external/module for the syntax reference.
+
+module(
+    name = "quorum",
+    version = "0.0.0",
+    compatibility_level = 1,
+)
+
+# Example deps to add as the project grows; uncomment when needed.
+# bazel_dep(name = "rules_python", version = "0.40.0")
+# bazel_dep(name = "rules_rust",   version = "0.55.0")
+# bazel_dep(name = "rules_go",     version = "0.51.0")
+# bazel_dep(name = "rules_oci",    version = "2.0.0")

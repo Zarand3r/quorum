@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convenience pytest runner for the quorum project."""
+"""Convenience pytest runner for the market project."""
 
 import argparse
 import subprocess
@@ -7,7 +7,7 @@ import sys
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Pytest runner for quorum (via uv)")
+    parser = argparse.ArgumentParser(description="Pytest runner for market (via uv)")
     parser.add_argument('--unit', action='store_true', help='Run unit tests only')
     parser.add_argument('--integration', action='store_true', help='Run integration tests only')
     parser.add_argument('--coverage', action='store_true', help='Include HTML coverage report')
@@ -19,7 +19,7 @@ def main():
     elif args.integration:
         cmd.append('tests/integration')
     if args.coverage:
-        cmd += ['--cov=quorum', '--cov-report=html']
+        cmd += ['--cov=market', '--cov-report=html']
 
     print(f"$ {' '.join(cmd)}")
     sys.exit(subprocess.run(cmd).returncode)

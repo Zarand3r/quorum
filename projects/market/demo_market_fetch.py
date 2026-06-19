@@ -2,7 +2,7 @@
 """
 LEGACY demo — pre-refinement 10-dimension sentiment-vector pipeline.
 
-This script demos the original (pre-refinement) ``quorum.legacy`` pipeline,
+This script demos the original (pre-refinement) ``market.legacy`` pipeline,
 kept for reference. It is NOT a demo of Slice 0 of the refined PLAN.md.
 
 For the refined direction, see ``PLAN.md`` §12.1 (Slice 0) and
@@ -33,9 +33,9 @@ def check_requirements() -> bool:
 
 async def run_demo():
     try:
-        from quorum.config.settings import AppConfig
-        from quorum.legacy.embedding_agent.market_fetcher import MarketContextFetcher
-        from quorum.legacy.embedding_agent.embedding_parser import EmbeddingParser
+        from market.config.settings import AppConfig
+        from market.legacy.embedding_agent.market_fetcher import MarketContextFetcher
+        from market.legacy.embedding_agent.embedding_parser import EmbeddingParser
     except ImportError as e:
         print(f"Import error: {e}")
         print("  Run `uv sync --extra dev` from this directory first.")

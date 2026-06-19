@@ -33,14 +33,14 @@ Coverage HTML lands in `htmlcov/index.html`.
 
 ## Legacy demo
 
-`quorum.legacy` is the pre-refinement sentiment-vector pipeline. The demo runs it end-to-end against the legacy `MarketContextFetcher` + `EmbeddingParser`:
+`market.legacy` is the pre-refinement sentiment-vector pipeline. The demo runs it end-to-end against the legacy `MarketContextFetcher` + `EmbeddingParser`:
 
 ```bash
 uv run python demo_market_fetch.py
 ```
 
 What it does:
-1. Loads `quorum.config.settings.AppConfig` from environment variables.
+1. Loads `market.config.settings.AppConfig` from environment variables.
 2. Tests LLM and market-data connectivity.
 3. Fetches market data for the configured target symbols (default `SPY, QQQ, IWM, DIA`) via yfinance.
 4. Calls the LLM for a market analysis.
@@ -62,5 +62,5 @@ Per legacy demo invocation: ≈ $0.07–0.20 (one analysis call + one extraction
 
 - **`OpenAI API error`** — confirm `OPENAI_API_KEY` is set and the account has credits.
 - **`No market data`** — yfinance occasionally fails on outside-hours queries; retry during market hours or stub yfinance in your environment.
-- **`Import errors`** — run from the project root so the `quorum/` package resolves: `cd /path/to/quorum && uv run ...`.
+- **`Import errors`** — run from the project root so the `market/` package resolves: `cd /path/to/market && uv run ...`.
 - **`uv: command not found`** — install uv: `curl -LsSf https://astral.sh/uv/install.sh | sh` (Linux/macOS) or `pipx install uv`.

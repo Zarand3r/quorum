@@ -1,7 +1,7 @@
 """
-Configuration for quorum.
+Configuration for market.
 
-This module is shared by ``quorum.legacy`` (the pre-refinement sentiment
+This module is shared by ``market.legacy`` (the pre-refinement sentiment
 pipeline) and will be shared by the refined news-impact estimator once it
 lands. Some fields (``MarketConfig.embedding_dimensions``,
 ``DatabaseConfig.redis_url``) are scoped to the legacy pipeline; they will be
@@ -67,13 +67,13 @@ class DatabaseConfig:
     pipeline (PLAN.md §8). ``redis_url`` is legacy and will be removed when
     the legacy pipeline retires.
     """
-    database_url: str = "duckdb:///./data/quorum.duckdb"
+    database_url: str = "duckdb:///./data/market.duckdb"
     redis_url: str = "redis://localhost:6379/0"
 
     @classmethod
     def from_env(cls) -> "DatabaseConfig":
         return cls(
-            database_url=os.getenv('DATABASE_URL', 'duckdb:///./data/quorum.duckdb'),
+            database_url=os.getenv('DATABASE_URL', 'duckdb:///./data/market.duckdb'),
             redis_url=os.getenv('REDIS_URL', 'redis://localhost:6379/0'),
         )
 
@@ -109,7 +109,7 @@ class AppConfig:
     market: MarketConfig
 
     log_level: str = "INFO"
-    log_file: str = "quorum.log"
+    log_file: str = "market.log"
     daily_run_time: str = "09:00"  # UTC HH:MM for the daily cron tick (legacy).
 
     @classmethod
@@ -119,6 +119,6 @@ class AppConfig:
             database=DatabaseConfig.from_env(),
             market=MarketConfig.from_env(),
             log_level=os.getenv('LOG_LEVEL', 'INFO'),
-            log_file=os.getenv('LOG_FILE', 'quorum.log'),
+            log_file=os.getenv('LOG_FILE', 'market.log'),
             daily_run_time=os.getenv('DAILY_RUN_TIME', '09:00'),
         )

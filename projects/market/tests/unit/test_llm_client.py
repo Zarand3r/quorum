@@ -1,4 +1,4 @@
-"""Unit tests for ``quorum.legacy.embedding_agent.llm_client``."""
+"""Unit tests for ``market.legacy.embedding_agent.llm_client``."""
 
 import time
 from datetime import datetime, timedelta, timezone
@@ -7,8 +7,8 @@ from unittest.mock import Mock, patch
 import openai
 import pytest
 
-from quorum.config.settings import APIConfig
-from quorum.legacy.embedding_agent.llm_client import (
+from market.config.settings import APIConfig
+from market.legacy.embedding_agent.llm_client import (
     LLMClient,
     LLMResponse,
     RateLimiter,
@@ -102,14 +102,14 @@ class TestLLMClient:
         return response
 
     def test_llm_client_creation(self, api_config):
-        with patch('quorum.legacy.embedding_agent.llm_client.OpenAI') as mock_openai:
+        with patch('market.legacy.embedding_agent.llm_client.OpenAI') as mock_openai:
             client = LLMClient(api_config)
             assert client.config == api_config
             mock_openai.assert_called_once_with(api_key="test-api-key")
             assert isinstance(client.rate_limiter, RateLimiter)
 
     def test_cost_estimation(self, api_config):
-        with patch('quorum.legacy.embedding_agent.llm_client.OpenAI'):
+        with patch('market.legacy.embedding_agent.llm_client.OpenAI'):
             client = LLMClient(api_config)
 
             assert client._estimate_cost("gpt-4", 1000, 500) == pytest.approx(
@@ -123,7 +123,7 @@ class TestLLMClient:
                 (1000 / 1000 * 0.03) + (500 / 1000 * 0.06)
             )
 
-    @patch('quorum.legacy.embedding_agent.llm_client.OpenAI')
+    @patch('market.legacy.embedding_agent.llm_client.OpenAI')
     def test_successful_completion(self, mock_openai_class, api_config, mock_openai_response):
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
@@ -147,7 +147,7 @@ class TestLLMClient:
             timeout=30,
         )
 
-    @patch('quorum.legacy.embedding_agent.llm_client.OpenAI')
+    @patch('market.legacy.embedding_agent.llm_client.OpenAI')
     def test_openai_error_returns_failure_response(self, mock_openai_class, api_config):
         """All OpenAI library errors collapse into LLMResponse(success=False).
 
@@ -170,7 +170,7 @@ class TestLLMClient:
         assert response.cost_estimate == 0.0
         assert "APIError" in (response.error_message or "")
 
-    @patch('quorum.legacy.embedding_agent.llm_client.OpenAI')
+    @patch('market.legacy.embedding_agent.llm_client.OpenAI')
     def test_non_openai_exception_propagates(self, mock_openai_class, api_config):
         """A ValueError from elsewhere is *not* swallowed (review m1) — it
         propagates so a programmer bug doesn't masquerade as an API failure."""
@@ -182,7 +182,7 @@ class TestLLMClient:
         with pytest.raises(ValueError, match="bug"):
             llm_client.generate_completion([{"role": "user", "content": "x"}])
 
-    @patch('quorum.legacy.embedding_agent.llm_client.OpenAI')
+    @patch('market.legacy.embedding_agent.llm_client.OpenAI')
     def test_custom_parameters(self, mock_openai_class, api_config, mock_openai_response):
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
@@ -206,7 +206,7 @@ class TestLLMClient:
             timeout=60,
         )
 
-    @patch('quorum.legacy.embedding_agent.llm_client.OpenAI')
+    @patch('market.legacy.embedding_agent.llm_client.OpenAI')
     def test_connection_test_success(self, mock_openai_class, api_config, mock_openai_response):
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
@@ -215,7 +215,7 @@ class TestLLMClient:
         llm_client = LLMClient(api_config)
         assert llm_client.test_connection() is True
 
-    @patch('quorum.legacy.embedding_agent.llm_client.OpenAI')
+    @patch('market.legacy.embedding_agent.llm_client.OpenAI')
     def test_connection_test_failure(self, mock_openai_class, api_config):
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
@@ -225,7 +225,7 @@ class TestLLMClient:
         assert llm_client.test_connection() is False
 
     @patch('time.sleep')
-    @patch('quorum.legacy.embedding_agent.llm_client.OpenAI')
+    @patch('market.legacy.embedding_agent.llm_client.OpenAI')
     def test_rate_limiting_integration(
         self,
         mock_openai_class,

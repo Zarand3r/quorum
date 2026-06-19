@@ -2,7 +2,7 @@
 Invariant tests — PLAN.md §5 promises, verified on synthetic data.
 
 These tests intentionally do not touch network, LLM, or filesystem; they
-exercise pure functions in ``quorum.scoring`` against deterministic inputs
+exercise pure functions in ``market.scoring`` against deterministic inputs
 so a regression in time-discipline shows up on a fresh checkout.
 
 The tests are the verification anchors named in ``PLAN.md`` §14 and the
@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from quorum.scoring.abnormal_return import (
+from market.scoring.abnormal_return import (
     LookAheadError,
     abnormal_return,
     cumulative_abnormal_return,

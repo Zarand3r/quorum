@@ -1,8 +1,8 @@
-"""Unit tests for ``quorum.config.settings``."""
+"""Unit tests for ``market.config.settings``."""
 
 from unittest.mock import patch
 
-from quorum.config.settings import (
+from market.config.settings import (
     APIConfig,
     AppConfig,
     DatabaseConfig,
@@ -47,7 +47,7 @@ class TestDatabaseConfig:
         config = DatabaseConfig()
         # PLAN.md §8: v0 storage is a single DuckDB file.
         assert config.database_url.startswith("duckdb")
-        assert "quorum" in config.database_url
+        assert "market" in config.database_url
         assert config.redis_url == "redis://localhost:6379/0"
 
     def test_database_config_from_env(self, monkeypatch):
@@ -107,12 +107,12 @@ class TestAppConfig:
         config = AppConfig.load()
 
         assert config.log_level == "INFO"
-        assert config.log_file == "quorum.log"
+        assert config.log_file == "market.log"
         assert config.daily_run_time == "09:00"
 
-    @patch('quorum.config.settings.APIConfig.from_env')
-    @patch('quorum.config.settings.DatabaseConfig.from_env')
-    @patch('quorum.config.settings.MarketConfig.from_env')
+    @patch('market.config.settings.APIConfig.from_env')
+    @patch('market.config.settings.DatabaseConfig.from_env')
+    @patch('market.config.settings.MarketConfig.from_env')
     def test_app_config_component_loading(self, mock_market, mock_db, mock_api):
         mock_api.return_value = APIConfig(openai_api_key="test")
         mock_db.return_value = DatabaseConfig()

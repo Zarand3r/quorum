@@ -8,15 +8,15 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from quorum.legacy.embedding_agent.embedding_parser import EmbeddingParser
-from quorum.legacy.embedding_agent.market_fetcher import MarketContextFetcher
+from market.legacy.embedding_agent.embedding_parser import EmbeddingParser
+from market.legacy.embedding_agent.market_fetcher import MarketContextFetcher
 
 
 @pytest.mark.integration
 class TestPipelineIntegration:
     @pytest.mark.asyncio
-    @patch('quorum.legacy.embedding_agent.market_fetcher.MarketDataCollector')
-    @patch('quorum.legacy.embedding_agent.llm_client.OpenAI')
+    @patch('market.legacy.embedding_agent.market_fetcher.MarketDataCollector')
+    @patch('market.legacy.embedding_agent.llm_client.OpenAI')
     async def test_basic_pipeline(
         self,
         mock_openai_class,
