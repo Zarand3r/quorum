@@ -1,48 +1,21 @@
-[project]
-name = "quorum"
-version = "0.2.0"
-description = "Real-time news-impact market state estimator. See PLAN.md for the system design."
-authors = [
-    {name = "Richard Bao"},
-]
-readme = "README.md"
-license = {text = "MIT"}
-requires-python = ">=3.10,<4.0"
-dependencies = [
-    # LLM + market data — needed by quorum.legacy and the refined event-extraction stage (PLAN.md §4.4).
-    "openai>=1.88.0,<2.0.0",
-    "yfinance>=0.2.65,<0.3.0",
-    # Storage + math for Slice 0 (PLAN.md §8, §11).
-    "duckdb>=1.1.0,<2.0.0",
-    "numpy>=1.26.0,<3.0.0",
-    "pandas>=2.2.0,<3.0.0",
-    "pydantic>=2.7.0,<3.0.0",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.4.1",
-    "pytest-asyncio>=1.1.0",
-    "pytest-mock>=3.14.1",
-    "pytest-cov>=6.2.1",
-]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["quorum"]
-
-# Removed dependencies (and why):
-#  - flask          : never imported; web API is deferred to M6+.
-#  - sqlalchemy     : never imported; v0 storage is DuckDB.
-#  - aiohttp        : only used by the mock-news scraper in the legacy market_fetcher,
-#                    which was removed (review M3 — was injecting hardcoded fake
-#                    articles into the LLM prompt, violating PLAN.md I5).
-#  - beautifulsoup4 : same — only the deleted mock-news code imported it.
+# Workspace root for the quorum polyglot monorepo.
 #
-# Dependency tool: this project uses `uv` (https://docs.astral.sh/uv/).
-#   uv sync                    # create .venv and install everything (incl. dev extra)
-#   uv run pytest -q           # run the test suite
-#   uv lock --upgrade          # regenerate uv.lock against the latest compatible versions
+# This file declares the uv workspace and nothing else — no runtime deps,
+# no buildable package at the root. Each project under ``projects/<name>/``
+# has its own ``pyproject.toml`` with its own ``[project].dependencies`` and
+# is fully isolated from its siblings.
+#
+# uv resolves all Python members into a single shared ``uv.lock`` at this
+# root, so any version conflict between members surfaces at lock time as a
+# deliberate decision rather than a silent drift. Non-Python projects can
+# live alongside (``projects/<name>/Cargo.toml``, ``go.mod``,
+# ``package.json``) — uv only governs the Python ones.
+#
+# Usage:
+#   uv sync --all-extras                           # install every member + dev extras
+#   uv sync --package quorum --extra dev           # just one member
+#   uv run --package quorum pytest -q              # run a command against a member
+#   cd projects/quorum && uv run pytest -q         # equivalent, cwd-relative
+
+[tool.uv.workspace]
+members = ["projects/*"]
