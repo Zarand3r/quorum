@@ -38,7 +38,7 @@ async def run_demo():
         from quorum.legacy.embedding_agent.embedding_parser import EmbeddingParser
     except ImportError as e:
         print(f"Import error: {e}")
-        print("  Run `poetry install` first.")
+        print("  Run `uv sync --extra dev` from this directory first.")
         return
 
     config = AppConfig.load()
