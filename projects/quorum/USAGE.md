@@ -4,17 +4,19 @@ Concrete how-to. For the *design*, see `PLAN.md`.
 
 ## Install
 
-[uv](https://docs.astral.sh/uv/) is the only required tool. Python 3.12 is pinned via `.python-version` and is fetched automatically.
+[uv](https://docs.astral.sh/uv/) is the only required tool. Python 3.12 is pinned at the repo root via `.python-version` and is fetched automatically.
+
+This project is a member of the workspace defined at the repo root (`/pyproject.toml`). The shared `uv.lock` lives at the root; commands from inside this directory work because uv walks up to find the workspace.
 
 ```bash
-uv sync --extra dev          # create .venv + install everything (runtime + dev)
+uv sync --extra dev          # create the workspace .venv + install runtime + dev deps
 export OPENAI_API_KEY="..."
 ```
 
-If you ever change `pyproject.toml`, regenerate the lock:
+To regenerate the shared lock after changing `pyproject.toml` (run from this dir or the repo root):
 
 ```bash
-uv lock                      # write uv.lock from current pyproject
+uv lock                      # rewrite uv.lock from the current workspace state
 uv lock --upgrade            # bump pinned versions to latest compatible
 ```
 

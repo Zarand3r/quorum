@@ -1,57 +1,74 @@
-# quorum
+# Monorepo root
 
-A real-time **news-impact market state estimator**. Ingests news, filings, and other market-relevant text; extracts structured event-impact signals with an LLM; updates latent market-state estimates with filtering; logs predictions before outcomes are known; and joins them to realized returns to build a growing training dataset.
+A polyglot monorepo. Each project lives in `projects/<name>/` with its own dependencies, lockfile (or build manifest), and `PLAN.md`. Projects are **fully independent** — no cross-project imports.
 
-> News is treated as an exogenous measurement or shock. Prices and returns are noisy observations. The system maintains a latent belief state over expected return, sentiment, volatility, correlation, and uncertainty. **The LLM never decides trades.**
+## Active projects
 
-## What to read
+| Project | Language | Brief |
+|---|---|---|
+| [`projects/quorum/`](projects/quorum/) | Python | Real-time news-impact market state estimator. The LLM extracts evidence; a filter updates beliefs; predictions are logged before outcomes and joined to realized returns to grow a training dataset. **The LLM never decides trades.** Read [`projects/quorum/PLAN.md`](projects/quorum/PLAN.md) and [`projects/quorum/README.md`](projects/quorum/README.md). |
 
-The repo has one source of truth and a few derivative docs.
+Add a new project by creating `projects/<name>/` with whatever toolchain it needs (`pyproject.toml` for Python via uv, `Cargo.toml` for Rust, `go.mod` for Go, `package.json` for TS, etc.). Python projects are picked up automatically by the uv workspace via the glob in the root `pyproject.toml`.
 
-- **`PLAN.md`** — full system design: invariants I1–I10, risks R1–R10, architecture, schemas, vertical Slice 0, milestones M1–M6. **Read this first.**
-- **`docs/constitution.md`** — the ungameable promises the elves Judge enforces every batch; derived from PLAN.md §5 and must stay in sync.
-- **`docs/ELVES_SETUP.md`** — prerequisites checklist for running the autonomous overnight harness on this repo.
-- **`CLAUDE.md`** — routing for Claude Code coding sessions through the `eng-skills` plugin (`karpathy-guidelines`, `principal-production-engineer`, `strategic-engineering-planner`, `implementation-plan`, `cpp-systems-internals`, `auto-research`, `elves`).
+## Tooling
 
-## Current state
+- **Python:** [uv](https://docs.astral.sh/uv/) workspaces. The root `pyproject.toml` declares `[tool.uv.workspace] members = ["projects/*"]`; every Python project under `projects/` gets its own `[project].dependencies` resolved into the shared root `uv.lock`. Python is pinned to 3.12 via `.python-version`.
+- **Non-Python projects:** each brings its own toolchain. uv only governs Python.
+- **Skill library:** the [`eng-skills`](https://github.com/Zarand3r/claude-skills) plugin is auto-installed when Claude Code trusts this folder (see `.claude/settings.json`). It provides the `strategic-engineering-planner` → `implementation-plan` → `principal-production-engineer` planning + build flow, plus the autonomous `elves` overnight harness. See `CLAUDE.md` for the full routing table.
 
-The repo contains:
-
-- `quorum/scoring/` — pure-numpy abnormal-return computation and outcome scoring (PLAN.md §11.4); the I8/I10 invariants are unit-tested against it.
-- `quorum/config/` — environment-driven configuration (DuckDB by default per PLAN.md §8).
-- `quorum/legacy/` — the pre-refinement 10-dimension sentiment pipeline, preserved for reference. **Not** on the path for Slice 0 or any milestone; do not extend it.
-- `tests/` — unit + integration tests including `tests/unit/test_invariants.py` for I8/I10.
-
-Slice 0 (PLAN.md §12.1) is the next thing to build; it is not built yet.
-
-## Install
-
-Requires [uv](https://docs.astral.sh/uv/) (the project pins Python 3.12 via `.python-version`; uv will fetch it if missing).
+## Setup
 
 ```bash
-uv sync --extra dev          # create .venv, install runtime + dev deps from uv.lock
-export OPENAI_API_KEY="..."
+# one-time on a fresh machine
+curl -LsSf https://astral.sh/uv/install.sh | sh
+git clone https://github.com/Zarand3r/quorum.git
+cd quorum
+uv sync --all-extras                          # install every Python member + all dev extras
 ```
 
-## Tests
+## Working on a specific project
+
+From the repo root:
 
 ```bash
-uv run pytest                                # all
-uv run pytest tests/unit                     # unit only
-uv run pytest tests/integration              # integration only
-uv run pytest tests/unit/test_invariants.py  # PLAN.md I8 / I10
+uv run --package quorum pytest -q             # run pytest in the quorum member
+uv sync --package quorum --extra dev          # install only quorum + its dev deps
 ```
 
-Coverage is written to `htmlcov/index.html` (pytest.ini enables it by default).
-
-## Legacy demo (pre-refinement)
-
-For reference only — this is the original 10-dimension sentiment pipeline, **not** Slice 0:
+Or equivalently from within the project directory:
 
 ```bash
-uv run python demo_market_fetch.py
+cd projects/quorum
+uv run pytest -q
 ```
 
-## Disclaimer
+Both forms use the workspace lock at the root.
 
-This project is for research and educational purposes only. Outputs must not be used as the sole basis for any financial decision.
+## Repo layout
+
+```
+.
+├── CLAUDE.md                       # repo-wide skill routing + non-negotiables
+├── README.md                       # this file
+├── .claude/settings.json           # auto-installs the eng-skills plugin
+├── .python-version                 # 3.12 (repo-wide)
+├── .gitignore                      # repo-wide
+├── pyproject.toml                  # uv workspace root (no runtime deps)
+├── uv.lock                         # shared resolution for all Python members
+└── projects/
+    └── quorum/
+        ├── CLAUDE.md               # project-specific anchors
+        ├── README.md               # project quickstart
+        ├── PLAN.md                 # design source of truth
+        ├── USAGE.md                # how-to
+        ├── pyproject.toml          # project's own deps (isolated)
+        ├── quorum/                 # package
+        ├── tests/
+        └── docs/
+            ├── constitution.md     # ungameable promises (elves Judge enforces)
+            └── ELVES_SETUP.md      # overnight harness prerequisites
+```
+
+## License
+
+MIT.
