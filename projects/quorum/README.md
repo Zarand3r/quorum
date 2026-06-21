@@ -1,40 +1,25 @@
-# quorum
+# projects/quorum
 
-Empty Bazel workspace bootstrap. No targets, no language rules wired yet — just the minimum scaffolding needed for `bazel` to recognize this as a workspace and for future build files to land in a sane place.
+Placeholder package in the repo-wide bazel workspace. No targets yet — the empty `BUILD.bazel` exists so this directory is a valid bazel package, so the first bazel-built work has a sensible place to land.
 
-## Files
+The bazel workspace itself is declared at the repo root in [`/MODULE.bazel`](../../MODULE.bazel). One workspace, one cache, one version pin (`.bazelversion`) — see the [root README](../../README.md) for the rationale.
 
-| File | Purpose |
-|---|---|
-| `MODULE.bazel` | Bzlmod module declaration. Add `bazel_dep(...)` lines as you bring in external rules (rules_python, rules_rust, rules_go, rules_oci, …). |
-| `BUILD.bazel` | Root package marker; no targets yet. |
-| `.bazelversion` | Pins the bazel version (currently `7.4.1`). Bumping it is a deliberate act, not drift. |
-| `.bazelrc` | Build/test config: Bzlmod on, strict action env for cache hygiene, sensible test output, optional per-user overrides via `.bazelrc.user`. |
+## Adding the first target
 
-## Run
+1. Decide what language. Bazel doesn't ship language rules in the core; bring them in via Bzlmod by uncommenting the relevant `bazel_dep(...)` line in `/MODULE.bazel` (e.g. `rules_go` for Go, `rules_rust` for Rust, `rules_oci` for container images).
+2. Write a `BUILD.bazel` rule in this directory using the rules you imported.
+3. Build it: `bazel build //projects/quorum:<target-name>`.
+
+## Run from anywhere
+
+Bazel finds the workspace by walking up to `MODULE.bazel`, so these all work:
 
 ```bash
-cd projects/quorum
-bazel build //...     # builds every target (none yet)
-bazel test //...      # runs every test (none yet)
-bazel mod graph       # show the Bzlmod dep graph
+bazel build //projects/quorum/...    # from the repo root
+bazel test //projects/quorum/...     # from the repo root
+cd projects/quorum && bazel build //...   # equivalent
 ```
 
-## Adding a language
+## Context
 
-Bazel doesn't ship language rules in the core; you bring them in via Bzlmod. Examples to paste into `MODULE.bazel`:
-
-```python
-bazel_dep(name = "rules_python", version = "0.40.0")
-bazel_dep(name = "rules_rust",   version = "0.55.0")
-bazel_dep(name = "rules_go",     version = "0.51.0")
-bazel_dep(name = "rules_oci",    version = "2.0.0")
-```
-
-Then write `BUILD.bazel` files in your source subdirectories that `load()` the rules and declare targets.
-
-## Why bazel here
-
-This project shares a repo with [`projects/market/`](../market/), which is Python under `uv` and lives in its own dependency-isolated world. They do not interact — uv governs the Python workspace, bazel governs this one. The repo is set up so each project picks the build system that fits.
-
-See the [repo root README](../../README.md) for the full multi-project layout.
+This is one project in a polyglot monorepo. The sibling [`projects/market/`](../market/) is Python under `uv` and uses a different toolchain entirely; bazel doesn't see it (no BUILD files there). The two are dependency-isolated by construction.
