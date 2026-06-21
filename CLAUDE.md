@@ -7,7 +7,7 @@ This is a polyglot monorepo with two build systems coexisting at the root: a **u
 | Project | Build system | Brief |
 |---|---|---|
 | [`projects/market/`](projects/market/) | Python (uv) | Real-time news-impact market state estimator. See `projects/market/PLAN.md`. |
-| [`projects/quorum/`](projects/quorum/) | Bazel | Placeholder package in the repo-wide bazel workspace. Empty `BUILD.bazel`; no targets yet. |
+| [`projects/quorum/`](projects/quorum/) | Bazel | Single-pass LLM population simulator for emergent behavior. Goal: **computed** (irreducible) emergence, validated by Boids / Schelling baselines and an irreducibility test. See `projects/quorum/PLAN.md`. Design only; no implementation yet. |
 
 When working on a specific project, also load its own `CLAUDE.md` (e.g. `projects/market/CLAUDE.md`) for project-specific framing, invariants, and document pointers. Claude Code merges all CLAUDE.md files on the path to cwd; the two are additive.
 
