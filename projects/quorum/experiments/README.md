@@ -25,8 +25,8 @@ These are *toy models*. They are not Slice 0 and they are not on the path to v1.
 
 ## Tactical decisions about the build
 
-- **Build system: uv, not bazel (for now).** Quorum's production answer is bazel (per the root `MODULE.bazel`). The experiments folder uses a standalone uv project as a tactical shortcut so we can move fast on TDD without first wiring `rules_python` end-to-end. When Slice 0 lands, the toys migrate into the bazel graph. This is documented in `pyproject.toml`.
-- **Excluded from the root uv workspace.** The root `pyproject.toml` already lists `projects/quorum` in `[tool.uv.workspace].exclude`. We don't change that; we run uv commands from inside `projects/quorum/experiments/` directly.
+- **Build system: uv, not bazel (for now).** Quorum's production answer is bazel (per the root `MODULE.bazel`). The experiments folder uses a uv project as a tactical shortcut so we can move fast on TDD without first wiring `rules_python` end-to-end. When Slice 0 lands, the toys migrate into the bazel graph. This is documented in `pyproject.toml`.
+- **Member of the uv workspace.** The root `pyproject.toml` lists `projects/quorum/experiments` as an explicit workspace member. The bazel project at `projects/quorum/` itself stays excluded (it has no `pyproject.toml`). Shared lock at the workspace root; nested member here.
 - **Torch is optional.** The unit test suite uses a `MockPolicy` and depends only on `numpy` + `pytest`. The real `LLMPolicy` is in an optional `[llm]` extra (torch + transformers). This keeps tests fast (<1 s) and laptop-runnable without GPU.
 
 ## Running

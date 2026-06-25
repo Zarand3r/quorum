@@ -18,9 +18,12 @@
 #   cd projects/quorum && uv run pytest -q         # equivalent, cwd-relative
 
 [tool.uv.workspace]
-members = ["projects/*"]
-# Non-Python projects (Bazel, Rust, Go, TS, …) live under projects/ too;
-# list each one here so uv skips it instead of looking for a pyproject.toml.
+members = [
+    "projects/*",                       # top-level Python projects (currently: market)
+    "projects/quorum/experiments",      # nested under the bazel quorum project
+]
+# Non-Python projects (Bazel, Rust, Go, TS, …) live under projects/ too.
+# List each here so uv skips it instead of looking for a pyproject.toml.
 exclude = [
-    "projects/quorum",   # bazel workspace, see projects/quorum/MODULE.bazel
+    "projects/quorum",   # bazel workspace; no pyproject.toml at this level
 ]
