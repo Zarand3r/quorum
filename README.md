@@ -12,7 +12,7 @@ They look for different files (uv → `pyproject.toml` in members; bazel → `BU
 | Project | Build system | Brief |
 |---|---|---|
 | [`projects/market/`](projects/market/) | Python (uv) | Real-time news-impact market state estimator. The LLM extracts evidence; a filter updates beliefs; predictions are logged before outcomes and joined to realized returns to grow a training dataset. **The LLM never decides trades.** Read [`projects/market/PLAN.md`](projects/market/PLAN.md) and [`projects/market/README.md`](projects/market/README.md). |
-| [`projects/quorum/`](projects/quorum/) | Bazel | Placeholder package in the repo-wide bazel workspace. Empty `BUILD.bazel`; no targets yet. The first bazel-built work will land here. |
+| [`projects/quorum/`](projects/quorum/) | Bazel | **Single-pass LLM population simulator for emergent behavior.** A Game-of-Life–style engine where the local rule is an LLM but the common-case update for the *entire population* is one batched forward pass; expensive generations are reserved for rare reflection. Goal is **computed** (irreducible) emergence — validated by Boids / Schelling baselines and an irreducibility test, not by fidelity to real humans. **Status: design only, no implementation yet.** Read [`projects/quorum/PLAN.md`](projects/quorum/PLAN.md). |
 
 Add a new project by creating `projects/<name>/` with whichever toolchain it needs. Python projects (with a `pyproject.toml`) are picked up automatically by the uv workspace; bazel-built work just gets a `BUILD.bazel` and is reachable as `//projects/<name>/...`. New non-Python projects must also be added to the `[tool.uv.workspace].exclude` list in the root `pyproject.toml` so uv stops looking for a `pyproject.toml` there.
 
