@@ -1,0 +1,6 @@
+# projects/quorum — placeholder bazel package.
+#
+# Part of the repo-wide bazel workspace declared in the root MODULE.bazel.
+# No targets yet; this file exists so the directory is a valid bazel
+# package (reachable as ``//projects/quorum``) and so future targets can
+# land here without ceremony.

@@ -1,0 +1,5 @@
+# Root package for the quorum bazel workspace.
+#
+# No targets yet. Add language-specific BUILD.bazel files in subdirectories
+# as the project grows; this file exists mainly so the root package is a
+# valid bazel package.

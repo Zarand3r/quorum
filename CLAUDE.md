@@ -1,14 +1,15 @@
 # Repository Instructions for Claude
 
-This is a polyglot monorepo. Each project lives in `projects/<name>/` with its own dependencies, lockfile (or build manifest), and `PLAN.md`. Cross-project imports are not used; projects are fully independent.
+This is a polyglot monorepo with two build systems coexisting at the root: a **uv workspace** for Python (`pyproject.toml` + `uv.lock`) and a **Bazel workspace** for everything else (`MODULE.bazel` + `BUILD.bazel` + `.bazelversion` + `.bazelrc`). Each project under `projects/<name>/` picks one; projects are dependency-isolated. Cross-project imports are not used.
 
 ## Active projects
 
-| Project | Language | Brief |
+| Project | Build system | Brief |
 |---|---|---|
-| [`projects/quorum/`](projects/quorum/) | Python | Real-time news-impact market state estimator. See `projects/quorum/PLAN.md`. |
+| [`projects/market/`](projects/market/) | Python (uv) | Real-time news-impact market state estimator. See `projects/market/PLAN.md`. |
+| [`projects/quorum/`](projects/quorum/) | Bazel | Placeholder package in the repo-wide bazel workspace. Empty `BUILD.bazel`; no targets yet. |
 
-When working on a specific project, also load its own `CLAUDE.md` (e.g. `projects/quorum/CLAUDE.md`) for project-specific framing, invariants, and document pointers. Claude Code merges all CLAUDE.md files on the path to cwd; the two are additive.
+When working on a specific project, also load its own `CLAUDE.md` (e.g. `projects/market/CLAUDE.md`) for project-specific framing, invariants, and document pointers. Claude Code merges all CLAUDE.md files on the path to cwd; the two are additive.
 
 ## Skill library + harness
 
@@ -55,6 +56,7 @@ Verdict; blocker/major/minor findings; invariant gaps; ownership/lifetime issues
 
 ## Workspace tooling
 
-- **Python:** [uv](https://docs.astral.sh/uv/) with one shared `uv.lock` at the root (see root `pyproject.toml`). Each Python project under `projects/<name>/` has its own `[project] dependencies` and is fully isolated. Default: `uv sync --all-extras` from root.
-- **Non-Python projects:** each brings its own toolchain (`Cargo.toml` / `go.mod` / `package.json` / `BUILD.bazel`). uv only governs the Python ones.
+- **Python:** [uv](https://docs.astral.sh/uv/) with one shared `uv.lock` at the root (see root `pyproject.toml`). Each Python project under `projects/<name>/` has its own `[project] dependencies` and is fully isolated. Default: `uv sync --all-extras` from root. Non-Python projects must be listed in `[tool.uv.workspace].exclude` so uv stops looking for a `pyproject.toml` there.
+- **Bazel:** one repo-wide workspace at the root — `MODULE.bazel` (Bzlmod), `BUILD.bazel`, `.bazelversion`, `.bazelrc`. `bazel` commands work from anywhere in the tree (bazel walks up to find `MODULE.bazel`). New bazel-built work lands under `projects/<name>/` with its own `BUILD.bazel` and is reachable as `//projects/<name>/...`. External rules / libraries (`rules_python`, `rules_rust`, `rules_go`, `rules_oci`, …) are declared in the root `MODULE.bazel` via `bazel_dep(...)`, not in subdirs.
 - **Python version:** pinned at the repo root via `.python-version` (currently `3.12`); uv fetches it if missing.
+- **`.bazelversion`** pins bazel repo-wide; bumping it is a deliberate, single-commit act.

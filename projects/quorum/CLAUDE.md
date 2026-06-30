@@ -1,28 +1,32 @@
-# quorum — project-specific instructions
+# projects/quorum — project-specific instructions
 
-This project is a real-time news-impact market state estimator. It is architecturally significant, performance-sensitive, concurrency-heavy, and safety-relevant (financial signals, closed-loop estimation). The repo-wide CLAUDE.md at the workspace root has the skill routing and engineering rules; this file adds the project-specific anchors.
+Placeholder bazel package. The bazel workspace itself is the entire repo; see [`/MODULE.bazel`](../../MODULE.bazel) at the root. This file records the conventions for anyone (human or agent) building bazel-managed work into this directory.
 
-## Project anchors
+## Conventions
 
-- **Plan** — `PLAN.md` is the source of truth for scope, invariants (I1–I10), risks (R1–R10), and milestones (Slice 0 → M1–M6). Read it before proposing changes that cross layers.
-- **Constitution** — `docs/constitution.md` lists the ungameable promises the elves Judge enforces every batch. Derived from PLAN.md §5; the two must stay in sync.
-- **Harness setup** — `docs/ELVES_SETUP.md` is the prerequisites checklist before launching an overnight elves run on this project.
-- **Verification gate** — `tests/unit/test_invariants.py` enforces PLAN.md I8 (no look-ahead in abnormal return) and I10 (monotonic-in-time scoring) against `quorum.scoring.abnormal_return`. This is the gate the elves Judge looks for in batch 1.
+- **Build system: bazel via Bzlmod.** External deps are declared at `/MODULE.bazel` (not here). When you need a language ruleset (`rules_python`, `rules_rust`, `rules_nodejs`, …), uncomment the appropriate `bazel_dep(...)` line at the root.
+- **Do not introduce a parallel toolchain** (pip, cargo, npm, etc.) inside this directory. If you need third-party packages, route them through the relevant bazel-native rules so builds stay hermetic and cache-friendly.
+- **`.bazelversion` is at the repo root and is a hard pin.** Bumping it is a deliberate act; do it in a single commit with a one-line justification.
+- **Targets are public-by-default-No.** Use explicit `visibility = ["//visibility:public"]` or package-scoped visibility groups. Don't leak implementation details.
+- **Tests:** `bazel test //projects/quorum/...` is the local gate; `bazel test //...` from the repo root is the global gate.
+- **No targets exist yet.** When you add the first one, also add it to the elves checklist (or whatever supersedes it) so the verification gate stays honest.
 
-## Domain-specific reminders
-
-- **The LLM never decides trades.** The LLM extracts evidence; a filter updates beliefs; a predictor estimates impact; a portfolio/risk layer (when it exists) decides whether to act. This separation is constitutional.
-- **As-of discipline is non-negotiable.** Every row that influences a prediction carries `as_of_time_utc`. Naive `datetime.now()` is a bug — use `datetime.now(timezone.utc)`. The scoring layer raises `LookAheadError` on tz-naive inputs.
-- **No silent fallback.** Failures log typed errors and skip; never substitute neutral defaults (cf. review M1–M5 in the migration commit; the legacy mock-news scraper is gone).
-- **Slice 0 only for the first elves run.** Scope is capped at PLAN.md §12.1. No M1+ work, no LightGBM training, no auto-research until the loop has gone round once.
-
-## Working inside this project
+## Working here
 
 ```bash
+# Build everything bazel knows about, from anywhere in the repo:
+bazel build //...
+
+# Just this package, from anywhere in the repo:
+bazel build //projects/quorum/...
+
+# From inside this directory:
 cd projects/quorum
-uv sync --extra dev            # install runtime + dev deps (workspace-aware)
-uv run pytest -q               # run the gate
-uv run pytest tests/unit/test_invariants.py   # just the I8 / I10 anchor
+bazel test //...
+bazel mod graph                  # Bzlmod dep graph (resolves to the repo-root workspace)
+bazel query 'deps(//projects/quorum/...)'
 ```
 
-`quorum/legacy/` is the pre-refinement 10-dim sentiment pipeline. Preserved for reference; do not extend it. Build new functionality under `quorum/`.
+## Repo context
+
+This is a polyglot monorepo with **one** bazel workspace at the root. The sibling [`projects/market/`](../market/) is Python under `uv` and is independent — bazel doesn't see it (no BUILD files there). Keep cross-project boundaries clean: don't add bazel rules that reach into `projects/market/`, and don't import from `projects/quorum/` into the Python project.

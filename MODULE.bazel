@@ -1,0 +1,24 @@
+# quorum — repo-wide Bazel workspace (Bzlmod).
+#
+# This file lives at the repo root, so ``bazel`` commands run from
+# anywhere in the tree resolve back here. The workspace name matches the
+# repo: a single bazel workspace covering whatever bazel-built work lands
+# under ``projects/``. Non-bazel projects (uv Python at ``projects/market``)
+# simply have no ``BUILD.bazel`` files and are invisible to bazel.
+#
+# Add ``bazel_dep(...)`` calls below as you wire in external rules /
+# libraries (rules_python, rules_rust, rules_go, rules_oci, etc.).
+#
+# See https://bazel.build/external/module for the syntax reference.
+
+module(
+    name = "quorum",
+    version = "0.0.0",
+    compatibility_level = 1,
+)
+
+# Example deps to add as bazel-built work appears; uncomment when needed.
+# bazel_dep(name = "rules_python", version = "0.40.0")
+# bazel_dep(name = "rules_rust",   version = "0.55.0")
+# bazel_dep(name = "rules_go",     version = "0.51.0")
+# bazel_dep(name = "rules_oci",    version = "2.0.0")

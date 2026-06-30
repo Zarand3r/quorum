@@ -1,60 +1,25 @@
-# quorum
+# projects/quorum
 
-A real-time **news-impact market state estimator**. Ingests news, filings, and other market-relevant text; extracts structured event-impact signals with an LLM; updates latent market-state estimates with filtering; logs predictions before outcomes are known; and joins them to realized returns to build a growing training dataset.
+Placeholder package in the repo-wide bazel workspace. No targets yet — the empty `BUILD.bazel` exists so this directory is a valid bazel package, so the first bazel-built work has a sensible place to land.
 
-> News is treated as an exogenous measurement or shock. Prices and returns are noisy observations. The system maintains a latent belief state over expected return, sentiment, volatility, correlation, and uncertainty. **The LLM never decides trades.**
+The bazel workspace itself is declared at the repo root in [`/MODULE.bazel`](../../MODULE.bazel). One workspace, one cache, one version pin (`.bazelversion`) — see the [root README](../../README.md) for the rationale.
 
-## What to read
+## Adding the first target
 
-- **`PLAN.md`** — full system design: invariants I1–I10, risks R1–R10, architecture, schemas, vertical Slice 0, milestones M1–M6. **Read this first.**
-- **`docs/constitution.md`** — the ungameable promises the elves Judge enforces every batch; derived from PLAN.md §5 and must stay in sync.
-- **`docs/ELVES_SETUP.md`** — prerequisites checklist for running the autonomous overnight harness on this project.
-- **`CLAUDE.md`** (here) and the repo root `CLAUDE.md` — both are loaded by Claude Code; the root has the universal skill routing, this one has the quorum-specific anchors.
+1. Decide what language. Bazel doesn't ship language rules in the core; bring them in via Bzlmod by uncommenting the relevant `bazel_dep(...)` line in `/MODULE.bazel` (e.g. `rules_go` for Go, `rules_rust` for Rust, `rules_oci` for container images).
+2. Write a `BUILD.bazel` rule in this directory using the rules you imported.
+3. Build it: `bazel build //projects/quorum:<target-name>`.
 
-## Current state
+## Run from anywhere
 
-- `quorum/scoring/` — pure-numpy abnormal-return computation and outcome scoring (PLAN.md §11.4); the I8/I10 invariants are unit-tested against it.
-- `quorum/config/` — environment-driven configuration (DuckDB by default per PLAN.md §8).
-- `quorum/legacy/` — the pre-refinement 10-dimension sentiment pipeline, preserved for reference. **Not** on the path for Slice 0 or any milestone; do not extend it.
-- `tests/` — 52 tests (unit + integration), including `tests/unit/test_invariants.py` for I8/I10.
-
-Slice 0 (PLAN.md §12.1) is the next thing to build; it is not built yet.
-
-## Install + test
-
-The Python deps live in `pyproject.toml` here; the lock is shared at the workspace root.
-
-From the workspace root:
+Bazel finds the workspace by walking up to `MODULE.bazel`, so these all work:
 
 ```bash
-uv sync --package quorum --extra dev   # install quorum + its dev deps
-uv run --package quorum pytest -q      # run quorum's tests
+bazel build //projects/quorum/...    # from the repo root
+bazel test //projects/quorum/...     # from the repo root
+cd projects/quorum && bazel build //...   # equivalent
 ```
 
-From this directory:
+## Context
 
-```bash
-uv sync --extra dev
-uv run pytest                                    # all
-uv run pytest tests/unit                         # unit only
-uv run pytest tests/integration                  # integration only
-uv run pytest tests/unit/test_invariants.py      # PLAN.md I8 / I10
-```
-
-```bash
-export OPENAI_API_KEY="..."     # required for any LLM-touching code
-```
-
-Coverage HTML lands in `htmlcov/` next to wherever you ran pytest from.
-
-## Legacy demo (pre-refinement)
-
-For reference only — the original 10-dimension sentiment pipeline, **not** Slice 0:
-
-```bash
-uv run python demo_market_fetch.py
-```
-
-## Disclaimer
-
-This project is for research and educational purposes only. Outputs must not be used as the sole basis for any financial decision.
+This is one project in a polyglot monorepo. The sibling [`projects/market/`](../market/) is Python under `uv` and uses a different toolchain entirely; bazel doesn't see it (no BUILD files there). The two are dependency-isolated by construction.

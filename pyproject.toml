@@ -19,3 +19,8 @@
 
 [tool.uv.workspace]
 members = ["projects/*"]
+# Non-Python projects (Bazel, Rust, Go, TS, …) live under projects/ too;
+# list each one here so uv skips it instead of looking for a pyproject.toml.
+exclude = [
+    "projects/quorum",   # bazel workspace, see projects/quorum/MODULE.bazel
+]
