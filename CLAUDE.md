@@ -1,15 +1,19 @@
 # Repository Instructions for Claude
 
-This is a polyglot monorepo with two build systems coexisting at the root: a **uv workspace** for Python (`pyproject.toml` + `uv.lock`) and a **Bazel workspace** for everything else (`MODULE.bazel` + `BUILD.bazel` + `.bazelversion` + `.bazelrc`). Each project under `projects/<name>/` picks one; projects are dependency-isolated. Cross-project imports are not used.
+This is a Bazel workspace at the repo root (`MODULE.bazel` + `BUILD.bazel` + `.bazelversion` + `.bazelrc`). One project today; designed for more. **No Python at the repo root** since `projects/market/` was extracted on 2026-06-29 into [`Zarand3r/sentiment`](https://github.com/Zarand3r/sentiment) (the root `pyproject.toml` + `uv.lock` were removed in the same change).
 
 ## Active projects
 
 | Project | Build system | Brief |
 |---|---|---|
-| [`projects/market/`](projects/market/) | Python (uv) | Real-time news-impact market state estimator. See `projects/market/PLAN.md`. |
-| [`projects/quorum/`](projects/quorum/) | Bazel | Placeholder package in the repo-wide bazel workspace. Empty `BUILD.bazel`; no targets yet. |
+| [`projects/quorum/`](projects/quorum/) | Bazel | Single-pass LLM population simulator for emergent behavior. Goal: **computed** (irreducible) emergence, validated by Boids / Schelling baselines and an irreducibility test. See `projects/quorum/PLAN.md`. Design only; no implementation yet. |
 
-When working on a specific project, also load its own `CLAUDE.md` (e.g. `projects/market/CLAUDE.md`) for project-specific framing, invariants, and document pointers. Claude Code merges all CLAUDE.md files on the path to cwd; the two are additive.
+When working on a specific project, also load its own `CLAUDE.md` (e.g. `projects/quorum/CLAUDE.md`) for project-specific framing, invariants, and document pointers. Claude Code merges all CLAUDE.md files on the path to cwd; the two are additive.
+
+## Related repos
+
+- [`Zarand3r/sentiment`](https://github.com/Zarand3r/sentiment) — was `projects/market/` here until 2026-06-29; now its own repo. Real-time news-impact market state estimator (Python).
+- [`Zarand3r/claude-skills`](https://github.com/Zarand3r/claude-skills) — the `eng-skills` plugin source.
 
 ## Skill library + harness
 
@@ -59,7 +63,7 @@ Verdict; blocker/major/minor findings; invariant gaps; ownership/lifetime issues
 
 ## Workspace tooling
 
-- **Python:** [uv](https://docs.astral.sh/uv/) with one shared `uv.lock` at the root (see root `pyproject.toml`). Each Python project under `projects/<name>/` has its own `[project] dependencies` and is fully isolated. Default: `uv sync --all-extras` from root. Non-Python projects must be listed in `[tool.uv.workspace].exclude` so uv stops looking for a `pyproject.toml` there.
-- **Bazel:** one repo-wide workspace at the root — `MODULE.bazel` (Bzlmod), `BUILD.bazel`, `.bazelversion`, `.bazelrc`. `bazel` commands work from anywhere in the tree (bazel walks up to find `MODULE.bazel`). New bazel-built work lands under `projects/<name>/` with its own `BUILD.bazel` and is reachable as `//projects/<name>/...`. External rules / libraries (`rules_python`, `rules_rust`, `rules_go`, `rules_oci`, …) are declared in the root `MODULE.bazel` via `bazel_dep(...)`, not in subdirs.
-- **Python version:** pinned at the repo root via `.python-version` (currently `3.12`); uv fetches it if missing.
+- **Bazel.** One repo-wide workspace at the root — `MODULE.bazel` (Bzlmod), `BUILD.bazel`, `.bazelversion`, `.bazelrc`. `bazel` commands work from anywhere in the tree (bazel walks up to find `MODULE.bazel`). New bazel-built work lands under `projects/<name>/` with its own `BUILD.bazel` and is reachable as `//projects/<name>/...`. External rules / libraries (`rules_python`, `rules_rust`, `rules_go`, `rules_oci`, …) are declared in the root `MODULE.bazel` via `bazel_dep(...)`, not in subdirs.
 - **`.bazelversion`** pins bazel repo-wide; bumping it is a deliberate, single-commit act.
+- **No uv / no Python at the repo root** as of 2026-06-29. If a Python sub-project lands here later, declare a fresh `[tool.uv.workspace]` block in a new root `pyproject.toml` and add the member; or wire `rules_python` into `MODULE.bazel` if you want bazel to govern the Python too.
+- **`.python-version`** still exists; it's leftover from the pre-extraction state and harmless. Delete if a future cleanup wants to.
