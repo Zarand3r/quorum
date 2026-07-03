@@ -1,0 +1,44 @@
+# Nonstationarity curriculum (PLAN.md §16 M5 / Phase 5).
+#
+# The whole point (R7): do NOT train on one periodic schedule. Randomize
+# speed, amplitude, direction, duration, and causal structure so adaptation
+# TRANSFERS to unseen schedules rather than memorizing one cycle. The M5
+# success gate is measured on a HELD-OUT schedule not seen in training.
+
+# Objective (PLAN.md §10.4): continuing average-reward viability.
+# NO direct "order"/low-entropy term (I10).
+objective:
+  kind: average_reward
+  lambda_pred: 0.10         # weight on local prediction loss ℓ_pred
+  # r_viability = −B(e) − B(τ) − B(w); costs from world.yaml; repro term at M6.
+
+# TBPTT (PLAN.md §9, §13). Random-length chunks, carry DETACHED state (I9).
+truncated_bptt:
+  chunk_len_min: 16
+  chunk_len_max: 64         # random per chunk; window vs z time-constant is §24.2
+  detach_between_chunks: true
+  carry_world_state: true   # long-horizon viability via state carry, not long backprop
+
+# Training curriculum stages — sampled with randomized parameters, not replayed
+# in a fixed order at eval time.
+stages:
+  - {name: static_island,        weight: 1.0}
+  - {name: drifting_source,      weight: 1.0, speed: [0.05, 0.40]}
+  - {name: seasonal_schedule,    weight: 1.0, period: [200, 1200]}
+  - {name: heat_waves,           weight: 1.0, amplitude: [0.3, 1.0]}
+  - {name: toxic_pulses,         weight: 1.0, amplitude: [0.3, 1.0]}
+  - {name: terrain_damage,       weight: 0.5}
+  - {name: density_change,       weight: 0.5}
+  - {name: rotating_gradient,    weight: 1.0, omega: [0.01, 0.10]}
+  - {name: new_chemistry,        weight: 0.5}
+  - {name: recurring_noncycle,   weight: 1.0}  # recurring but NOT identical
+
+# Held-out schedules — used ONLY for the M5 unseen-schedule gate. Never trained on.
+holdout:
+  - {name: unseen_shock_timing}
+  - {name: unseen_drift_direction}
+  - {name: unseen_seasonal_phase}
+
+randomization:
+  seed: 42                  # curriculum RNG is logged separately (I8)
+  randomize: [speed, amplitude, direction, duration, causal_structure]
