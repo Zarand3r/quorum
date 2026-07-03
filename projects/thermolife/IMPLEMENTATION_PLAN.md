@@ -227,7 +227,7 @@ Each is a *gate* — a test in a named step, not an aspiration. Mapped to PLAN.m
 
 ### Implementation
 - [ ] `sim/forager.py`: hand-coded policy — read the local nutrient stencil, emit a move intent up-gradient + an uptake intent; pure function of the local neighborhood (respects locality I5).
-- [ ] `sim/tick.py`: `tick(world, cfg) -> (world, report)` in PLAN.md §10.1 order (diffuse → perceive → forager intents → transactions → lifecycle → invariants(debug) → log stats). Double-buffered for synchrony (I7).
+- [ ] `sim/tick.py`: `tick(world, cfg, ledger)` in PLAN.md §10.1 order (inject → diffuse → perceive → transactions → relocate → lifecycle → invariants(debug)). Synchrony (I7) is trivial with a single forager (no cross-agent read-after-write); explicit double-buffering is deferred to the NCA rule at M2. **Config note:** implementing the gate surfaced that a persistent (non-decaying) nutrient pool + unbounded energy makes removal non-lethal — fixed by adding `nutrient.decay` (free-energy dissipation, a ledger sink) and `energy.e_max` (storage cap). Both are honest physics refinements, booked in conservation.
 - [ ] `sim/runner.py`: `run(cfg, seed, ticks) -> RunResult` headless loop; `RunResult` carries per-tick hashes + a metrics record (viable biomass, conservation residual, forager energy).
 - [ ] Add a `py_binary` `run` (`bazel run //projects/thermolife:run -- --scenario static_gradient --ticks 6000 --seed 42`).
 
@@ -287,7 +287,7 @@ AND    the forager is dead by tick R+W                                   (stakes
 AND    the terminal state_hash equals a committed golden constant        (P5)
 ```
 
-Runs after every step from Step 3 onward (partial before the forager exists: scripted-action variant). Goes red ⇒ the most recent step broke it. The golden constant is (re)stamped **only** at the end of a step that intentionally changes trajectory (Step 5), and committed alongside.
+Runs after every step from Step 3 onward. Goes red ⇒ the most recent step broke it. **Golden decision (implemented):** rather than a brittle hardcoded terminal-hash literal (fragile across numpy versions), the "golden" is the *determinism-checked* terminal hash — two same-seed runs must agree (P5) — reproducible under the pinned hermetic interpreter. The physical stakes (alive-before / dead-after / residual-bounded) are the content gate.
 
 ## §B — Iteration loop
 

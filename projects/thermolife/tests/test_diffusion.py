@@ -23,17 +23,19 @@ def test_laplacian_conserves() -> None:
     assert abs(float(laplacian(a).sum())) < 1e-9  # no-flux ⇒ sum ≈ 0
 
 
-def test_pure_diffusion_conserves_nutrient() -> None:
-    # P1: nutrient has zero decay, so diffusion alone preserves total mass.
+def test_diffusion_plus_decay_conserves_nutrient() -> None:
+    # P1: nutrient total change equals exactly the booked decay sink (diffusion
+    # itself conserves; decay is the only loss).
     w = _world()
     w.fields[:] = 0.0
     w.fields[:, :, F.Field.HEAT] = w.cfg.fields["heat"].ambient
     w.fields[30, 30, F.Field.NUTRIENT] = 100.0
     before = w.fields[:, :, F.Field.NUTRIENT].sum()
+    decayed = 0.0
     for _ in range(200):
-        diffuse_and_decay(w, w.cfg)
+        decayed += diffuse_and_decay(w, w.cfg)["nutrient"]
     after = w.fields[:, :, F.Field.NUTRIENT].sum()
-    assert np.isclose(before, after, rtol=0, atol=1e-9)
+    assert np.isclose(after, before - decayed, atol=1e-9)
 
 
 def test_waste_decay_is_an_exact_sink() -> None:
@@ -42,7 +44,7 @@ def test_waste_decay_is_an_exact_sink() -> None:
     w.fields[:, :, F.Field.HEAT] = w.cfg.fields["heat"].ambient
     w.fields[20:25, 20:25, F.Field.WASTE] = 5.0
     before = w.fields[:, :, F.Field.WASTE].sum()
-    removed = diffuse_and_decay(w, w.cfg)
+    removed = diffuse_and_decay(w, w.cfg)["waste"]
     after = w.fields[:, :, F.Field.WASTE].sum()
     # diffusion conserves; decay removes exactly `removed`.
     assert np.isclose(after, before - removed, atol=1e-9)

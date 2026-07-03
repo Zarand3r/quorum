@@ -44,6 +44,7 @@ class EnergyConfig:
     cost_plasticity: float
     cost_repair: float
     e_lethal: float
+    e_max: float
     e_div: float
 
 
@@ -138,6 +139,7 @@ def load_world_config(path: str | Path, scenario: str | None = None) -> WorldCon
             cost_plasticity=float(_require(energy_raw, "cost_plasticity", "energy")),
             cost_repair=float(_require(energy_raw, "cost_repair", "energy")),
             e_lethal=float(_require(energy_raw, "e_lethal", "energy")),
+            e_max=float(_require(energy_raw, "e_max", "energy")),
             e_div=float(_require(energy_raw, "e_div", "energy")),
         ),
         barriers=BarrierConfig(

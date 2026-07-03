@@ -4,7 +4,7 @@
 # and web control, on numpy + pyyaml only. Deps come from the ``thermolife_deps``
 # pip hub (MODULE.bazel), pinned in ``requirements_lock.txt``. No torch yet (M2).
 
-load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 load("@thermolife_deps//:requirements.bzl", "requirement")
 
 package(default_visibility = ["//visibility:public"])
@@ -39,6 +39,15 @@ py_library(
         requirement("numpy"),
         requirement("pyyaml"),
     ],
+)
+
+py_binary(
+    name = "run",
+    srcs = ["sim/runner.py"],
+    main = "sim/runner.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":thermolife"],
 )
 
 py_test(

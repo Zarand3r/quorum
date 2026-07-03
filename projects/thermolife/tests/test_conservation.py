@@ -37,7 +37,7 @@ def test_conservation_over_long_run() -> None:
         uptake[fy, fx] = 0.5           # forager grabs nutrient at its cell
         cost[fy, fx] = cfg.energy.cost_move
         led.source_injected += inject_sources(w, t)
-        led.waste_decayed += diffuse_and_decay(w, cfg)
+        led.book_decay(diffuse_and_decay(w, cfg))
         led.book(apply_conservative_transactions(w, uptake, cost, cfg))
         residual = abs(conserved_total(w) - led.expected_total(t0))
         assert residual < 1e-6, f"tick {t}: residual {residual:.2e}"
@@ -55,9 +55,9 @@ def test_no_free_energy_flat_when_idle() -> None:
     led = TransactionLedger()
     t0 = conserved_total(w)
     for _ in range(50):
-        led.waste_decayed += diffuse_and_decay(w, w.cfg)
+        led.book_decay(diffuse_and_decay(w, w.cfg))
         led.book(apply_conservative_transactions(w, zeros, zeros, w.cfg))
-    assert np.isclose(conserved_total(w), t0 - led.waste_decayed, atol=1e-9)
+    assert np.isclose(conserved_total(w), t0 + led.net(), atol=1e-9)
 
 
 def test_uptake_creates_nothing() -> None:
