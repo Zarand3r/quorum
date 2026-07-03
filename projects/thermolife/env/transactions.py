@@ -56,21 +56,27 @@ class TransactionLedger:
     not against a re-summed "truth".
     """
 
-    source_injected: float = 0.0  # nutrient injected by the scenario source
-    conversion_loss: float = 0.0  # (1−η−α)·u dissipated in conversion
-    energy_spent: float = 0.0     # metabolic + action costs (dissipated as heat)
-    waste_decayed: float = 0.0    # waste removed by decay
-    decomp_loss: float = 0.0      # decomposition return loss (Step 4)
+    source_injected: float = 0.0   # nutrient injected by the scenario source
+    conversion_loss: float = 0.0   # (1−η−α)·u dissipated in conversion
+    energy_spent: float = 0.0      # metabolic + action costs (dissipated as heat)
+    nutrient_decayed: float = 0.0  # nutrient removed by free-energy decay
+    waste_decayed: float = 0.0     # waste removed by decay
+    decomp_loss: float = 0.0       # decomposition return loss (Step 4)
 
     def book(self, report: TransactionReport) -> None:
         self.conversion_loss += report.conversion_loss
         self.energy_spent += report.energy_spent
+
+    def book_decay(self, sinks: dict[str, float]) -> None:
+        self.nutrient_decayed += sinks["nutrient"]
+        self.waste_decayed += sinks["waste"]
 
     def net(self) -> float:
         return (
             self.source_injected
             - self.conversion_loss
             - self.energy_spent
+            - self.nutrient_decayed
             - self.waste_decayed
             - self.decomp_loss
         )

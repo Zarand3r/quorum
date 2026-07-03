@@ -15,9 +15,11 @@ grid:
 
 # Physical channels (PLAN.md §9.1). Diffusion D and decay δ per field.
 fields:
-  nutrient:                 # n:  n' = n + D∇²n + s − uptake
+  nutrient:                 # n:  n' = n + D∇²n + s − uptake − δ_n·n
     diffusion: 0.10
-    decay: 0.0              # nutrient is conserved except through source s and uptake
+    decay: 0.02             # δ_n — free-energy dissipation (ledger sink). Without it
+                            # the source pool accumulates forever and removal is
+                            # never lethal, breaking the Slice-0 gate (§15.2).
     ambient: 0.0
   waste:                    # w:  w' = w + D∇²w + α·uptake − δ_w·w
     diffusion: 0.15
@@ -44,6 +46,8 @@ energy:
   cost_plasticity: 0.03     # M4+; charged per plastic update
   cost_repair: 0.04
   e_lethal: 0.02            # below this → dying (I4)
+  e_max: 2.00               # storage cap — bounds energy so source removal starves
+                            # the forager in a bounded window (uptake tapers → e_max)
   e_div: 1.50               # above this → division permitted (M6)
 
 # Viability soft-barriers B(·) (PLAN.md §10.4). Rise sharply near lethal.

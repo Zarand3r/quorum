@@ -53,11 +53,12 @@ def inject_sources(world: World, tick: int) -> float:
     return float(rate * mask.sum())
 
 
-def diffuse_and_decay(world: World, cfg: WorldConfig) -> float:
-    """Diffuse every field, decay waste/pheromone, cool heat toward ambient.
+def diffuse_and_decay(world: World, cfg: WorldConfig) -> dict[str, float]:
+    """Diffuse every field, decay nutrient/waste/pheromone, cool heat to ambient.
 
-    Mutates ``world.fields`` in place. Returns the amount of **waste** removed by
-    decay (the only conservation-ledger sink in this step, PLAN.md I1).
+    Mutates ``world.fields`` in place. Returns the conservation-ledger sinks this
+    step: ``{"nutrient": ..., "waste": ...}`` (the mass removed by decay from the
+    two conserved fields). Pheromone/heat changes are not conserved quantities.
     """
     f = world.fields
     fc = cfg.fields
@@ -71,7 +72,11 @@ def diffuse_and_decay(world: World, cfg: WorldConfig) -> float:
     ):
         f[:, :, idx] += fc[name].diffusion * laplacian(f[:, :, idx])
 
-    # Waste decay — a named ledger sink.
+    # Decay of the conserved fields — named ledger sinks.
+    nutrient = f[:, :, Field.NUTRIENT]
+    nutrient_decayed = float(fc["nutrient"].decay * nutrient.sum())
+    nutrient *= 1.0 - fc["nutrient"].decay
+
     waste = f[:, :, Field.WASTE]
     waste_decayed = float(fc["waste"].decay * waste.sum())
     waste *= 1.0 - fc["waste"].decay
@@ -83,4 +88,4 @@ def diffuse_and_decay(world: World, cfg: WorldConfig) -> float:
     heat = f[:, :, Field.HEAT]
     heat -= fc["heat"].decay * (heat - fc["heat"].ambient)
 
-    return waste_decayed
+    return {"nutrient": nutrient_decayed, "waste": waste_decayed}
