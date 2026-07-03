@@ -22,7 +22,8 @@ fields:
   waste:                    # w:  w' = w + D∇²w + α·uptake − δ_w·w
     diffusion: 0.15
     decay: 0.01             # δ_w — waste removal sink (accounted in ledger)
-    alpha: 0.30             # α — waste produced per unit uptake
+    alpha: 0.15             # α — waste per unit uptake; η+α ≤ 1 so uptake conserves
+                            #     (η·u → energy, α·u → waste, (1−η−α)·u → loss sink)
   heat:                     # τ:  τ' = τ + D∇²τ + β·cost − δ_τ(τ − ambient)
     diffusion: 0.20
     decay: 0.05             # δ_τ — cooling toward ambient
@@ -36,6 +37,8 @@ fields:
 # Energy accounting (PLAN.md §10.3). e' = e + η·uptake − Σ costs.
 energy:
   eta: 0.80                 # η — nutrient→energy conversion efficiency (< 1: lossy, I3)
+  cost_metabolic: 0.010     # unconditional per-tick maintenance drain — makes
+                            # removal of the gradient lethal (Slice-0 gate, §15.2)
   cost_move: 0.05
   cost_signal: 0.02
   cost_plasticity: 0.03     # M4+; charged per plastic update

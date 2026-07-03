@@ -38,6 +38,7 @@ class FieldConfig:
 @dataclass(frozen=True)
 class EnergyConfig:
     eta: float
+    cost_metabolic: float
     cost_move: float
     cost_signal: float
     cost_plasticity: float
@@ -131,6 +132,7 @@ def load_world_config(path: str | Path, scenario: str | None = None) -> WorldCon
         },
         energy=EnergyConfig(
             eta=float(_require(energy_raw, "eta", "energy")),
+            cost_metabolic=float(_require(energy_raw, "cost_metabolic", "energy")),
             cost_move=float(_require(energy_raw, "cost_move", "energy")),
             cost_signal=float(_require(energy_raw, "cost_signal", "energy")),
             cost_plasticity=float(_require(energy_raw, "cost_plasticity", "energy")),
