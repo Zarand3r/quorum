@@ -19,10 +19,11 @@ This project is a real-time news-impact market state estimator. It is architectu
 ## Working inside this project
 
 ```bash
-cd projects/market
-uv sync --extra dev            # install runtime + dev deps (workspace-aware)
-uv run pytest -q               # run the gate
-uv run pytest tests/unit/test_invariants.py   # just the I8 / I10 anchor
+# All bazel commands work from anywhere — bazel walks up to find MODULE.bazel.
+bazel test //projects/market:test_suite                              # run the full gate (52 tests)
+bazel test //projects/market:test_suite --test_arg=-k --test_arg=invariants   # just the I8 / I10 anchor
 ```
+
+Deps come from the `market_deps` pip hub (root `MODULE.bazel`), pinned in `requirements_lock.txt`. Tests are hermetic — the conftest mocks the LLM and injects a fake `OPENAI_API_KEY`, so no network or real key is needed.
 
 `market/legacy/` is the pre-refinement 10-dim sentiment pipeline. Preserved for reference; do not extend it. Build new functionality under `market/`.

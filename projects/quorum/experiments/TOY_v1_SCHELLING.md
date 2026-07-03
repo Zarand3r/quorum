@@ -88,8 +88,8 @@ The substrate, prompt rendering, and metrics are pure numpy / Python (no torch).
 
 For v1 to be considered "working" the following all hold on a clean run with the defaults above:
 
-1. `uv run pytest -q` is green (every invariant + every unit + integration test passes).
-2. `uv run python -m toy_v1.main` runs for 40 ticks without exception.
+1. `bazel test //projects/quorum/experiments:test_suite` is green (every invariant + every unit + integration test passes).
+2. `bazel run //projects/quorum/experiments:main -- --ticks 40 --seed 42` runs for 40 ticks without exception.
 3. The per-tick `fwd_passes=1` line is printed every tick (I3 runtime gate).
 4. The same seed yields a byte-identical trajectory across two runs (I8 runtime gate).
 5. With a real LLM (SmolLM2-135M-Instruct), the final same-color fraction is strictly greater than the initial fraction on at least 7 of 10 seeded runs. (Failure here is fine — it means R2 / R6 is dominating; the *mechanics* still pass.)

@@ -25,22 +25,19 @@ These are *toy models*. They are not Slice 0 and they are not on the path to v1.
 
 ## Tactical decisions about the build
 
-- **Build system: uv, not bazel (for now).** Quorum's production answer is bazel (per the root `MODULE.bazel`). The experiments folder uses a uv project as a tactical shortcut so we can move fast on TDD without first wiring `rules_python` end-to-end. When Slice 0 lands, the toys migrate into the bazel graph. This is documented in `pyproject.toml`.
-- **Member of the uv workspace.** The root `pyproject.toml` lists `projects/quorum/experiments` as an explicit workspace member. The bazel project at `projects/quorum/` itself stays excluded (it has no `pyproject.toml`). Shared lock at the workspace root; nested member here.
-- **Torch is optional.** The unit test suite uses a `MockPolicy` and depends only on `numpy` + `pytest`. The real `LLMPolicy` is in an optional `[llm]` extra (torch + transformers). This keeps tests fast (<1 s) and laptop-runnable without GPU.
+- **Built with bazel `rules_python`.** Deps come from the `experiments_deps` pip hub (root `MODULE.bazel`), pinned in `requirements_lock.txt`. The substrate + tests need only `numpy` + `pytest`.
+- **Torch is optional and not a bazel dependency.** The unit suite uses a `MockPolicy` (numpy only). The real `LLMPolicy` (torch + transformers) is imported lazily, and the smoke test `pytest.importorskip("torch")`s, so it skips cleanly when torch is absent — keeping `bazel test` fast (<1 s) and GPU-free. To run the real LLM path, provide torch in the environment or add it to the lock.
 
 ## Running
 
-From `projects/quorum/experiments/`:
+All bazel commands work from anywhere — bazel walks up to find `MODULE.bazel`.
 
 ```bash
-# unit tests (fast, no torch)
-uv sync --extra dev
-uv run pytest -q
+# unit + integration tests (fast, no torch)
+bazel test //projects/quorum/experiments:test_suite
 
-# real LLM smoke run (slow, requires torch)
-uv sync --extra dev --extra llm
-uv run python -m toy_v1.main --ticks 40 --seed 42
+# run the toy (default MockPolicy, no torch)
+bazel run //projects/quorum/experiments:main -- --ticks 40 --seed 42
 ```
 
 ## How this relates to PLAN.md

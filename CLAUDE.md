@@ -1,13 +1,14 @@
 # Repository Instructions for Claude
 
-This is a polyglot monorepo with two build systems coexisting at the root: a **uv workspace** for Python (`pyproject.toml` + `uv.lock`) and a **Bazel workspace** for everything else (`MODULE.bazel` + `BUILD.bazel` + `.bazelversion` + `.bazelrc`). Each project under `projects/<name>/` picks one; projects are dependency-isolated. Cross-project imports are not used.
+This is a monorepo built entirely with **Bazel** (Bzlmod): one repo-wide workspace at the root (`MODULE.bazel` + `BUILD.bazel` + `.bazelversion` + `.bazelrc`). Every project under `projects/<name>/` has its own `BUILD.bazel` targets and is reachable as `//projects/<name>/...`. Python projects use `rules_python` with a **per-project `pip.parse` hub** (declared in `MODULE.bazel`) reading a pinned `requirements_lock.txt` committed next to the project — so projects stay dependency-isolated. Cross-project imports are not used.
 
 ## Active projects
 
 | Project | Build system | Brief |
 |---|---|---|
-| [`projects/market/`](projects/market/) | Python (uv) | Real-time news-impact market state estimator. See `projects/market/PLAN.md`. |
-| [`projects/quorum/`](projects/quorum/) | Bazel | Single-pass LLM population simulator for emergent behavior. Goal: **computed** (irreducible) emergence, validated by Boids / Schelling baselines and an irreducibility test. See `projects/quorum/PLAN.md`. Design only; no implementation yet. |
+| [`projects/market/`](projects/market/) | Bazel (`rules_python`) | Real-time news-impact market state estimator. See `projects/market/PLAN.md`. |
+| [`projects/quorum/`](projects/quorum/) | Bazel (`rules_python`) | Single-pass LLM population simulator for emergent behavior. Goal: **computed** (irreducible) emergence, validated by Boids / Schelling baselines and an irreducibility test. See `projects/quorum/PLAN.md`. Design only; toy v1 experiment under [`experiments/`](projects/quorum/experiments/). |
+| [`projects/thermolife/`](projects/thermolife/) | Bazel (`rules_python`) | Continuous thermodynamic neural cellular automaton — resource-constrained NCA with learned binding interfaces + online plasticity on a 2D grid. Goal: **earned** adaptation (learned interfaces + predictive plasticity beat matched ablations on long-horizon viability), not "pretty blobs." See `projects/thermolife/PLAN.md`. Design only; no implementation yet. |
 
 When working on a specific project, also load its own `CLAUDE.md` (e.g. `projects/market/CLAUDE.md`) for project-specific framing, invariants, and document pointers. Claude Code merges all CLAUDE.md files on the path to cwd; the two are additive.
 
@@ -56,7 +57,7 @@ Verdict; blocker/major/minor findings; invariant gaps; ownership/lifetime issues
 
 ## Workspace tooling
 
-- **Python:** [uv](https://docs.astral.sh/uv/) with one shared `uv.lock` at the root (see root `pyproject.toml`). Each Python project under `projects/<name>/` has its own `[project] dependencies` and is fully isolated. Default: `uv sync --all-extras` from root. Non-Python projects must be listed in `[tool.uv.workspace].exclude` so uv stops looking for a `pyproject.toml` there.
-- **Bazel:** one repo-wide workspace at the root — `MODULE.bazel` (Bzlmod), `BUILD.bazel`, `.bazelversion`, `.bazelrc`. `bazel` commands work from anywhere in the tree (bazel walks up to find `MODULE.bazel`). New bazel-built work lands under `projects/<name>/` with its own `BUILD.bazel` and is reachable as `//projects/<name>/...`. External rules / libraries (`rules_python`, `rules_rust`, `rules_go`, `rules_oci`, …) are declared in the root `MODULE.bazel` via `bazel_dep(...)`, not in subdirs.
-- **Python version:** pinned at the repo root via `.python-version` (currently `3.12`); uv fetches it if missing.
+- **Bazel everywhere.** One repo-wide workspace at the root — `MODULE.bazel` (Bzlmod), `BUILD.bazel`, `.bazelversion`, `.bazelrc`. `bazel` commands work from anywhere in the tree (bazel walks up to find `MODULE.bazel`). Work lands under `projects/<name>/` with its own `BUILD.bazel`, reachable as `//projects/<name>/...`. External rules/libraries (`rules_python`, and later `rules_rust`/`rules_go`/`rules_oci`) are declared in the root `MODULE.bazel` via `bazel_dep(...)`, not in subdirs. Build/test the whole repo with `bazel test //...`.
+- **Python:** `rules_python` with a hermetic 3.12 toolchain. Each Python project has its **own** `pip.parse` hub in `MODULE.bazel` reading a pinned `projects/<name>/requirements_lock.txt`; BUILD files reference deps via `requirement("<pkg>")`. Isolation is by construction — no shared lock. Tests run through a small `tests/pytest_main.py` `py_test` entry point that invokes pytest with the project's `pytest.ini`. To change deps: edit the lock (it is a standard pinned requirements file) and re-run `bazel test //...`.
+- **Python version:** pinned via `.python-version` (`3.12`) and mirrored by the `rules_python` toolchain in `MODULE.bazel`.
 - **`.bazelversion`** pins bazel repo-wide; bumping it is a deliberate, single-commit act.

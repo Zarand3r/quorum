@@ -1,0 +1,41 @@
+# market — real-time news-impact market state estimator. Bazel build graph.
+#
+# Deps come from the ``market_deps`` pip hub (MODULE.bazel), pinned in
+# ``requirements_lock.txt``. Tests are hermetic: the conftest mocks the LLM
+# client and injects a fake OPENAI_API_KEY, so nothing here touches the network.
+
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("@market_deps//:requirements.bzl", "requirement")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["requirements_lock.txt"])
+
+py_library(
+    name = "market",
+    srcs = glob(["market/**/*.py"]),
+    imports = ["."],  # put projects/market on sys.path → `import market`
+    deps = [
+        requirement("numpy"),
+        requirement("pandas"),
+        requirement("pydantic"),
+        requirement("duckdb"),
+        requirement("openai"),
+        requirement("yfinance"),
+    ],
+)
+
+py_test(
+    name = "test_suite",
+    srcs = glob(["tests/**/*.py"]),
+    main = "tests/pytest_main.py",
+    imports = ["."],
+    data = ["pytest.ini"],
+    deps = [
+        ":market",
+        requirement("pytest"),
+        requirement("pytest-asyncio"),
+        requirement("pytest-mock"),
+        requirement("pytest-cov"),
+    ],
+)

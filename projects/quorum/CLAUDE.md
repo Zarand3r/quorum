@@ -38,8 +38,8 @@ bazel test //projects/quorum/tests:invariants
 bazel run //projects/quorum/runner:slice0 -- --scenario boids --ticks 100 --seed 42
 ```
 
-All commands work from anywhere — bazel walks up to find `MODULE.bazel`. For Python deps the project pulls them in via `rules_python` declared at the root `MODULE.bazel`, not via uv. (uv only governs `projects/market/`; quorum is bazel-only.)
+All commands work from anywhere — bazel walks up to find `MODULE.bazel`. Python deps come via `rules_python` declared in the root `MODULE.bazel`; the toy v1 experiment has its own `experiments_deps` pip hub reading `projects/quorum/experiments/requirements_lock.txt`. The whole repo is bazel-only.
 
 ## Repo context
 
-This is one project in a polyglot monorepo. The sibling [`projects/market/`](../market/) is Python under uv and is independent — keep cross-project boundaries clean.
+This is one project in a bazel-only monorepo. The sibling [`projects/market/`](../market/) and [`projects/thermolife/`](../thermolife/) are independent bazel `rules_python` projects — keep cross-project boundaries clean.

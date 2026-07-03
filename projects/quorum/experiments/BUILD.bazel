@@ -1,0 +1,45 @@
+# quorum toy v1 (Schelling experiment) — Bazel build graph.
+#
+# Substrate + tests run on numpy alone; the real-LLM path (torch/transformers)
+# is an opt-in smoke test that skips when torch is absent, so it needs no Bazel
+# dependency. Deps come from the ``experiments_deps`` pip hub (MODULE.bazel).
+
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+load("@experiments_deps//:requirements.bzl", "requirement")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["requirements_lock.txt"])
+
+py_library(
+    name = "toy_v1",
+    srcs = glob(["toy_v1/**/*.py"]),
+    imports = ["."],  # put projects/quorum/experiments on sys.path → `import toy_v1`
+    deps = [
+        requirement("numpy"),
+    ],
+)
+
+# Default runner uses MockPolicy (no torch). The real LLMPolicy is imported
+# lazily inside make_llm_policy, so this binary needs only numpy.
+#   bazel run //projects/quorum/experiments:main -- --ticks 40 --seed 42
+py_binary(
+    name = "main",
+    srcs = ["toy_v1/main.py"],
+    main = "toy_v1/main.py",
+    imports = ["."],
+    deps = [":toy_v1"],
+)
+
+py_test(
+    name = "test_suite",
+    srcs = glob(["tests/**/*.py"]),
+    main = "tests/pytest_main.py",
+    imports = ["."],
+    data = ["pytest.ini"],
+    deps = [
+        ":toy_v1",
+        requirement("pytest"),
+        requirement("pytest-cov"),
+    ],
+)

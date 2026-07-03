@@ -2,42 +2,29 @@
 
 Concrete how-to. For the *design*, see `PLAN.md`.
 
-## Install
+## Build
 
-[uv](https://docs.astral.sh/uv/) is the only required tool. Python 3.12 is pinned at the repo root via `.python-version` and is fetched automatically.
+[bazelisk](https://github.com/bazelbuild/bazelisk) is the only required tool — it reads `.bazelversion` and fetches the right bazel. `rules_python` provides a hermetic CPython 3.12 (mirrored from the repo-root `.python-version`); the first `bazel` run downloads it plus the pinned pip wheels.
 
-This project is a member of the workspace defined at the repo root (`/pyproject.toml`). The shared `uv.lock` lives at the root; commands from inside this directory work because uv walks up to find the workspace.
-
-```bash
-uv sync --extra dev          # create the workspace .venv + install runtime + dev deps
-export OPENAI_API_KEY="..."
-```
-
-To regenerate the shared lock after changing `pyproject.toml` (run from this dir or the repo root):
-
-```bash
-uv lock                      # rewrite uv.lock from the current workspace state
-uv lock --upgrade            # bump pinned versions to latest compatible
-```
+Deps come from the `market_deps` pip hub in the root `MODULE.bazel`, pinned in `requirements_lock.txt`. To change deps, edit that lock (a standard pinned requirements file) and re-run `bazel test`.
 
 ## Tests
 
+All bazel commands work from anywhere — bazel walks up to find `MODULE.bazel`.
+
 ```bash
-uv run pytest                                    # full suite
-uv run pytest tests/unit                         # unit only
-uv run pytest tests/integration                  # integration only
-uv run pytest tests/unit/test_invariants.py      # PLAN.md I8 / I10
+bazel test //projects/market:test_suite                              # full suite (52 tests)
+bazel test //projects/market:test_suite --test_arg=-k --test_arg=unit         # unit only
+bazel test //projects/market:test_suite --test_arg=-k --test_arg=integration  # integration only
+bazel test //projects/market:test_suite --test_arg=-k --test_arg=invariants   # PLAN.md I8 / I10
+bazel test //projects/market:test_suite --test_output=all            # see pytest output
 ```
 
-Coverage HTML lands in `htmlcov/index.html`.
+Tests are hermetic — the conftest mocks the LLM and injects a fake `OPENAI_API_KEY`, so no network or real key is needed.
 
 ## Legacy demo
 
-`market.legacy` is the pre-refinement sentiment-vector pipeline. The demo runs it end-to-end against the legacy `MarketContextFetcher` + `EmbeddingParser`:
-
-```bash
-uv run python demo_market_fetch.py
-```
+`market.legacy` is the pre-refinement sentiment-vector pipeline. `demo_market_fetch.py` has no bazel target yet; add a `py_binary` (deps `:market`) to run it under the hermetic toolchain. It needs a real `OPENAI_API_KEY` and network (yfinance), so it is not part of `bazel test`.
 
 What it does:
 1. Loads `market.config.settings.AppConfig` from environment variables.
@@ -62,5 +49,5 @@ Per legacy demo invocation: ≈ $0.07–0.20 (one analysis call + one extraction
 
 - **`OpenAI API error`** — confirm `OPENAI_API_KEY` is set and the account has credits.
 - **`No market data`** — yfinance occasionally fails on outside-hours queries; retry during market hours or stub yfinance in your environment.
-- **`Import errors`** — run from the project root so the `market/` package resolves: `cd /path/to/market && uv run ...`.
-- **`uv: command not found`** — install uv: `curl -LsSf https://astral.sh/uv/install.sh | sh` (Linux/macOS) or `pipx install uv`.
+- **`Import errors`** — the `market/` package is put on `sys.path` by the target's `imports = ["."]`; run tests via `bazel test //projects/market:test_suite` rather than a bare `pytest`.
+- **`bazel: command not found`** — install bazelisk: see https://github.com/bazelbuild/bazelisk (it reads `.bazelversion` and fetches the pinned bazel).
