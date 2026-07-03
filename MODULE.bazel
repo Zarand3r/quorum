@@ -1,13 +1,14 @@
-# quorum — repo-wide Bazel workspace (Bzlmod).
+# quorum — repo-wide Bazel workspace (Bzlmod). Bazel-only monorepo.
 #
-# This file lives at the repo root, so ``bazel`` commands run from
-# anywhere in the tree resolve back here. The workspace name matches the
-# repo: a single bazel workspace covering whatever bazel-built work lands
-# under ``projects/``. Non-bazel projects (uv Python at ``projects/market``)
-# simply have no ``BUILD.bazel`` files and are invisible to bazel.
+# This file lives at the repo root, so ``bazel`` commands run from anywhere in
+# the tree resolve back here. Every project under ``projects/<name>/`` is built
+# by Bazel: each has its own ``BUILD.bazel`` targets and (for Python projects) a
+# ``requirements_lock.txt`` consumed by a per-project ``pip.parse`` hub below.
 #
-# Add ``bazel_dep(...)`` calls below as you wire in external rules /
-# libraries (rules_python, rules_rust, rules_go, rules_oci, etc.).
+# Dependency isolation is preserved by giving each project its OWN pip hub, so a
+# version conflict between projects surfaces as a deliberate decision, not silent
+# drift. The lock files are generated from each project's declared dependencies;
+# regenerate with the project's own tooling and re-run ``bazel test //...``.
 #
 # See https://bazel.build/external/module for the syntax reference.
 
@@ -17,8 +18,27 @@ module(
     compatibility_level = 1,
 )
 
-# Example deps to add as bazel-built work appears; uncomment when needed.
-# bazel_dep(name = "rules_python", version = "0.40.0")
-# bazel_dep(name = "rules_rust",   version = "0.55.0")
-# bazel_dep(name = "rules_go",     version = "0.51.0")
-# bazel_dep(name = "rules_oci",    version = "2.0.0")
+bazel_dep(name = "rules_python", version = "0.40.0")
+
+PYTHON_VERSION = "3.12"
+
+# --- Hermetic Python toolchain -------------------------------------------------
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    python_version = PYTHON_VERSION,
+    is_default = True,
+)
+
+# --- Per-project pip dependency hubs ------------------------------------------
+# One hub per project keeps dependency sets isolated (a core repo invariant).
+# Each reads a fully-pinned lock committed next to that project's BUILD.bazel.
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "market_deps",
+    python_version = PYTHON_VERSION,
+    requirements_lock = "//projects/market:requirements_lock.txt",
+)
+use_repo(pip, "market_deps")
+
+# Future projects (thermolife once code + deps land, then rules_rust / rules_go /
+# rules_oci as polyglot work appears) add their bazel_dep + pip.parse hub here.

@@ -20,40 +20,22 @@ A real-time **news-impact market state estimator**. Ingests news, filings, and o
 
 Slice 0 (PLAN.md §12.1) is the next thing to build; it is not built yet.
 
-## Install + test
+## Build + test
 
-The Python deps live in `pyproject.toml` here; the lock is shared at the workspace root.
-
-From the workspace root:
+Built with Bazel `rules_python`. Deps come from the `market_deps` pip hub (root `MODULE.bazel`), pinned in `requirements_lock.txt`. All bazel commands work from anywhere — bazel walks up to find `MODULE.bazel`.
 
 ```bash
-uv sync --package market --extra dev   # install market + its dev deps
-uv run --package market pytest -q      # run market's tests
+bazel test //projects/market:test_suite                              # full suite (52 tests)
+bazel test //projects/market:test_suite --test_arg=-k --test_arg=unit         # unit tests only
+bazel test //projects/market:test_suite --test_arg=-k --test_arg=invariants   # PLAN.md I8 / I10
+bazel test //projects/market:test_suite --test_output=all            # see pytest output
 ```
 
-From this directory:
-
-```bash
-uv sync --extra dev
-uv run pytest                                    # all
-uv run pytest tests/unit                         # unit only
-uv run pytest tests/integration                  # integration only
-uv run pytest tests/unit/test_invariants.py      # PLAN.md I8 / I10
-```
-
-```bash
-export OPENAI_API_KEY="..."     # required for any LLM-touching code
-```
-
-Coverage HTML lands in `htmlcov/` next to wherever you ran pytest from.
+Tests are hermetic: the conftest mocks the LLM client and injects a fake `OPENAI_API_KEY`, so no network or real key is needed. To change deps, edit `requirements_lock.txt` and re-run.
 
 ## Legacy demo (pre-refinement)
 
-For reference only — the original 10-dimension sentiment pipeline, **not** Slice 0:
-
-```bash
-uv run python demo_market_fetch.py
-```
+For reference only — the original 10-dimension sentiment pipeline, **not** Slice 0. `demo_market_fetch.py` has no bazel target yet; add a `py_binary` for it (deps `:market`) if you want to run it under bazel.
 
 ## Disclaimer
 
