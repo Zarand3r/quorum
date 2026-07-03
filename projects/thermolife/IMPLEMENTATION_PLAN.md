@@ -120,7 +120,7 @@ Each is a *gate* — a test in a named step, not an aspiration. Mapped to PLAN.m
 **Why now:** the data contract must be locked before any physics reads or writes it. Everything downstream is a pure function `World → World`.
 
 ### Tests first
-- [ ] `tests/test_world.py`: `World.from_config(cfg, seed)` yields arrays of the documented shapes/dtypes (`fields[H,W,F]` float64, `energy[H,W]`, `alive[H,W]`, `hidden[H,W,16]`, `plastic[H,W,8]`, `orient[H,W,2]`); a `state_hash()` is stable across two constructions with the same seed (P5 primitive) and differs for different seeds.
+- [ ] `tests/test_world.py`: `from_config(cfg, seed)` yields arrays of the documented shapes/dtypes (`fields[H,W,4]` float64, `energy[H,W]`, `alive[H,W]`); a `state_hash()` is stable across two constructions with the same seed (P5 primitive) and differs when state or tick changes. **Note:** per "avoid unnecessary complexity," the `hidden[16]`/`plastic[8]`/`orient[2]` cell channels of PLAN.md §6 are *deferred to M2* (the NCA rule) — Slice-0 physics never reads them, so allocating them now would be speculative.
 
 ### Implementation
 - [ ] `env/fields.py`: channel index enums (`Field.NUTRIENT`, …), `World` dataclass with `__slots__`-style dense arrays, `from_config(cfg, seed)`, `state_hash()` (hash of concatenated array bytes), `copy()`.
