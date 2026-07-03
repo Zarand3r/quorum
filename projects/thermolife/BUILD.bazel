@@ -33,7 +33,10 @@ py_library(
         ],
         allow_empty = True,
     ),
-    data = [":configs"],
+    data = [
+        ":configs",
+        "sim/viewer.html",  # served by sim/server.py from runfiles
+    ],
     imports = ["."],  # put projects/thermolife on sys.path → `import env`, `import sim`
     deps = [
         requirement("numpy"),
@@ -46,6 +49,20 @@ py_binary(
     srcs = ["sim/runner.py"],
     main = "sim/runner.py",
     data = [":configs"],
+    imports = ["."],
+    deps = [":thermolife"],
+)
+
+# Web control server: bazel run //projects/thermolife:serve -- --port 8787
+# then `tailscale serve --bg 8787` to expose it on your tailnet (sim/README.md).
+py_binary(
+    name = "serve",
+    srcs = ["sim/server.py"],
+    main = "sim/server.py",
+    data = [
+        ":configs",
+        "sim/viewer.html",
+    ],
     imports = ["."],
     deps = [":thermolife"],
 )
