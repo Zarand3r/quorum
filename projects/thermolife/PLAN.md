@@ -96,6 +96,7 @@ Be precise about the "no inference/training boundary" claim (from the proposal �
   ┌───────────────────────────────────────────────────────────────────────────────┐
   │ env/     : diffuse_and_decay → local_perception → apply_conservative_transactions │
   │            → lifecycle(death/decomp/division) → invariants                        │
+  │ sim/     : forager · tick(loop) · runner · controller · server (Slice-0 ops+web)  │
   │ model/   : interface_heads (ligand,receptor,value) → binding → predictor         │
   │            → cell_core (Δh, actions) → plasticity_rule (Δz)                        │
   │ train/   : rollout · truncated_bptt · objective (avg-reward) · curriculum         │
@@ -107,6 +108,7 @@ Be precise about the "no inference/training boundary" claim (from the proposal �
 Layer ownership:
 - **env/** owns the physics and conservation. It is the only layer allowed to change physical channels. It knows nothing about neural nets.
 - **model/** owns the learned rule. It reads observations/messages, emits *action intents* and *transfer requests*; it never mutates fields directly — it hands intents to `env/apply_conservative_transactions`, which enforces cost and conservation.
+- **sim/** owns the *operational* Slice-0 loop (forager, tick pipeline, headless runner) and the web control surface (a thread-safe start/pause/restart state machine + a stdlib HTTP server, exposed over Tailscale). Distinct from `train/`: `sim/` runs the world, `train/` trains the rule.
 - **train/** owns the outer loop (TBPTT, objective, curriculum). Frozen `θ,φ` inside a chunk (I9).
 - **eval/** owns falsification: ablations, perturbations, metrics, matched controls.
 - **viz/** is read-only over the world; its interface renderer must call the *same* code path as the binding kernel (I11).

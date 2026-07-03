@@ -1,0 +1,86 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>thermolife — Slice 0</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #0b0d10; color: #d7dde3;
+         font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  header { padding: 12px 16px; display: flex; gap: 10px; align-items: center;
+           flex-wrap: wrap; border-bottom: 1px solid #1c2127; }
+  h1 { font-size: 15px; margin: 0 12px 0 0; font-weight: 600; }
+  button { background: #1b2027; color: #d7dde3; border: 1px solid #2b323b;
+           border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+  button:hover { background: #232a33; }
+  button:disabled { opacity: .4; cursor: default; }
+  #stats { margin-left: auto; display: flex; gap: 16px; }
+  #stats span b { color: #7fd1b9; font-weight: 600; }
+  main { display: flex; justify-content: center; padding: 20px; }
+  canvas { image-rendering: pixelated; border: 1px solid #2b323b; border-radius: 4px;
+           width: min(80vmin, 640px); height: min(80vmin, 640px); }
+  .dot { color: #ffd479; }
+</style>
+<header>
+  <h1>thermolife · Slice 0</h1>
+  <button id="start">Start</button>
+  <button id="pause">Pause</button>
+  <button id="resume">Resume</button>
+  <button id="restart">Restart</button>
+  <button id="stop">Stop</button>
+  <div id="stats">
+    <span>status <b id="s-status">—</b></span>
+    <span>tick <b id="s-tick">0</b></span>
+    <span>alive <b id="s-alive">0</b></span>
+    <span>energy <b id="s-energy">0</b></span>
+    <span>residual <b id="s-res">0</b></span>
+  </div>
+</header>
+<main><canvas id="grid" width="64" height="64"></canvas></main>
+<script>
+const canvas = document.getElementById("grid");
+const ctx = canvas.getContext("2d");
+
+async function post(path) {
+  try { await fetch(path, { method: "POST" }); } catch (e) {}
+}
+for (const id of ["start", "pause", "resume", "restart", "stop"]) {
+  document.getElementById(id).onclick = () => post("/" + id);
+}
+
+function draw(state) {
+  document.getElementById("s-status").textContent = state.status;
+  document.getElementById("s-tick").textContent = state.tick;
+  document.getElementById("s-alive").textContent = state.alive;
+  document.getElementById("s-energy").textContent = state.energy_total.toFixed(2);
+  document.getElementById("s-res").textContent = state.residual.toExponential(1);
+  if (!state.nutrient) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
+
+  const H = state.height, W = state.width;
+  if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+  const img = ctx.createImageData(W, H);
+  const nmax = state.nutrient_max || 1;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const v = Math.min(1, state.nutrient[y][x] / nmax);
+      const i = (y * W + x) * 4;
+      img.data[i] = 20 + 40 * v;         // teal-ish nutrient ramp
+      img.data[i + 1] = 30 + 180 * v;
+      img.data[i + 2] = 40 + 120 * v;
+      img.data[i + 3] = 255;
+    }
+  }
+  if (state.forager) {
+    const [fy, fx] = state.forager, i = (fy * W + fx) * 4;
+    img.data[i] = 255; img.data[i + 1] = 212; img.data[i + 2] = 121; img.data[i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+async function poll() {
+  try {
+    const r = await fetch("/state");
+    if (r.ok) draw(await r.json());
+  } catch (e) {}
+}
+setInterval(poll, 200);  // ~5 Hz
+poll();
+</script>

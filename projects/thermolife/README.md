@@ -1,6 +1,6 @@
 # thermolife
 
-> **A continuous thermodynamic neural cellular automaton.** Status: **design only, no implementation yet.** See [`PLAN.md`](PLAN.md) for the full system design.
+> **A continuous thermodynamic neural cellular automaton.** Status: **Slice 0 implemented** (conservation-checked physical substrate + a hand-coded forager + a Tailscale-hosted start/pause/restart web endpoint); the learned NCA (M1–M7) is design only. See [`PLAN.md`](PLAN.md) for the full system design and [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) for the build sequence.
 
 A 2D grid world in which a **single shared local neural rule** gives every cell a fast hidden state and a slow *plastic* state, learned **ligand/receptor interfaces** that selectively bind and trade resources with energetic consequences, and a local **predictor** whose errors reshape the plastic state online — no inference/training boundary inside a lifetime. An explicit, conservation-checked abstract **physics** (nutrient/waste/heat fields, per-action energy cost, death → decomposition) makes organized behavior contingent on exploiting external gradients: you cannot get something for nothing.
 
@@ -20,12 +20,14 @@ The strongest result is *not* "it made pretty blobs." It is beating the seven ma
 
 ## Current state
 
-- `PLAN.md` — system design, complete, pre-implementation.
-- `README.md` / `CLAUDE.md` — this file and the project anchors.
-- `configs/*.yaml` — the first-experiment configuration (PLAN.md §12), as design.
-- `env/ model/ train/ eval/ viz/ tests/` — package skeleton; each `__init__.py` is a docstring stub pointing at its PLAN.md section. **No logic yet.**
+**Slice 0 is built and green** (37 tests) — PLAN.md §15:
 
-No source code, no passing tests. Implementation begins with **Slice 0** per `PLAN.md` §15.1.
+- `env/` — the conservation-checked substrate: `config`, `fields` (World SoA), `diffusion`, `transactions` (the ledger core), `lifecycle`, `invariants`.
+- `sim/` — the operational loop + web control: `forager` (hand-coded gradient climber), `tick`, `runner` (+ `//projects/thermolife:run`), `controller`, `server`, `viewer.html` (+ `//projects/thermolife:serve`). See [`sim/README.md`](sim/README.md).
+- The Slice-0 gate holds: the forager survives on the static gradient and **dies within ~500 ticks of source removal**, conservation residual ~4e-8 at 6000 ticks, replayable byte-for-byte.
+- `model/ train/ eval/ viz/` — still docstring stubs; these are the learned NCA (M1–M7), **out of Slice-0 scope**.
+
+Run it: `bazel run //projects/thermolife:serve -- --port 8787`, then `tailscale serve --bg 8787`.
 
 ## When implementation starts — Slice 0 only
 
