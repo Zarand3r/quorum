@@ -1,0 +1,45 @@
+# Shared NCA cell-rule configuration (PLAN.md §9, §12).
+#
+# ONE shared program across all cells (a "genome"). Heterogeneity comes from
+# state/plasticity/mutation, not from per-cell architectures. Not used in
+# Slice 0 (§15.3 defers everything learned); enters at M2.
+#
+# Dimensionality note (PLAN.md §3.2): keep cognitive state higher-dim than the
+# visualization. Interfaces render in 2D while staying 4-D latent internally.
+
+state:
+  hidden_dim: 16            # h — fast state, updated every tick
+  plastic_dim: 8            # z — slow plastic state, continuous bounded update (I14)
+  orient_dim: 2
+
+interfaces:                 # M3 (Phase 3). Learned ligand/receptor codes.
+  iface_dim: 4              # D_iface per cardinal direction (Open Question §24.3)
+  value_dim: 8              # D_val — what a bound neighbor receives
+  directions: 4            # cardinal
+  # Anti-trivial-solution constraints (I14, R1) — without these, cells learn
+  # to bind to everything and the chemistry collapses.
+  receptor_capacity: 3.0    # finite incoming binding budget
+  outgoing_capacity: 3.0    # finite outgoing binding budget
+  expression_noise: 0.05    # noise in receptor/ligand expression
+  binding_duration: 3       # ticks a bond must hold before major transfer
+  bind_temperature: 0.50    # T_bind in κ = σ((b − |ℓ−ρ|²)/T_bind)
+  bind_bias: 1.0            # b in the same expression
+
+plasticity:                 # M4 (Phase 4). G_φ update to z from prediction error.
+  enabled: false            # OFF until M4; M2/M3 run frozen
+  update_clip: 0.10         # bounded magnitude (I14, R2)
+  decay: 0.001              # slow forgetting so stale adaptations fade
+  # Time constants, fast→slow (PLAN.md §10.2):
+  hidden_every: 1
+  interface_every: 3        # interface expression recomputed every k ticks
+  # plastic z: continuous (governed by update_clip/decay)
+
+predictor:                  # M4. Local next-observation predictor → ε.
+  enabled: false            # OFF until M4
+  targets: [nutrient_delta, signal_delta, temp_waste_delta, neighbor_stays_bound, own_energy_sign]
+  # Targets are normalized/informative to dodge the constant-prediction shortcut (R11).
+
+neighborhood:
+  radius: 1                 # Moore/von-Neumann stencil; NO global view (I5)
+  stencil: axis_aware       # start axis-aware and MEASURE dependence (I13, §24.4);
+                            # switch to `isotropic` if the symmetry probe shows large leak
