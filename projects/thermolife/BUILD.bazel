@@ -1,13 +1,15 @@
 # thermolife — continuous thermodynamic neural cellular automaton. Bazel graph.
 #
-# Design only (see PLAN.md): the package is docstring stubs and declarative
-# configs, with no external dependencies yet. When Slice 0 code lands (PLAN.md
-# §15), add a ``thermolife_deps`` pip hub in MODULE.bazel (numpy, then torch at
-# M2) and a ``py_test`` target for the invariant gate (§17).
+# Slice 0 scope (IMPLEMENTATION_PLAN.md): env/ physics + sim/ operational loop
+# and web control, on numpy + pyyaml only. Deps come from the ``thermolife_deps``
+# pip hub (MODULE.bazel), pinned in ``requirements_lock.txt``. No torch yet (M2).
 
-load("@rules_python//python:defs.bzl", "py_library")
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("@thermolife_deps//:requirements.bzl", "requirement")
 
 package(default_visibility = ["//visibility:public"])
+
+exports_files(["requirements_lock.txt", "pytest.ini"])
 
 # Declarative design artifacts (PLAN.md §12) — world / model / curriculum config.
 filegroup(
@@ -15,12 +17,41 @@ filegroup(
     srcs = glob(["configs/*.yaml"]),
 )
 
-# Package skeleton: docstring stubs that import nothing external yet.
+# Substrate + operational code. model/ train/ eval/ viz/ remain docstring stubs
+# until M1+ (out of Slice 0 scope), so they carry no external deps.
 py_library(
     name = "thermolife",
     srcs = glob(
-        ["*.py", "env/**/*.py", "model/**/*.py", "train/**/*.py", "eval/**/*.py", "viz/**/*.py"],
+        [
+            "*.py",
+            "env/**/*.py",
+            "sim/**/*.py",
+            "model/**/*.py",
+            "train/**/*.py",
+            "eval/**/*.py",
+            "viz/**/*.py",
+        ],
         allow_empty = True,
     ),
+    data = [":configs"],
+    imports = ["."],  # put projects/thermolife on sys.path → `import env`, `import sim`
+    deps = [
+        requirement("numpy"),
+        requirement("pyyaml"),
+    ],
+)
+
+py_test(
+    name = "test_suite",
+    srcs = glob(["tests/**/*.py"]),
+    main = "tests/pytest_main.py",
+    data = [
+        ":configs",
+        "pytest.ini",
+    ],
     imports = ["."],
+    deps = [
+        ":thermolife",
+        requirement("pytest"),
+    ],
 )
