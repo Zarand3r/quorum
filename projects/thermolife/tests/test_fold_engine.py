@@ -9,6 +9,7 @@ import numpy as np
 
 from fold.config import load_fold_config
 from fold.engine import FoldEngine
+from sim.controller import SimController
 
 _CFG = Path(__file__).resolve().parent.parent / "configs" / "fold.yaml"
 _RUNNING = SimpleNamespace(value="RUNNING")
@@ -57,3 +58,27 @@ def test_fold_step_finite_and_bounded() -> None:
     steps = np.array(steps)
     assert np.isfinite(steps).all()
     assert steps.max() < 10.0
+
+
+def test_fold_gallery_advances() -> None:
+    """A settled fold reseeds into a fresh one (PLAN.md D3), deterministically."""
+    cfg = _cfg()
+    a, b = FoldEngine(cfg, 0), FoldEngine(cfg, 0)
+    for _ in range(300):
+        a.step()
+        b.step()
+    assert a.snapshot(_RUNNING)["fold"] >= 1  # converged at least once and reseeded
+    assert a.state_hash() == b.state_hash()   # reseeds are deterministic (J2 holds)
+
+
+def test_runs_through_controller() -> None:
+    cfg = _cfg()
+    c = SimController(lambda s: FoldEngine(cfg, s), default_seed=0, autostart_thread=False)
+    c.start(seed=0)
+    for _ in range(50):
+        c._tick_now()
+    snap = c.snapshot()
+    assert snap["status"] == "RUNNING" and snap["tick"] == 50
+    assert len(snap["tokens"]) == cfg.n_tokens
+    c.stop()
+    assert c.snapshot()["tokens"] == []  # IDLE snapshot is empty

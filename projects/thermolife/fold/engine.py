@@ -22,17 +22,36 @@ from fold.weights import FoldWeights
 class FoldEngine:
     def __init__(self, cfg: FoldConfig, seed: int) -> None:
         self.cfg = cfg
-        self.w = FoldWeights.random(cfg, seed)
-        rng = np.random.default_rng(seed + 10_000)  # decorrelate embeddings from weights
-        self.x = rng.standard_normal((cfg.n_tokens, cfg.d)) * cfg.init_scale
-        self._t = 0
+        self._base = seed
+        self._gen = 0          # which fold in the gallery (bumps on convergence)
+        self._t = 0            # total iterations
+        self._since = 0        # iterations since the current fold started
         self._fold_step = 0.0
+        self.w, self.x = self._instantiate()
+
+    def _instantiate(self):
+        """Fresh toy transformer + tokens for the current gallery index (deterministic)."""
+        s = self._base if self._gen == 0 else (self._base * 10007 + self._gen)
+        w = FoldWeights.random(self.cfg, s)
+        rng = np.random.default_rng([s, 10_000])  # decorrelate embeddings from weights
+        x = rng.standard_normal((self.cfg.n_tokens, self.cfg.d)) * self.cfg.init_scale
+        return w, x
 
     def step(self) -> None:
         x1, _, _ = block_step(self.x, self.w, self.cfg)
         self._fold_step = float(np.linalg.norm(x1 - self.x) / np.sqrt(self.x.size))
         self.x = x1
         self._t += 1
+        self._since += 1
+        # a fold that has settled → start the next one (fold gallery; PLAN.md D3)
+        if (
+            self.cfg.reseed_on_converge
+            and self._since >= self.cfg.min_iters_before_reseed
+            and self._fold_step < self.cfg.converge_eps
+        ):
+            self._gen += 1
+            self.w, self.x = self._instantiate()
+            self._since = 0
 
     @property
     def tick(self) -> int:
@@ -66,6 +85,8 @@ class FoldEngine:
         return {
             "status": status.value,
             "tick": self._t,
+            "fold": self._gen,
+            "fold_iter": self._since,
             "n": self.cfg.n_tokens,
             "fold_step": round(self._fold_step, 5),
             "max_attn": round(float(off_diag.max()), 3),

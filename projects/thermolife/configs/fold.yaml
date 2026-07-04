@@ -14,3 +14,6 @@ render_scale: 0.5    # blob size in the position plane
 init_scale: 1.5      # initial spread of tokens
 contour_points: 64   # outline resolution
 edge_threshold: 0.15 # min attention to draw a docking bond
+reseed_on_converge: true   # once a fold settles, start a fresh one (a fold gallery)
+converge_eps: 0.001        # fold_step below this ⇒ converged
+min_iters_before_reseed: 40 # show each fold at least this long
