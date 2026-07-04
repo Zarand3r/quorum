@@ -1,6 +1,6 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>thermolife</title>
+<title>thermolife · embedding folding</title>
 <style>
   :root { color-scheme: dark; }
   body { margin: 0; background: #0b0d10; color: #d7dde3;
@@ -11,108 +11,94 @@
   button { background: #1b2027; color: #d7dde3; border: 1px solid #2b323b;
            border-radius: 6px; padding: 6px 12px; cursor: pointer; }
   button:hover { background: #232a33; }
-  button:disabled { opacity: .4; cursor: default; }
-  button.field.on { border-color: #7fd1b9; color: #7fd1b9; }
   #stats { margin-left: auto; display: flex; gap: 16px; }
   #stats span b { color: #7fd1b9; font-weight: 600; }
   main { display: flex; justify-content: center; padding: 20px; }
-  canvas { image-rendering: pixelated; border: 1px solid #2b323b; border-radius: 4px;
-           width: min(80vmin, 640px); height: min(80vmin, 640px); }
-  .dot { color: #ffd479; }
+  canvas { background: #06070a; border: 1px solid #2b323b; border-radius: 4px;
+           width: min(84vmin, 720px); height: min(84vmin, 720px); }
 </style>
 <header>
-  <h1>thermolife</h1>
+  <h1>thermolife · embedding folding</h1>
   <button id="start">Start</button>
   <button id="pause">Pause</button>
   <button id="resume">Resume</button>
   <button id="restart">Restart</button>
   <button id="stop">Stop</button>
-  <span style="width:12px"></span>
-  <button id="f-nutrient" class="field">Nutrient</button>
-  <button id="f-heat" class="field">Heat</button>
-  <button id="f-waste" class="field">Waste</button>
-  <button id="f-mass" class="field">Cells</button>
-  <button id="f-hidden" class="field">Hidden</button>
   <div id="stats">
     <span>status <b id="s-status">—</b></span>
-    <span>tick <b id="s-tick">0</b></span>
-    <span>alive <b id="s-alive">0</b></span>
-    <span>energy <b id="s-energy">0</b></span>
-    <span>residual <b id="s-res">0</b></span>
+    <span>iter <b id="s-tick">0</b></span>
+    <span>fold&nbsp;step <b id="s-fold">0</b></span>
+    <span>max&nbsp;attn <b id="s-attn">0</b></span>
   </div>
 </header>
-<main><canvas id="grid" width="64" height="64"></canvas></main>
+<main><canvas id="c" width="720" height="720"></canvas></main>
 <script>
-const canvas = document.getElementById("grid");
+const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
-async function post(path) {
-  try { await fetch(path, { method: "POST" }); } catch (e) {}
-}
-for (const id of ["start", "pause", "resume", "restart", "stop"]) {
+async function post(path) { try { await fetch(path, { method: "POST" }); } catch (e) {} }
+for (const id of ["start", "pause", "resume", "restart", "stop"])
   document.getElementById(id).onclick = () => post("/" + id);
-}
 
-// Which field to render, and its color ramp (value in 0..1 → RGB).
-const FIELDS = ["nutrient", "heat", "waste", "mass", "hidden"];
-const RAMPS = {
-  nutrient: v => [20 + 40 * v, 30 + 180 * v, 40 + 120 * v],   // teal/green
-  heat:     v => [30 + 225 * v, 30 + 90 * v, 25],             // black→red/orange
-  waste:    v => [40 + 120 * v, 20 + 30 * v, 55 + 150 * v],   // purple
-  mass:     v => [30 + 200 * v, 40 + 215 * v, 60 + 150 * v],  // cells: bright cyan/white
-  hidden:   v => [40 + 90 * v, 40 + 120 * v, 60 + 195 * v],   // hidden state: blue
-};
-let field = null;        // chosen field
-let userPicked = false;  // once the user clicks, honor their choice
-for (const f of FIELDS) {
-  document.getElementById("f-" + f).onclick = () => { field = f; userPicked = true; };
-}
-function pickField(state) {
-  if (userPicked && state[field] != null) return field;
-  return FIELDS.find(f => state[f] != null) || field;  // first field with data
+// distinct hue per token
+const hue = i => `hsl(${(i * 47) % 360} 70% 60%)`;
+
+// map world coords (blob outlines share the token position plane) → canvas,
+// autoscaling to the bounding box of every contour point so the fold stays framed.
+function fitTransform(tokens, W, H, pad) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const t of tokens) for (const [x, y] of t.contour) {
+    if (x < minX) minX = x; if (x > maxX) maxX = x;
+    if (y < minY) minY = y; if (y > maxY) maxY = y;
+  }
+  if (!isFinite(minX)) return null;
+  const sx = (W - 2 * pad) / Math.max(1e-6, maxX - minX);
+  const sy = (H - 2 * pad) / Math.max(1e-6, maxY - minY);
+  const s = Math.min(sx, sy);
+  const ox = pad + (W - 2 * pad - s * (maxX - minX)) / 2 - s * minX;
+  const oy = pad + (H - 2 * pad - s * (maxY - minY)) / 2 - s * minY;
+  return ([x, y]) => [ox + s * x, oy + s * y];
 }
 
 function draw(state) {
   document.getElementById("s-status").textContent = state.status;
   document.getElementById("s-tick").textContent = state.tick;
-  document.getElementById("s-alive").textContent = state.alive;
-  document.getElementById("s-energy").textContent = state.energy_total.toFixed(2);
-  document.getElementById("s-res").textContent = state.residual.toExponential(1);
+  document.getElementById("s-fold").textContent = (state.fold_step ?? 0).toFixed(4);
+  document.getElementById("s-attn").textContent = (state.max_attn ?? 0).toFixed(2);
 
-  field = pickField(state);
-  for (const f of FIELDS) {
-    const btn = document.getElementById("f-" + f);
-    btn.style.display = state[f] != null ? "" : "none";  // hide fields this engine doesn't emit
-    btn.classList.toggle("on", f === field);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const tokens = state.tokens || [];
+  const T = fitTransform(tokens, canvas.width, canvas.height, 48);
+  if (!T) return;
+
+  // docking bonds first (behind the blobs)
+  for (const [i, j, w] of state.edges || []) {
+    const [ax, ay] = T(tokens[i].pos), [bx, by] = T(tokens[j].pos);
+    ctx.strokeStyle = `rgba(127,209,185,${Math.min(0.9, w)})`;
+    ctx.lineWidth = 0.5 + 3 * w;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
   }
-  const grid = field ? state[field] : null;
-  if (!grid) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
-  const H = state.height, W = state.width;
-  if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
-  const img = ctx.createImageData(W, H);
-  const ramp = RAMPS[field];
-  const fmax = state[field + "_max"] || 1;
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      const v = Math.min(1, grid[y][x] / fmax);
-      const [r, g, b] = ramp(v);
-      const i = (y * W + x) * 4;
-      img.data[i] = r; img.data[i + 1] = g; img.data[i + 2] = b; img.data[i + 3] = 255;
-    }
-  }
-  if (state.forager) {
-    const [fy, fx] = state.forager, i = (fy * W + fx) * 4;
-    img.data[i] = 255; img.data[i + 1] = 212; img.data[i + 2] = 121; img.data[i + 3] = 255;
-  }
-  ctx.putImageData(img, 0, 0);
+
+  // morphing contour blobs
+  tokens.forEach((t, i) => {
+    ctx.beginPath();
+    t.contour.forEach((p, k) => {
+      const [x, y] = T(p);
+      k ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    });
+    ctx.closePath();
+    ctx.fillStyle = hue(i).replace("60%)", "60% / 0.30)").replace("hsl", "hsla");
+    ctx.fill();
+    ctx.strokeStyle = hue(i); ctx.lineWidth = 2; ctx.stroke();
+    const [cx, cy] = T(t.pos);
+    ctx.fillStyle = hue(i);
+    ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, 2 * Math.PI); ctx.fill();
+  });
 }
 
 async function poll() {
-  try {
-    const r = await fetch("/state");
-    if (r.ok) draw(await r.json());
-  } catch (e) {}
+  try { const r = await fetch("/state"); if (r.ok) draw(await r.json()); } catch (e) {}
 }
-setInterval(poll, 200);  // ~5 Hz
+setInterval(poll, 150);
 poll();
 </script>

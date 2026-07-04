@@ -27,6 +27,9 @@ class FoldConfig:
     init_scale: float      # embedding init std
     contour_points: int    # samples per contour polyline (P)
     edge_threshold: float  # min attention weight to draw a bond
+    reseed_on_converge: bool     # once a fold settles, start a fresh one (fold gallery)
+    converge_eps: float          # fold_step below this ⇒ converged
+    min_iters_before_reseed: int # show each fold at least this many iterations
 
 
 _DEFAULTS: dict = {
@@ -44,6 +47,9 @@ _DEFAULTS: dict = {
     "init_scale": 1.5,
     "contour_points": 64,
     "edge_threshold": 0.15,
+    "reseed_on_converge": True,
+    "converge_eps": 1e-3,
+    "min_iters_before_reseed": 40,
 }
 
 
@@ -65,6 +71,9 @@ def load_fold_config(path: str | Path) -> FoldConfig:
         init_scale=float(d["init_scale"]),
         contour_points=int(d["contour_points"]),
         edge_threshold=float(d["edge_threshold"]),
+        reseed_on_converge=bool(d["reseed_on_converge"]),
+        converge_eps=float(d["converge_eps"]),
+        min_iters_before_reseed=int(d["min_iters_before_reseed"]),
     )
     if cfg.d < 2:
         raise ValueError("d must be ≥ 2 (a 2D position projection is needed)")

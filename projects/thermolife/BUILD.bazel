@@ -1,8 +1,8 @@
-# thermolife — continuous thermodynamic neural cellular automaton. Bazel graph.
+# thermolife — embedding folding as ligand–receptor docking (PLAN.md). Bazel graph.
 #
-# Slice 0 scope (IMPLEMENTATION_PLAN.md): env/ physics + sim/ operational loop
-# and web control, on numpy + pyyaml only. Deps come from the ``thermolife_deps``
-# pip hub (MODULE.bazel), pinned in ``requirements_lock.txt``. No torch yet (M2).
+# S0 scope: fold/ toy transformer (grounded Fourier-contour attention) + sim/ web
+# control, on numpy + pyyaml only. Deps come from the ``thermolife_deps`` pip hub
+# (MODULE.bazel), pinned in ``requirements_lock.txt``. No torch yet (M2 training).
 
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 load("@thermolife_deps//:requirements.bzl", "requirement")
@@ -11,26 +11,21 @@ package(default_visibility = ["//visibility:public"])
 
 exports_files(["requirements_lock.txt", "pytest.ini"])
 
-# Declarative design artifacts (PLAN.md §12) — world / model / curriculum config.
+# Declarative config (PLAN.md §7) — fold.yaml.
 filegroup(
     name = "configs",
     srcs = glob(["configs/*.yaml"]),
 )
 
-# Substrate + operational code. model/ train/ eval/ viz/ remain docstring stubs
-# until M1+ (out of Slice 0 scope), so they carry no external deps.
+# Fold mechanism + operational code. train/ is a stub until M2 (torch training).
 py_library(
     name = "thermolife",
     srcs = glob(
         [
             "*.py",
             "fold/**/*.py",
-            "env/**/*.py",
             "sim/**/*.py",
-            "model/**/*.py",
             "train/**/*.py",
-            "eval/**/*.py",
-            "viz/**/*.py",
         ],
         allow_empty = True,
     ),
@@ -45,17 +40,8 @@ py_library(
     ],
 )
 
-py_binary(
-    name = "run",
-    srcs = ["sim/runner.py"],
-    main = "sim/runner.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":thermolife"],
-)
-
 # Web control server: bazel run //projects/thermolife:serve -- --port 8787
-# then `tailscale serve --bg 8787` to expose it on your tailnet (sim/README.md).
+# then `tailscale serve --bg 8787` to expose it on your tailnet (sim/host.sh).
 py_binary(
     name = "serve",
     srcs = ["sim/server.py"],

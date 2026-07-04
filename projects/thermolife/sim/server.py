@@ -1,17 +1,15 @@
-"""Stdlib HTTP control server for the Slice-0 simulation (Step 6).
+"""Stdlib HTTP control server for the embedding-folding sim (PLAN.md §5, §7).
 
-Zero external deps (IMPLEMENTATION_PLAN §D1): a ``ThreadingHTTPServer`` whose
-handlers *only* call ``SimController`` methods — they never touch the world (P8).
-Exposes the control surface + a polled state feed + the canvas viewer:
+Zero external deps: a ``ThreadingHTTPServer`` whose handlers *only* call
+``SimController`` methods. Routes:
 
-    GET  /            → viewer.html
-    GET  /state       → JSON snapshot (tick, status, residual, nutrient grid, …)
-    POST /start       → build world (optional {"seed": N}) and run
+    GET  /            → viewer.html (morphing blobs + docking edges)
+    GET  /state       → JSON snapshot (tick, fold_step, tokens[blobs], edges)
+    POST /start       → build a fresh fold (optional {"seed": N}) and run
     POST /pause /resume /restart /stop  → control transitions (409 if illegal)
 
-Bind to loopback and expose over Tailscale with ``tailscale serve`` — see
-sim/README.md. The app is unauthenticated by design; access control is delegated
-to the tailnet.
+Bind to loopback and expose over Tailscale (sim/host.sh). Unauthenticated by
+design; access control is delegated to the tailnet.
 """
 
 from __future__ import annotations
@@ -22,14 +20,13 @@ import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from env.config import load_world_config
-from model.config import load_model_config
+from fold.config import load_fold_config
+from fold.engine import FoldEngine
 from sim.controller import ControllerError, SimController
-from sim.nca_engine import NCAEngine
 
 _HERE = Path(__file__).resolve().parent
 _VIEWER = _HERE / "viewer.html"
-_DEFAULT_CONFIG = _HERE.parent / "configs" / "world.yaml"
+_DEFAULT_CONFIG = _HERE.parent / "configs" / "fold.yaml"
 
 _CONTROLS = {
     "/start": lambda c, body: c.start(seed=body.get("seed")),
@@ -61,7 +58,7 @@ class ControlHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self) -> None:
-        if self.path == "/" or self.path == "/index.html":
+        if self.path in ("/", "/index.html"):
             html = _VIEWER.read_bytes()
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -97,31 +94,22 @@ def build_server(host: str, port: int, controller: SimController) -> ControlServ
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="thermolife Slice-0 web control server")
+    p = argparse.ArgumentParser(description="thermolife embedding-folding server")
     p.add_argument("--config", default=str(_DEFAULT_CONFIG))
-    p.add_argument("--scenario", default="static_gradient")
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=8787)
-    p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--step-hz", type=float, default=50.0)
-    p.add_argument("--engine", choices=["forager", "nca"], default="forager",
-                   help="forager = Slice-0 baseline; nca = M2 transformer Game of Life")
-    p.add_argument("--model-config",
-                   default=str(_HERE.parent / "configs" / "model.yaml"))
+    p.add_argument("--seed", type=int, default=None)
+    p.add_argument("--step-hz", type=float, default=20.0)
     args = p.parse_args(argv)
 
-    cfg = load_world_config(args.config, scenario=args.scenario)
-    engine_factory = None
-    if args.engine == "nca":
-        model_cfg = load_model_config(args.model_config)
-        engine_factory = lambda seed: NCAEngine(cfg, model_cfg, seed)  # noqa: E731
+    cfg = load_fold_config(args.config)
+    seed = cfg.seed if args.seed is None else args.seed
     controller = SimController(
-        cfg, default_seed=args.seed, step_hz=args.step_hz, engine_factory=engine_factory
+        lambda s: FoldEngine(cfg, s), default_seed=seed, step_hz=args.step_hz
     )
     server = build_server(args.host, args.port, controller)
     print(
-        f"thermolife serving on http://{args.host}:{server.server_address[1]}  "
-        f"(scenario={args.scenario})\n"
+        f"thermolife (fold) serving on http://{args.host}:{server.server_address[1]}\n"
         f"expose on your tailnet:  tailscale serve --bg {server.server_address[1]}"
     )
     try:
