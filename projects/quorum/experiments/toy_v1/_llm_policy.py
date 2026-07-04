@@ -53,7 +53,12 @@ class LLMPolicy:
         self.generate_call_count = 0  # always 0; we never call .generate()
 
     @torch.no_grad()
-    def step(self, prompts: list[str], rng: np.random.Generator) -> list[str]:
+    def step(
+        self,
+        prompts: list[str],
+        rng: np.random.Generator,
+        observations: list[dict] | None = None,  # ignored; LLM reads the prompt
+    ) -> list[str]:
         enc = self.tok(prompts, padding=True, return_tensors="pt").to(self.device)
         # >>> ONE forward pass for the entire population (I3). <<<
         out = self.model(**enc)

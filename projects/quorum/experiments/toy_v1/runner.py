@@ -47,7 +47,14 @@ class TickMetric:
 
 @dataclass(slots=True)
 class RunResult:
-    """Trajectory of a single run."""
+    """Trajectory of a single run.
+
+    ``cells_history`` is a list of length ``n_ticks + 1``: index 0 is
+    ``initial_cells`` (state_0, before any tick), index ``t + 1`` is the state
+    after tick ``t``. Populated so the viz can animate the trajectory without
+    re-running the sim; the copies are ``O(H·W)`` per tick which is negligible
+    at toy scales.
+    """
 
     config: RunConfig
     metrics: list[TickMetric] = field(default_factory=list)
@@ -55,6 +62,7 @@ class RunResult:
     initial_agents: list[Agent] = field(default_factory=list)
     final_cells: np.ndarray = field(default=None)  # type: ignore[assignment]
     final_agents: list[Agent] = field(default_factory=list)
+    cells_history: list[np.ndarray] = field(default_factory=list)
 
 
 def run(cfg: RunConfig, policy: Policy) -> RunResult:
@@ -70,13 +78,19 @@ def run(cfg: RunConfig, policy: Policy) -> RunResult:
     initial_agents = [Agent(id=a.id, row=a.row, col=a.col, color=a.color) for a in agents]
 
     tick_metrics: list[TickMetric] = []
+    cells_history: list[np.ndarray] = [initial_cells.copy()]
 
     for t in range(cfg.n_ticks):
-        # 1. Observe (locality enforced inside prompts.render_full → I1, I11)
+        # 1. Observe (locality enforced inside neighbor_counts / render_full → I1, I11)
         batch_prompts = [prompts.render_full(a, cells) for a in agents]
+        batch_obs = [
+            {"own": o, "other": ot, "empty": e}
+            for a in agents
+            for (o, ot, e) in [grid.neighbor_counts(cells, a)]
+        ]
 
         # 2. Decide — ONE batched forward pass (I3, I4)
-        labels = policy.step(batch_prompts, rng=rng)
+        labels = policy.step(batch_prompts, rng=rng, observations=batch_obs)
 
         # 3. Apply — substrate semantics + synchronous step (I2)
         verbs = [actions.to_verb(L) for L in labels]
@@ -91,6 +105,7 @@ def run(cfg: RunConfig, policy: Policy) -> RunResult:
                 fwd_passes=1,
             )
         )
+        cells_history.append(cells.copy())
 
     return RunResult(
         config=cfg,
@@ -99,4 +114,5 @@ def run(cfg: RunConfig, policy: Policy) -> RunResult:
         initial_agents=initial_agents,
         final_cells=cells,
         final_agents=agents,
+        cells_history=cells_history,
     )

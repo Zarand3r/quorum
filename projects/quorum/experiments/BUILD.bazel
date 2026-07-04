@@ -43,3 +43,21 @@ py_test(
         requirement("pytest-cov"),
     ],
 )
+
+# Web viz — FastAPI single-page app that runs the mock sim on demand and
+# animates the trajectory client-side. Kept mock-only so it is safe to
+# expose behind Tailscale Funnel; the LLM backend never runs here.
+#
+#   bazel run //projects/quorum/experiments:viz -- \
+#       --host 127.0.0.1 --port 8081 --path /quorum
+py_binary(
+    name = "viz",
+    srcs = ["toy_v1/viz/server.py"],
+    main = "toy_v1/viz/server.py",
+    imports = ["."],
+    deps = [
+        ":toy_v1",
+        requirement("fastapi"),
+        requirement("uvicorn"),
+    ],
+)
