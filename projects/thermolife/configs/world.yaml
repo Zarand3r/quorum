@@ -69,8 +69,8 @@ scenarios:
     shocks: none
     removal_tick: 5000      # gradient removed here; forager must then die
 
-  first_experiment:         # PLAN.md §12
-    source: {kind: moving, rate: 0.50, radius: 6, speed: 0.20, path: random_walk}
+  first_experiment:         # PLAN.md §12 — moving source the forager must chase
+    source: {kind: moving, rate: 0.50, radius: 6, speed: 0.012, orbit_radius: 14}
     shocks: {kind: periodic, interval: 800, jitter: 200, type: [heat_wave, toxic_pulse]}
 
 # Determinism (I8).

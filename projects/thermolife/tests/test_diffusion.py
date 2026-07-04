@@ -69,6 +69,20 @@ def test_determinism() -> None:
     assert np.array_equal(a.fields, b.fields)
 
 
+def test_moving_source_orbits_deterministically() -> None:
+    from env.diffusion import _source_center
+
+    cfg = load_world_config(_CONFIG, scenario="first_experiment")
+    w = F.from_config(cfg, 42)
+    src = cfg.scenario.source
+    assert inject_sources(w, 0) > 0.0                 # injects nutrient
+    c0 = _source_center(w, src, 0)
+    c_quarter = _source_center(w, src, 130)           # ~quarter orbit
+    assert c0 != c_quarter                            # the source moves
+    # deterministic: same tick → same center (P5)
+    assert _source_center(w, src, 130) == c_quarter
+
+
 def test_source_injection_respects_removal() -> None:
     w = _world()
     removal = w.cfg.scenario.removal_tick
