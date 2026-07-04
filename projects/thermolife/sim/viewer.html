@@ -1,6 +1,6 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>thermolife — Slice 0</title>
+<title>thermolife</title>
 <style>
   :root { color-scheme: dark; }
   body { margin: 0; background: #0b0d10; color: #d7dde3;
@@ -21,7 +21,7 @@
   .dot { color: #ffd479; }
 </style>
 <header>
-  <h1>thermolife · Slice 0</h1>
+  <h1>thermolife</h1>
   <button id="start">Start</button>
   <button id="pause">Pause</button>
   <button id="resume">Resume</button>
@@ -80,8 +80,11 @@ function draw(state) {
   document.getElementById("s-res").textContent = state.residual.toExponential(1);
 
   field = pickField(state);
-  for (const f of FIELDS)
-    document.getElementById("f-" + f).classList.toggle("on", f === field);
+  for (const f of FIELDS) {
+    const btn = document.getElementById("f-" + f);
+    btn.style.display = state[f] != null ? "" : "none";  // hide fields this engine doesn't emit
+    btn.classList.toggle("on", f === field);
+  }
   const grid = field ? state[field] : null;
   if (!grid) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
   const H = state.height, W = state.width;
