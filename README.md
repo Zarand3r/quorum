@@ -9,7 +9,7 @@ Python projects use [`rules_python`](https://github.com/bazelbuild/rules_python)
 | Project | Build system | Brief |
 |---|---|---|
 | [`projects/market/`](projects/market/) | Bazel (`rules_python`) | Real-time news-impact market state estimator. The LLM extracts evidence; a filter updates beliefs; predictions are logged before outcomes and joined to realized returns to grow a training dataset. **The LLM never decides trades.** Read [`projects/market/PLAN.md`](projects/market/PLAN.md) and [`projects/market/README.md`](projects/market/README.md). |
-| [`projects/quorum/`](projects/quorum/) | Bazel (`rules_python`) | **Single-pass LLM population simulator for emergent behavior.** A Game-of-Life–style engine where the local rule is an LLM but the common-case update for the *entire population* is one batched forward pass; expensive generations are reserved for rare reflection. Goal is **computed** (irreducible) emergence — validated by Boids / Schelling baselines and an irreducibility test. Design only; a toy v1 (LLM Schelling) lives under [`experiments/`](projects/quorum/experiments/). Read [`projects/quorum/PLAN.md`](projects/quorum/PLAN.md). |
+| [`projects/quorum/`](projects/quorum/) | Bazel (`rules_python`) | **Single-pass LLM population simulator for emergent behavior.** A Game-of-Life–style engine where the local rule is an LLM but the common-case update for the *entire population* is one batched forward pass; expensive generations are reserved for rare reflection. Goal is **computed** (irreducible) emergence — validated by Boids / Schelling baselines and an irreducibility test. Design only. Read [`projects/quorum/PLAN.md`](projects/quorum/PLAN.md). |
 | [`projects/thermolife/`](projects/thermolife/) | Bazel (`rules_python`) | **Embedding folding as ligand–receptor docking** — a toy transformer whose token embeddings fold through iterated attention (Hinton's "embeddings fold like proteins"), each rendered as a **grounded** 2D contour blob (the drawn shape *is* the attention query/key: `Q·K` = contour overlap by Parseval) that docks with complementary blobs. Goal is **earned** meaningful folding (trained + objective-driven), not "pretty blobs." **Status: S0 (numpy mechanism) implemented; training is M2.** Read [`projects/thermolife/PLAN.md`](projects/thermolife/PLAN.md). |
 
 Add a new Python project by creating `projects/<name>/` with a `BUILD.bazel`, a `requirements_lock.txt`, and a `pip.parse` hub in the root `MODULE.bazel`; it is then reachable as `//projects/<name>/...`. Non-Python work just gets a `BUILD.bazel` and the relevant `bazel_dep(...)` in `MODULE.bazel`.
@@ -39,7 +39,7 @@ All bazel commands work from anywhere in the repo — bazel walks up to find the
 ```bash
 bazel test //...                        # build + test every target in the repo
 bazel test //projects/market:test_suite # just the market test suite (52 tests)
-bazel test //projects/quorum/experiments:test_suite   # the toy v1 Schelling suite
+bazel test //projects/thermolife:test_suite   # the embedding-fold J1-J6 gate (12 tests)
 bazel build //projects/thermolife/...   # build one project's targets
 bazel mod graph                         # inspect the Bzlmod dependency graph
 ```
@@ -73,13 +73,12 @@ To change a Python project's dependencies, edit its `requirements_lock.txt` (a s
     │
     ├── quorum/                     # single-pass LLM population simulator (design)
     │   ├── BUILD.bazel             # placeholder package marker
-    │   ├── CLAUDE.md · README.md · PLAN.md
-    │   └── experiments/            # toy v1 (LLM Schelling): BUILD.bazel + requirements_lock.txt
+    │   └── CLAUDE.md · README.md · PLAN.md
     │
     └── thermolife/                 # embedding folding as ligand–receptor docking (S0 built)
-        ├── BUILD.bazel             # configs filegroup + py_library skeleton
+        ├── BUILD.bazel             # fold library + serve binary + J1-J6 test suite
         ├── CLAUDE.md · README.md · PLAN.md
-        └── configs/ env/ model/ train/ eval/ viz/ tests/
+        └── fold/ sim/ configs/ tests/   # mechanism · web control · fold.yaml · gate
 ```
 
 ## License
