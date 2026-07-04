@@ -1,0 +1,61 @@
+# quorum Slice 0 — Bazel build graph.
+#
+# See PLAN.md §15.1 for the design (Boids on 32×32 toroidal grid, N=64, LLM
+# backend via vLLM, single batched forward pass per tick).
+#
+# The [llm] extra (torch + vllm) lands in the requirements lock only when the
+# LLM policy commit adds it. Everything else — substrate, prompts, metrics,
+# UniformRandomPolicy baseline, tests — is pure Python and needs only the base
+# dependencies + [dev] extras.
+
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+load("@slice0_deps//:requirements.bzl", "requirement")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["requirements_lock.txt"])
+
+py_library(
+    name = "slice0",
+    srcs = glob(["slice0/**/*.py"]),
+    imports = ["."],  # so `import slice0` works
+    deps = [
+        requirement("numpy"),
+        requirement("scipy"),
+        requirement("pandas"),
+        requirement("pyarrow"),
+    ],
+)
+
+# CLI runner — accepts --policy uniform_random|llm etc.
+py_binary(
+    name = "main",
+    srcs = ["slice0/main.py"],
+    main = "slice0/main.py",
+    imports = ["."],
+    deps = [":slice0"],
+)
+
+# Success-criteria harness — Mann-Whitney U + replay diff. This is the merge
+# gate for the whole slice (PLAN.md §15.1 success criteria).
+py_binary(
+    name = "verify",
+    srcs = ["slice0/verify.py"],
+    main = "slice0/verify.py",
+    imports = ["."],
+    deps = [":slice0"],
+)
+
+py_test(
+    name = "test_suite",
+    srcs = glob(["tests/**/*.py"]),
+    main = "tests/pytest_main.py",
+    imports = ["."],
+    data = ["pytest.ini"],
+    deps = [
+        ":slice0",
+        requirement("pytest"),
+        requirement("pytest-cov"),
+        requirement("hypothesis"),
+    ],
+)
