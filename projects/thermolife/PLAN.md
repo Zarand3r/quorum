@@ -243,6 +243,23 @@ r_viability,i = − B(e_i) − B(τ_i) − B(w_i)      # soft barriers B(·) ris
 ```
 Term jobs: **viability** keeps cells in a survivable regime · **reproduction/biomass** turns survival into lineage persistence · **action cost** bounds motion/signaling/compute · **plasticity cost** stops free reshaping of interfaces · **prediction loss** makes cells learn environmental regularities. Note (I10): none of these is an "order" term.
 
+### 10.5 The cell update as reaction–diffusion–advection (the "transformer Game of Life" step, M2 canonical form)
+
+The learned hidden update `F_θ` of §10.2 is factored into three **named terms** — the transformer Game-of-Life tick. Attention is the *coupling/transport operator*; diffusion is its fixed-weight baseline (this is the Gray–Scott reaction–diffusion system with a *learned* reaction kernel):
+
+```text
+h_{t+1} = h_t + D_c ∇²h_t        # (1) DIFFUSION  — fixed per-channel Laplacian smoothing (the Turing term)
+                − ∇·(𝐯 h_t)       # (2) ADVECTION  — attention as directed CONSERVED transport  → movement
+                + F_θ(h_t, m_t)   # (3) REACTION   — attention-conditioned pointwise nonlinearity → morphing
+```
+`m_t` is the attention aggregate (§9.4); the advection velocity `𝐯` **is** attention — the direction of the strongest ligand/receptor match. One attention op wears three hats: (a) route conserved occupancy/mass → **movement** (glider/soliton advection); (b) condition the pointwise reaction → **in-place morphing**; (c) gate compatibility `κ` → entities **fuse / annihilate / pass through** (soliton interactions).
+
+- **Differential diffusion is the pattern knob (Turing).** Per-channel `D_c`: fast "inhibitor/signal" channels + slow "activator" channels give short-range activation / long-range inhibition → spot/stripe/labyrinth spacing. Attention cannot supply this — it must be an explicit per-channel operator.
+- **Attention transport must conserve mass (flux limiter — strengthens I1/I3).** softmax normalizes on the *receiver* side; movement conserves mass only if total **outflow** from a source cell ≤ its mass (a CFL-like condition) with non-negativity. Attention flux is booked in the `TransactionLedger` like any transfer, and every unit of transport debits energy (I12) — so a cell **cannot** attend to everything (I14).
+- **Why it does not settle.** Terms (1)+(2)+(3) with *fixed* weights converge — pure diffusion oversmooths to a uniform field (heat death); attention still mostly averages. Continuous morphing needs the interface codes `ℓ,ρ` to be *dynamical* (from plastic `z`, M4) **and** the drive to *drift* (M5): tracking a moving free-energy source is the only way to keep paying the transport/attention energy bill. The genuinely difference-*amplifying* term (Gray–Scott autocatalysis `+uv²`) is the pointwise nonlinearity in (3), not attention's averaging.
+
+This is the sub-symbolic physical twin of the sibling `quorum` project's "Game of Life whose local rule is an LLM, one batched forward pass per tick" — same synchronous single-pass skeleton, a conserved thermodynamic substrate instead of an LLM.
+
 ## 11. State Machines / Lifecycles
 
 ### 11.1 Cell lifecycle
@@ -318,7 +335,7 @@ Everything learned: no `interface_heads`, no `binding`, no `predictor`, no `cell
 Each milestone maps to a proposal phase and carries a **binary success condition**.
 
 - **M1 — Hand-coded artificial-chemistry baseline** (Phase 1). Three fixed cell types: forager (climbs nutrient), producer/collector (converts efficiently, moves poorly), scavenger (eats waste/dead biomass). Fixed ligand/receptor types. *Success:* visible binding, resource/info transfer, and population shifts when the environment changes — with the renderer, accounting, and selection pressures all legible *before* neural nets enter.
-- **M2 — Shared NCA rule replaces hand-coded control** (Phase 2). One shared `(h,z,o,m) ↦ (Δh, actions)`, **plasticity off**. Objectives: survival under moving nutrient, energy efficiency, recovery after random deletion, bounded biomass, no waste/heat collapse. *Success:* a genetically identical population survives conditions **not in its initial state**.
+- **M2 — Shared NCA rule as a conserved reaction–diffusion–advection tick** (Phase 2, the "transformer Game of Life"). Replace the hand-coded forager with one shared local rule implementing §10.5 steps (1)–(3): per-channel diffusion `D_c∇²h`, **attention-driven conserved mass advection** (movement, with the source-side flux limiter), and a pointwise reaction `F_θ`. One batched forward pass per tick (no per-cell loop, I6; synchronous, I7). Split into **M2a — mechanism** (fixed/random `θ`, no gradient training; demonstrate emergent movement + morphing + Gray–Scott-like patterns; conserved and viewable — numpy, *no torch*) and **M2b — training** (add torch to the build; TBPTT to meta-train `θ`). Learned interfaces + plasticity stay off (M3/M4). *New invariant:* attention flux conserves mass (extends I1/I3) and debits energy (I12). *Success (M2a):* a pattern **moves and morphs** purely from attention transport (not a hand-coded move action), conserving mass. *Success (M2b):* a genetically identical population survives conditions **not in its initial state**.
 - **M3 — Learn hands & receptors** (Phase 3). Turn on learned ligand/receptor codes with the anti-trivial constraints (finite receptor + outgoing capacity, per-interface energetic cost, neighbor competition, expression noise, binding-duration-before-transfer — I14, R1). *Success:* cells use **different interfaces for different functional interactions**, and a receptor lesion causes a **specific** behavioral deficit (not global degradation).
 - **M4 — Predictive learning + plasticity** (Phase 4). Prediction targets: local nutrient change, incoming-signal change, temperature/waste change, whether a neighbor stays bound, whether own energy rises/falls. Prediction error updates `z` (not `θ`, I9). Separate time constants (§10.2). *Success:* after a distribution shift, **plastic cells regain viability faster than an identical frozen-control** population. This is the core hypothesis test.
 - **M5 — Permanently nonstationary environment** (Phase 5). Curriculum: static island → drifting source → seasonal schedule → heat waves → toxic pulses → terrain damage → density changes → rotating gradients → new nutrient chemistry → recurring-but-not-identical cycles. **Randomize** speed/amplitude/direction/duration/causal structure — never train on one periodic schedule. *Success:* adaptation **transfers to unseen schedules** rather than memorizing one cycle.
@@ -419,6 +436,8 @@ Particles / radius graph / EGNN equivariance (M7) · reproduction & mutation gen
 - **Goal-conditioned NCA** — local systems driven to change behavior dynamically rather than converge once.
 - **Differentiable plasticity / neuromodulated variants** — base parameters trained so within-lifetime plastic updates are *useful*, not noise. Our `G_φ`.
 - **Active inference / allostatic control** — homeostasis + prediction; we keep resource accounting explicit rather than reifying statistical free energy as heat.
+- **Gray–Scott reaction–diffusion / Turing patterns** — dissipative structures (spots, solitons, labyrinths) far from equilibrium via feed/kill throughput. We generalize the *fixed* reaction kernel `uv²` to a *learned local-attention* kernel (§10.5); differential diffusion is the pattern knob.
+- **GNN-as-PDE (GRAND) and reaction–diffusion GNNs (GREAD) / oversmoothing** — treating message-passing layers as diffusion, and adding an explicit reaction term to fight the smoothing-to-uniform failure. Direct precedent for our diffusion(Laplacian)+reaction(attention) decomposition.
 - **EGNN / equivariant message passing** — the M7 particle machinery.
 - **Sibling project `quorum`** — same repo, same "emergence must be earned, not faked" methodology (their I6 "computed not retrieved" ≈ our I10 "thermodynamic honesty").
 
