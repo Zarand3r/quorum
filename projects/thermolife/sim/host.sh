@@ -22,6 +22,7 @@ MODE="${MODE:-existing}"
 if [[ "$MODE" == existing ]]; then PORT="${PORT:-8080}"; else PORT="${PORT:-8787}"; fi
 TS_PORT="${TS_PORT:-8443}"
 SCENARIO="${SCENARIO:-static_gradient}"
+ENGINE="${ENGINE:-forager}"   # forager = Slice-0 baseline; nca = M2 transformer GoL
 RUN_DIR="${TMPDIR:-/tmp}/thermolife"
 PIDFILE="$RUN_DIR/serve.pid"
 LOG="$RUN_DIR/serve.log"
@@ -53,9 +54,9 @@ if [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
   kill "$(cat "$PIDFILE")" 2>/dev/null || true
 fi
 
-echo ">> starting server on 127.0.0.1:${PORT} (scenario=${SCENARIO})"
-nohup "$BIN" --scenario "$SCENARIO" --host 127.0.0.1 --port "$PORT" --step-hz 30 \
-  >"$LOG" 2>&1 &
+echo ">> starting server on 127.0.0.1:${PORT} (engine=${ENGINE} scenario=${SCENARIO})"
+nohup "$BIN" --engine "$ENGINE" --scenario "$SCENARIO" --host 127.0.0.1 --port "$PORT" \
+  --step-hz 30 >"$LOG" 2>&1 &
 echo $! >"$PIDFILE"
 
 echo ">> waiting for health"

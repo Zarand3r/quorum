@@ -28,9 +28,11 @@
   <button id="restart">Restart</button>
   <button id="stop">Stop</button>
   <span style="width:12px"></span>
-  <button id="f-nutrient" class="field on">Nutrient</button>
+  <button id="f-nutrient" class="field">Nutrient</button>
   <button id="f-heat" class="field">Heat</button>
   <button id="f-waste" class="field">Waste</button>
+  <button id="f-mass" class="field">Cells</button>
+  <button id="f-hidden" class="field">Hidden</button>
   <div id="stats">
     <span>status <b id="s-status">—</b></span>
     <span>tick <b id="s-tick">0</b></span>
@@ -51,19 +53,23 @@ for (const id of ["start", "pause", "resume", "restart", "stop"]) {
   document.getElementById(id).onclick = () => post("/" + id);
 }
 
-// Which physical field to render, and its color ramp (value in 0..1 → RGB).
-let field = "nutrient";
+// Which field to render, and its color ramp (value in 0..1 → RGB).
+const FIELDS = ["nutrient", "heat", "waste", "mass", "hidden"];
 const RAMPS = {
   nutrient: v => [20 + 40 * v, 30 + 180 * v, 40 + 120 * v],   // teal/green
   heat:     v => [30 + 225 * v, 30 + 90 * v, 25],             // black→red/orange
   waste:    v => [40 + 120 * v, 20 + 30 * v, 55 + 150 * v],   // purple
+  mass:     v => [30 + 200 * v, 40 + 215 * v, 60 + 150 * v],  // cells: bright cyan/white
+  hidden:   v => [40 + 90 * v, 40 + 120 * v, 60 + 195 * v],   // hidden state: blue
 };
-for (const f of ["nutrient", "heat", "waste"]) {
-  document.getElementById("f-" + f).onclick = () => {
-    field = f;
-    for (const g of ["nutrient", "heat", "waste"])
-      document.getElementById("f-" + g).classList.toggle("on", g === f);
-  };
+let field = null;        // chosen field
+let userPicked = false;  // once the user clicks, honor their choice
+for (const f of FIELDS) {
+  document.getElementById("f-" + f).onclick = () => { field = f; userPicked = true; };
+}
+function pickField(state) {
+  if (userPicked && state[field] != null) return field;
+  return FIELDS.find(f => state[f] != null) || field;  // first field with data
 }
 
 function draw(state) {
@@ -73,7 +79,10 @@ function draw(state) {
   document.getElementById("s-energy").textContent = state.energy_total.toFixed(2);
   document.getElementById("s-res").textContent = state.residual.toExponential(1);
 
-  const grid = state[field];
+  field = pickField(state);
+  for (const f of FIELDS)
+    document.getElementById("f-" + f).classList.toggle("on", f === field);
+  const grid = field ? state[field] : null;
   if (!grid) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
   const H = state.height, W = state.width;
   if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }

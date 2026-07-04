@@ -93,7 +93,11 @@ class SimController:
         default_seed: int = 42,
         step_hz: float = 50.0,
         autostart_thread: bool = True,
+        engine_factory=None,
     ) -> None:
+        # engine_factory(seed) -> engine with .step()/.tick/.residual()/.snapshot();
+        # defaults to the Slice-0 forager engine.
+        self._engine_factory = engine_factory or (lambda seed: SimEngine(cfg, seed))
         self._cfg = cfg
         self._default_seed = default_seed
         self._step_period = 1.0 / step_hz if step_hz > 0 else 0.0
@@ -113,7 +117,7 @@ class SimController:
     def start(self, seed: int | None = None) -> None:
         with self._lock:
             self._seed = self._default_seed if seed is None else seed
-            self._engine = SimEngine(self._cfg, self._seed)
+            self._engine = self._engine_factory(self._seed)
             self._status = SimStatus.RUNNING
         self._resume.set()
 
@@ -135,7 +139,7 @@ class SimController:
         with self._lock:
             if self._status == SimStatus.IDLE:
                 raise ControllerError("cannot restart before start")
-            self._engine = SimEngine(self._cfg, self._seed)  # same seed → tick 0
+            self._engine = self._engine_factory(self._seed)  # same seed → tick 0
             self._status = SimStatus.RUNNING
         self._resume.set()
 
