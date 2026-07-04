@@ -1,22 +1,27 @@
 #!/usr/bin/env bash
-# Build, run, and Tailscale-host the thermolife Slice-0 web control server.
+# Build, run, and host the thermolife Slice-0 web control server on a tailnet.
 #
-#   ./projects/thermolife/sim/host.sh            # tailnet-private (default, safe)
-#   MODE=funnel ./projects/thermolife/sim/host.sh   # public internet (opt-in)
-#   ./projects/thermolife/sim/host.sh stop       # tear down server + tailscale mapping
+#   ./projects/thermolife/sim/host.sh                 # MODE=existing (default): run on
+#                                                     #   the port the existing tailscale
+#                                                     #   funnel already proxies (no sudo)
+#   MODE=serve  ./projects/thermolife/sim/host.sh     # create a tailnet-private mapping
+#   MODE=funnel ./projects/thermolife/sim/host.sh     # create a PUBLIC funnel mapping
+#   ./projects/thermolife/sim/host.sh stop            # tear down server (+ mapping)
 #
-# Env knobs: PORT (local, 8787) · TS_PORT (tailscale https port, 8443) ·
-# SCENARIO (static_gradient) · MODE (serve|funnel).
+# MODE=existing reuses a `tailscale funnel`/`serve` mapping you already have
+# (this box maps https://<host>.ts.net -> 127.0.0.1:8080), so it needs no sudo.
+# MODE=serve|funnel run `tailscale` directly and require operator rights
+# (`sudo tailscale set --operator=$USER` once) or sudo.
 #
-# The app binds to loopback; Tailscale proxies it. `serve` keeps it private to
-# your tailnet; `funnel` exposes an UNAUTHENTICATED control endpoint to the
-# public internet — only use funnel deliberately (see sim/README.md §security).
+# The app binds to loopback; Tailscale proxies it. `funnel` exposes an
+# UNAUTHENTICATED control endpoint to the public internet — see sim/README.md.
 set -euo pipefail
 
-PORT="${PORT:-8787}"
+MODE="${MODE:-existing}"
+# Default local port: 8080 for `existing` (matches this box's funnel), else 8787.
+if [[ "$MODE" == existing ]]; then PORT="${PORT:-8080}"; else PORT="${PORT:-8787}"; fi
 TS_PORT="${TS_PORT:-8443}"
 SCENARIO="${SCENARIO:-static_gradient}"
-MODE="${MODE:-serve}"
 RUN_DIR="${TMPDIR:-/tmp}/thermolife"
 PIDFILE="$RUN_DIR/serve.pid"
 LOG="$RUN_DIR/serve.log"
@@ -25,8 +30,10 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 mkdir -p "$RUN_DIR"
 
 stop() {
-  echo ">> stopping tailscale ${MODE} on :${TS_PORT}"
-  tailscale "$MODE" --https="$TS_PORT" off 2>/dev/null || true
+  if [[ "$MODE" != existing ]]; then
+    echo ">> removing tailscale ${MODE} on :${TS_PORT}"
+    tailscale "$MODE" --https="$TS_PORT" off 2>/dev/null || true
+  fi
   if [[ -f "$PIDFILE" ]]; then
     kill "$(cat "$PIDFILE")" 2>/dev/null || true
     rm -f "$PIDFILE"
@@ -37,12 +44,10 @@ stop() {
 if [[ "${1:-}" == "stop" ]]; then stop; exit 0; fi
 
 cd "$REPO_ROOT"
-
 echo ">> building //projects/thermolife:serve"
 bazel build //projects/thermolife:serve >/dev/null 2>&1
 BIN="$REPO_ROOT/bazel-bin/projects/thermolife/serve"
 
-# Restart cleanly if already running.
 if [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
   echo ">> restarting existing server"
   kill "$(cat "$PIDFILE")" 2>/dev/null || true
@@ -61,20 +66,29 @@ if ! curl -sf --retry 40 --retry-delay 1 --retry-connrefused \
   exit 1
 fi
 
-echo ">> exposing via tailscale ${MODE} on https :${TS_PORT}"
-tailscale "$MODE" --bg --https="$TS_PORT" "$PORT"
-
 DNS="$(tailscale status --json \
   | python3 -c "import sys,json;print(json.load(sys.stdin)['Self']['DNSName'].rstrip('.'))")"
-URL="https://${DNS}:${TS_PORT}"
+
+case "$MODE" in
+  existing)
+    URL="https://${DNS}"  # reuses the pre-existing 443 funnel -> this port
+    ACCESS="reusing existing tailscale funnel (public)"
+    ;;
+  serve|funnel)
+    echo ">> exposing via tailscale ${MODE} on https :${TS_PORT}"
+    tailscale "$MODE" --bg --https="$TS_PORT" "$PORT"
+    URL="https://${DNS}:${TS_PORT}"
+    ACCESS="$([[ $MODE == funnel ]] && echo 'PUBLIC internet' || echo 'tailnet-private')"
+    ;;
+  *) echo "unknown MODE=$MODE (use existing|serve|funnel)" >&2; exit 2 ;;
+esac
 
 echo
 echo "============================================================"
 echo " thermolife is hosted:"
 echo "   ${URL}"
-echo "   mode: ${MODE} ($([[ $MODE == funnel ]] && echo 'PUBLIC internet' || echo 'tailnet-private'))"
+echo "   access: ${ACCESS}"
 echo "   local: http://127.0.0.1:${PORT}   log: ${LOG}"
 echo "   open it and click Start / Pause / Restart / Stop"
 echo "   tear down: $0 stop"
 echo "============================================================"
-tailscale "$MODE" status 2>/dev/null | sed 's/^/   /' || true
