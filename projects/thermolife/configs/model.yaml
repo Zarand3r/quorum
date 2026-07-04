@@ -39,6 +39,20 @@ predictor:                  # M4. Local next-observation predictor → ε.
   targets: [nutrient_delta, signal_delta, temp_waste_delta, neighbor_stays_bound, own_energy_sign]
   # Targets are normalized/informative to dodge the constant-prediction shortcut (R11).
 
+# M2 — the reaction-diffusion-advection "transformer Game of Life" (PLAN.md §10.5,
+# IMPLEMENTATION_PLAN_M2.md). numpy mechanism, fixed/random genome, no torch.
+nca:
+  hidden_dim: 8            # C — hidden channels per cell (field everywhere)
+  iface_dim: 4             # ligand/receptor code width per direction
+  directions: 4            # von-Neumann (up/down/left/right); toroidal grid
+  mlp_width: 16            # reaction MLP hidden width
+  bind_temperature: 0.5    # T in κ = softmax((b − |ℓ−ρ|²)/T)
+  bind_bias: 1.0           # b
+  advection_gain: 0.5      # g ≤ 1 — max fraction of a cell's mass that moves/tick (flux limiter)
+  reaction_scale: 0.1      # scales the pointwise reaction Δh (stability)
+  # per-channel diffusivity D_c (Turing knob): fast "inhibitor" + slow "activator" + static
+  diffusivity: [0.24, 0.24, 0.10, 0.10, 0.04, 0.04, 0.0, 0.0]
+
 neighborhood:
   radius: 1                 # Moore/von-Neumann stencil; NO global view (I5)
   stencil: axis_aware       # start axis-aware and MEASURE dependence (I13, §24.4);
