@@ -23,7 +23,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from env.config import load_world_config
+from model.config import load_model_config
 from sim.controller import ControllerError, SimController
+from sim.nca_engine import NCAEngine
 
 _HERE = Path(__file__).resolve().parent
 _VIEWER = _HERE / "viewer.html"
@@ -102,10 +104,20 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--port", type=int, default=8787)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--step-hz", type=float, default=50.0)
+    p.add_argument("--engine", choices=["forager", "nca"], default="forager",
+                   help="forager = Slice-0 baseline; nca = M2 transformer Game of Life")
+    p.add_argument("--model-config",
+                   default=str(_HERE.parent / "configs" / "model.yaml"))
     args = p.parse_args(argv)
 
     cfg = load_world_config(args.config, scenario=args.scenario)
-    controller = SimController(cfg, default_seed=args.seed, step_hz=args.step_hz)
+    engine_factory = None
+    if args.engine == "nca":
+        model_cfg = load_model_config(args.model_config)
+        engine_factory = lambda seed: NCAEngine(cfg, model_cfg, seed)  # noqa: E731
+    controller = SimController(
+        cfg, default_seed=args.seed, step_hz=args.step_hz, engine_factory=engine_factory
+    )
     server = build_server(args.host, args.port, controller)
     print(
         f"thermolife serving on http://{args.host}:{server.server_address[1]}  "
