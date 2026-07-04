@@ -17,8 +17,28 @@ module(
     compatibility_level = 1,
 )
 
-# Example deps to add as bazel-built work appears; uncomment when needed.
-# bazel_dep(name = "rules_python", version = "0.40.0")
-# bazel_dep(name = "rules_rust",   version = "0.55.0")
-# bazel_dep(name = "rules_go",     version = "0.51.0")
-# bazel_dep(name = "rules_oci",    version = "2.0.0")
+bazel_dep(name = "rules_python", version = "0.40.0")
+
+PYTHON_VERSION = "3.12"
+
+# --- Hermetic Python toolchain -------------------------------------------------
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    python_version = PYTHON_VERSION,
+    is_default = True,
+)
+
+# --- Per-project pip dependency hubs ------------------------------------------
+# One hub per project keeps dependency sets isolated (a core repo invariant).
+# Each reads a fully-pinned lock committed next to that project's BUILD.bazel.
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "slice0_deps",
+    python_version = PYTHON_VERSION,
+    requirements_lock = "//projects/quorum/slice0:requirements_lock.txt",
+)
+use_repo(pip, "slice0_deps")
+
+# Slice 0's [llm] extra (torch + transformers + CUDA runtime) lands in the
+# LLM backend commit; base + dev is sufficient for substrate, baseline policy,
+# metrics, and the Mann-Whitney U merge gate.
