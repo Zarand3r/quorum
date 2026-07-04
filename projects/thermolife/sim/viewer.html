@@ -12,6 +12,7 @@
            border-radius: 6px; padding: 6px 12px; cursor: pointer; }
   button:hover { background: #232a33; }
   button:disabled { opacity: .4; cursor: default; }
+  button.field.on { border-color: #7fd1b9; color: #7fd1b9; }
   #stats { margin-left: auto; display: flex; gap: 16px; }
   #stats span b { color: #7fd1b9; font-weight: 600; }
   main { display: flex; justify-content: center; padding: 20px; }
@@ -26,6 +27,10 @@
   <button id="resume">Resume</button>
   <button id="restart">Restart</button>
   <button id="stop">Stop</button>
+  <span style="width:12px"></span>
+  <button id="f-nutrient" class="field on">Nutrient</button>
+  <button id="f-heat" class="field">Heat</button>
+  <button id="f-waste" class="field">Waste</button>
   <div id="stats">
     <span>status <b id="s-status">—</b></span>
     <span>tick <b id="s-tick">0</b></span>
@@ -46,26 +51,41 @@ for (const id of ["start", "pause", "resume", "restart", "stop"]) {
   document.getElementById(id).onclick = () => post("/" + id);
 }
 
+// Which physical field to render, and its color ramp (value in 0..1 → RGB).
+let field = "nutrient";
+const RAMPS = {
+  nutrient: v => [20 + 40 * v, 30 + 180 * v, 40 + 120 * v],   // teal/green
+  heat:     v => [30 + 225 * v, 30 + 90 * v, 25],             // black→red/orange
+  waste:    v => [40 + 120 * v, 20 + 30 * v, 55 + 150 * v],   // purple
+};
+for (const f of ["nutrient", "heat", "waste"]) {
+  document.getElementById("f-" + f).onclick = () => {
+    field = f;
+    for (const g of ["nutrient", "heat", "waste"])
+      document.getElementById("f-" + g).classList.toggle("on", g === f);
+  };
+}
+
 function draw(state) {
   document.getElementById("s-status").textContent = state.status;
   document.getElementById("s-tick").textContent = state.tick;
   document.getElementById("s-alive").textContent = state.alive;
   document.getElementById("s-energy").textContent = state.energy_total.toFixed(2);
   document.getElementById("s-res").textContent = state.residual.toExponential(1);
-  if (!state.nutrient) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
 
+  const grid = state[field];
+  if (!grid) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
   const H = state.height, W = state.width;
   if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
   const img = ctx.createImageData(W, H);
-  const nmax = state.nutrient_max || 1;
+  const ramp = RAMPS[field];
+  const fmax = state[field + "_max"] || 1;
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
-      const v = Math.min(1, state.nutrient[y][x] / nmax);
+      const v = Math.min(1, grid[y][x] / fmax);
+      const [r, g, b] = ramp(v);
       const i = (y * W + x) * 4;
-      img.data[i] = 20 + 40 * v;         // teal-ish nutrient ramp
-      img.data[i + 1] = 30 + 180 * v;
-      img.data[i + 2] = 40 + 120 * v;
-      img.data[i + 3] = 255;
+      img.data[i] = r; img.data[i + 1] = g; img.data[i + 2] = b; img.data[i + 3] = 255;
     }
   }
   if (state.forager) {

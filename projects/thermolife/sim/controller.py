@@ -56,6 +56,8 @@ class SimEngine:
 
     def snapshot(self, status: SimStatus) -> dict:
         nutrient = self.world.fields[:, :, Field.NUTRIENT]
+        heat = self.world.fields[:, :, Field.HEAT]
+        waste = self.world.fields[:, :, Field.WASTE]
         pos = forager_position(self.world)
         alive = int((self.world.alive >= self.cfg.lifecycle.alive_threshold).sum())
         return {
@@ -64,8 +66,14 @@ class SimEngine:
             "height": self.world.height,
             "width": self.world.width,
             "residual": self.residual(),
-            "nutrient_max": float(nutrient.max()),
+            # physical fields (nutrient/heat/waste) as H×W grids + their maxes,
+            # so the viewer can render + normalize each independently.
             "nutrient": np.round(nutrient, 4).tolist(),
+            "nutrient_max": float(nutrient.max()),
+            "heat": np.round(heat, 4).tolist(),
+            "heat_max": float(heat.max()),
+            "waste": np.round(waste, 5).tolist(),
+            "waste_max": float(waste.max()),
             "forager": [pos[0], pos[1]] if pos is not None else None,
             "alive": alive,
             "energy_total": float(self.world.energy.sum()),
@@ -157,8 +165,12 @@ class SimController:
                     "height": self._cfg.height,
                     "width": self._cfg.width,
                     "residual": 0.0,
-                    "nutrient_max": 0.0,
                     "nutrient": None,
+                    "nutrient_max": 0.0,
+                    "heat": None,
+                    "heat_max": 0.0,
+                    "waste": None,
+                    "waste_max": 0.0,
                     "forager": None,
                     "alive": 0,
                     "energy_total": 0.0,
