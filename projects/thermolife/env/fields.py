@@ -81,9 +81,17 @@ class World:
 
 
 def _forager_start(cfg: WorldConfig) -> tuple[int, int]:
-    """Where the single Slice-0 forager is seeded: a few cells off the static
-    source so it must climb the gradient to survive. Falls back to grid center."""
+    """Where the single Slice-0 forager is seeded.
+
+    Static source: a few cells off ``(cx, cy)`` so it must climb the gradient.
+    Moving source: at the orbit's tick-0 center so it starts fed and then chases.
+    """
     src = cfg.scenario.source
+    if src and src.get("kind") == "moving":
+        orbit = float(src.get("orbit_radius", min(cfg.height, cfg.width) / 4.0))
+        r = int(round(cfg.height / 2.0 + orbit))  # cos(0)=1
+        c = int(round(cfg.width / 2.0))           # sin(0)=0
+        return (min(max(r, 0), cfg.height - 1), min(max(c, 0), cfg.width - 1))
     if src and "cx" in src and "cy" in src:
         cx, cy = int(src["cx"]), int(src["cy"])
         return (min(cx + 3, cfg.height - 1), min(cy + 3, cfg.width - 1))

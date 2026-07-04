@@ -14,6 +14,8 @@ waste decay; :func:`diffuse_and_decay` returns the waste removed so the caller
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 
 from env.config import WorldConfig
@@ -30,25 +32,41 @@ def laplacian(a: np.ndarray) -> np.ndarray:
     return p[:-2, 1:-1] + p[2:, 1:-1] + p[1:-1, :-2] + p[1:-1, 2:] - 4.0 * a
 
 
+def _source_center(world: World, src: dict, tick: int) -> tuple[int, int]:
+    """The (row, col) center of the nutrient source this tick.
+
+    ``static`` sits at ``(cx, cy)``. ``moving`` orbits the grid center on a
+    deterministic circle (radius ``orbit_radius``, angular ``speed``) — a pure
+    function of ``tick``, so replay determinism (P5) holds without RNG.
+    """
+    if src.get("kind") == "moving":
+        speed = float(src.get("speed", 0.02))
+        orbit = float(src.get("orbit_radius", min(world.height, world.width) / 4.0))
+        r = int(round(world.height / 2.0 + orbit * math.cos(speed * tick)))
+        c = int(round(world.width / 2.0 + orbit * math.sin(speed * tick)))
+        return (min(max(r, 0), world.height - 1), min(max(c, 0), world.width - 1))
+    return (int(src["cx"]), int(src["cy"]))
+
+
 def inject_sources(world: World, tick: int) -> float:
     """Inject the scenario nutrient source for this tick; returns amount injected.
 
-    A static source injects ``rate`` into each cell within ``radius`` of
-    ``(cx, cy)`` until ``removal_tick`` (the Slice-0 gate, PLAN.md §15.2), after
-    which it is off. Returns the total nutrient added (a ledger source, I1).
+    Injects ``rate`` into each cell within ``radius`` of the source center (see
+    :func:`_source_center`) until ``removal_tick`` (the Slice-0 gate, §15.2),
+    after which it is off. Returns the total nutrient added (a ledger source, I1).
     """
     src = world.cfg.scenario.source
-    if not src or src.get("kind") != "static":
+    if not src or src.get("kind") not in ("static", "moving"):
         return 0.0
     removal = world.cfg.scenario.removal_tick
     if removal is not None and tick >= removal:
         return 0.0
 
-    cx, cy = int(src["cx"]), int(src["cy"])
+    cr, cc = _source_center(world, src, tick)
     radius = int(src["radius"])
     rate = float(src["rate"])
     yy, xx = np.ogrid[: world.height, : world.width]
-    mask = (yy - cx) ** 2 + (xx - cy) ** 2 <= radius**2
+    mask = (yy - cr) ** 2 + (xx - cc) ** 2 <= radius**2
     world.fields[:, :, Field.NUTRIENT] += rate * mask
     return float(rate * mask.sum())
 
