@@ -1,16 +1,12 @@
-# thermolife · sim — operational loop + web control
+# thermolife · sim — web control for the fold viewer
 
-The `sim/` package runs the Slice-0 substrate forward and exposes a **web control
-endpoint** to start / pause / restart / stop the simulation and watch it live.
-It is deliberately dependency-light (stdlib `http.server`; a client-side
-`<canvas>` viewer) — see IMPLEMENTATION_PLAN.md §D1–D3.
+The `sim/` package drives the embedding fold (`fold/FoldEngine`) and exposes a **web
+control endpoint** to start / pause / restart / stop it and watch the blobs fold and
+dock live. Dependency-light: stdlib `http.server` + a client-side `<canvas>` viewer.
 
 ## Run it
 
 ```bash
-# headless (no server) — the Slice-0 gate run
-bazel run //projects/thermolife:run -- --scenario static_gradient --ticks 6000 --seed 42
-
 # web control server (binds loopback by default)
 bazel run //projects/thermolife:serve -- --port 8787
 # → http://127.0.0.1:8787
@@ -20,50 +16,41 @@ Control surface:
 
 | Method | Path | Effect |
 |---|---|---|
-| GET  | `/`        | the canvas viewer |
-| GET  | `/state`   | JSON snapshot: `tick`, `status`, `residual`, `nutrient` grid, `forager`, `alive`, `energy_total` |
-| POST | `/start`   | build the world (optional `{"seed": N}`) and run |
+| GET  | `/`        | the canvas viewer (morphing blobs + docking edges) |
+| GET  | `/state`   | JSON snapshot: `status`, `tick`, `fold`, `fold_iter`, `fold_step`, `max_attn`, `tokens` (each `{pos, contour}`), `edges` (`[i,j,weight]`) |
+| POST | `/start`   | build a fresh fold (optional `{"seed": N}`) and run |
 | POST | `/pause`   | pause stepping (409 if not RUNNING) |
 | POST | `/resume`  | resume (409 if not PAUSED) |
-| POST | `/restart` | reset to tick 0 with the same seed and run |
+| POST | `/restart` | reset to the same seed and run |
 | POST | `/stop`    | back to IDLE |
 
-The stepping runs on a single background thread; HTTP handlers only call
-controller methods and never touch the world, so pause/resume timing cannot
-perturb the trajectory (determinism, P8).
+Stepping runs on a single background thread; HTTP handlers only call controller
+methods and never touch the engine, so pause/resume timing cannot perturb the
+trajectory (determinism, J2).
 
 ## Expose it over Tailscale
 
-The app binds to `127.0.0.1`; **Tailscale proxies** it — there is no Tailscale
-code in the app. Start the server, then in another shell:
+The app binds to `127.0.0.1`; **Tailscale proxies** it (no Tailscale code in the app).
+`sim/host.sh` wraps this; or manually:
 
 ```bash
-# private to YOUR tailnet (recommended default): reachable from your own devices
-tailscale serve --bg 8787
-tailscale serve status            # shows the https://<machine>.<tailnet>.ts.net URL
-
-# turn it off
-tailscale serve --https=443 off
+tailscale serve --bg 8787          # private to your tailnet (recommended)
+tailscale serve status             # shows the https://<machine>.<tailnet>.ts.net URL
+tailscale serve --https=443 off    # off
 ```
 
-For a **public** URL on the internet (opt-in — security decision below):
+For a **public** URL (opt-in): `tailscale funnel --bg 8787`.
 
-```bash
-tailscale funnel --bg 8787        # anyone with the URL can reach it
-tailscale funnel status
-tailscale funnel --https=443 off
-```
-
-> **Security note.** The control API is **unauthenticated by design** — access
-> control is delegated to the tailnet. `tailscale serve` keeps it private to your
-> devices. `tailscale funnel` exposes an *unauthenticated start/pause/restart
-> endpoint to the public internet*; only enable it deliberately, and prefer
-> adding auth (or a reverse proxy) first. This is IMPLEMENTATION_PLAN.md §D2.
+> **Security note.** The control API is **unauthenticated by design** — access control
+> is delegated to the tailnet. `serve` keeps it private to your devices; `funnel`
+> exposes an unauthenticated start/pause/restart endpoint to the public internet —
+> only enable it deliberately.
 
 ## Files
 
-- `controller.py` — `SimEngine` (deterministic stepper + snapshot) and
-  `SimController` (background thread + `IDLE/RUNNING/PAUSED` state machine).
+- `controller.py` — `SimController`: background thread + `IDLE/RUNNING/PAUSED` state
+  machine around any engine (`step`/`tick`/`residual`/`snapshot`).
 - `server.py` — stdlib HTTP server; routes control POSTs + `/state` + the viewer.
-- `viewer.html` — self-contained canvas page (polls `/state` at ~5 Hz).
-- `forager.py` · `tick.py` · `runner.py` — the Slice-0 physics loop.
+- `viewer.html` — self-contained canvas page (polls `/state` at ~7 Hz), draws each
+  token's contour blob + attention bonds, autoscaled to frame the fold.
+- `host.sh` — build + run + Tailscale hosting helper.

@@ -1,39 +1,65 @@
 # thermolife — project-specific instructions
 
-This project is a continuous thermodynamic neural cellular automaton — a resource-constrained NCA on a 2D grid with learned binding interfaces and online plasticity. It is architecturally significant, performance-sensitive (fully-vectorized grid physics + NCA rule in the hot path; TBPTT meta-training), and methodologically delicate (the difference between *earned* adaptation and "pretty blobs" is the entire point). The repo-root `CLAUDE.md` has the universal skill routing and engineering rules; this file adds the project-specific anchors.
+thermolife visualizes **embedding folding as ligand–receptor docking**: a toy
+transformer whose token embeddings morph through iterated attention (Hinton's
+"embeddings fold like proteins"), each rendered as a **grounded 2D contour blob**
+that docks with complementary blobs. The repo-root `CLAUDE.md` has the universal
+skill routing and engineering rules; this file adds the project-specific anchors.
 
 ## Project anchors
 
-- **Plan** — [`PLAN.md`](PLAN.md) is the source of truth for scope, invariants (I1–I15), risks (R1–R14), architecture (§5), the per-tick pipeline (§10.1), the explicit physics (§10.3), the average-reward objective (§10.4), the binding mechanism (§9.3–9.4), Slice 0 (§15), and milestones M1–M7 (§16). Read it before proposing changes that cross layers.
-- **Workspace** — Bazel `rules_python`, like every project in this repo. When Slice 0 code lands, add a `thermolife_deps` `pip.parse` hub in the root `MODULE.bazel` reading `projects/thermolife/requirements_lock.txt` (start with `numpy`/`pyyaml`; `torch`/`matplotlib` when M2 needs them) and a `py_test` for the invariant gate. No deps for milestones that don't exist yet.
-- **No implementation yet.** The first batch's job is Slice 0 (§15.1) and its always-on invariant tests (§17.1) — **not** M1+ components. Slice 0 has zero learning on purpose: physics + a hand-coded forager only.
+- **Plan** — [`PLAN.md`](PLAN.md) is the source of truth: the mechanism (§4), the
+  visualization contract (§5), invariants **J1–J6** (§6), the `fold/` module map (§7),
+  milestones **S0–M3** (§8), and §9 (what changed from the earlier thermodynamic-grid
+  design). Read it before changes that cross layers.
+- **Workspace** — Bazel `rules_python`, like every project in this repo. Deps come
+  from the `thermolife_deps` `pip.parse` hub (numpy + pyyaml today; **torch** arrives
+  at M2 training). `bazel test //projects/thermolife:test_suite` runs the J1–J6 gate.
+- **S0 is built.** `fold/` (numpy, random init) + `sim/` (web control). Learned
+  docking (M2, torch) and the drifting objective (M3) are design only.
 
-## Domain-specific reminders
+## Domain-specific reminders (the invariants that make this *this*)
 
-- **env/ is the only mutator of physical channels.** `model/` emits *action intents* and *transfer requests*; `env/apply_conservative_transactions` debits energy first (I12) and enforces conservation (I1, I3). This one boundary is what makes conservation checkable in one place. If model code writes a field directly, that's the bug.
-- **No per-cell Python loop in the hot path (I6).** Neighborhoods are shifted tensors / `unfold` / conv stencils, vectorized over the whole `[B,H,W,C]` world. A `for cell in cells:` in `tick()` is a violation; there's a structural test *and* a wall-clock gate.
-- **Conservation is a ledger, not a re-sum (I1, R3).** Check the running `TransactionLedger` against the field totals; every source/sink is a named logged entry. Float/op-order drift accumulates over long horizons — fixed transaction order + the long-horizon drift test catch it.
-- **Plasticity ≠ training (I9).** Within a rollout chunk, base weights `θ,φ` are frozen. Only `h` (every tick), interface expression (every `k` ticks), and `z` (slow, bounded) change. The outer optimizer steps **only** at *detached* TBPTT chunk boundaries. Applying `θ.grad` mid-chunk is a violation.
-- **Thermodynamic honesty (I10) — the anti-gaming invariant.** The reward contains **no** direct "lower entropy / more order / more structure" term. Organization must *emerge* from viability soft-barriers + action/plasticity cost. Any term that scores order directly is constitutional and forbidden. This is thermolife's analogue of quorum's "computed, not retrieved."
-- **Interface groundedness (I11).** The rendered ligand/receptor contour `R(φ)` is a pure function of the *same* code that drives the binding kernel `κ`. A hand that morphs on screen ⟺ its interaction kernel changed. The renderer must read nothing the kernel doesn't. No decorative hands.
-- **Determinism / replay (I8).** Same seed + same `state_0` ⇒ byte-identical trajectory. Set `torch.use_deterministic_algorithms(True)`, pin CUDA, log RNG state — CUDA non-determinism (R14) silently breaks this.
-- **The seven ablations (§18) are verification, not an afterthought.** A metric improvement that survives none of them is not a result. Any comparison claim needs a **matched-compute control** (M4's frozen-plasticity control, M3's lesion specificity, M5's unseen-schedule holdout).
-- **No aesthetic claims.** "Interesting emergent pattern" judged by eye is failure mode F-Aesthetic. Report against the four metric families (§2.2) and the ablations, and report what was **not** run.
+- **Groundedness is the soul (J1/J6).** The drawn contour is a pure function of
+  `C = X·W_c`, and that same `C` is the attention **query**; the **key** is `C·M`. By
+  Parseval the attention score `Q_i·K_j` **equals** the overlap of the two contours.
+  A blob that morphs ⟺ its binding changed. **If the renderer reads anything the
+  attention math doesn't, that's the bug.** No decorative shapes.
+- **No spatial grid.** The embedding space *is* the space; tokens are free vectors, and
+  a token's canvas position is a fixed 2D projection of its embedding. Do not
+  reintroduce a physical grid, diffusion fields, or nutrient/energy physics — those
+  were the old design (PLAN.md §9).
+- **No per-token Python loop in the mechanism (J3).** `fold/transformer.py` and
+  `fold/interface.py` are batched matmuls over all N tokens. Loops over the 4 harmonics
+  or serialization loops in `engine.snapshot` are fine; a `for i in range(n_tokens)` in
+  the fold math is not (there's a structural test).
+- **Synchrony (J4).** `block_step` reads `X` and returns a fresh `X`; it mutates
+  nothing. `X^{t+1}` is a pure function of `X^{t}`.
+- **Determinism / replay (J2).** Same seed ⇒ byte-identical fold trajectory, including
+  the fold-gallery reseeds (`FoldEngine._instantiate` is seeded deterministically).
+- **Honest emergence.** No term rewards "nice docking"; at S0 the weights are random
+  and the fold either docks or doesn't — report what happens. No eyeballed-pattern
+  claims (failure mode F-Aesthetic). The objective that *earns* meaningful folding is
+  M2 (trained) / M3 (viability under drift), not a hand-tuned pretty picture.
 
 ## Milestone discipline
 
-- **Slice 0 only for the first batch of work.** Scope is capped at PLAN.md §15.1. No learned interfaces, no NCA rule, no plasticity, no prediction, no evolution, no particles until Slice 0 is green *and* the hand-coded forager demonstrably dies when the gradient is removed.
-- **Grid before particles; plasticity before evolution.** Particles are M7, gated behind a working grid. Reproduction/selection is M6, gated behind working within-lifetime plasticity (M4). Do not reorder.
+- **S0 is the mechanism only** (PLAN.md §8): the fold + the grounded blob viewer, J1–J6
+  green. No training, no learned interfaces, no objective.
+- **Order is S0 → M1 (designed) → M2 (trained, torch) → M3 (objective-driven).** M2
+  before M3: you need a trainable fold before an objective can shape it. Do not
+  reorder; do not add torch before M2.
 
-## Working inside this project (when code exists)
+## Working inside this project
 
 ```bash
-# All bazel commands work from anywhere — bazel walks up to find MODULE.bazel.
-bazel test //projects/thermolife/...                       # build + run every target
-bazel test //projects/thermolife:test_suite               # the PLAN.md I1-I15 gate (§17.1)
-bazel test //projects/thermolife:test_suite --test_arg=-k --test_arg=conservation   # I1/I2/I3/I12
+bazel test //projects/thermolife:test_suite               # the J1-J6 gate (§6)
+bazel run  //projects/thermolife:serve -- --port 8787     # live blob viewer
+./projects/thermolife/sim/host.sh                         # host it on the tailnet
 ```
 
 ## Repo context
 
-One project in a polyglot monorepo. Its methodological sibling is [`projects/quorum/`](../quorum/) — same discipline that emergence must be *earned*, not faked. Keep cross-project boundaries clean; no cross-project imports.
+One project in a polyglot bazel-only monorepo. Keep it **conceptually separate** from
+its siblings `market` and `quorum` — do not import their vocabulary, objectives, or
+mechanisms. No cross-project imports.
