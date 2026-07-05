@@ -28,15 +28,60 @@ py_library(
     ],
 )
 
-# CLI runner — accepts --policy uniform_random|llm. The llm path is a lazy
-# import that errors cleanly when the [llm] extra isn't installed; the LLM
-# backend target lands in a separate commit.
+# Real LLM backend. Kept in a separate target so most builds don't need
+# torch/transformers. The base slice0 library imports this lazily via
+# ``main.py`` and ``policy.make_llm_policy``.
+#
+# The nvidia-* CUDA runtime wheels are listed explicitly because torch's
+# transitive deps go through the `cuda-toolkit==13.0.2` meta-package, and
+# rules_python does not follow the variant-suffix wheels it references —
+# torch's own preload sequence (torch/__init__.py:_load_global_deps) then
+# raises ``libcudart.so.13: cannot open shared object file`` at import time.
+py_library(
+    name = "llm_backend",
+    srcs = ["slice0/_llm_policy.py"],
+    imports = ["."],
+    deps = [
+        ":slice0",
+        requirement("torch"),
+        requirement("transformers"),
+        requirement("nvidia-cuda-runtime"),
+        requirement("nvidia-cuda-nvrtc"),
+        requirement("nvidia-cuda-cupti"),
+        requirement("nvidia-cublas"),
+        requirement("nvidia-cufft"),
+        requirement("nvidia-curand"),
+        requirement("nvidia-cusolver"),
+        requirement("nvidia-cusparse"),
+        requirement("nvidia-cufile"),
+        requirement("nvidia-nvjitlink"),
+        requirement("nvidia-nvtx"),
+    ],
+)
+
+# CLI runner — accepts --policy uniform_random|llm etc.
 py_binary(
     name = "main",
     srcs = ["slice0/main.py"],
     main = "slice0/main.py",
     imports = ["."],
-    deps = [":slice0"],
+    deps = [
+        ":slice0",
+        ":llm_backend",
+    ],
+)
+
+# Success-criteria harness — Mann-Whitney U + replay diff. This is the merge
+# gate for the whole slice (PLAN.md §15.1 success criteria).
+py_binary(
+    name = "verify",
+    srcs = ["slice0/verify.py"],
+    main = "slice0/verify.py",
+    imports = ["."],
+    deps = [
+        ":slice0",
+        ":llm_backend",
+    ],
 )
 
 py_test(
@@ -47,6 +92,7 @@ py_test(
     data = ["pytest.ini"],
     deps = [
         ":slice0",
+        ":llm_backend",
         requirement("pytest"),
         requirement("pytest-cov"),
         requirement("hypothesis"),
