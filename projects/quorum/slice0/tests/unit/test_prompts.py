@@ -67,13 +67,14 @@ class TestSharedPrefix:
 
 class TestLocalitySuffix:
     def test_suffix_contains_local_count(self):
-        """I1: the suffix carries the neighborhood occupancy count."""
+        """I1: the suffix carries a 1-count from agent 0's local window."""
         cells, agents = _world()
-        # Agent 0 at (1,1) has one neighbor (agent 1 at (1,2)). Agent 2 at
-        # (3,3) is toroidal-Chebyshev distance 2 from (1,1) — OUTSIDE the
-        # radius=1 window.
+        # Agent 0 at (1,1) has one neighbor (agent 1 at (1,2)) — that is
+        # the E direction. Agent 2 at (3,3) is toroidal-Chebyshev distance 2
+        # from (1,1), OUTSIDE the radius=1 window.
         _, suffix = prompts.render(agents[0], cells)
-        assert "1 neighbor" in suffix or "1 agents" in suffix or " 1 " in suffix
+        assert "total 1 agents" in suffix
+        assert "E=1" in suffix
 
     def test_suffix_no_mention_of_other_agent_ids(self):
         """I11: agent 0's suffix names no other agent."""

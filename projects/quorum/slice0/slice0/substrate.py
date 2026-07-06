@@ -95,6 +95,32 @@ def neighborhood_occupancy(
     return count
 
 
+def neighborhood_view(
+    cells: np.ndarray,
+    agent: Agent,
+    radius: int = 1,
+) -> np.ndarray:
+    """Return the ``(2r+1) × (2r+1)`` toroidal window around the agent.
+
+    Center is the agent's own cell (always ``GRID_OCCUPIED`` by construction).
+    Values are cell states as int8 ``{GRID_EMPTY, GRID_OCCUPIED}``. Toroidal
+    wrap on both axes.
+
+    Locality (I1) holds because the view spans ONLY the declared window —
+    same radius as ``neighborhood_occupancy``. No coordinates leak: the
+    caller sees a grid-relative window, not any (row, col) tuples.
+    """
+    H, W = cells.shape
+    side = 2 * radius + 1
+    view = np.empty((side, side), dtype=np.int8)
+    for dr in range(-radius, radius + 1):
+        for dc in range(-radius, radius + 1):
+            nr = (agent.row + dr) % H
+            nc = (agent.col + dc) % W
+            view[dr + radius, dc + radius] = cells[nr, nc]
+    return view
+
+
 def step(
     cells: np.ndarray,
     agents: Sequence[Agent],

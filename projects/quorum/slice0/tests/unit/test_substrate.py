@@ -82,6 +82,54 @@ class TestNeighborhoodToroidal:
         assert substrate.neighborhood_occupancy(cells, a) == 0
 
 
+class TestNeighborhoodView:
+    """The per-cell window (I1: same declared radius as the count view)."""
+
+    def test_shape_matches_radius(self):
+        cells = np.zeros((8, 8), dtype=np.int8)
+        cells[4, 4] = GRID_OCCUPIED
+        a = Agent(id=0, row=4, col=4)
+        assert substrate.neighborhood_view(cells, a, radius=1).shape == (3, 3)
+        assert substrate.neighborhood_view(cells, a, radius=2).shape == (5, 5)
+
+    def test_center_is_self(self):
+        cells = np.zeros((8, 8), dtype=np.int8)
+        cells[4, 4] = GRID_OCCUPIED
+        a = Agent(id=0, row=4, col=4)
+        view = substrate.neighborhood_view(cells, a)
+        assert view[1, 1] == GRID_OCCUPIED
+
+    def test_places_neighbor_in_correct_direction(self):
+        # Neighbor to the south (row+1) of a (4,4) agent.
+        cells = np.zeros((8, 8), dtype=np.int8)
+        cells[4, 4] = GRID_OCCUPIED
+        cells[5, 4] = GRID_OCCUPIED  # south of the agent
+        a = Agent(id=0, row=4, col=4)
+        view = substrate.neighborhood_view(cells, a)
+        # dr=+1, dc=0 → view[2, 1]
+        assert view[2, 1] == GRID_OCCUPIED
+        # No other off-center cell is occupied.
+        view[1, 1] = 0
+        view[2, 1] = 0
+        assert int(view.sum()) == 0
+
+    def test_toroidal_wrap_top_left_corner(self):
+        # Agent at (0, 0) — its NW neighbor is (H-1, W-1) toroidally.
+        cells = np.zeros((8, 8), dtype=np.int8)
+        cells[0, 0] = GRID_OCCUPIED
+        cells[7, 7] = GRID_OCCUPIED
+        a = Agent(id=0, row=0, col=0)
+        view = substrate.neighborhood_view(cells, a)
+        # dr=-1, dc=-1 → view[0, 0]
+        assert view[0, 0] == GRID_OCCUPIED
+
+    def test_dtype_int8(self):
+        cells = np.zeros((4, 4), dtype=np.int8)
+        cells[0, 0] = GRID_OCCUPIED
+        a = Agent(id=0, row=0, col=0)
+        assert substrate.neighborhood_view(cells, a).dtype == np.int8
+
+
 class TestStepBasic:
     def test_stay_is_noop(self):
         cells = np.zeros((4, 4), dtype=np.int8)
