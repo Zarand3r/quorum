@@ -39,6 +39,7 @@ class LLMPolicy:
         model_name: str,
         device: str | None = None,
         dtype: str = "float16",
+        use_chat_template: bool = True,
     ) -> None:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.model_name = model_name
@@ -48,6 +49,19 @@ class LLMPolicy:
         self.tok.padding_side = "left"  # last position is real for every seq
         if self.tok.pad_token is None:
             self.tok.pad_token = self.tok.eos_token
+
+        # Instruction-tuned models like Qwen 2.5 expect chat-template wrapping
+        # (``<|im_start|>user\n... <|im_end|>\n<|im_start|>assistant\n``).
+        # Feeding raw text bypasses the tuning objective and produces the
+        # untuned continuation distribution — empirically this made Qwen 2.5
+        # 7B *actively scatter* agents on the §15.1 gate (treatment MNND
+        # 2.084 vs baseline 1.870, p=0.9995). Wrapping restores the tuned
+        # behaviour. I10 still holds: the wrap is byte-identical prefix +
+        # per-agent suffix + byte-identical assistant marker; the shared
+        # prefix cache reuse point is the wrap+PREFIX span.
+        self.use_chat_template = (
+            use_chat_template and self.tok.chat_template is not None
+        )
 
         # Use plain .to(device) rather than device_map=, which now requires
         # the accelerate package. For a single-model inference case we don't
@@ -81,6 +95,27 @@ class LLMPolicy:
         self.forward_call_count = 0
         self.generate_call_count = 0  # stays 0 by construction
 
+    def _wrap(self, prompts: list[str]) -> list[str]:
+        """Apply the tokenizer's chat template with add_generation_prompt=True.
+
+        Falls back to raw prompts for models without a chat template (e.g.
+        SmolLM base). The wrap preserves I10: for every batch element, the
+        span up to the per-agent divergence point is byte-identical (chat
+        header + PREFIX), and the span from the end of the suffix onward is
+        also byte-identical (``<|im_end|><|im_start|>assistant\\n``).
+        """
+        if not self.use_chat_template:
+            return prompts
+        wrapped: list[str] = []
+        for p in prompts:
+            msgs = [{"role": "user", "content": p}]
+            wrapped.append(
+                self.tok.apply_chat_template(
+                    msgs, tokenize=False, add_generation_prompt=True
+                )
+            )
+        return wrapped
+
     @torch.no_grad()
     def step(
         self,
@@ -88,6 +123,7 @@ class LLMPolicy:
         rng: np.random.Generator,
         observations: list[Observation] | None = None,  # ignored; LLM reads prompt
     ) -> list[str]:
+        prompts = self._wrap(prompts)
         enc = self.tok(prompts, padding=True, return_tensors="pt").to(self.device)
         # >>> ONE forward pass for the entire population (I3, I4). <<<
         out = self.model(**enc, use_cache=False)
