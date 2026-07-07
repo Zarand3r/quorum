@@ -112,8 +112,18 @@ tests; `configs/world.yaml` (→ `configs/fold.yaml`).
   embeddings fold and incidentally form bonds. **← first; this is what replaces the current code.**
 - **M1 — designed docking.** Hand-set `W_c` / `M` so chosen token pairs are complementary; they fold
   into *deliberate* docking. Proves the ligand/receptor readout is real, not coincidental.
-- **M2 — learned docking (torch).** Train the tiny transformer on a matching/assembly task so the
-  fold is *meaningful*, not incidental. First real optimization.
+  *(Subsumed by M2 in practice: the learned solution demonstrates the same thing, earned.)*
+- **M2 — learned docking (lock-and-key objective). Built.** A vocabulary of K complementary
+  pairs (2K learned base embeddings); scenes = all pairs, shuffled + Gaussian-noised (no positional
+  encoding ⇒ partners are identifiable only by *content*). Loss = attention cross-entropy
+  `−log A[i, partner(i)]` — the readout is the **attention structure**, not a token — with **deep
+  supervision** over every iteration (a final-step-only loss plateaus near chance: the untrained
+  weight-tied fold rank-collapses the scene away before T). Collapse is self-defeating under this
+  loss (identical embeddings ⇒ uniform A ⇒ pinned at log N), so anti-collapse needs no extra term.
+  Trained with **autograd** (pure-python autodiff over numpy) rather than torch — the model is a few
+  hundred parameters; a multi-GB hub is unjustified. `M` stays fixed (π-rotation) so high `Q·K`
+  keeps meaning *complementary*. **Gate: >95% held-out docking accuracy** (fresh shuffles + noise,
+  scored with the parity-pinned mechanism fold) — enforced by `tests/test_m2_trained.py`.
 - **M3 — objective-driven non-settling.** Re-introduce a viability / free-energy objective (the old
   thermodynamic idea, now as a docking energy over a *drifting* target) so folding keeps **adapting**
   instead of freezing — the "earned, not pretty" payoff.

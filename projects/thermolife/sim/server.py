@@ -100,12 +100,15 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--port", type=int, default=8787)
     p.add_argument("--seed", type=int, default=None)
     p.add_argument("--step-hz", type=float, default=20.0)
+    p.add_argument("--trained", default=None,
+                   help="path to trained weights .npz → learned-docking mode")
     args = p.parse_args(argv)
 
     cfg = load_fold_config(args.config)
     seed = cfg.seed if args.seed is None else args.seed
     controller = SimController(
-        lambda s: FoldEngine(cfg, s), default_seed=seed, step_hz=args.step_hz
+        lambda s: FoldEngine(cfg, s, trained_npz=args.trained),
+        default_seed=seed, step_hz=args.step_hz,
     )
     server = build_server(args.host, args.port, controller)
     print(
