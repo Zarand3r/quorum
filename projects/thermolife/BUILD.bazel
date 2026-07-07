@@ -55,6 +55,15 @@ py_binary(
     deps = [":thermolife"],
 )
 
+py_binary(
+    name = "train_fold",
+    srcs = ["train/train.py"],
+    main = "train/train.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":thermolife"],
+)
+
 py_test(
     name = "test_suite",
     srcs = glob(["tests/**/*.py"]),

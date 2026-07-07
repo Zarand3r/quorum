@@ -61,6 +61,15 @@ def fold_forward(x0, params: dict, m_metric, cfg: FoldConfig, t_steps: int):
     return x, a
 
 
+def fold_forward_all(x0, params: dict, m_metric, cfg: FoldConfig, t_steps: int):
+    """Unroll T iterations; return (final X, [A_1..A_T])."""
+    x, attns = x0, []
+    for _ in range(t_steps):
+        x, a = diff_block_step(x, params, m_metric, cfg)
+        attns.append(a)
+    return x, attns
+
+
 def scene_loss(
     params: dict, types, partner, noise, sigma: float, m_metric, cfg: FoldConfig, t_steps: int
 ):
@@ -69,11 +78,19 @@ def scene_loss(
     self-defeating: identical embeddings ⇒ uniform A ⇒ loss pinned at log N.
 
     X0 is assembled here from params["e_types"] so the vocabulary itself learns.
+
+    DEEP SUPERVISION: the loss averages over every iteration's attention, not
+    just the last. A weight-tied untrained fold washes the scene out by ~T
+    (rank collapse), so a final-step-only loss plateaus near chance; supervising
+    all steps teaches docking to form early and *persist*.
     """
     x0 = params["e_types"][types] + sigma * noise
-    _, a = fold_forward(x0, params, m_metric, cfg, t_steps)
-    picked = a[anp.arange(len(partner)), partner]
-    return -anp.mean(anp.log(picked + 1e-12))
+    _, attns = fold_forward_all(x0, params, m_metric, cfg, t_steps)
+    idx = anp.arange(len(partner))
+    total = 0.0
+    for a in attns:
+        total = total - anp.mean(anp.log(a[idx, partner] + 1e-12))
+    return total / len(attns)
 
 
 def batch_loss(params: dict, scenes, sigma, m_metric, cfg: FoldConfig, t_steps: int):

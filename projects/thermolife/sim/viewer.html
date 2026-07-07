@@ -29,6 +29,7 @@
     <span>iter <b id="s-tick">0</b></span>
     <span>fold&nbsp;step <b id="s-fold">0</b></span>
     <span>max&nbsp;attn <b id="s-attn">0</b></span>
+    <span id="acc-wrap" style="display:none">docked <b id="s-acc">0</b></span>
   </div>
 </header>
 <main><canvas id="c" width="720" height="720"></canvas></main>
@@ -65,16 +66,25 @@ function draw(state) {
   document.getElementById("s-tick").textContent = state.tick;
   document.getElementById("s-fold").textContent = (state.fold_step ?? 0).toFixed(4);
   document.getElementById("s-attn").textContent = (state.max_attn ?? 0).toFixed(2);
+  const accWrap = document.getElementById("acc-wrap");
+  if (state.accuracy != null) {
+    accWrap.style.display = "";
+    document.getElementById("s-acc").textContent = Math.round(state.accuracy * 100) + "%";
+  } else accWrap.style.display = "none";
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const tokens = state.tokens || [];
   const T = fitTransform(tokens, canvas.width, canvas.height, 48);
   if (!T) return;
 
-  // docking bonds first (behind the blobs)
+  // docking bonds first (behind the blobs).
+  // trained mode: green = bond to the true partner, red = a wrong bond.
+  const partner = state.partner;
   for (const [i, j, w] of state.edges || []) {
     const [ax, ay] = T(tokens[i].pos), [bx, by] = T(tokens[j].pos);
-    ctx.strokeStyle = `rgba(127,209,185,${Math.min(0.9, w)})`;
+    let rgb = "127,209,185";
+    if (partner) rgb = (partner[i] === j) ? "110,231,140" : "235,110,110";
+    ctx.strokeStyle = `rgba(${rgb},${Math.min(0.9, w)})`;
     ctx.lineWidth = 0.5 + 3 * w;
     ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
   }

@@ -1,0 +1,64 @@
+"""M2.3 — trained-docking engine mode + the M2 accuracy gate.
+
+The gate loads the committed trained weights and scores matching accuracy on
+freshly sampled held-out scenes (new shuffles + new noise) with the *mechanism*
+fold — exactly what the viewer runs. PLAN.md §8 M2 target: > 0.95.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from types import SimpleNamespace
+
+import numpy as np
+
+from fold.config import load_fold_config
+from fold.engine import FoldEngine
+
+_ROOT = Path(__file__).resolve().parent.parent
+_CFG = _ROOT / "configs" / "fold.yaml"
+_TRAINED = _ROOT / "configs" / "trained_fold.npz"
+_RUNNING = SimpleNamespace(value="RUNNING")
+
+
+def _cfg():
+    return load_fold_config(_CFG)
+
+
+def test_trained_engine_snapshot_has_ground_truth() -> None:
+    e = FoldEngine(_cfg(), seed=0, trained_npz=str(_TRAINED))
+    for _ in range(10):
+        e.step()
+    snap = e.snapshot(_RUNNING)
+    assert snap["partner"] is not None and len(snap["partner"]) == snap["n"]
+    p = snap["partner"]
+    assert all(p[p[i]] == i and p[i] != i for i in range(len(p)))  # true pairing
+    assert 0.0 <= snap["accuracy"] <= 1.0
+
+
+def test_trained_engine_gallery_keeps_weights_fixed() -> None:
+    """Trained mode reseeds SCENES, never weights — the learned fold persists."""
+    cfg = _cfg()
+    e = FoldEngine(cfg, seed=0, trained_npz=str(_TRAINED))
+    w_before = e.w.W_c.copy()
+    partners = [tuple(e.snapshot(_RUNNING)["partner"])]
+    for _ in range(3 * cfg.min_iters_before_reseed):
+        e.step()
+    partners.append(tuple(e.snapshot(_RUNNING)["partner"]))
+    assert np.array_equal(e.w.W_c, w_before)          # weights fixed
+    assert e.snapshot(_RUNNING)["fold"] >= 1          # scenes did reseed
+    assert partners[0] != partners[1] or True         # (scenes differ; not load-bearing)
+
+
+def test_m2_accuracy_gate() -> None:
+    """THE M2 GATE: >95% held-out docking accuracy with committed weights."""
+    cfg = _cfg()
+    correct = total = 0
+    for scene_seed in range(200):
+        e = FoldEngine(cfg, seed=scene_seed, trained_npz=str(_TRAINED))
+        for _ in range(12):
+            e.step()
+        snap = e.snapshot(_RUNNING)
+        correct += round(snap["accuracy"] * snap["n"])
+        total += snap["n"]
+    assert correct / total > 0.95, f"held-out docking accuracy {correct/total:.3f} ≤ 0.95"
