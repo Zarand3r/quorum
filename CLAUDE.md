@@ -1,12 +1,13 @@
 # Repository Instructions for Claude
 
-This is a Bazel workspace at the repo root (`MODULE.bazel` + `BUILD.bazel` + `.bazelversion` + `.bazelrc`). One project today; designed for more. **No Python at the repo root** since `projects/market/` was extracted on 2026-06-29 into [`Zarand3r/sentiment`](https://github.com/Zarand3r/sentiment) (the root `pyproject.toml` + `uv.lock` were removed in the same change).
+This is a Bazel workspace at the repo root (`MODULE.bazel` + `BUILD.bazel` + `.bazelversion` + `.bazelrc`). Python projects use `rules_python` with a hermetic 3.12 toolchain and a **per-project `pip.parse` hub** (declared in `MODULE.bazel`) reading a pinned `requirements_lock.txt` next to the project — dependency-isolated by construction. Cross-project imports are not used. **No Python at the repo root** since `projects/market/` was extracted on 2026-06-29 into [`Zarand3r/sentiment`](https://github.com/Zarand3r/sentiment) (the root `pyproject.toml` + `uv.lock` were removed in the same change).
 
 ## Active projects
 
 | Project | Build system | Brief |
 |---|---|---|
 | [`projects/quorum/`](projects/quorum/) | Bazel | Single-pass LLM population simulator for emergent behavior. Goal: **computed** (irreducible) emergence, validated by Boids / Schelling baselines and an irreducibility test. See `projects/quorum/PLAN.md`. Design only; no implementation yet. |
+| [`projects/thermolife/`](projects/thermolife/) | Bazel (`rules_python`) | Embedding folding as ligand–receptor docking — a toy transformer whose token embeddings fold through iterated attention, each rendered as a **grounded** 2D contour blob (the drawn shape *is* the attention query/key, so `Q·K` = contour overlap by Parseval) that docks with complementary blobs. Goal: **earned** meaningful folding (trained + objective-driven), not "pretty blobs." See `projects/thermolife/PLAN.md`. S0 (numpy mechanism) implemented; training is M2. |
 
 When working on a specific project, also load its own `CLAUDE.md` (e.g. `projects/quorum/CLAUDE.md`) for project-specific framing, invariants, and document pointers. Claude Code merges all CLAUDE.md files on the path to cwd; the two are additive.
 

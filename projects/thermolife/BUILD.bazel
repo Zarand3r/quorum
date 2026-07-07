@@ -1,0 +1,70 @@
+# thermolife — embedding folding as ligand–receptor docking (PLAN.md). Bazel graph.
+#
+# S0 scope: fold/ toy transformer (grounded Fourier-contour attention) + sim/ web
+# control, on numpy + pyyaml only. Deps come from the ``thermolife_deps`` pip hub
+# (MODULE.bazel), pinned in ``requirements_lock.txt``. No torch yet (M2 training).
+
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+load("@thermolife_deps//:requirements.bzl", "requirement")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["requirements_lock.txt", "pytest.ini"])
+
+# Declarative config (PLAN.md §7) — fold.yaml.
+filegroup(
+    name = "configs",
+    srcs = glob(["configs/*.yaml"]),
+)
+
+# Fold mechanism + operational code. train/ is a stub until M2 (torch training).
+py_library(
+    name = "thermolife",
+    srcs = glob(
+        [
+            "*.py",
+            "fold/**/*.py",
+            "sim/**/*.py",
+            "train/**/*.py",
+        ],
+        allow_empty = True,
+    ),
+    data = [
+        ":configs",
+        "sim/viewer.html",  # served by sim/server.py from runfiles
+    ],
+    imports = ["."],  # put projects/thermolife on sys.path → `import env`, `import sim`
+    deps = [
+        requirement("numpy"),
+        requirement("pyyaml"),
+    ],
+)
+
+# Web control server: bazel run //projects/thermolife:serve -- --port 8787
+# then `tailscale serve --bg 8787` to expose it on your tailnet (sim/host.sh).
+py_binary(
+    name = "serve",
+    srcs = ["sim/server.py"],
+    main = "sim/server.py",
+    data = [
+        ":configs",
+        "sim/viewer.html",
+    ],
+    imports = ["."],
+    deps = [":thermolife"],
+)
+
+py_test(
+    name = "test_suite",
+    srcs = glob(["tests/**/*.py"]),
+    main = "tests/pytest_main.py",
+    data = [
+        ":configs",
+        "pytest.ini",
+    ],
+    imports = ["."],
+    deps = [
+        ":thermolife",
+        requirement("pytest"),
+    ],
+)
