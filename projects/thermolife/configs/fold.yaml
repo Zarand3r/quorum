@@ -1,0 +1,19 @@
+# thermolife — embedding folding as ligand–receptor docking (PLAN.md §4).
+# numpy mechanism, random init, no torch (S0).
+n_tokens: 8          # tokens = "molecules"; each renders as a morphing contour blob
+d: 4                 # embedding dim (small); rendered as a 2D blob via grounded readout
+k_harmonics: 4       # K → contour coeff dim 2K (= attention query/key dim)
+tie_weights: true    # one repeated attention map (a folding flow)
+use_mlp: true
+mlp_width: 16
+seed: 0
+rho0: 1.0            # base blob radius
+amp: 0.5             # harmonic amplitude (blob morph strength)
+r_min: 0.05          # keep the outline renderable
+render_scale: 0.5    # blob size in the position plane
+init_scale: 1.5      # initial spread of tokens
+contour_points: 64   # outline resolution
+edge_threshold: 0.15 # min attention to draw a docking bond
+reseed_on_converge: true   # once a fold settles, start a fresh one (a fold gallery)
+converge_eps: 0.001        # fold_step below this ⇒ converged
+min_iters_before_reseed: 40 # show each fold at least this long
