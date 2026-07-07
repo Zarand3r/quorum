@@ -35,6 +35,7 @@ py_library(
     ],
     imports = ["."],  # put projects/thermolife on sys.path → `import env`, `import sim`
     deps = [
+        requirement("autograd"),
         requirement("numpy"),
         requirement("pyyaml"),
     ],

@@ -1,7 +1,8 @@
 # Pinned dependencies for the thermolife pip hub (thermolife_deps).
-# Slice 0 is numpy + pyyaml + pytest only — no torch, no matplotlib, no web
-# framework (the server is stdlib http.server; the viewer is a client canvas).
+# M2 adds autograd (pure-python reverse-mode autodiff over numpy, ~200KB) for
+# training the fold — torch would be a multi-GB hub for a ~300-parameter model.
 # Pins mirror the sibling quorum/experiments lock for a consistent pytest stack.
+autograd==1.7.0
 colorama==0.4.6 ; sys_platform == 'win32'
 iniconfig==2.3.0
 numpy==2.4.6
