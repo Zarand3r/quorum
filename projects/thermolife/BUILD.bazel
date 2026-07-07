@@ -24,6 +24,7 @@ py_library(
         [
             "*.py",
             "fold/**/*.py",
+            "eco/**/*.py",
             "sim/**/*.py",
             "train/**/*.py",
         ],
@@ -51,6 +52,15 @@ py_binary(
         ":configs",
         "sim/viewer.html",
     ],
+    imports = ["."],
+    deps = [":thermolife"],
+)
+
+py_binary(
+    name = "eco_run",
+    srcs = ["eco/run_cli.py"],
+    main = "eco/run_cli.py",
+    data = [":configs"],
     imports = ["."],
     deps = [":thermolife"],
 )

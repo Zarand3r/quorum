@@ -1,0 +1,26 @@
+# thermolife — E0 viability substrate (IMPLEMENTATION_PLAN.md).
+# Grid-free conserved economy; numpy only, no torch. drift_v is the E0-gate knob (P8).
+d: 4                 # position lives in R^d (NO grid)
+d_g: 2               # interface-gene dim (heredity; drives Q/K at E1)
+n_init: 24
+n_max: 256
+seed: 0
+
+inject: 6.0          # S — resource into the pool per tick
+sigma_r: 0.6         # harvest locality width
+harvest_rate: 0.6    # max uptake per token per tick at weight 1
+eta: 0.85            # harvest efficiency; (1-eta) dissipated
+
+c_base: 0.02         # metabolism per tick
+c_move: 0.20         # kinetic cost coefficient (cost = c_move*||dx||^2)
+e_init: 1.0
+e_div: 3.0           # reproduction threshold
+
+orbit_radius: 2.0    # source orbit radius
+drift_v: 0.06        # source linear speed (E0-gate knob)
+
+forager_gain: 0.5    # step = gain*(mu - x), clipped to max_step
+max_step: 0.20       # forager top speed (displacement/tick)
+
+repro_pos_noise: 0.03
+sigma_g: 0.05        # gene mutation std on reproduction
