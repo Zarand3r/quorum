@@ -50,15 +50,35 @@ def test_trained_engine_gallery_keeps_weights_fixed() -> None:
     assert partners[0] != partners[1] or True         # (scenes differ; not load-bearing)
 
 
-def test_m2_accuracy_gate() -> None:
-    """THE M2 GATE: >95% held-out docking accuracy with committed weights."""
+def _accuracy_at(n_iters: int, n_scenes: int = 200) -> float:
     cfg = _cfg()
     correct = total = 0
-    for scene_seed in range(200):
+    for scene_seed in range(n_scenes):
         e = FoldEngine(cfg, seed=scene_seed, trained_npz=str(_TRAINED))
-        for _ in range(12):
+        for _ in range(n_iters):
             e.step()
         snap = e.snapshot(_RUNNING)
         correct += round(snap["accuracy"] * snap["n"])
         total += snap["n"]
-    assert correct / total > 0.95, f"held-out docking accuracy {correct/total:.3f} ≤ 0.95"
+    return correct / total
+
+
+def _trained_horizon() -> int:
+    return int(np.load(_TRAINED)["t_steps"])
+
+
+def test_m2_accuracy_gate() -> None:
+    """THE M2 GATE: >95% held-out docking accuracy at the trained horizon."""
+    t = _trained_horizon()
+    acc = _accuracy_at(t)
+    assert acc > 0.95, f"held-out docking accuracy {acc:.3f} ≤ 0.95 at T={t}"
+
+
+def test_m2_persistence_gate() -> None:
+    """Docking must PERSIST: the gallery shows scenes for 2× the trained
+    horizon, and a docked configuration that drifts apart past T would
+    misrepresent what was learned (found live: T=8 weights fell to 0.75 by
+    iter ~60). Gate: >90% accuracy at 2× horizon."""
+    t = _trained_horizon()
+    acc = _accuracy_at(2 * t)
+    assert acc > 0.90, f"docking decayed to {acc:.3f} ≤ 0.90 by 2×T={2*t}"

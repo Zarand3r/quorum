@@ -50,6 +50,7 @@ class FoldEngine:
                     n_pairs=int(z["n_pairs"]), d=cfg.d,
                     noise_sigma=float(z["noise_sigma"]), init_scale=cfg.init_scale,
                 ),
+                "t_steps": int(z["t_steps"]),
             }
         self.w, self.x = self._instantiate()
 
@@ -79,7 +80,10 @@ class FoldEngine:
         # TRAINED mode: on a fixed timer — learned docking may stay dynamic, so
         # convergence is not a reliable scene boundary.
         if self._trained is not None:
-            if self._since >= 2 * self.cfg.min_iters_before_reseed:
+            # scene length = 2× the trained horizon: beyond what deep supervision
+            # covered, the weight-tied map may drift off the docked configuration —
+            # showing far past the horizon would misrepresent what was learned.
+            if self._since >= 2 * self._trained["t_steps"]:
                 self._gen += 1
                 self.w, self.x = self._instantiate()
                 self._since = 0
