@@ -21,8 +21,8 @@
 - [x] **Step 4 — Slice: reproduction.** Split on `e≥e_div`, gene mutation, `N` grows to `N_max`. *(P1, P6)*
 - [x] **Step 5 — Hand-forager + THE E0 GATE.** Greedy policy; conserves 10k ticks; **starves when drift outpaces any static config**. *(P1, P8)*
 - [ ] **Step 6 — Viewer.** Render population + field + source in the 2D projection; reuse `sim/`. *(P4)*
-- [ ] **Step 7 — E1: attention as interaction operator.** Swap hand-policy for `fold` block (fixed θ, gene-modulated Q/K) decoding move/harvest/transfer. *(P1, P2, P5, P7)*
-- [ ] **Step 8 — E1 gate: energy routes along edges.** Transfer provably follows attention; ablations wired. *(P1, P2)*
+- [x] **Step 7 — E1: attention as interaction operator.** Swap hand-policy for `fold` block (fixed θ, gene-modulated Q/K) decoding move/harvest/transfer. *(P1, P2, P5, P7)*
+- [x] **Step 8 — E1 gate: energy routes along edges.** Transfer provably follows attention; ablations wired. *(P1, P2)*
 
 ```
 0 ──▶ 1 ──▶ 2 ──▶ 3 ──▶ 4 ──▶ 5 ──▶ 7 ──▶ 8

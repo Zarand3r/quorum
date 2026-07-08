@@ -68,7 +68,8 @@ def hk_attention(
         e = np.exp(s)
         return e / e.sum(axis=1, keepdims=True)
     if kernel == "sigmoid":
-        gate = 1.0 / (1.0 + np.exp(-(scores - tau) / temp))
+        z = np.clip((scores - tau) / temp, -500.0, 500.0)  # exp-safe
+        gate = 1.0 / (1.0 + np.exp(-z))
         gate = np.where(eye, np.maximum(gate, 1e-3), gate)  # self never fully gated out
         s = scores - scores.max(axis=1, keepdims=True)
         e = gate * np.exp(s)

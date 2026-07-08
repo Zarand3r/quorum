@@ -21,7 +21,7 @@ from eco.policies import hand_forager
 from eco.resource import access_weight, harvest
 from eco.state import EcoState, init_state, source_at
 
-Policy = Callable[[EcoState, EcoConfig], "tuple[np.ndarray, np.ndarray]"]
+Policy = Callable[[EcoState, EcoConfig], "tuple[np.ndarray, np.ndarray, np.ndarray]"]
 
 
 class EcoEngine:
@@ -46,13 +46,21 @@ class EcoEngine:
         s.pool += injected
 
         # 2. policy decides actions
-        dx, gate = self.policy(s, cfg)
+        dx, gate, transfer = self.policy(s, cfg)
 
         # 3. harvest — energy in (η credited, 1-η dissipated, pool depleted)
         delta_e, drawn, diss_harvest = harvest(s.x, s.mu, s.pool, gate, cfg)
         s.pool -= drawn
         s.e = s.e + delta_e
         s.dissipated += diss_harvest
+
+        # 3b. transfer — energy moves along interaction edges (E1). Lossless and
+        # internal to Σe, so the ledger is untouched; overdraw is an invariant
+        # violation (policy contract: row sums ≤ e), so fail fast, never clamp.
+        sent = transfer.sum(axis=1)
+        if np.any(sent > s.e + 1e-9):
+            raise AssertionError("transfer overdraw: a token sent more than it holds")
+        s.e = s.e - sent + transfer.sum(axis=0)
 
         # 4. move — apply displacement; kinetic cost accrues into total cost below
         s.x = s.x + dx

@@ -16,16 +16,25 @@ from pathlib import Path
 
 from eco.config import load_eco_config
 from eco.engine import run
+from eco.interaction import make_attention_policy
 from eco.policies import frozen, hand_forager
 
 _CFG = Path(__file__).resolve().parent.parent / "configs" / "eco.yaml"
-_POLICIES = {"forager": hand_forager, "frozen": frozen}
+
+
+def _policy(name: str, cfg):
+    """attention = the E1 default (fixed random θ, HK-dock interaction);
+    forager/frozen survive as baselines/controls (Step 7 delete-after-verify)."""
+    if name == "attention":
+        return make_attention_policy(cfg, seed=cfg.seed)
+    return {"forager": hand_forager, "frozen": frozen}[name]
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--ticks", type=int, default=10000)
-    ap.add_argument("--policy", choices=list(_POLICIES), default="forager")
+    ap.add_argument("--policy", choices=["attention", "forager", "frozen"],
+                    default="attention")
     ap.add_argument("--drift-v", type=float, default=None, help="override cfg drift_v")
     ap.add_argument("--sweep", type=float, nargs="+", default=None,
                     help="drift_v values → survival-vs-drift curve (both policies)")
@@ -46,7 +55,7 @@ def main() -> int:
         return 0
 
     cfg = base if args.drift_v is None else replace(base, drift_v=args.drift_v)
-    res = run(cfg, args.ticks, policy=_POLICIES[args.policy])
+    res = run(cfg, args.ticks, policy=_policy(args.policy, cfg))
     print(f"policy={args.policy} drift_v={cfg.drift_v} ticks={args.ticks}")
     print(f"  survived={res['survived']}  final_n={res['final_n']}  "
           f"max|residual|={res['max_abs_residual']:.3e}")

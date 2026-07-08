@@ -46,6 +46,10 @@ class EcoConfig:
     repro_pos_noise: float  # offspring position jitter
     sigma_g: float          # gene mutation std on reproduction
 
+    # E1 interaction operator (RESEARCH_HK.md: bounded-confidence dock attention)
+    hk_tau: float            # confidence threshold τ (interact iff dock score > τ)
+    transfer_frac_max: float # max fraction of a token's energy sendable per tick
+
 
 _DEFAULTS: dict = {
     "d": 4,
@@ -67,6 +71,8 @@ _DEFAULTS: dict = {
     "max_step": 0.20,
     "repro_pos_noise": 0.03,
     "sigma_g": 0.05,
+    "hk_tau": 0.5,
+    "transfer_frac_max": 0.25,
 }
 
 
@@ -93,6 +99,8 @@ def load_eco_config(path: str | Path) -> EcoConfig:
         max_step=float(d["max_step"]),
         repro_pos_noise=float(d["repro_pos_noise"]),
         sigma_g=float(d["sigma_g"]),
+        hk_tau=float(d["hk_tau"]),
+        transfer_frac_max=float(d["transfer_frac_max"]),
     )
     _validate(cfg)
     return cfg
@@ -112,3 +120,6 @@ def _validate(cfg: EcoConfig) -> None:
     for name in ("inject", "sigma_r", "harvest_rate", "c_base", "c_move", "max_step"):
         if getattr(cfg, name) < 0.0:
             raise ValueError(f"{name} must be ≥ 0")
+    if not (0.0 <= cfg.transfer_frac_max < 1.0):
+        raise ValueError("transfer_frac_max must be in [0, 1) — a token cannot send "
+                         "more than it has")
