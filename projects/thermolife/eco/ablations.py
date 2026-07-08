@@ -4,8 +4,9 @@ Matched-compute arms over the SAME config/seed/tick budget, differing only in th
 interaction operator: any claim about the E1 substrate must be reported as the
 default arm's observable vs these. Modes (eco/interaction.py):
 
-  hk                — the E1 default (bounded-confidence dock attention)
+  dist              — the E1 default (distance-penalized dock attention)
   softmax           — global softmax (the collapse-prone operator, per the study)
+  hk                — hard bounded-confidence (measured control; untrainable)
   freeze_attention  — A = I: no interaction at all
   shuffle_edges     — permuted columns: same mass, wrong partners
   remove_transfer   — interaction intact, energy transport severed
@@ -20,7 +21,7 @@ from eco.engine import EcoEngine
 from eco.interaction import make_attention_policy
 from eco.observables import attention_entropy, interaction_degree
 
-MODES = ("hk", "softmax", "freeze_attention", "shuffle_edges", "remove_transfer")
+MODES = ("dist", "softmax", "hk", "freeze_attention", "shuffle_edges", "remove_transfer")
 
 
 def run_arm(cfg: EcoConfig, mode: str, ticks: int, seed: int = 0) -> dict:

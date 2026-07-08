@@ -38,19 +38,25 @@ def _cfg(**over):
 
 
 def test_transfer_follows_attention_and_conserves() -> None:
-    """P1 + edge routing: all transferred energy rides the sender's off-diagonal
-    attention shares; the full tick still closes the ledger."""
+    """P1 + edge routing: transferred energy rides the sender's off-diagonal
+    attention shares EXACTLY (each transfer row ∝ that token's off-diagonal
+    attention row), and the full tick closes the ledger. (We assert the exact
+    routing law, not a threshold proxy — with the dense `dist` operator most
+    edges carry small but nonzero, correctly-proportioned mass.)"""
     cfg = _cfg()
     policy = make_attention_policy(cfg, seed=3)
     eng = EcoEngine(cfg, policy=policy)
     eng.tick()
-    a = policy.last_attention
     st = eng.state
-    dx, gate, t = decode_actions(st, a[: st.n, : st.n] if a.shape[0] != st.n else a,
-                                 policy.weights, cfg)
+    a = policy.last_attention
+    dx, gate, t = decode_actions(st, a, policy.weights, cfg)
     assert np.allclose(np.diag(t), 0.0)                     # never send to self
     assert np.all(t.sum(axis=1) <= st.e + 1e-9)             # no overdraw
-    assert transfer_on_edges(t, a if a.shape[0] == st.n else a[: st.n, : st.n]) > 0.99
+    # exact routing: normalized transfer row == normalized off-diagonal attention
+    off = a * (1.0 - np.eye(st.n))
+    for i in range(st.n):
+        if t[i].sum() > 1e-12:
+            assert np.allclose(t[i] / t[i].sum(), off[i] / off[i].sum(), atol=1e-9)
     # 200 more ticks: ledger stays closed under interaction + transfer
     for _ in range(200):
         r = eng.tick()
@@ -83,11 +89,11 @@ def test_groundedness_gene_modulates_surface_and_graph() -> None:
     st = init_state(cfg)
     w = policy.weights
     c0 = interface_coeffs(st.x, st.g, w)
-    a0 = interaction_graph(st.x, st.g, w, cfg.hk_tau)
+    a0 = interaction_graph(st.x, st.g, w, cfg)
     g2 = st.g.copy()
     g2[3] += 2.0
     c2 = interface_coeffs(st.x, g2, w)
-    a2 = interaction_graph(st.x, g2, w, cfg.hk_tau)
+    a2 = interaction_graph(st.x, g2, w, cfg)
     assert not np.allclose(c0[3], c2[3])            # its surface changed
     assert not np.allclose(a0[3], a2[3])            # its interaction row changed
     others = [i for i in range(st.n) if i != 3]

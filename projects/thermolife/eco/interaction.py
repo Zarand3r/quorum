@@ -23,7 +23,7 @@ import numpy as np
 
 from eco.config import EcoConfig
 from eco.state import EcoState
-from fold.hk import dock_scores, hk_attention
+from fold.hk import distance_penalized_scores, dock_scores, hk_attention
 
 
 @dataclass
@@ -62,18 +62,28 @@ def interface_coeffs(x: np.ndarray, g: np.ndarray, w: EcoWeights) -> np.ndarray:
     return x @ w.W_c + g @ w.G_c
 
 
+def _softmax(s: np.ndarray) -> np.ndarray:
+    s = s - s.max(axis=1, keepdims=True)
+    e = np.exp(s)
+    return e / e.sum(axis=1, keepdims=True)
+
+
 def interaction_graph(
-    x: np.ndarray, g: np.ndarray, w: EcoWeights, tau: float, mode: str = "hk"
+    x: np.ndarray, g: np.ndarray, w: EcoWeights, cfg: EcoConfig, mode: str = "dist"
 ) -> np.ndarray:
-    """The interaction operator. mode="hk" (default, bounded-confidence hard
-    kernel) or "softmax" (the global ablation arm — RESEARCH_HK.md §5.3)."""
-    s = dock_scores(interface_coeffs(x, g, w), w.M)
-    if mode == "hk":
-        return hk_attention(s, tau=tau, kernel="hard")
+    """The interaction operator (RESEARCH_HK.md decision).
+
+    mode="dist" (DEFAULT): distance-penalized softmax A = softmax(dock − λ‖Δx‖²)
+    — smooth physical locality, collapse-resistant AND gradient-trainable.
+    mode="softmax": global softmax (ablation arm, collapse-prone).
+    mode="hk": hard bounded-confidence (measured control only — untrainable)."""
+    c = interface_coeffs(x, g, w)
+    if mode == "dist":
+        return _softmax(distance_penalized_scores(c, x, w.M, cfg.dist_lambda))
     if mode == "softmax":
-        s = s - s.max(axis=1, keepdims=True)
-        e = np.exp(s)
-        return e / e.sum(axis=1, keepdims=True)
+        return _softmax(dock_scores(c, w.M))
+    if mode == "hk":
+        return hk_attention(dock_scores(c, w.M), tau=cfg.hk_tau, kernel="hard")
     raise ValueError(f"unknown interaction mode: {mode}")
 
 
@@ -115,13 +125,13 @@ def decode_actions(
 
 def make_attention_policy(
     cfg: EcoConfig, *, k_harmonics: int = 4, hidden: int = 16, seed: int = 0,
-    mode: str = "hk",
+    mode: str = "dist",
 ):
-    """Build the E1 policy: fixed random θ, bounded-confidence interaction.
+    """Build the E1 policy: fixed random θ, distance-penalized interaction.
 
-    mode: "hk" | "softmax" | "freeze_attention" | "shuffle_edges" |
-    "remove_transfer" — the last three are the Step-8 ablation arms
-    (eco/ablations.py wraps these with the matched-compute harness)."""
+    mode: "dist" (default) | "softmax" | "hk" | "freeze_attention" |
+    "shuffle_edges" | "remove_transfer" — the ablation arms are wrapped by the
+    matched-compute harness in eco/ablations.py."""
     w = EcoWeights.random(cfg, k_harmonics, hidden, seed)
     ablation_rng = np.random.Generator(np.random.PCG64(seed + 777))
 
@@ -130,8 +140,8 @@ def make_attention_policy(
         if n == 0:
             z = np.zeros((0, cfg.d))
             return z, np.zeros(0), np.zeros((0, 0))
-        base_mode = "softmax" if mode == "softmax" else "hk"
-        a = interaction_graph(state.x, state.g, w, cfg.hk_tau, mode=base_mode)
+        base_mode = mode if mode in ("dist", "softmax", "hk") else "dist"
+        a = interaction_graph(state.x, state.g, w, cfg, mode=base_mode)
         if mode == "freeze_attention":
             a = np.eye(n)                       # no interaction: pure self-loop
         elif mode == "shuffle_edges":

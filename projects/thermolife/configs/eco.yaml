@@ -25,5 +25,6 @@ max_step: 0.20       # forager top speed (displacement/tick)
 repro_pos_noise: 0.03
 sigma_g: 0.05        # gene mutation std on reproduction
 
-hk_tau: 0.5          # E1 bounded-confidence threshold (RESEARCH_HK.md)
+dist_lambda: 0.5     # E1 locality strength λ (dock − λ‖Δx‖²); RESEARCH_HK.md
+hk_tau: 0.5          # HK control-arm threshold (measured control only)
 transfer_frac_max: 0.25  # max energy fraction sendable along attention edges/tick

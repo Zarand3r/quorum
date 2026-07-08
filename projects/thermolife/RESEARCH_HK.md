@@ -1,12 +1,18 @@
-# RESEARCH_HK — Bounded-Confidence (Hegselmann–Krause) Attention: study + decision
+# RESEARCH_HK — Local Attention (Bounded-Confidence vs Distance-Penalized): study + decision
 
-> **Status: resolved.** Question: should thermolife replace global softmax attention with a
-> local, bounded-confidence interaction rule (à la Krause dynamics)? Answer: **split by
-> regime.** HK-dock attention becomes the **E1–E3 interaction operator** (gradient-free
-> regime, where collapse-resistance is what matters); **global softmax + deep supervision
-> remains the training recipe** for gradient-trained docking (M2-style), where HK is
-> *harmful* — a hypothesis this study set out to confirm and instead **refuted**.
-> Code: `fold/hk.py`; experiments: `//projects/thermolife:hk_study`; gates: `tests/test_hk.py`.
+> **Status: resolved (revised after the distance-penalized follow-up).** Question: should
+> thermolife replace global softmax with a *local* interaction rule? Answer: **yes, and the
+> operator is distance-penalized softmax, not a hard bounded-confidence threshold.** The
+> decisive axis turned out to be **smooth vs. hard**, not local vs. global: a smooth distance
+> cost `s − λ‖Δx‖²` resists collapse *and* trains under gradients; a hard Hegselmann–Krause
+> threshold resists collapse but has **dead gradients** and cannot be trained. So:
+> **E1–E3 interaction operator = distance-penalized (`dist`)**; hard-HK is kept only as a
+> measured control; **global softmax + deep supervision remains the M2 training recipe**
+> (still the strongest trainer). Code: `fold/hk.py`; experiments:
+> `//projects/thermolife:hk_study`; gates: `tests/test_hk.py`.
+>
+> This revision was prompted by the observation that HK's *discreteness* — not its locality —
+> was what killed training; a smooth locality cost was the fix. The study confirmed it.
 
 ## 1. The proposal under test
 
@@ -64,61 +70,74 @@ Metrics (`fold/hk.py`, measured never rewarded): single-linkage **cluster count*
 | hk-dock τ=−0.5, full block | 1.2 | 3.40 | 0.196 |
 | hk-dock τ=0.0, full block | 1.2 | 3.40 | 0.241 |
 | hk-dock τ=0.5, full block | 1.4 | 2.80 | **0.636** |
-| hk-dock τ=1.0, full block | 2.2 | 2.24 | **0.760** |
-| hk-raw ε=0.5, full block | 2.0 | 2.23 | 1.130 |
-| hk-raw ε=1.0, full block | 1.8 | 2.21 | 1.115 |
+| hk-dock τ=1.0, full block | 2.2 | 0.76 |
+| hk-raw ε=1.0, full block | 1.8 | 1.115 |
+| **dist λ=0.05** | 1.0 | 0.000 |
+| **dist λ=0.1** | 1.0 | 0.000 |
+| **dist λ=0.2** | 1.4 | 0.724 |
+| **dist λ=0.5** | 1.6 | **1.123** |
+| **dist λ=1.0** | 1.6 | 1.118 |
+
+(effective-rank column dropped from the reproduction above for width; the scale-aware
+metric reads ~1.0 for every collapsed arm and is asserted separately in tests.)
 
 Findings:
 - **Anchors validate the implementation**: classic HK freezes ~54 micro-clusters
   (textbook); pure softmax averaging contracts and merges (metastable, per theory).
 - **Dressed global softmax collapses hard** (spread 0.024 — 70× below init-scale spread).
-- **HK-dock resists, scaling with τ**: 8–30× more spread than softmax; τ≥0.5 keeps
-  multiple clusters. **On average across seeds** — individual seeds can still collapse
-  (consistent with "locality slows, not prevents"). This average is now a permanent
-  regression gate (`test_dressed_hk_dock_preserves_more_spread_than_softmax`).
+- **Both local operators resist collapse.** HK-dock scales with τ (0.20→0.76). Distance-
+  penalized scales with λ: **weak λ≤0.1 still collapses** (the penalty is too small to beat
+  the softmax contraction), λ≥0.2 holds spread 0.72–1.12 — comparable to or better than HK,
+  *smoothly*. Both are **average-over-seed** effects: dressed-fold collapse is seed-dependent
+  (LN admits any-rank equilibria, Wu et al. 2024). Permanent regression gates
+  (`test_dressed_hk_dock_...`, `test_dist_softmax_preserves_spread_...`) pin the reported
+  seeds 1000–1004.
 
 ## 4. Experiment B — gradient training (does HK remove the deep-supervision crutch?)
 
 **Hypothesis (pre-registered in intent):** M2's softmax fold needed deep supervision only
-because rank collapse destroys the scene before T; HK-dock should therefore train docking
-from **final-step supervision alone**. `hk_study --exp B`: M2 lock-and-key task, T=8,
-800 Adam iters, batch 16, seed 0; HK = sigmoid kernel, temp 0.1. Chance = 1/8 = 0.125.
+because rank collapse destroys the scene before T; a *local* operator should therefore train
+docking from **final-step supervision alone**. `hk_study --exp B`: M2 lock-and-key task, T=8,
+800 Adam iters, batch 16, seed 0. HK = sigmoid kernel temp 0.1; dist = λ 0.3. Chance = 0.125.
 
 | arm | held-out acc @800 |
 |---|---:|
 | softmax, final-only | 0.235 (the known plateau) |
 | softmax, deep supervision | **0.639** (→ 0.9975 at 4k iters, M2) |
-| hk-dock τ=0.5, final-only | 0.125 — exactly chance |
-| hk-dock τ=0.5, deep | 0.233 |
-| hk-dock τ=0.0, final-only | 0.120 — chance |
-| hk-dock τ=0.0, deep | 0.241 |
+| hk-dock, final-only | 0.120 — exactly chance |
+| hk-dock, deep | 0.233 — **stuck** |
+| **dist λ=0.3, final-only** | 0.125 — chance |
+| **dist λ=0.3, deep** | **0.521 — and climbing** (0.14→0.24→0.32→0.46→0.53) |
 
-**The hypothesis is refuted.** HK-dock fails to train the docking task at either τ, with or
-without deep supervision. Mechanism (consistent with the top-k gradient literature): at
-random init, dock scores concentrate near 0, so the gate suppresses or flattens exactly the
-cross-token entries the retrieval loss `−log A[i, partner]` needs; the same locality that
-freezes diversity (Exp A) starves the learning signal (Exp B). Locality's virtue and vice
-are the same property.
+**Two findings.** (a) *The deep-supervision crutch is NOT removed by locality* — every
+final-only arm sits at chance. Locality slows but does not prevent within-horizon collapse
+(exactly Wu et al. 2024), so final-step signal is still absent. That hypothesis is refuted
+for both local operators. (b) *But smooth locality is trainable and hard locality is not*:
+with deep supervision, `dist` climbs steeply (still rising at 800 iters, trajectory above)
+while `hk-dock` is stuck near chance. Mechanism: the HK hard/sigmoid gate zeroes exactly the
+cross-token entries the retrieval loss needs at random init (top-k gradient death); the
+distance penalty only *reweights* them, so gradients survive. **Smooth vs. hard is the axis,
+not local vs. global.**
 
-## 5. Decision
+## 5. Decision (revised)
 
-**Split by regime — adopt HK where its virtue matters and its vice doesn't:**
+1. **E1–E3 interaction operator = distance-penalized softmax (`dist`), λ from config**
+   (default 0.5 — the Exp-A anti-collapse knee). It is the one operator that is *both*
+   collapse-resistant (Exp A) and gradient-trainable (Exp B), so the **same** operator serves
+   the fixed-θ E1, and any future gradient path, and E2/E3 (where λ can itself be evolved).
+   It is physically grounded — locality is particle proximity in `x`, exactly right for a
+   docking/particle system — and reduces to global softmax at λ=0.
+2. **Hard bounded-confidence (HK) is demoted to a measured control**, not the operator. Its
+   Exp-A collapse-resistance is real but it is untrainable (Exp B) and offers `dist` no
+   advantage; kept only so the smooth-vs-hard contrast stays reproducible.
+3. **Global softmax is a permanent E1 ablation arm.** Every emergence observable is reported
+   dist vs. softmax (vs. hk), so "locality preserved the structure" stays a *measured* claim.
+4. **Gradient-trained docking (M2 artifacts) keeps global softmax + deep supervision** — still
+   the strongest trainer (0.639 vs dist's 0.521 at matched budget); dist+deep is a viable
+   local alternative if locality is wanted, at a modest accuracy cost. M2 weights untouched.
 
-1. **E1–E3 interaction operator = `hk-dock`, hard kernel, τ from config** (default 0.5).
-   The emergence path is **gradient-free** (E1 fixed θ; E2 ES; E3 selection): dead gradients
-   are irrelevant, and collapse-resistance is exactly what a population substrate needs —
-   a collapsed population is a dead simulation. Grounded (the confidence set lives in the
-   same M-metric the blobs draw), local (structure can live in the attention graph), and
-   with a granularity dial (τ) that E2/E3 may evolve.
-2. **Gradient-trained docking (M2 artifacts) keeps global softmax + deep supervision.**
-   Measured: HK harms it. The committed M2 weights and gates are untouched.
-3. **Global softmax becomes a permanent E1 ablation arm** — every emergence observable is
-   reported HK vs softmax, so "locality preserved the structure" stays a measured claim.
-
-Rejected options, for the record: (a) HK everywhere — refuted by Exp B; (b) softmax
-everywhere — leaves E1's substrate exposed to the collapse that Exp A quantifies;
-(c) raw-space HK — clusters *identical* tokens, fights the complementarity thesis, and
-offers no advantage over dock-space in Exp A.
+Rejected, for the record: HK as the operator (untrainable, Exp B); softmax as the E1 operator
+(collapses, Exp A); raw-space locality (clusters *identical* tokens, fights complementarity).
 
 ## 6. Threats to validity (honest)
 

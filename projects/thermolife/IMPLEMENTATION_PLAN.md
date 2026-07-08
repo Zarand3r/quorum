@@ -257,7 +257,7 @@
 ## Step 7 — E1: attention as the interaction operator
 
 **Goal:** replace the hand-forager with the transformer interaction block — **fixed random θ**, Q/K **modulated by gene `g`** — decoding `move`/`harvest`/`transfer` actions.
-**Operator (decided by the HK study, RESEARCH_HK.md):** **bounded-confidence dock attention** (`fold/hk.py`, hard kernel, τ from config) — in this gradient-free regime its collapse-resistance (Exp A: 8–30× spread retention) is what a living population needs, and its dead-gradient vice (Exp B refutation) is irrelevant. **Global softmax is a permanent ablation arm**, not the default.
+**Operator (decided by the HK study, RESEARCH_HK.md — revised):** **distance-penalized dock attention** `A = softmax(dock − λ‖Δx‖²)` (`fold/hk.py`, λ from config). The study found the decisive axis is *smooth vs. hard*, not local vs. global: distance-penalty resists collapse (Exp A: 8–47× spread) **and** trains under gradients (Exp B), where the hard-HK threshold has dead gradients. **hk** and **global softmax** are kept as permanent ablation arms, not the default.
 **Why now:** interaction now flows through attention (the mechanism the whole thesis rides on); genes make binding surfaces heritable and *drawable* (P7).
 
 ### Tests first

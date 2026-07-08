@@ -25,11 +25,11 @@ conserved-energy economy over a token population with a drifting resource source
 sharp *real-stakes* threshold — below a critical drift a forager survives, above it the whole
 population starves, while a frozen control starves at any speed (conservation holds to ~1e-12
 throughout). **(4) Locality vs. trainability:** replacing global softmax with a
-bounded-confidence (Hegselmann–Krause) rule resists collapse (8–30× more spread retained) but
-*cannot be trained* by gradients (dead gradients at the threshold); a smooth distance-penalized
-softmax [DIST-TRAIN-RESULT] . We conclude that the operator choice is regime-dependent —
-smooth locality where gradients matter, hard locality where they do not — and lay out the
-substrate for open-ended, *computed* (irreducible) emergence.
+bounded-confidence (Hegselmann–Krause) rule resists collapse (8–47× more spread retained) but
+*cannot be trained* by gradients (dead gradients at the threshold), whereas a smooth
+distance-penalized softmax both resists collapse *and* trains. The decisive axis is **smooth
+vs. hard**, not local vs. global; we adopt distance-penalized attention as the interaction
+operator and lay out the substrate for open-ended, *computed* (irreducible) emergence.
 
 ---
 
@@ -178,7 +178,7 @@ pairwise spread.
 | dist λ=0.5 | 1.6 | 1.123 |
 | *(anchor)* classic-HK, pure avg | 54.4 | 3.848 |
 
-Both local operators retain 8–30× more spread than global softmax; the classic-HK anchor
+Both local operators retain 8–47× more spread than global softmax; the classic-HK anchor
 reproduces textbook multi-cluster freezing (implementation validated). We note honestly that
 collapse of the *dressed* fold (residual+LN+MLP) is **seed-dependent** — LayerNorm admits
 equilibria of any rank [Wu+2024] — so these are averages, and weak λ (≤0.1) still collapses.
@@ -192,17 +192,27 @@ attention remove the deep-supervision crutch?
 | global softmax, deep | **0.639** (→0.9975 at length) |
 | HK-dock, final-only | 0.125 (chance) |
 | HK-dock, deep | 0.233 |
-| distance-penalized, final-only | [DIST-FINAL] |
-| distance-penalized, deep | [DIST-DEEP] |
+| distance-penalized (λ=0.3), final-only | 0.125 (chance) |
+| distance-penalized (λ=0.3), deep | **0.521 and climbing** (0.14→0.24→0.32→0.46→0.53) |
 
-**The HK hypothesis is refuted:** bounded-confidence attention *fails to train* the docking task
-at either τ, with or without deep supervision — the discrete threshold starves exactly the
-cross-token gradients the retrieval loss needs (consistent with the hard-selection/MoE gradient
-literature). [DIST-CONCLUSION]
+**Two findings, one refuted hypothesis.** (i) *Locality does not remove the deep-supervision
+crutch:* every final-only arm sits at chance — local attention slows but does not prevent
+within-horizon collapse [Wu+2024], so there is still no final-step signal. (ii) *But smooth
+locality trains and hard locality does not:* with deep supervision, distance-penalized attention
+climbs steeply (still rising at 800 iters) while bounded-confidence is stuck near chance. The
+HK threshold zeroes exactly the cross-token gradients the retrieval loss needs at random init
+(the hard-selection/MoE gradient-death phenomenon); the distance penalty merely *reweights*
+them, so gradients survive. **The operative axis is smooth vs. hard, not local vs. global** —
+the redirect that produced the distance-penalized variant was decisive. Global softmax + deep
+remains the strongest *trainer* (0.639); distance-penalized is the strongest *collapse-resistant
+and trainable* operator, and is what we adopt for the interaction substrate (§6).
 
 ## 6. E1 — attention as the interaction operator
 
-We wire the chosen operator into the E0 substrate as the population's per-tick physics. A
+We wire the chosen operator (distance-penalized dock attention) into the E0 substrate as the
+population's per-tick physics — locality is now *physical* particle proximity, exactly the right
+inductive bias for a docking system, and the same operator remains available to gradient or
+evolutionary training later. A
 token's interface `C_i = x_i·W_c + g_i·G_c` is **gene-modulated**: selection (future work) acting
 on `g` reshapes the drawn binding surface *and* the interaction graph together (groundedness
 carried). An MLP head decodes three actions from own-state plus the attention-aggregated message
@@ -218,8 +228,9 @@ feeding back into dynamics or reward.
 
 ## 7. Honest limitations and negative results (collected)
 
-- **Two refuted hypotheses:** longer unroll trains *worse* (§3, T=24 fails); bounded-confidence
-  attention *cannot be trained* for docking (§5, Exp B). We report both prominently.
+- **Refuted hypotheses, reported prominently:** longer unroll trains *worse* (§3, T=24 fails);
+  bounded-confidence attention *cannot be trained* for docking (§5, Exp B); and locality of any
+  kind *does not* remove the deep-supervision requirement (§5, all final-only arms at chance).
 - **Toy scale:** N≤256, d=4, single head, weight-tied. The linear-complexity argument for local
   attention was *not* tested (irrelevant at this N) and is not claimed.
 - **Seed variance:** dressed-fold collapse is seed-dependent; Exp A/B report averages over

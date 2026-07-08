@@ -46,8 +46,9 @@ class EcoConfig:
     repro_pos_noise: float  # offspring position jitter
     sigma_g: float          # gene mutation std on reproduction
 
-    # E1 interaction operator (RESEARCH_HK.md: bounded-confidence dock attention)
-    hk_tau: float            # confidence threshold τ (interact iff dock score > τ)
+    # E1 interaction operator (RESEARCH_HK.md: distance-penalized dock attention)
+    dist_lambda: float       # locality strength λ in s = dock − λ‖Δx‖² (0 = global softmax)
+    hk_tau: float            # HK control-arm threshold (measured control only, not default)
     transfer_frac_max: float # max fraction of a token's energy sendable per tick
 
 
@@ -71,6 +72,7 @@ _DEFAULTS: dict = {
     "max_step": 0.20,
     "repro_pos_noise": 0.03,
     "sigma_g": 0.05,
+    "dist_lambda": 0.5,
     "hk_tau": 0.5,
     "transfer_frac_max": 0.25,
 }
@@ -99,6 +101,7 @@ def load_eco_config(path: str | Path) -> EcoConfig:
         max_step=float(d["max_step"]),
         repro_pos_noise=float(d["repro_pos_noise"]),
         sigma_g=float(d["sigma_g"]),
+        dist_lambda=float(d["dist_lambda"]),
         hk_tau=float(d["hk_tau"]),
         transfer_frac_max=float(d["transfer_frac_max"]),
     )
