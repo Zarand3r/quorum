@@ -256,7 +256,8 @@
 
 ## Step 7 — E1: attention as the interaction operator
 
-**Goal:** replace the hand-forager with the `fold` transformer block — **fixed random θ**, Q/K **modulated by gene `g`** — decoding `move`/`harvest`/`transfer` actions.
+**Goal:** replace the hand-forager with the transformer interaction block — **fixed random θ**, Q/K **modulated by gene `g`** — decoding `move`/`harvest`/`transfer` actions.
+**Operator (decided by the HK study, RESEARCH_HK.md):** **bounded-confidence dock attention** (`fold/hk.py`, hard kernel, τ from config) — in this gradient-free regime its collapse-resistance (Exp A: 8–30× spread retention) is what a living population needs, and its dead-gradient vice (Exp B refutation) is irrelevant. **Global softmax is a permanent ablation arm**, not the default.
 **Why now:** interaction now flows through attention (the mechanism the whole thesis rides on); genes make binding surfaces heritable and *drawable* (P7).
 
 ### Tests first
@@ -285,11 +286,11 @@
 
 ### Tests first
 - [ ] `test_edge_routing`: total transferred energy correlates with `A` mass on transfer edges above a threshold; zeroing `A` zeroes transfer.
-- [ ] `test_ablation_harness`: `freeze_attention`, `shuffle_edges`, `remove_transfer` modes exist, are deterministic, and each changes the transport observable in the predicted direction.
+- [ ] `test_ablation_harness`: `freeze_attention`, `shuffle_edges`, `remove_transfer`, `global_softmax` modes exist, are deterministic, and each changes the transport observable in the predicted direction (softmax arm per RESEARCH_HK.md §5.3).
 
 ### Implementation
 - [ ] `eco/observables.py`: attention-graph entropy, transfer-on-edge mass, survival time (read-only — P2: never fed back).
-- [ ] `eco/ablations.py`: the three ablation modes + a matched-compute harness.
+- [ ] `eco/ablations.py`: the four ablation modes + a matched-compute harness.
 
 ### Integration check
 - [ ] §A spine green under each ablation mode (they change dynamics, not conservation).

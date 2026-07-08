@@ -57,6 +57,15 @@ py_binary(
 )
 
 py_binary(
+    name = "hk_study",
+    srcs = ["train/hk_study.py"],
+    main = "train/hk_study.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":thermolife"],
+)
+
+py_binary(
     name = "eco_run",
     srcs = ["eco/run_cli.py"],
     main = "eco/run_cli.py",

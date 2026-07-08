@@ -48,8 +48,13 @@ This is not a pivot away from M2 — it's M2's substrate placed inside an econom
 
 **Per-tick pipeline (the transformer is the physics; pure tensor ops, double-buffered):**
 1. **Observe** — each token reads its own `(x,e,g)` + the resource it can sense locally.
-2. **Interact (attention)** — `A = softmax(QKᵀ/√d)` where `Q,K` are the grounded readout
-   **modulated by the gene `g`**. `A` *is* the interaction graph — who trades/senses whom.
+2. **Interact (attention)** — **bounded-confidence dock attention** (`fold/hk.py`, hard
+   kernel): token *i* interacts with *j* iff the grounded, **gene-modulated** dock score
+   `s_ij > τ`, normalized locally. `A` *is* the interaction graph — who trades/senses whom.
+   Chosen over global softmax by the HK study (RESEARCH_HK.md): in this **gradient-free**
+   regime, collapse-resistance is what matters (Exp A: 8–30× spread retention; multiple
+   clusters), and HK's dead-gradient vice is irrelevant. Global softmax stays wired as a
+   permanent ablation arm so "locality preserved structure" is always a measured claim.
 3. **Decode actions (MLP head)** from the folded embedding:
    - `move`: `Δx_i` — advect the embedding. **Cost ∝ ‖Δx‖²** (kinetic).
    - `harvest`: uptake from the local resource field (η converted to energy; `1−η`

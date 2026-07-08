@@ -41,11 +41,27 @@ def _softmax_rows(s):
     return e / anp.sum(e, axis=1, keepdims=True)
 
 
-def diff_block_step(x, params: dict, m_metric, cfg: FoldConfig):
-    """One fold iteration; mirrors fold.transformer.block_step exactly."""
+def diff_block_step(x, params: dict, m_metric, cfg: FoldConfig,
+                    attn: str = "softmax", tau: float = 0.0, temp: float = 0.1):
+    """One fold iteration; mirrors fold.transformer.block_step exactly.
+
+    attn="softmax" is the global fold. attn="hk" is the bounded-confidence
+    variant (fold/hk.py, sigmoid kernel in the dock metric): a differentiable
+    gate σ((s−τ)/temp) shapes exp(s) before row normalization — tokens interact
+    only where net-complementary, with no dead gradients at the boundary."""
     c = x @ params["W_c"]
     key = c @ m_metric
-    a = _softmax_rows((c @ key.T) / anp.sqrt(c.shape[1]))
+    s = (c @ key.T) / anp.sqrt(c.shape[1])
+    if attn == "softmax":
+        a = _softmax_rows(s)
+    elif attn == "hk":
+        gate = 1.0 / (1.0 + anp.exp(-(s - tau) / temp))
+        eye = anp.eye(s.shape[0])
+        gate = gate * (1.0 - eye) + anp.maximum(gate, 1e-3) * eye  # self never gated out
+        e = gate * anp.exp(s - anp.max(s, axis=1, keepdims=True))
+        a = e / anp.sum(e, axis=1, keepdims=True)
+    else:
+        raise ValueError(f"unknown attn: {attn}")
     x1 = _layernorm(x + a @ (x @ params["W_v"]))
     if cfg.use_mlp:
         hidden = anp.maximum(0.0, x1 @ params["W1"] + params["b1"])
@@ -53,51 +69,61 @@ def diff_block_step(x, params: dict, m_metric, cfg: FoldConfig):
     return x1, a
 
 
-def fold_forward(x0, params: dict, m_metric, cfg: FoldConfig, t_steps: int):
+def fold_forward(x0, params: dict, m_metric, cfg: FoldConfig, t_steps: int,
+                 attn: str = "softmax", tau: float = 0.0, temp: float = 0.1):
     """Unroll T iterations; return (final X, final attention A)."""
     x, a = x0, None
     for _ in range(t_steps):
-        x, a = diff_block_step(x, params, m_metric, cfg)
+        x, a = diff_block_step(x, params, m_metric, cfg, attn=attn, tau=tau, temp=temp)
     return x, a
 
 
-def fold_forward_all(x0, params: dict, m_metric, cfg: FoldConfig, t_steps: int):
+def fold_forward_all(x0, params: dict, m_metric, cfg: FoldConfig, t_steps: int,
+                     attn: str = "softmax", tau: float = 0.0, temp: float = 0.1):
     """Unroll T iterations; return (final X, [A_1..A_T])."""
     x, attns = x0, []
     for _ in range(t_steps):
-        x, a = diff_block_step(x, params, m_metric, cfg)
+        x, a = diff_block_step(x, params, m_metric, cfg, attn=attn, tau=tau, temp=temp)
         attns.append(a)
     return x, attns
 
 
 def scene_loss(
-    params: dict, types, partner, noise, sigma: float, m_metric, cfg: FoldConfig, t_steps: int
+    params: dict, types, partner, noise, sigma: float, m_metric, cfg: FoldConfig, t_steps: int,
+    attn: str = "softmax", tau: float = 0.0, temp: float = 0.1, deep: bool = True,
 ):
-    """Lock-and-key retrieval loss: −mean log A[i, partner(i)] on the FINAL
-    attention. The readout is the attention structure, not a token. Collapse is
+    """Lock-and-key retrieval loss: −mean log A[i, partner(i)] on the attention.
+    The readout is the attention structure, not a token. Collapse is
     self-defeating: identical embeddings ⇒ uniform A ⇒ loss pinned at log N.
 
     X0 is assembled here from params["e_types"] so the vocabulary itself learns.
 
-    DEEP SUPERVISION: the loss averages over every iteration's attention, not
-    just the last. A weight-tied untrained fold washes the scene out by ~T
-    (rank collapse), so a final-step-only loss plateaus near chance; supervising
-    all steps teaches docking to form early and *persist*.
+    deep=True (DEEP SUPERVISION): average over every iteration's attention. A
+    weight-tied untrained *softmax* fold washes the scene out by ~T (rank
+    collapse), so a final-step-only loss plateaus near chance; supervising all
+    steps teaches docking to form early and persist. deep=False supervises the
+    final step only — the arm that tests whether bounded-confidence attention
+    removes the need for the crutch (the HK study's decisive experiment).
     """
     x0 = params["e_types"][types] + sigma * noise
-    _, attns = fold_forward_all(x0, params, m_metric, cfg, t_steps)
+    _, attns = fold_forward_all(x0, params, m_metric, cfg, t_steps,
+                                attn=attn, tau=tau, temp=temp)
     idx = anp.arange(len(partner))
+    supervised = attns if deep else attns[-1:]
     total = 0.0
-    for a in attns:
+    for a in supervised:
         total = total - anp.mean(anp.log(a[idx, partner] + 1e-12))
-    return total / len(attns)
+    return total / len(supervised)
 
 
-def batch_loss(params: dict, scenes, sigma, m_metric, cfg: FoldConfig, t_steps: int):
+def batch_loss(params: dict, scenes, sigma, m_metric, cfg: FoldConfig, t_steps: int,
+               attn: str = "softmax", tau: float = 0.0, temp: float = 0.1,
+               deep: bool = True):
     """Mean scene_loss over a list of (types, partner, noise) scenes."""
     total = 0.0
     for types, partner, noise in scenes:
         total = total + scene_loss(
-            params, types, partner, noise, sigma, m_metric, cfg, t_steps
+            params, types, partner, noise, sigma, m_metric, cfg, t_steps,
+            attn=attn, tau=tau, temp=temp, deep=deep,
         )
     return total / len(scenes)
