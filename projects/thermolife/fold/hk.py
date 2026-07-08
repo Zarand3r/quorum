@@ -44,6 +44,22 @@ def raw_scores(x: np.ndarray) -> np.ndarray:
     return -(d2 + d2.T - 2.0 * (x @ x.T))
 
 
+def distance_penalized_scores(
+    c: np.ndarray, x: np.ndarray, m_metric: np.ndarray, lam: float
+) -> np.ndarray:
+    """Soft-locality scores: complementarity MINUS a distance cost.
+
+        s_ij = ⟨C_i, C_j·M⟩/√2K  −  λ·‖x_i − x_j‖²
+
+    Unlike the HK *threshold* (a discrete confidence set → dead gradients), this
+    is smooth everywhere: far tokens are exponentially suppressed under the
+    softmax but never hard-excluded, so gradients flow. λ=0 recovers the plain
+    dock fold; larger λ makes physically-near, complementary tokens dominate.
+    Self-distance is 0, so a token always favors itself — no empty neighborhood.
+    (raw_scores(x) = −‖·‖², hence the `+ lam * raw_scores`.)"""
+    return dock_scores(c, m_metric) + lam * raw_scores(x)
+
+
 def hk_attention(
     scores: np.ndarray,
     tau: float,
@@ -77,6 +93,12 @@ def hk_attention(
     raise ValueError(f"unknown kernel: {kernel}")
 
 
+def _softmax_rows(s: np.ndarray) -> np.ndarray:
+    s = s - s.max(axis=1, keepdims=True)
+    e = np.exp(s)
+    return e / e.sum(axis=1, keepdims=True)
+
+
 def hk_block_step(
     x: np.ndarray,
     w: FoldWeights,
@@ -86,23 +108,29 @@ def hk_block_step(
     tau: float = 0.0,
     kernel: str = "hard",
     temp: float = 0.1,
+    lam: float = 0.0,
     use_ln: bool = True,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """One fold iteration with bounded-confidence attention.
+    """One fold iteration with a local attention variant.
+
+    space="dock"/"raw": bounded-confidence (HK) — a threshold `tau` selects a
+    discrete confidence set aggregated by `kernel`.
+    space="dist": distance-penalized SOFTMAX — smooth locality, s = dock − λ‖Δx‖²,
+    no threshold (kernel ignored). This is the differentiable variant.
 
     Mirrors fold.transformer.block_step (residual + LN + optional MLP) with A
-    swapped for the HK variant. use_ln=False additionally strips residual+LN+MLP
-    down to pure averaging x ← A·x — the literal Hegselmann–Krause update, kept
-    as the theoretical sanity anchor.
+    swapped. use_ln=False strips it to pure averaging x ← A·x (the HK sanity
+    anchor).
     """
     c = contour_coeffs(x, w)
     if space == "dock":
-        s = dock_scores(c, w.M)
+        a = hk_attention(dock_scores(c, w.M), tau, kernel=kernel, temp=temp)
     elif space == "raw":
-        s = raw_scores(x)
+        a = hk_attention(raw_scores(x), tau, kernel=kernel, temp=temp)
+    elif space == "dist":
+        a = _softmax_rows(distance_penalized_scores(c, x, w.M, lam))
     else:
         raise ValueError(f"unknown space: {space}")
-    a = hk_attention(s, tau, kernel=kernel, temp=temp)
 
     if not use_ln:                      # classic HK: consensus averaging, no dressing
         return a @ x, c, a

@@ -17,6 +17,7 @@ import numpy as np
 from fold.config import load_fold_config
 from fold.hk import (
     cluster_count,
+    distance_penalized_scores,
     dock_scores,
     effective_rank,
     hk_attention,
@@ -174,6 +175,64 @@ def test_hk_dock_scores_are_grounded() -> None:
 
 
 # ---- mechanism / diff-twin parity ------------------------------------------
+
+
+def test_distance_penalty_localizes_attention() -> None:
+    """The λ‖Δx‖² cost makes a token attend to a physically-near token over an
+    equally-complementary far one (soft locality, no threshold)."""
+    cfg = _cfg()
+    rng = np.random.default_rng(20)
+    w = FoldWeights.random(cfg, 20)
+    # token 0 at origin; tokens 1 (near) and 2 (far) with identical contours
+    x = np.zeros((3, cfg.d))
+    x[1] = 0.2 * rng.standard_normal(cfg.d)
+    x[2] = 5.0 + 0.2 * rng.standard_normal(cfg.d)
+    c = np.zeros((3, 2 * cfg.k_harmonics)) + 0.3   # identical complementarity
+    s_plain = dock_scores(c, w.M)
+    s_dist = distance_penalized_scores(c, x, w.M, lam=0.5)
+    # plain: near/far scores equal; dist: far is penalized below near
+    assert abs(s_plain[0, 1] - s_plain[0, 2]) < 1e-9
+    assert s_dist[0, 1] > s_dist[0, 2] + 1.0
+
+
+def test_dist_softmax_preserves_spread_vs_softmax() -> None:
+    """Exp-A regression gate for the trainable variant — reproduces the reported
+    row (seeds 1000–1004): distance-penalized softmax (λ=0.5) retains far more
+    spread than plain softmax. NOTE (honest): collapse is seed-DEPENDENT for the
+    dressed fold — residual+LN+MLP prevent it on some seeds (Wu et al. 2024) — so
+    this is an average-over-the-reported-seeds claim, not a per-seed guarantee."""
+    cfg = _cfg()
+    from fold.transformer import block_step
+
+    sp_sm, sp_d = [], []
+    for s in range(5):
+        rng = np.random.default_rng(1000 + s)
+        w = FoldWeights.random(cfg, 1000 + s)
+        x_sm = cfg.init_scale * rng.standard_normal((64, cfg.d))
+        x_d = x_sm.copy()
+        for _ in range(200):
+            x_sm, _, _ = block_step(x_sm, w, cfg)
+            x_d, _, _ = hk_block_step(x_d, w, cfg, space="dist", lam=0.5)
+        sp_sm.append(spread(x_sm))
+        sp_d.append(spread(x_d))
+    assert np.mean(sp_d) > 5.0 * np.mean(sp_sm), (sp_d, sp_sm)
+
+
+def test_dist_parity_mechanism_vs_diff() -> None:
+    """Mechanism dist fold and its autograd twin are the same math (1e-12)."""
+    import autograd.numpy as anp
+
+    from train.diff_fold import diff_block_step, params_from_weights
+
+    cfg = _cfg()
+    rng = np.random.default_rng(21)
+    w = FoldWeights.random(cfg, 21)
+    x = rng.standard_normal((cfg.n_tokens, cfg.d))
+    params = params_from_weights(w, np.zeros((2, cfg.d)))
+    xm, _, am = hk_block_step(x, w, cfg, space="dist", lam=0.4)
+    xd, ad = diff_block_step(anp.array(x), params, w.M, cfg, attn="dist", lam=0.4)
+    assert np.max(np.abs(xm - np.asarray(xd))) < 1e-12
+    assert np.max(np.abs(am - np.asarray(ad))) < 1e-12
 
 
 def test_hk_sigmoid_parity_mechanism_vs_diff() -> None:

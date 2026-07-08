@@ -54,6 +54,8 @@ def _run_dynamics(arm: dict, cfg, n_tokens: int, t_iters: int, seed: int):
                 x = a @ x
             else:
                 x, _, _ = block_step(x, w, cfg)
+        elif arm["op"] == "dist":
+            x, _, _ = hk_block_step(x, w, cfg, space="dist", lam=arm["lam"])
         else:
             x, _, _ = hk_block_step(
                 x, w, cfg, space=arm["space"], tau=arm["tau"],
@@ -74,9 +76,13 @@ def exp_a(n_tokens: int, t_iters: int, n_seeds: int, link_eps: float) -> None:
         {"name": "hk-dock t=0.0",          "op": "hk", "space": "dock", "tau": 0.0},
         {"name": "hk-dock t=0.5",          "op": "hk", "space": "dock", "tau": 0.5},
         {"name": "hk-dock t=1.0",          "op": "hk", "space": "dock", "tau": 1.0},
-        {"name": "hk-raw  e=0.5",          "op": "hk", "space": "raw", "tau": -0.25},
         {"name": "hk-raw  e=1.0",          "op": "hk", "space": "raw", "tau": -1.0},
-        {"name": "hk-raw  e=2.0",          "op": "hk", "space": "raw", "tau": -4.0},
+        # distance-penalized softmax (the smooth, trainable locality variant)
+        {"name": "dist  lam=0.05",         "op": "dist", "lam": 0.05},
+        {"name": "dist  lam=0.1",          "op": "dist", "lam": 0.1},
+        {"name": "dist  lam=0.2",          "op": "dist", "lam": 0.2},
+        {"name": "dist  lam=0.5",          "op": "dist", "lam": 0.5},
+        {"name": "dist  lam=1.0",          "op": "dist", "lam": 1.0},
     ]
     print(f"EXP A — untrained dynamics: N={n_tokens} d={cfg.d} T={t_iters} "
           f"seeds={n_seeds} link_eps={link_eps}")
@@ -95,30 +101,32 @@ def exp_a(n_tokens: int, t_iters: int, n_seeds: int, link_eps: float) -> None:
 # ---------------------------------------------------------------- experiment B
 
 def exp_b(iters: int, t_steps: int, seed: int, tau: float, temp: float,
-          hk_only: bool = False) -> None:
+          hk_only: bool = False, lam: float = 0.1) -> None:
     cfg = load_fold_config(_CFG)
     vc = VocabConfig(n_pairs=cfg.n_tokens // 2, d=cfg.d,
                      noise_sigma=0.6, init_scale=cfg.init_scale)
+    # (name, attn, deep)
     arms = [
         ("softmax final-only", "softmax", False),
-        ("hk-dock final-only", "hk", False),
         ("softmax deep",       "softmax", True),
-        ("hk-dock deep",       "hk", True),
+        ("hk-dock final-only", "hk", False),
+        ("dist final-only",    "dist", False),   # the trainable-locality test
+        ("dist deep",          "dist", True),
     ]
     if hk_only:
-        arms = [a for a in arms if a[1] == "hk"]
+        arms = [a for a in arms if a[1] in ("hk", "dist")]
     print(f"EXP B — M2 docking, T={t_steps}, iters={iters}, "
-          f"tau={tau} temp={temp} seed={seed}")
+          f"tau={tau} temp={temp} lam={lam} seed={seed}")
     results = []
     for name, attn, deep in arms:
         print(f"--- arm: {name} ---")
         params, w0, _ = train(
             cfg, vc, t_steps=t_steps, iters=iters, batch=16, lr=3e-3, seed=seed,
-            attn=attn, tau=tau, temp=temp, deep=deep,
+            attn=attn, tau=tau, temp=temp, deep=deep, lam=lam,
             log=lambda s: print(f"  {s}"),
         )
         acc = evaluate(params, w0, vc, cfg, t_steps, n_scenes=200, seed=123_456,
-                       attn=attn, tau=tau, temp=temp)
+                       attn=attn, tau=tau, temp=temp, lam=lam)
         results.append((name, acc))
         print(f"  FINAL held-out accuracy (200 scenes): {acc:.4f}")
     print("\nEXP B SUMMARY")
@@ -137,6 +145,7 @@ def main(argv=None) -> int:
     p.add_argument("--t-steps", type=int, default=8)
     p.add_argument("--tau", type=float, default=0.0)
     p.add_argument("--temp", type=float, default=0.1)
+    p.add_argument("--lam", type=float, default=0.1)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--hk-only", action="store_true",
                    help="exp B: run only the hk arms (τ/temp follow-ups)")
@@ -145,7 +154,7 @@ def main(argv=None) -> int:
         exp_a(args.n_tokens, args.t_iters, args.n_seeds, args.link_eps)
     else:
         exp_b(args.iters, args.t_steps, args.seed, args.tau, args.temp,
-              hk_only=args.hk_only)
+              hk_only=args.hk_only, lam=args.lam)
     return 0
 
 

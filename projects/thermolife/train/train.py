@@ -31,7 +31,8 @@ _DEFAULT_CONFIG = _HERE.parent / "configs" / "fold.yaml"
 
 def evaluate(params: dict, w_template: FoldWeights, vc: VocabConfig,
              cfg: FoldConfig, t_steps: int, n_scenes: int, seed: int,
-             attn: str = "softmax", tau: float = 0.0, temp: float = 0.1) -> float:
+             attn: str = "softmax", tau: float = 0.0, temp: float = 0.1,
+             lam: float = 0.0) -> float:
     """Held-out matching accuracy, computed with the *mechanism* fold (parity-
     gated), so what we score is exactly what the viewer will run. attn selects
     the matching mechanism block (softmax fold vs bounded-confidence fold)."""
@@ -47,6 +48,8 @@ def evaluate(params: dict, w_template: FoldWeights, vc: VocabConfig,
         for _ in range(t_steps):
             if attn == "softmax":
                 x, _, a = block_step(x, w, cfg)
+            elif attn == "dist":
+                x, _, a = hk_block_step(x, w, cfg, space="dist", lam=lam)
             else:
                 x, _, a = hk_block_step(x, w, cfg, space="dock", tau=tau,
                                         kernel="sigmoid", temp=temp)
@@ -66,13 +69,13 @@ def weights_with_params(w: FoldWeights, params: dict) -> FoldWeights:
 def train(cfg: FoldConfig, vc: VocabConfig, *, t_steps: int, iters: int,
           batch: int, lr: float, seed: int, log=print,
           attn: str = "softmax", tau: float = 0.0, temp: float = 0.1,
-          deep: bool = True) -> tuple[dict, FoldWeights, list]:
+          deep: bool = True, lam: float = 0.0) -> tuple[dict, FoldWeights, list]:
     w0 = FoldWeights.random(cfg, seed)
     params = params_from_weights(w0, init_type_embeddings(vc, seed))
     rng = np.random.default_rng(seed + 1)
     loss_grad = grad(
         lambda p, scenes: batch_loss(p, scenes, vc.noise_sigma, w0.M, cfg, t_steps,
-                                     attn=attn, tau=tau, temp=temp, deep=deep)
+                                     attn=attn, tau=tau, temp=temp, deep=deep, lam=lam)
     )
     # Adam
     m = {k: np.zeros_like(v) for k, v in params.items()}
@@ -90,9 +93,9 @@ def train(cfg: FoldConfig, vc: VocabConfig, *, t_steps: int, iters: int,
             params[k] = params[k] - lr * mh / (np.sqrt(vh) + eps)
         if it % 50 == 0 or it == 1:
             loss = float(batch_loss(params, scenes, vc.noise_sigma, w0.M, cfg, t_steps,
-                                    attn=attn, tau=tau, temp=temp, deep=deep))
+                                    attn=attn, tau=tau, temp=temp, deep=deep, lam=lam))
             acc = evaluate(params, w0, vc, cfg, t_steps, n_scenes=50, seed=99_000 + it,
-                           attn=attn, tau=tau, temp=temp)
+                           attn=attn, tau=tau, temp=temp, lam=lam)
             history.append((it, loss, acc))
             log(f"iter {it:5d}  loss {loss:.4f}  held-out acc {acc:.3f}")
     return params, w0, history

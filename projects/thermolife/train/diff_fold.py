@@ -42,13 +42,14 @@ def _softmax_rows(s):
 
 
 def diff_block_step(x, params: dict, m_metric, cfg: FoldConfig,
-                    attn: str = "softmax", tau: float = 0.0, temp: float = 0.1):
+                    attn: str = "softmax", tau: float = 0.0, temp: float = 0.1,
+                    lam: float = 0.0):
     """One fold iteration; mirrors fold.transformer.block_step exactly.
 
-    attn="softmax" is the global fold. attn="hk" is the bounded-confidence
-    variant (fold/hk.py, sigmoid kernel in the dock metric): a differentiable
-    gate σ((s−τ)/temp) shapes exp(s) before row normalization — tokens interact
-    only where net-complementary, with no dead gradients at the boundary."""
+    attn="softmax": global fold. attn="hk": bounded-confidence sigmoid gate in
+    the dock metric (differentiable but still a soft *threshold*). attn="dist":
+    distance-penalized softmax s = dock − λ‖Δx‖² — smooth *physical* locality,
+    the trainable variant with no threshold."""
     c = x @ params["W_c"]
     key = c @ m_metric
     s = (c @ key.T) / anp.sqrt(c.shape[1])
@@ -60,6 +61,10 @@ def diff_block_step(x, params: dict, m_metric, cfg: FoldConfig,
         gate = gate * (1.0 - eye) + anp.maximum(gate, 1e-3) * eye  # self never gated out
         e = gate * anp.exp(s - anp.max(s, axis=1, keepdims=True))
         a = e / anp.sum(e, axis=1, keepdims=True)
+    elif attn == "dist":
+        d2 = anp.sum(x * x, axis=1, keepdims=True)
+        sq = d2 + d2.T - 2.0 * (x @ x.T)          # ‖x_i − x_j‖²
+        a = _softmax_rows(s - lam * sq)
     else:
         raise ValueError(f"unknown attn: {attn}")
     x1 = _layernorm(x + a @ (x @ params["W_v"]))
@@ -70,20 +75,20 @@ def diff_block_step(x, params: dict, m_metric, cfg: FoldConfig,
 
 
 def fold_forward(x0, params: dict, m_metric, cfg: FoldConfig, t_steps: int,
-                 attn: str = "softmax", tau: float = 0.0, temp: float = 0.1):
+                 attn: str = "softmax", tau: float = 0.0, temp: float = 0.1, lam: float = 0.0):
     """Unroll T iterations; return (final X, final attention A)."""
     x, a = x0, None
     for _ in range(t_steps):
-        x, a = diff_block_step(x, params, m_metric, cfg, attn=attn, tau=tau, temp=temp)
+        x, a = diff_block_step(x, params, m_metric, cfg, attn=attn, tau=tau, temp=temp, lam=lam)
     return x, a
 
 
 def fold_forward_all(x0, params: dict, m_metric, cfg: FoldConfig, t_steps: int,
-                     attn: str = "softmax", tau: float = 0.0, temp: float = 0.1):
+                     attn: str = "softmax", tau: float = 0.0, temp: float = 0.1, lam: float = 0.0):
     """Unroll T iterations; return (final X, [A_1..A_T])."""
     x, attns = x0, []
     for _ in range(t_steps):
-        x, a = diff_block_step(x, params, m_metric, cfg, attn=attn, tau=tau, temp=temp)
+        x, a = diff_block_step(x, params, m_metric, cfg, attn=attn, tau=tau, temp=temp, lam=lam)
         attns.append(a)
     return x, attns
 
@@ -91,6 +96,7 @@ def fold_forward_all(x0, params: dict, m_metric, cfg: FoldConfig, t_steps: int,
 def scene_loss(
     params: dict, types, partner, noise, sigma: float, m_metric, cfg: FoldConfig, t_steps: int,
     attn: str = "softmax", tau: float = 0.0, temp: float = 0.1, deep: bool = True,
+    lam: float = 0.0,
 ):
     """Lock-and-key retrieval loss: −mean log A[i, partner(i)] on the attention.
     The readout is the attention structure, not a token. Collapse is
@@ -107,7 +113,7 @@ def scene_loss(
     """
     x0 = params["e_types"][types] + sigma * noise
     _, attns = fold_forward_all(x0, params, m_metric, cfg, t_steps,
-                                attn=attn, tau=tau, temp=temp)
+                                attn=attn, tau=tau, temp=temp, lam=lam)
     idx = anp.arange(len(partner))
     supervised = attns if deep else attns[-1:]
     total = 0.0
@@ -118,12 +124,12 @@ def scene_loss(
 
 def batch_loss(params: dict, scenes, sigma, m_metric, cfg: FoldConfig, t_steps: int,
                attn: str = "softmax", tau: float = 0.0, temp: float = 0.1,
-               deep: bool = True):
+               deep: bool = True, lam: float = 0.0):
     """Mean scene_loss over a list of (types, partner, noise) scenes."""
     total = 0.0
     for types, partner, noise in scenes:
         total = total + scene_loss(
             params, types, partner, noise, sigma, m_metric, cfg, t_steps,
-            attn=attn, tau=tau, temp=temp, deep=deep,
+            attn=attn, tau=tau, temp=temp, deep=deep, lam=lam,
         )
     return total / len(scenes)
