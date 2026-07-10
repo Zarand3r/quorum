@@ -14,15 +14,15 @@
 
 ## Steps at a glance
 
-- [ ] **Step 0 — Foundation.** `eco/` skeleton, config, Bazel targets, test harness, ledger helper. *Infra only.*
-- [ ] **Step 1 — Lock state + ledger contract.** `EcoState` dense arrays; no-op tick conserves trivially. *(P1, P3, P4, P5, P6)*
-- [ ] **Step 2 — Slice: resource in.** Drifting source + field + harvest (η, dissipation booked). *(P1)*
-- [ ] **Step 3 — Slice: energy out.** Move (kinetic cost) + metabolism + death. *(P1)*
-- [ ] **Step 4 — Slice: reproduction.** Split on `e≥e_div`, gene mutation, `N` grows to `N_max`. *(P1, P6)*
-- [ ] **Step 5 — Hand-forager + THE E0 GATE.** Greedy policy; conserves 10k ticks; **starves when drift outpaces any static config**. *(P1, P8)*
+- [x] **Step 0 — Foundation.** `eco/` skeleton, config, Bazel targets, test harness, ledger helper. *Infra only.*
+- [x] **Step 1 — Lock state + ledger contract.** `EcoState` dense arrays; no-op tick conserves trivially. *(P1, P3, P4, P5, P6)*
+- [x] **Step 2 — Slice: resource in.** Drifting source + field + harvest (η, dissipation booked). *(P1)*
+- [x] **Step 3 — Slice: energy out.** Move (kinetic cost) + metabolism + death. *(P1)*
+- [x] **Step 4 — Slice: reproduction.** Split on `e≥e_div`, gene mutation, `N` grows to `N_max`. *(P1, P6)*
+- [x] **Step 5 — Hand-forager + THE E0 GATE.** Greedy policy; conserves 10k ticks; **starves when drift outpaces any static config**. *(P1, P8)*
 - [ ] **Step 6 — Viewer.** Render population + field + source in the 2D projection; reuse `sim/`. *(P4)*
-- [ ] **Step 7 — E1: attention as interaction operator.** Swap hand-policy for `fold` block (fixed θ, gene-modulated Q/K) decoding move/harvest/transfer. *(P1, P2, P5, P7)*
-- [ ] **Step 8 — E1 gate: energy routes along edges.** Transfer provably follows attention; ablations wired. *(P1, P2)*
+- [x] **Step 7 — E1: attention as interaction operator.** Swap hand-policy for `fold` block (fixed θ, gene-modulated Q/K) decoding move/harvest/transfer. *(P1, P2, P5, P7)*
+- [x] **Step 8 — E1 gate: energy routes along edges.** Transfer provably follows attention; ablations wired. *(P1, P2)*
 
 ```
 0 ──▶ 1 ──▶ 2 ──▶ 3 ──▶ 4 ──▶ 5 ──▶ 7 ──▶ 8
@@ -256,7 +256,8 @@
 
 ## Step 7 — E1: attention as the interaction operator
 
-**Goal:** replace the hand-forager with the `fold` transformer block — **fixed random θ**, Q/K **modulated by gene `g`** — decoding `move`/`harvest`/`transfer` actions.
+**Goal:** replace the hand-forager with the transformer interaction block — **fixed random θ**, Q/K **modulated by gene `g`** — decoding `move`/`harvest`/`transfer` actions.
+**Operator (decided by the HK study, RESEARCH_HK.md — revised):** **distance-penalized dock attention** `A = softmax(dock − λ‖Δx‖²)` (`fold/hk.py`, λ from config). The study found the decisive axis is *smooth vs. hard*, not local vs. global: distance-penalty resists collapse (Exp A: 8–47× spread) **and** trains under gradients (Exp B), where the hard-HK threshold has dead gradients. **hk** and **global softmax** are kept as permanent ablation arms, not the default.
 **Why now:** interaction now flows through attention (the mechanism the whole thesis rides on); genes make binding surfaces heritable and *drawable* (P7).
 
 ### Tests first
@@ -285,11 +286,11 @@
 
 ### Tests first
 - [ ] `test_edge_routing`: total transferred energy correlates with `A` mass on transfer edges above a threshold; zeroing `A` zeroes transfer.
-- [ ] `test_ablation_harness`: `freeze_attention`, `shuffle_edges`, `remove_transfer` modes exist, are deterministic, and each changes the transport observable in the predicted direction.
+- [ ] `test_ablation_harness`: `freeze_attention`, `shuffle_edges`, `remove_transfer`, `global_softmax` modes exist, are deterministic, and each changes the transport observable in the predicted direction (softmax arm per RESEARCH_HK.md §5.3).
 
 ### Implementation
 - [ ] `eco/observables.py`: attention-graph entropy, transfer-on-edge mass, survival time (read-only — P2: never fed back).
-- [ ] `eco/ablations.py`: the three ablation modes + a matched-compute harness.
+- [ ] `eco/ablations.py`: the four ablation modes + a matched-compute harness.
 
 ### Integration check
 - [ ] §A spine green under each ablation mode (they change dynamics, not conservation).
