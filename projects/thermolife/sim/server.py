@@ -33,6 +33,7 @@ _CONTROLS = {
     "/pause": lambda c, body: c.pause(),
     "/resume": lambda c, body: c.resume(),
     "/restart": lambda c, body: c.restart(),
+    "/next": lambda c, body: c.next_scene(),
     "/stop": lambda c, body: c.stop(),
 }
 

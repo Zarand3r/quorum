@@ -37,17 +37,17 @@ def test_trained_engine_snapshot_has_ground_truth() -> None:
 
 
 def test_trained_engine_gallery_keeps_weights_fixed() -> None:
-    """Trained mode reseeds SCENES, never weights — the learned fold persists."""
+    """Advancing the gallery reseeds SCENES, never weights — the learned fold
+    persists across scenes (now via explicit next_scene, not auto-reseed)."""
     cfg = _cfg()
     e = FoldEngine(cfg, seed=0, trained_npz=str(_TRAINED))
     w_before = e.w.W_c.copy()
-    partners = [tuple(e.snapshot(_RUNNING)["partner"])]
-    for _ in range(3 * cfg.min_iters_before_reseed):
-        e.step()
-    partners.append(tuple(e.snapshot(_RUNNING)["partner"]))
-    assert np.array_equal(e.w.W_c, w_before)          # weights fixed
-    assert e.snapshot(_RUNNING)["fold"] >= 1          # scenes did reseed
-    assert partners[0] != partners[1] or True         # (scenes differ; not load-bearing)
+    for _ in range(3):
+        for _ in range(6):
+            e.step()
+        e.next_scene()
+    assert np.array_equal(e.w.W_c, w_before)          # weights fixed across scenes
+    assert e.snapshot(_RUNNING)["fold"] == 3          # three explicit advances
 
 
 def _accuracy_at(n_iters: int, n_scenes: int = 200) -> float:
@@ -72,6 +72,31 @@ def test_m2_accuracy_gate() -> None:
     t = _trained_horizon()
     acc = _accuracy_at(t)
     assert acc > 0.95, f"held-out docking accuracy {acc:.3f} ≤ 0.95 at T={t}"
+
+
+def test_trained_holds_at_horizon_until_next_scene() -> None:
+    """The gallery no longer silently reseeds: at 2× the trained horizon the
+    fold HOLDS (frozen frame), and only an explicit next_scene() advances it."""
+    cfg = _cfg()
+    e = FoldEngine(cfg, seed=0, trained_npz=str(_TRAINED))
+    t = int(np.load(_TRAINED)["t_steps"])
+    for _ in range(2 * t):
+        e.step()
+    snap = e.snapshot(_RUNNING)
+    assert snap["held"] is True                       # settled at the horizon
+    # held ⇒ further steps are a no-op: no motion, no auto-reseed
+    frozen = e.state_hash()
+    for _ in range(25):
+        e.step()
+    assert e.state_hash() == frozen
+    assert e.snapshot(_RUNNING)["fold"] == snap["fold"]   # same scene held
+    # explicit advance → next scene, hold released, stepping resumes
+    e.next_scene()
+    after = e.snapshot(_RUNNING)
+    assert after["held"] is False
+    assert after["fold"] == snap["fold"] + 1
+    e.step()
+    assert e.state_hash() != frozen                   # motion resumed
 
 
 def test_m2_persistence_gate() -> None:

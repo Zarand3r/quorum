@@ -83,6 +83,19 @@ class SimController:
             self._status = SimStatus.RUNNING
         self._resume.set()
 
+    def next_scene(self) -> None:
+        """Advance a gallery engine to its next scene (explicit, user-gated).
+        No-op-safe: raises if the engine has no scenes or the sim isn't started."""
+        with self._lock:
+            if self._engine is None:
+                raise ControllerError("cannot advance scene before start")
+            advance = getattr(self._engine, "next_scene", None)
+            if advance is None:
+                raise ControllerError("this engine has no gallery scenes")
+            advance()
+            self._status = SimStatus.RUNNING
+        self._resume.set()
+
     def stop(self) -> None:
         with self._lock:
             self._status = SimStatus.IDLE
