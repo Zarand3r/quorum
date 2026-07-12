@@ -20,7 +20,7 @@
 - [x] **Step 3 — Slice: energy out.** Move (kinetic cost) + metabolism + death. *(P1)*
 - [x] **Step 4 — Slice: reproduction.** Split on `e≥e_div`, gene mutation, `N` grows to `N_max`. *(P1, P6)*
 - [x] **Step 5 — Hand-forager + THE E0 GATE.** Greedy policy; conserves 10k ticks; **starves when drift outpaces any static config**. *(P1, P8)*
-- [ ] **Step 6 — Viewer.** Render population + field + source in the 2D projection; reuse `sim/`. *(P4)*
+- [x] **Step 6 — Viewer.** Render population + field + source in the 2D projection; reuse `sim/`. *(P4)*
 - [x] **Step 7 — E1: attention as interaction operator.** Swap hand-policy for `fold` block (fixed θ, gene-modulated Q/K) decoding move/harvest/transfer. *(P1, P2, P5, P7)*
 - [x] **Step 8 — E1 gate: energy routes along edges.** Transfer provably follows attention; ablations wired. *(P1, P2)*
 
@@ -378,3 +378,23 @@ Specced lightly on purpose; each firms into full steps once the prior milestone'
 - **E4 — Open-endedness.** Finite resource + predation + coevolution; track evolutionary-activity
   / novelty statistics (contested — reported as exploratory). No binary gate; deliverable is the
   measured trajectory + an honest verdict.
+
+## §F — Noted future experiments (opportunistic, not milestone-gated)
+
+Small, self-contained probes to run when we next touch the relevant code, not steps on the
+critical path. Filed so they aren't lost.
+
+- **F1 — Muon vs. Adam: does optimizer isotropy propagate to activation isotropy?**
+  *Hypothesis to test, not adopt.* Muon orthogonalizes the weight-*update* spectrum (parameter
+  space); thermolife's collapse is in the forward token trajectory (activation space). These are
+  different objects, so the analogy is unproven. The chain the analogy implies is
+  *higher-rank updates → higher-rank weights → less forward oversmoothing*. **Probe:** train the
+  M2 fold with Adam vs. a Muon step in `train/train.py`, and compare the **forward** effective
+  rank of the token trajectory (`fold/hk.py::effective_rank`, already an observable) and
+  collapse onset — not just held-out accuracy. If Muon-trained folds hold higher forward rank /
+  collapse later, the parameter→activation isotropy link is real; if not, the resonance is
+  aesthetic. **Caveats (why this is a probe, not a plan):** (a) our models are tiny (`W_c` is
+  4×8, ~300 params) — little singular spectrum for Newton–Schulz to isotropize, so a null result
+  is likely and would itself be informative; (b) the emergence path (E2 ES, E3 selection) is
+  gradient-free, so Muon only ever applies to the gradient-trained parts (M2, a gradient E2).
+  Run only when the gradient trainer is already open for other reasons.

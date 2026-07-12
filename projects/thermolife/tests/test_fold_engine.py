@@ -60,25 +60,42 @@ def test_fold_step_finite_and_bounded() -> None:
     assert steps.max() < 10.0
 
 
-def test_fold_gallery_advances() -> None:
-    """A settled fold reseeds into a fresh one (PLAN.md D3), deterministically."""
+def test_fold_gallery_holds_then_advances() -> None:
+    """A settled fold HOLDS (no silent reseed); next_scene() advances the
+    gallery, deterministically (J2). Reset is gated on an explicit control."""
     cfg = _cfg()
     a, b = FoldEngine(cfg, 0), FoldEngine(cfg, 0)
     for _ in range(300):
         a.step()
         b.step()
-    assert a.snapshot(_RUNNING)["fold"] >= 1  # converged at least once and reseeded
-    assert a.state_hash() == b.state_hash()   # reseeds are deterministic (J2 holds)
+    assert a.snapshot(_RUNNING)["held"] is True   # settled → held, not reseeded
+    assert a.snapshot(_RUNNING)["fold"] == 0      # still the first scene
+    assert a.state_hash() == b.state_hash()       # deterministic
+    a.next_scene()
+    b.next_scene()
+    assert a.snapshot(_RUNNING)["fold"] == 1       # explicit advance
+    assert a.snapshot(_RUNNING)["held"] is False
+    assert a.state_hash() == b.state_hash()        # reseeds are deterministic
 
 
 def test_runs_through_controller() -> None:
     cfg = _cfg()
     c = SimController(lambda s: FoldEngine(cfg, s), default_seed=0, autostart_thread=False)
     c.start(seed=0)
-    for _ in range(50):
+    for _ in range(30):  # < min_iters_before_reseed so the fold can't hold yet
         c._tick_now()
     snap = c.snapshot()
-    assert snap["status"] == "RUNNING" and snap["tick"] == 50
+    assert snap["status"] == "RUNNING" and snap["tick"] == 30
     assert len(snap["tokens"]) == cfg.n_tokens
     c.stop()
     assert c.snapshot()["tokens"] == []  # IDLE snapshot is empty
+
+
+def test_controller_next_scene() -> None:
+    """The control surface can advance the gallery (drives the New-scene button)."""
+    cfg = _cfg()
+    c = SimController(lambda s: FoldEngine(cfg, s), default_seed=0, autostart_thread=False)
+    c.start(seed=0)
+    scene0 = c.snapshot()["fold"]
+    c.next_scene()
+    assert c.snapshot()["fold"] == scene0 + 1

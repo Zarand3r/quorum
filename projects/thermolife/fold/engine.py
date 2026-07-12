@@ -37,6 +37,7 @@ class FoldEngine:
         self._since = 0        # iterations since the current fold started
         self._fold_step = 0.0
         self._partner = None   # ground-truth partner indices (trained mode)
+        self._held = False     # settled/horizon-reached: hold until next_scene()
         self._trained = None
         if trained_npz is not None:
             z = np.load(Path(trained_npz))
@@ -71,30 +72,39 @@ class FoldEngine:
         return w, x
 
     def step(self) -> None:
+        if self._held:            # settled: hold the frame until next_scene()
+            return
         x1, _, _ = block_step(self.x, self.w, self.cfg)
         self._fold_step = float(np.linalg.norm(x1 - self.x) / np.sqrt(self.x.size))
         self.x = x1
         self._t += 1
         self._since += 1
-        # Gallery advance. RANDOM mode: when the fold has settled (PLAN.md D3).
-        # TRAINED mode: on a fixed timer — learned docking may stay dynamic, so
-        # convergence is not a reliable scene boundary.
+        # End-of-scene: instead of silently reseeding (which read as a sudden,
+        # discontinuous jump), HOLD the settled scene. The next scene is gated
+        # behind an explicit control (next_scene / the viewer's "New scene").
+        # TRAINED mode: hold at 2× the trained horizon — past what deep
+        # supervision covered, the weight-tied map drifts off the docked config,
+        # so showing further would misrepresent what was learned.
+        # RANDOM mode: hold once the fold has settled (PLAN.md D3).
         if self._trained is not None:
-            # scene length = 2× the trained horizon: beyond what deep supervision
-            # covered, the weight-tied map may drift off the docked configuration —
-            # showing far past the horizon would misrepresent what was learned.
             if self._since >= 2 * self._trained["t_steps"]:
-                self._gen += 1
-                self.w, self.x = self._instantiate()
-                self._since = 0
+                self._held = True
         elif (
             self.cfg.reseed_on_converge
             and self._since >= self.cfg.min_iters_before_reseed
             and self._fold_step < self.cfg.converge_eps
         ):
-            self._gen += 1
-            self.w, self.x = self._instantiate()
-            self._since = 0
+            self._held = True
+
+    def next_scene(self) -> None:
+        """Advance the gallery to a fresh scene (explicit, user-gated) and
+        release the hold so stepping resumes. Trained mode reseeds a new
+        shuffle+noise scene; random mode a fresh random fold."""
+        self._gen += 1
+        self.w, self.x = self._instantiate()
+        self._since = 0
+        self._fold_step = 0.0
+        self._held = False
 
     @property
     def tick(self) -> int:
@@ -135,6 +145,7 @@ class FoldEngine:
             "tick": self._t,
             "fold": self._gen,
             "fold_iter": self._since,
+            "held": self._held,
             "n": self.cfg.n_tokens,
             "fold_step": round(self._fold_step, 5),
             "max_attn": round(float(off_diag.max()), 3),

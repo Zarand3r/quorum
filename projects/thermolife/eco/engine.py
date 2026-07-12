@@ -35,6 +35,14 @@ class EcoEngine:
         self.policy = policy if policy is not None else hand_forager
         self.state = state if state is not None else init_state(cfg)
         self.last_residual: float = 0.0
+        self._n_edges = 0     # transfer edges applied last tick (render stat)
+
+    def step(self) -> None:
+        """Controller-protocol alias for tick() (drives the sim/ viewer)."""
+        self.tick()
+
+    def state_hash(self) -> str:
+        return self.state.state_hash()
 
     def tick(self) -> float:
         """Advance one tick. Returns the ledger residual (P1); |residual| < 1e-9."""
@@ -109,18 +117,42 @@ class EcoEngine:
 
     # ---- observation (read-only; never feeds back into dynamics — P2) ----
 
-    def snapshot(self) -> dict:
-        st = self.state
-        w = access_weight(st.x, st.mu, self.cfg.sigma_r) if st.n else np.zeros(0)
+    def snapshot(self, status=None) -> dict:
+        """Render-ready, read-only view for the viewer (Step 6). Positions are
+        projected to the first two dims (the source's orbit plane) — a pure
+        display projection, so stepping through here never perturbs dynamics
+        (P4). Transfer edges are recomputed from the current state (read-only)."""
+        cfg, st = self.cfg, self.state
+        pos = st.x[:, :2] if st.n else np.zeros((0, 2))
+        w = access_weight(st.x, st.mu, cfg.sigma_r) if st.n else np.zeros(0)
+        emax = float(st.e.max()) if st.n else 1.0
+        tokens = [
+            {"pos": [round(float(pos[i, 0]), 3), round(float(pos[i, 1]), 3)],
+             "e": round(float(st.e[i]), 3)}
+            for i in range(st.n)
+        ]
+        edges = []
+        if st.n:
+            _, _, transfer = self.policy(st, cfg)          # read-only recompute
+            ii, jj = np.where(transfer > 0.02)             # meaningful transfers only
+            order = np.argsort(-transfer[ii, jj])[:300]    # cap payload
+            edges = [[int(ii[k]), int(jj[k]), round(float(transfer[ii[k], jj[k]]), 4)]
+                     for k in order]
         return {
-            "t": st.t,
+            "status": status.value if status is not None else "RUNNING",
+            "tick": st.t,
             "n": st.n,
-            "pool": st.pool,
-            "dissipated": st.dissipated,
-            "energy": float(np.sum(st.e)),
-            "mu": st.mu.tolist(),
-            "mean_access": float(np.mean(w)) if st.n else 0.0,
+            "n_max": cfg.n_max,
+            "pool": round(float(st.pool), 3),
+            "dissipated": round(float(st.dissipated), 3),
+            "energy": round(float(np.sum(st.e)), 3),
+            "mean_access": round(float(np.mean(w)), 3) if st.n else 0.0,
             "residual": self.last_residual,
+            "source": [round(float(st.mu[0]), 3), round(float(st.mu[1]), 3)],
+            "harvest_radius": cfg.sigma_r,
+            "e_max": round(emax, 3),
+            "tokens": tokens,
+            "edges": edges,
         }
 
 

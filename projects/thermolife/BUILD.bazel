@@ -33,6 +33,7 @@ py_library(
     data = [
         ":configs",
         "sim/viewer.html",  # served by sim/server.py from runfiles
+        "sim/eco_viewer.html",
     ],
     imports = ["."],  # put projects/thermolife on sys.path → `import env`, `import sim`
     deps = [
@@ -51,6 +52,7 @@ py_binary(
     data = [
         ":configs",
         "sim/viewer.html",
+        "sim/eco_viewer.html",
     ],
     imports = ["."],
     deps = [":thermolife"],
@@ -60,6 +62,15 @@ py_binary(
     name = "hk_study",
     srcs = ["train/hk_study.py"],
     main = "train/hk_study.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":thermolife"],
+)
+
+py_binary(
+    name = "render",
+    srcs = ["sim/render_svg.py"],
+    main = "sim/render_svg.py",
     data = [":configs"],
     imports = ["."],
     deps = [":thermolife"],
