@@ -52,15 +52,23 @@ if [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
   kill "$(cat "$PIDFILE")" 2>/dev/null || true
 fi
 
-TRAINED="${TRAINED:-default}"   # default = committed trained weights; none = untrained S0 fold
-TRAINED_ARG=()
-if [[ "$TRAINED" == default ]]; then
-  TRAINED_ARG=(--trained "$REPO_ROOT/projects/thermolife/configs/trained_fold.npz")
-elif [[ "$TRAINED" != none ]]; then
-  TRAINED_ARG=(--trained "$TRAINED")
+# ECO=default serves the economy (eco/) instead of the fold. ECO_POLICY picks the
+# driver: forager (healthy, watchable) | attention (E1 operator, transfer edges) | frozen.
+ECO="${ECO:-none}"
+MODE_ARG=()
+if [[ "$ECO" != none ]]; then
+  MODE_ARG=(--eco --eco-policy "${ECO_POLICY:-forager}")
+  echo ">> starting ECONOMY server on 127.0.0.1:${PORT} (policy=${ECO_POLICY:-forager})"
+else
+  TRAINED="${TRAINED:-default}"   # default = committed trained weights; none = untrained S0
+  if [[ "$TRAINED" == default ]]; then
+    MODE_ARG=(--trained "$REPO_ROOT/projects/thermolife/configs/trained_fold.npz")
+  elif [[ "$TRAINED" != none ]]; then
+    MODE_ARG=(--trained "$TRAINED")
+  fi
+  echo ">> starting embedding-folding server on 127.0.0.1:${PORT} (trained=${TRAINED})"
 fi
-echo ">> starting embedding-folding server on 127.0.0.1:${PORT} (trained=${TRAINED})"
-nohup "$BIN" --host 127.0.0.1 --port "$PORT" --step-hz 20 "${TRAINED_ARG[@]}" >"$LOG" 2>&1 &
+nohup "$BIN" --host 127.0.0.1 --port "$PORT" --step-hz 20 "${MODE_ARG[@]}" >"$LOG" 2>&1 &
 echo $! >"$PIDFILE"
 
 echo ">> waiting for health"
