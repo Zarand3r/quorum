@@ -120,9 +120,14 @@ def _validate(cfg: EcoConfig) -> None:
         raise ValueError("n_init must be ≤ n_max")
     if cfg.e_div <= cfg.e_init:
         raise ValueError("e_div must exceed e_init or nothing ever forages before splitting")
-    for name in ("inject", "sigma_r", "harvest_rate", "c_base", "c_move", "max_step"):
+    for name in ("inject", "harvest_rate", "c_base", "c_move", "max_step"):
         if getattr(cfg, name) < 0.0:
             raise ValueError(f"{name} must be ≥ 0")
+    if cfg.sigma_r <= 0.0:
+        # sigma_r divides the harvest weight AND the chemotaxis sense gradient;
+        # 0 → division by zero → NaN energy that silently corrupts the ledger.
+        # Fail fast at load rather than degrade silently.
+        raise ValueError("sigma_r must be > 0 (it is a Gaussian width; 0 → NaN energy)")
     if not (0.0 <= cfg.transfer_frac_max < 1.0):
         raise ValueError("transfer_frac_max must be in [0, 1) — a token cannot send "
                          "more than it has")

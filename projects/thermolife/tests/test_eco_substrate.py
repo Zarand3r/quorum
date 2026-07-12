@@ -10,7 +10,9 @@ from pathlib import Path
 
 import numpy as np
 
-from eco.config import load_eco_config
+import pytest
+
+from eco.config import _validate, load_eco_config
 from eco.engine import EcoEngine, run
 from eco.policies import frozen, hand_forager
 from eco.resource import harvest
@@ -30,6 +32,17 @@ def _state(x, e, g, cfg, mu=None, pool=10.0, seed=0):
         mu=source_at(0, cfg) if mu is None else np.asarray(mu, float),
         pool=pool, dissipated=0.0, t=0, rng=np.random.Generator(np.random.PCG64(seed)),
     )
+
+
+# ---- fail-fast config validation ---------------------------------------------
+
+def test_sigma_r_zero_rejected() -> None:
+    """σ_r divides the harvest weight and the chemotaxis gradient; 0 → NaN energy
+    that silently corrupts the ledger. Config load must fail fast, not degrade."""
+    with pytest.raises(ValueError, match="sigma_r"):
+        _validate(_cfg(sigma_r=0.0))
+    with pytest.raises(ValueError, match="sigma_r"):
+        _validate(_cfg(sigma_r=-0.3))
 
 
 # ---- P1 conservation ---------------------------------------------------------

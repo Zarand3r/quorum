@@ -116,15 +116,14 @@ class SimController:
     def snapshot(self) -> dict:
         with self._lock:
             if self._engine is None:
-                return {
-                    "status": self._status.value,
-                    "tick": 0,
-                    "n": 0,
-                    "fold_step": 0.0,
-                    "max_attn": 0.0,
-                    "tokens": [],
-                    "edges": [],
-                }
+                # No engine yet (IDLE / post-stop). Emit a MODE-NEUTRAL empty
+                # snapshot: only the keys both viewers tolerate. Emitting fold-only
+                # keys here (fold_step/max_attn) leaked the fold schema into the eco
+                # viewer and left `fold` undefined, which flashed a bogus
+                # "scene undefined" toast on Stop. Empty tokens/edges render as a
+                # blank scene in either viewer.
+                return {"status": self._status.value, "tick": 0, "n": 0,
+                        "tokens": [], "edges": []}
             return self._engine.snapshot(self._status)
 
     # --- stepping ------------------------------------------------------------

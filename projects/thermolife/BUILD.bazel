@@ -94,6 +94,15 @@ py_binary(
     deps = [":thermolife"],
 )
 
+py_binary(
+    name = "train_es",
+    srcs = ["train/es_eco.py"],
+    main = "train/es_eco.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":thermolife"],
+)
+
 py_test(
     name = "test_suite",
     srcs = glob(["tests/**/*.py"]),

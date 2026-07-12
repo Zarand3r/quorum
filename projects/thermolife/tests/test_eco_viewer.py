@@ -68,6 +68,24 @@ def test_eco_viewer_readonly_matches_headless() -> None:
     assert c._engine.state_hash() == headless.state_hash()
 
 
+def test_eco_snapshot_readonly_for_stochastic_policies() -> None:
+    """P4 (the sharp case): snapshot() recomputes edges by calling the policy.
+    For a STOCHASTIC arm (shuffle_edges draws a permutation) that recompute must
+    still not perturb the trajectory. Regression for the latent bug where a
+    per-call ablation RNG was advanced by every render, desyncing the next tick.
+    hand_forager (zero transfer, no RNG) can't catch this — these policies can."""
+    cfg = _cfg()
+    for mode in ("dist", "shuffle_edges"):
+        headless = EcoEngine(cfg, policy=make_attention_policy(cfg, seed=1, mode=mode))
+        rendered = EcoEngine(cfg, policy=make_attention_policy(cfg, seed=1, mode=mode))
+        for _ in range(60):
+            headless.step()
+            rendered.step()
+            rendered.snapshot()                           # render every tick (UI path)
+        assert rendered.state_hash() == headless.state_hash(), \
+            f"snapshot() perturbed the {mode} trajectory (P4 violation)"
+
+
 def test_eco_controller_snapshot_ok() -> None:
     """The controller serves the eco engine's snapshot without touching it."""
     cfg = _cfg()
