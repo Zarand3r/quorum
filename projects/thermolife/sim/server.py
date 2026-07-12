@@ -99,15 +99,24 @@ def build_server(host: str, port: int, controller: SimController,
     return ControlServer((host, port), controller, viewer)
 
 
-def _eco_factory(cfg, policy_name: str):
-    """Build an eco engine factory(seed) for the chosen policy."""
+def _eco_factory(cfg, policy_name: str, theta_npz: str | None = None):
+    """Build an eco engine factory(seed) for the chosen policy.
+
+    ``attention`` uses the E1 operator: a random θ by default, or the EVOLVED θ
+    (E2) when ``theta_npz`` is given — the same weights the E2 gate scores, so the
+    viewer shows the learned foraging, not untrained noise."""
     from eco.engine import EcoEngine
     from eco.interaction import make_attention_policy
     from eco.policies import frozen, hand_forager
 
+    weights = None
+    if theta_npz is not None:
+        from train.es_eco import load_theta
+        weights = load_theta(theta_npz, cfg)
+
     def factory(seed: int):
         if policy_name == "attention":
-            return EcoEngine(cfg, policy=make_attention_policy(cfg, seed=seed))
+            return EcoEngine(cfg, policy=make_attention_policy(cfg, seed=seed, weights=weights))
         if policy_name == "frozen":
             return EcoEngine(cfg, policy=frozen)
         return EcoEngine(cfg, policy=hand_forager)
@@ -127,14 +136,17 @@ def main(argv: list[str] | None = None) -> int:
                    help="serve the ECONOMY (eco/) instead of the fold")
     p.add_argument("--eco-policy", choices=["forager", "attention", "frozen"],
                    default="forager", help="eco mode: which policy drives the population")
+    p.add_argument("--eco-theta", default=None,
+                   help="eco attention mode: path to evolved θ .npz (E2) → learned foraging")
     args = p.parse_args(argv)
 
     if args.eco:
         cfg = load_eco_config(args.config or str(_ECO_CONFIG))
         seed = cfg.seed if args.seed is None else args.seed
-        controller = SimController(_eco_factory(cfg, args.eco_policy),
+        controller = SimController(_eco_factory(cfg, args.eco_policy, args.eco_theta),
                                    default_seed=seed, step_hz=args.step_hz)
-        viewer, label = _ECO_VIEWER, f"economy · {args.eco_policy}"
+        tag = args.eco_policy + (" · evolved θ" if args.eco_theta else "")
+        viewer, label = _ECO_VIEWER, f"economy · {tag}"
     else:
         cfg = load_fold_config(args.config or str(_DEFAULT_CONFIG))
         seed = cfg.seed if args.seed is None else args.seed

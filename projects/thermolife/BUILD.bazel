@@ -14,7 +14,7 @@ exports_files(["requirements_lock.txt", "pytest.ini"])
 # Declarative config (PLAN.md §7) — fold.yaml.
 filegroup(
     name = "configs",
-    srcs = glob(["configs/*.yaml"]),
+    srcs = glob(["configs/*.yaml", "configs/*.npz"]),  # yaml knobs + trained/evolved weights
 )
 
 # Fold mechanism + operational code. train/ is a stub until M2 (torch training).
