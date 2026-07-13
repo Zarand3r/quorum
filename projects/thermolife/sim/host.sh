@@ -52,12 +52,18 @@ if [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
   kill "$(cat "$PIDFILE")" 2>/dev/null || true
 fi
 
-# ECO=default serves the economy (eco/) instead of the fold. ECO_POLICY picks the
-# driver: forager (healthy, watchable) | attention (E1 operator, transfer edges) | frozen.
+# MORPH=1 serves the reaction–diffusion morph (fold/morph.py): shapes grow from one
+# seed and move/morph as the transformer block performs RD. ECO=default serves the
+# economy (eco/). ECO_POLICY: forager | attention | frozen (+ ECO_THETA for evolved θ).
+MORPH="${MORPH:-none}"
 ECO="${ECO:-none}"
 MODE_ARG=()
-if [[ "$ECO" != none ]]; then
+if [[ "$MORPH" != none ]]; then
+  MODE_ARG=(--morph)
+  echo ">> starting REACTION–DIFFUSION MORPH server on 127.0.0.1:${PORT}"
+elif [[ "$ECO" != none ]]; then
   MODE_ARG=(--eco --eco-policy "${ECO_POLICY:-forager}")
+  [[ -n "${ECO_THETA:-}" ]] && MODE_ARG+=(--eco-theta "$ECO_THETA")
   echo ">> starting ECONOMY server on 127.0.0.1:${PORT} (policy=${ECO_POLICY:-forager})"
 else
   TRAINED="${TRAINED:-default}"   # default = committed trained weights; none = untrained S0
