@@ -103,6 +103,24 @@ py_binary(
     deps = [":thermolife"],
 )
 
+py_binary(
+    name = "aliveness",
+    srcs = ["train/aliveness.py"],
+    main = "train/aliveness.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":thermolife"],
+)
+
+py_binary(
+    name = "morph_search",
+    srcs = ["train/morph_search.py"],
+    main = "train/morph_search.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":thermolife"],
+)
+
 py_test(
     name = "test_suite",
     srcs = glob(["tests/**/*.py"]),
