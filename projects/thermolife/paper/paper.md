@@ -240,7 +240,53 @@ feeding back into dynamics or reward.
   (E2 meta-learning, E3 per-token selection), and are gated on measured observables, not on
   appearance.
 
-## 8. Conclusion
+## 8. Where this points: learn-while-living (a program, not yet a result)
+
+Sections 3–6 keep the two clocks that the deep-learning default assumes: *train* the weights
+against an objective, then *run* the fixed net forward. The road out of collapse we have not yet
+walked collapses those two clocks into **one** — a transformer whose weights update *online, by
+a local rule, with no global loss*, so that the training iterations **are** the simulation. We
+sketch it here honestly as a direction, with **no results to report**; the detailed design lives
+in a sibling project (`vivarium`) and the code does not exist at the time of writing.
+
+**The one idea.** A bounded 2-D dish of `N` free-moving grounded-shape agents (the fold's
+contour readout, §2, carried over) that interact only through *local* distance-penalized
+attention (§5's chosen operator). The shared block is applied every tick, and every tick also
+nudges its weights by a **local learning rule** — the leading candidate is predictive plasticity
+(each agent reduces its surprise about its neighbours), which is the local message-passing form
+of a global variational-free-energy descent. A slow drifting field keeps the colony
+off-equilibrium so it never fully predicts and so never settles. Aliveness is **measured, never
+optimized**: the same ungameable gate product used elsewhere in this project, extended with an
+*irreducibility* term (ablate agent–agent coupling and the colony must be measurably *less*
+alive — the economy's shuffle test, §6, promoted to a pass/fail gate).
+
+**Honest positioning against prior art.** None of the ingredients is new. Neural Cellular
+Automata [Mordvintsev+2020] iterate a learned local rule to grow patterns; **attention** as the
+CA rule is already done [Tesfaldet+2022]. Lenia and Flow Lenia [Chan2019] are the continuous,
+moving, mass-conserving ALife this resembles; Particle Life and Boids [Reynolds1987] are the
+local-interaction-to-collective-motion lineage; predictive coding [Rao&Ballard1999] and the Free
+Energy Principle [Friston2010] are exactly the local rule we would use. What is *not* standard,
+and is the only defensible contribution, is the **combination**: (i) the weights learn *online
+by a local rule with no global objective* — most NCA train offline by backprop-through-time then
+run inference — so "the simulation is the training" is literal, not metaphorical; (ii) aliveness
+is a **falsifiable measured observable that forbids gaming**, where almost all ALife is eyeballed
+("look, gliders"); and (iii) a single **binary** experiment: build a finite-range *global*
+energy-based rule and the *local* plasticity rule over the same substrate and same aliveness
+harness, and ask whether they land in the same regime. The duality argument (a finite-range
+global energy *is* a local rule; mean-field homogenizes, equilibrium minimization settles)
+predicts *yes* under matched finite range and matched drive, *no* if the drive is stripped
+(global converges, local keeps moving), and *collapse* for either if made mean-field — a
+prediction that can be refuted, not just admired.
+
+**The honest risk.** Online local plasticity with no global objective producing *rich,
+sustained, irreducible* emergence is ambitious and may simply not occur: predictive plasticity
+alone tends to converge (perfect prediction ⇒ frozen) or collapse, and the sibling morph sim
+plateaued at a low measured aliveness (~0.16) after search. The likely outcome to plan for is a
+*measured negative* — "we built the ungameable metric and the colony is not very alive" — which
+is worth reporting precisely because the metric cannot be gamed, but is not the triumphant result
+the framing invites. We record the direction, not a claim.
+
+## 9. Conclusion
 
 Transformers can be read as programmable interaction engines whose iterated dynamics are the
 product, not a byproduct — but the mechanism's contraction bias means a useful latent world must
@@ -249,8 +295,8 @@ faithful (grounded readout), earned a non-trivial learned behavior (docking, wit
 cost of deep supervision), built a conserved substrate with real thermodynamic stakes, and
 resolved by measurement which local attention operator belongs where. The road to the goal —
 sustained, *computed*, irreducible emergence — runs through non-settling drives and selection
-on the heritable interface, with every step gated by falsifiable observables rather than by how
-alive it looks.
+on the heritable interface (and, one clock further, through weights that learn *while* they live,
+§8), with every step gated by falsifiable observables rather than by how alive it looks.
 
 ## References
 
@@ -263,3 +309,9 @@ alive it looks.
 [Xiao+2023] Efficient Streaming LMs with Attention Sinks, arXiv:2309.17453.
 [Gu+2024] When Attention Sink Emerges, arXiv:2410.10781.
 [Liu+2026] Krause Synchronization Transformers, arXiv:2602.11534.
+[Mordvintsev+2020] Growing Neural Cellular Automata, distill.pub/2020/growing-ca.
+[Tesfaldet+2022] Attention-based Neural Cellular Automata, arXiv:2211.01233.
+[Chan2019] Lenia — Biology of Artificial Life, arXiv:1812.05433 (Flow Lenia, arXiv:2212.07906).
+[Reynolds1987] Flocks, Herds and Schools: A Distributed Behavioral Model, SIGGRAPH '87.
+[Rao&Ballard1999] Predictive coding in the visual cortex, Nature Neuroscience 2(1).
+[Friston2010] The free-energy principle: a unified brain theory?, Nature Rev. Neuroscience 11(2).
