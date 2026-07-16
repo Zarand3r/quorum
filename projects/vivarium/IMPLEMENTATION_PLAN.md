@@ -22,8 +22,8 @@ clock — D9), **M0–M2**. Route B (backprop world-model) and the molecular/ene
 
 - [ ] **Step 0 — Foundation.** Package skeleton, Bazel target, test harness, seeding/determinism helpers, render stub. *Test infra only.*
 - [ ] **Step 1 — Shared substrate (M0).** Dish + agents (tokens) + grounded contour render + **local** attention **forward pass**, fixed random weights. *← the fork point for both tracks.* Gates **P1, P4, P5, P7, P8**.
-- [ ] **Step 2 — One clock, local learning (M1).** Predictive plasticity + gentle drift: each tick advances state **and** weights, from local one-step prediction error. Gates **P2, P3(partial)**.
-- [ ] **Step 3 — Aliveness harness (measured, read-only).** Gate product + Lyapunov + irreducibility measurement. One-way. Completes **P3**; supplies the metric for **P6**.
+- [ ] **Step 2 — One clock, local learning (M1).** Predictive plasticity + gentle drift: each tick advances state **and** weights, from local one-step prediction error. Gates **P2, P9, P3(partial)**.
+- [ ] **Step 3 — Aliveness harness (measured, read-only).** Gate product + Lyapunov, one-way (irreducibility is *not* a live factor — it's P6's ablation). Completes **P3**; supplies the metric for **P6**.
 - [ ] **Step 4 — Emergent interacting life (M2, the deliverable).** Tune scale/ranges/drift until *measured* aliveness clears collapse/freeze **and** interaction is irreducible. Gate **P6** + sustained non-convergence.
 - [ ] **Step 5 — CI guards + failure injection.** Grep guards (P3), determinism CI, NaN/blow-up injection (P7). *After* violations can't occur.
 - [ ] **Step 6 — Viewer/host (parallel, optional).** Vendor a minimal thermolife-style server + viewer to watch on the tailnet.
@@ -46,15 +46,18 @@ Critical path: **0 → 1 → 2 → 3 → 4 → 5**. Step 6 is parallel (needs on
 | **P1** | **Locality** — interaction *and* learning use only a bounded neighborhood | all-to-all coupling; a global loss; backprop-through-time | Step 1 (attention neighborhood test) + Step 2 (update uses only local signals) |
 | **P2** | **One clock** — a single `step()` advances both state and weights | a separate train phase; weights frozen during a "sim" call | Step 2 (`θ` before ≠ after one step; no other entry point mutates `θ`) |
 | **P3** | **Measured-not-rewarded** — no path lets aliveness (or any global objective) influence the update | aliveness/`step` coupling; a reward term in the loss | Step 3 (aliveness exists ⇒ prove it's read-only) + Step 5 (grep guard) |
-| **P4** | **Determinism** — `(seed, drift schedule)` → byte-identical run | wall-clock/`Random()` seeding; unordered set iteration in dynamics | Step 1 (two runs byte-identical) |
+| **P4** | **Determinism** — `(seed, drift schedule)` → byte-identical run | wall-clock/`Random()` seeding; unordered set iteration; **unstable tie-breaking** (equal-distance k-NN via unstable `argsort`) | Step 1 (two runs byte-identical; k-NN ties broken by index) |
 | **P5** | **Read-only render** — snapshotting never perturbs dynamics | a `snapshot()` that advances RNG or mutates state | Step 1 (snapshot-doesn't-change-next-state test) |
-| **P6** | **Interaction is load-bearing** — measured aliveness with coupling ablated < with coupling on | "life" that survives ablating agent–agent coupling (independent agents) | Step 4 (ablation arm scores strictly lower) |
+| **P6** | **Interaction is load-bearing** — measured aliveness with coupling ablated < with coupling on | "life" that survives ablating agent–agent coupling (independent agents) | Step 4 (ablation arm scores lower over ≥5 seeds by a stated margin) |
 | **P7** | **Boundedness** — states and weights stay finite and bounded | NaN/Inf; unbounded growth of `‖x‖` or `‖θ‖` | Step 1 (bounded over long run) + Step 5 (injection) |
-| **P8** | **Grounded render** — the drawn shape is a readout of the embedding | a renderer that reads anything the mechanism doesn't (decorative overlay) | Step 1 (perturb `x_i` ⇒ blob *and* attention row move together) |
+| **P8** | **Grounded render** — the drawn shape is a readout of the embedding, via the *same* `W_c` the attention query uses | a renderer with its own decorative map (a `W_c` distinct from the attention's) | Step 1 (rendered contour ≡ `X·W_c` with the block's own `W_c`; perturbing `x_i` moves blob *and* attention row) |
+| **P9** | **Single transformer, no extra modules** — the only learnable module is the one weight-tied block; the "prediction" is a readout of the block's own output, not an auxiliary network | a separate predictor/decoder MLP; any second set of trained weights; per-agent networks | Step 2 (grep: no learnable module outside the block; prediction reads block output) |
 
-Calibration note: P1/P7/P8 are *substrate* properties (Step 1); P2/P3 are *learning* properties
-(Steps 2–3); P6 is the *deliverable* property (Step 4). No property test forward-references an
-abstraction that doesn't exist at its step.
+Calibration note: P1/P7/P8/P9(substrate half) are *substrate/faithfulness* properties; P2/P3/P9
+are *learning* properties (Steps 2–3); P6 is the *deliverable* property (Step 4). No property
+test forward-references an abstraction that doesn't exist at its step. **P9 encodes your
+"single transformer, no extra modules" constraint as a merge gate** — see §D-b for why Route A
+strains it and Route B would satisfy it natively.
 
 ---
 
@@ -96,8 +99,7 @@ seeding before any behavior can be gated.
 
 ### Acceptance
 - [ ] `bazel test //projects/vivarium/...` passes.
-- [ ] `grep -rn "random\.\|np.random.default_rng()\|time()" projects/vivarium/*.py` returns
-  empty (no nondeterministic seeding).
+- [ ] Nondeterministic seeding is absent: `grep -rEn "default_rng\(\s*\)|random\.random|random\.seed|time\(|datetime\.now|perf_counter" projects/vivarium/` returns empty. (Targets only the *unseeded/wall-clock* forms — seeded `default_rng(seed)` / `PCG64(seed)` in `rng.py` are allowed; the real guarantee is the P4 test.)
 
 **Depends on:** —
 
@@ -114,31 +116,37 @@ forward dynamics; and M1's learning has nothing to update until the block exists
 - [ ] `test_locality.py` (**P1**) — with `n_neighbors=k`, each agent's attention row has ≤ k
   nonzero entries, all among its k nearest neighbors; no entry to a non-neighbor.
 - [ ] `test_determinism.py` (**P4**) — two runs at the same `(seed, drift schedule)` produce
-  byte-identical state trajectories (hash of the stacked `X` per tick).
+  byte-identical state trajectories (hash of the stacked `X` per tick); **includes an
+  equal-distance case** to prove k-NN ties are broken by index, not by unstable sort.
 - [ ] `test_render_readonly.py` (**P5**) — `snapshot()` then `step()` yields the same next state
   as `step()` alone (snapshot advances no RNG, mutates nothing).
 - [ ] `test_bounded.py` (**P7**) — over `T=5000` fixed-weight ticks, `‖X‖∞` and every value stay
   finite and below a stated bound (LayerNorm-backed).
-- [ ] `test_grounded.py` (**P8**) — perturbing `x_i` moves both the rendered contour `C_i` and
-  agent `i`'s attention row; a frozen-`x` control moves neither (the renderer reads only `x`).
+- [ ] `test_grounded.py` (**P8**) — the rendered contour equals `X·W_c` computed with the block's
+  **own** `W_c` (same matrix object/values the attention query uses — assert identity, not just
+  correlation); and perturbing `x_i` moves both the blob and agent `i`'s attention row.
 
 ### Implementation
 - [ ] `substrate.py` — state `X ∈ ℝ^{N×d}`; channel views (`pos`, `shape=C=X·W_c`, `hidden`).
-- [ ] `block.py` — one weight-tied block: **local** distance/neighbor attention
-  `s_ij = ⟨C_i, C_j·M⟩/√2K − λ‖p_i−p_j‖²` over the k-NN set, `A = softmax` (local),
-  `X ← LN(X + A·V)`, `X ← LN(X + MLP(X))`; positions move with `X`. Fixed random `θ`.
-  (Locality via k-NN mask now; **learned positional locality is a §D tension** to revisit.)
+- [ ] `block.py` — one weight-tied block as a **pure function** `forward(X, θ) → X` (no weight
+  mutation): **local** attention `s_ij = ⟨C_i, C_j·M⟩/√2K − λ‖p_i−p_j‖²` over the k-NN set with
+  **index-stable tie-breaking** (P4), `A = softmax` (local), `X ← LN(X + A·V)`,
+  `X ← LN(X + MLP(X))`; positions move with `X`. `W_c` is shared with the renderer (P8). Fixed
+  random `θ`. (Locality via k-NN mask now; **learned positional locality is §D-a** to revisit.)
 - [ ] `engine.py` — `Engine(cfg, seed)` with `step()` (advance state), `snapshot()`
   (read-only), `drift` field carried but static at M0.
-- [ ] `render.py` — real grounded contour readout (blobs + local edges) for the viewer.
+- [ ] `render.py` — grounded contour readout (blobs + local edges) using the block's `W_c`.
 
 ### Integration check
 - [ ] Golden-path test (§A) green at M0 scope (fixed seed → stamped snapshot; render mounts).
 
 ### Acceptance
 - [ ] P1, P4, P5, P7, P8 tests green.
-- [ ] `grep -rn "θ\|weights\|learn\|update.*grad\|plasticity" projects/vivarium/block.py`
-  shows **no** weight mutation (M0 is forward-only).
+- [ ] `block.forward` is pure — **primary gate:** a test asserting the weight arrays are
+  **byte-identical before and after** a `step()` at M0. **Secondary heuristic grep** (mutation
+  only, so constructor `=` init is not flagged):
+  `grep -rEn "(self\.)?(W|M|mlp|theta)[a-z_]*\s*[-+*/]=|\.fill\(|\bnp\.(add|subtract|multiply)\([^)]*out=" projects/vivarium/block.py`
+  returns empty (no in-place weight update).
 
 **Depends on:** Step 0.
 
@@ -161,12 +169,17 @@ have something to update, and it must exist before aliveness can be measured on 
   has strictly higher error than the learned predictor after `K` ticks (guards the ground-truth
   degeneracy called out in the design).
 - [ ] `test_bounded_learning.py` (**P7**) — `‖θ‖` and `‖X‖` stay bounded over a long learning run.
+- [ ] `test_single_module.py` (**P9**) — the prediction is a **readout of the block's own output**
+  (e.g. `X·W_read` / a slice of the post-block state), not a separate trained network; there is
+  exactly **one** learnable weight bundle (the block's `θ`) and no per-agent parameters.
 
 ### Implementation
-- [ ] `predict.py` — each agent predicts its **local world** (neighbors' next state + local drift
-  value) from its current local view (partial observation ⇒ non-degenerate target).
+- [ ] `predict.py` — a **readout** (not a network): each agent's prediction of its local world is a
+  linear/thin readout of its post-block state (partial observation ⇒ non-degenerate target). No
+  new trained weights beyond the block (P9); if a readout matrix is needed it is part of `θ`.
 - [ ] `plasticity.py` — Route A local delta rule `Δθ ∝ Σ_i e_i · input_i` (`e_i` = local one-step
-  prediction error); applied inside `step()` (one clock).
+  prediction error); applied inside `step()` (one clock). **Deterministic accumulation order**
+  over agents/neighbors (fixed index order) so P4/§A stay byte-identical.
 - [ ] `drift.py` — a slow deterministic external field `s(t)` (the "season"); schedule is part of
   the determinism contract (P4).
 
@@ -174,9 +187,13 @@ have something to update, and it must exist before aliveness can be measured on 
 - [ ] Golden path (§A) green with learning on (byte-identical stamped run at fixed seed/drift).
 
 ### Acceptance
-- [ ] P2, P1-learning, non-degeneracy, P7-learning tests green.
-- [ ] `grep -rn "def train\|def fit\|for epoch\|backward()\|autograd\|torch"
-  projects/vivarium/` returns empty (no separate phase, no BPTT, no autograd — Route A).
+- [ ] P2, P1-learning, P9, non-degeneracy, P7-learning tests green.
+- [ ] No separate phase / BPTT / autograd:
+  `grep -rEn "def train|def fit|for epoch|\.backward\(|autograd|import torch" projects/vivarium/`
+  returns empty (Route A).
+- [ ] Single learnable module: no second parameter set outside the block —
+  `grep -rEn "nn\.|Linear\(|Sequential\(|class .*Net|class .*MLP" projects/vivarium/predict.py`
+  returns empty (the predictor is a readout, not a network).
 
 **Depends on:** Step 1.
 
@@ -198,9 +215,12 @@ exists to show it's not fed back.
   import or reference the aliveness module (grep-level + import-graph assertion).
 
 ### Implementation
-- [ ] `aliveness.py` — `gate_finite · gate_spread · gate_motion · structure · coherence`
-  over a window (ported in spirit from thermolife's metric, re-derived — no cross-project import);
-  `lyapunov()` via twin-rollout; `interaction_irreducibility()` scaffold (used in Step 4).
+- [ ] `aliveness.py` — the **live score** is `gate_finite · gate_spread · gate_motion · structure
+  · coherence` over a window (ported in spirit from thermolife's metric, re-derived — no
+  cross-project import) + `lyapunov()` via twin-rollout. **Irreducibility is NOT a live factor
+  here** — it requires a counterfactual coupling-off rollout, so it is a *separate ablation
+  experiment* owned by P6 (Step 4), not a term inside the per-tick score. (This resolves the
+  SPEC §4 wording, which is corrected to match.)
 - [ ] wire aliveness as an **observer** on the engine (pull-only; never passed into `step`).
 
 ### Integration check
@@ -223,9 +243,12 @@ freeze over a long window, **and** interaction is irreducible (**P6**).
 and the metric in place.
 
 ### Tests first
-- [ ] `test_interaction_load_bearing.py` (**P6**) — measured aliveness with agent–agent coupling
-  **ablated** (attention → identity / shuffled partners) is **strictly lower** than with coupling
-  on, at the tuned config (the economy's shuffle test, promoted to a gate).
+- [ ] `test_interaction_load_bearing.py` (**P6**) — over **≥5 seeds**, mean measured aliveness with
+  agent–agent coupling **ablated** (attention → identity, and separately **shuffled partners** =
+  same interaction mass, wrong structure) is lower than with coupling on **by a stated margin
+  `Δ` that exceeds the across-seed std** (not a single-seed "strictly lower", which noise can
+  fake). This is the economy's shuffle test promoted to a gate, and it is the **sole owner** of
+  irreducibility (aliveness has no live irreducibility factor — see Step 3).
 - [ ] `test_sustained_nonconvergence.py` — over a long window the tuned run stays above the
   freeze/collapse gates (aliveness does not decay to ~0); a *no-drift* control **does** decay
   (shows the drive is load-bearing — the `J→0` prediction).
@@ -255,8 +278,10 @@ and the metric in place.
 **Why now:** *after* Steps 2–4, so guards don't red-flag legitimate in-progress states.
 
 ### Tests first
-- [ ] `test_ci_guards.py` — the grep guards from Steps 1–3 as executable assertions (no
-  autograd/BPTT/train-phase; no aliveness in the update path; deterministic seeding only).
+- [ ] `test_ci_guards.py` — the grep guards from Steps 0–3 as executable assertions: no
+  autograd/BPTT/train-phase (Step 2), no aliveness in the update path (Step 3), deterministic
+  seeding only (Step 0), block `forward` is pure (Step 1), and **single learnable module / no
+  auxiliary network** (P9, Step 2).
 - [ ] `test_failure_injection.py` (**P7**) — inject a NaN into `X` and an overflow into `θ`;
   assert a **named fail-fast** path (loud error / marked-invalid tick), never a silent clamp.
 
@@ -297,7 +322,7 @@ indicator showing `θ` is changing).
 ## Definition of done (whole plan)
 
 - [ ] Steps 0–5 acceptance boxes all checked (Step 6 optional).
-- [ ] P1–P8 each green in CI.
+- [ ] P1–P9 each green in CI.
 - [ ] `bazel test //projects/vivarium/...` green; golden path (§A) green.
 - [ ] `configs/vivarium.yaml` reproduces the reported aliveness within tolerance from one command.
 - [ ] An honest M2 report exists — the achieved number, the ablation gap, and any negative result
@@ -349,10 +374,16 @@ transformer") is to let locality be *learned* via positional encoding.
 *Recommendation:* ship the k-NN mask first (testable, guaranteed local for P1), then A/B it
 against learned locality in Step 4; adopt learned if it holds locality without the mask.
 
-**D-b. Route A vs B.** Plan builds A (local delta rule, plain numpy). If M1/M2 collapse or the
-delta rule is too weak, switch to B (needs autograd + an anti-collapse term).
-*Recommendation:* commit to A through Step 4; treat a persistent dark-room collapse as the
-trigger to open the Route-B plan, not as a reason to hand-tune.
+**D-b. Route A vs B — and the faithfulness cost (P9).** Plan builds A (local delta rule, plain
+numpy). Be honest that **A is *less* faithful to "single transformer, no extra modules"** than
+B: the hand delta rule is not the transformer's native backward pass, and A is most tempted to
+grow a separate predictor head. **P9 exists to hold that line** — the predictor must stay a
+*readout of the block*, and there must be exactly one learnable weight bundle. B (native
+backprop of the same one-step loss) would satisfy P9 more naturally but needs autograd + an
+anti-collapse term. *Recommendation:* commit to A through Step 4 *with P9 enforced*; treat a
+persistent dark-room collapse (or P9 becoming impossible to satisfy without a real predictor
+network) as the trigger to open the Route-B plan — not as a reason to hand-tune or to quietly
+add a module.
 
 **D-c. Drift source: external vs internal.** M1 uses an external drift field as `J`. An internal
 skew/rotational term (morph's) is the alternative.

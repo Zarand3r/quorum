@@ -65,11 +65,17 @@ is earned by local rules — exactly Game of Life's spirit.
 ## 4. What is measured (not optimized): aliveness
 
 The same ungameable idea as thermolife's `aliveness`, applied to the colony over a
-window: `gate_finite · gate_spread · gate_motion · structure · coherence · INTERACTION`,
-where **INTERACTION** requires the life to be *irreducible* — ablate agent–agent
-coupling and the colony must be *less* alive (many-body; the economy's shuffle test).
-Reported live alongside the dish, plus an edge-of-chaos Lyapunov diagnostic. It scores
-the run; it never feeds back into the rule.
+window. The **live** score is `gate_finite · gate_spread · gate_motion · structure ·
+coherence`, reported alongside the dish plus an edge-of-chaos Lyapunov diagnostic. It
+scores the run; it never feeds back into the rule.
+
+**Irreducibility (INTERACTION) is measured separately, not as a live factor.** Requiring
+the life to be *irreducible* — ablate agent–agent coupling and the colony must be *less*
+alive (many-body; the economy's shuffle test) — needs a *counterfactual coupling-off
+rollout*, so it cannot be a term inside the per-tick score. It is a distinct **ablation
+experiment**, owned by invariant P6 and gated at M2 (see
+[`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) Step 4), not a multiplier in the live
+gauge above.
 
 ## 5. Visualization — two clocks would give two views; one clock gives one
 
