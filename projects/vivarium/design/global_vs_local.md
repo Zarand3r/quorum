@@ -70,7 +70,10 @@ of:
   `f = −∇E + (rotational part)`. The rotational part is **not** the gradient of any
   potential, so it produces **limit cycles / perpetual orbits** — never a fixed point.
   This is exactly the skew-symmetric oscillator term the morph needed. A global rule can
-  include it; then "energy" alone doesn't govern the dynamics.
+  include it; then "energy" alone doesn't govern the dynamics. **The rigorous thermodynamic
+  completion of this bullet — the potential–flux decomposition `ẋ = −D∇Φ + J`, why no single
+  global scalar governs a living system, and the falsifiable flux experiments — lives in
+  [`potential_flux.md`](potential_flux.md).**
 - **Maximum entropy production / non-equilibrium variational principles:** proposed
   global principles selecting *steady states with ongoing flux* rather than static
   minima. (Less rigorously established — flag as speculative.)

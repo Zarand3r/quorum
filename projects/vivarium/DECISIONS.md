@@ -73,6 +73,16 @@ emergence). *Status:* firm on "local + measured"; **open** on *which* local rule
 **Decision:** consequence of D8/D9 — nothing in the running system optimizes a global
 quantity; global aliveness is observed only. *Status:* firm (invariant P3).
 
+### D11 — The thermodynamic justification is potential + flux, not a single scalar
+**Decision:** the design is grounded in `ẋ = −D∇Φ + J` — a relaxation/landscape part **plus**
+an irreducible non-conservative flux `J`; **no single global scalar governs the living
+dynamics** (a gradient system provably cannot oscillate/sustain, and living matter has
+measured broken detailed balance). *Consequences:* non-convergence (D7) is `J ≠ 0` made
+concrete; Route A's drift and Route B's anti-collapse term are two ways to *supply* `J`;
+`J → 0` predicts death (a falsifiable claim). *Rationale + full treatment:*
+[`design/potential_flux.md`](design/potential_flux.md). *Status:* firm as framing;
+the flux experiments (E-flux1–5) are **post-core**.
+
 ---
 
 ## Open decisions
@@ -89,6 +99,17 @@ quantity; global aliveness is observed only. *Status:* firm (invariant P3).
   variant may want autograd/torch. Decide per-milestone.
 - **Hosting:** vendor a minimal thermolife-style server/viewer so it's watchable on the
   tailnet like the others.
+- **Training route — hand local rule (A) vs native backprop world-model (B):** OPEN,
+  may switch. Both are one-clock and keep aliveness measured-only; A maximizes strict
+  locality (D9 default, plain numpy), B replaces the hand delta rule with autodiff backprop
+  of the same one-step self-supervised loss + an anti-collapse (JEPA/VICReg) term that stands
+  in for the external drift — nothing outside the transformer's forward/backward pass. Full
+  trade-off in [`design/related_work.md`](design/related_work.md) §3. Likely resolved
+  empirically at M1 (start with A; switch to B if the local rule is too weak/collapses).
+- **Architectural variants** (equilibrium-prop, forward-forward, DEQ, skew term):
+  deliberately **out of the first pass** — logged as post-M2 future directions in
+  [`design/related_work.md`](design/related_work.md) §4, reached for only if the plain
+  local rule plateaus or M3 needs them. M0–M2 stay plain numpy + local plasticity.
 
 ## Superseded (kept for the record)
 

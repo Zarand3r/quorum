@@ -13,7 +13,14 @@ interaction engine; grounded readouts; the aliveness metric) but not its code.
 
 **Design rationale + the alternatives we rejected live in [`DECISIONS.md`](DECISIONS.md).
 The open global-vs-local research question lives in
-[`design/global_vs_local.md`](design/global_vs_local.md).**
+[`design/global_vs_local.md`](design/global_vs_local.md); its rigorous thermodynamic
+foundation — the potential–flux structure `ẋ = −D∇Φ + J`, the single-scalar-vs-flux question,
+and the deferred flux experiments — lives in [`design/potential_flux.md`](design/potential_flux.md).
+Prior art, the training-route fork, and post-M2 architectural directions live in
+[`design/related_work.md`](design/related_work.md). A parallel *molecular / energy* formulation
+("do what molecules do" — transformer as a force field, dynamics = `−∇_X E_θ + J`) and the
+two-scale comparison it enables are reasoned through in
+[`design/two_tracks.md`](design/two_tracks.md) (reasoning only, undecided).**
 
 ---
 
@@ -87,6 +94,10 @@ indicator so it's visible that the *rule* is changing, not just the state.
 
 ## 7. Milestones (vertical slices, each watchable + a binary gate)
 
+> The rigorous, checklist-first execution of M0–M2 (organism track, Route A) lives in
+> [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md): Step 1 = M0, Step 2 = M1,
+> Steps 3–4 = M2, with each invariant below tied to a specific test in a specific step.
+
 - **M0 — Dish + agents + render + skeleton.** Moving grounded-shape bacteria under a
   *fixed random* interaction rule (no learning yet). *Gate:* P1/P4/P5/P7/P8.
 - **M1 — Local learning rule (one clock).** Predictive plasticity on; weights change
@@ -97,6 +108,12 @@ indicator so it's visible that the *rule* is changing, not just the state.
 - **M3 — Global-vs-local experiment.** Implement a global-rule variant (see
   `global_vs_local.md`) and compare measured aliveness/patterns to the local rule.
   *Gate:* a documented, honest verdict on the research question.
+- **M4 (post-core research program) — The potential–flux experiments.** Instrument the
+  non-conservative flux `J` (entropy production / broken detailed balance / probability
+  current) and test the sharpened thermodynamic claims: aliveness ⟺ `‖J‖ > 0`, and
+  `J → 0 ⇒ death`, vs a pure-gradient control. Full program (E-flux1–5) +
+  the single-scalar-vs-flux foundation in [`design/potential_flux.md`](design/potential_flux.md).
+  *Not first-pass — do not pull into M0–M2.*
 
 ## 8. Open decisions (see DECISIONS.md §Open)
 
