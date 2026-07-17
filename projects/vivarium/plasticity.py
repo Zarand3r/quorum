@@ -25,8 +25,7 @@ import numpy as np
 
 from block import Weights
 from config import VivariumConfig
-from drift import season
-from predict import obs_dim, observe
+from predict import observe
 
 _WEIGHT_DECAY = 1e-2  # ridge pull-back → bounded W_v, W_p at the plasticity fixed point
 
@@ -39,12 +38,24 @@ def local_error(
     t: int,
     cfg: VivariumConfig,
 ) -> np.ndarray:
-    """Per-agent one-step prediction error `e_i = pred_i − target_i` (N, m).
+    """Per-agent one-step signalling error `e_i = pred_i − target_i` (N, m).
 
-    target_i = (A · obs(X_next))_i + s(t)   — the neighbourhood's next observable,
-    plus the season; pred_i = msg_i · W_p."""
-    m = obs_dim(cfg)
-    target = A @ observe(X_next, cfg) + season(t, m, cfg.drift_rate)
+    Signalling objective (the pivot): each agent predicts its neighbourhood's next
+    observable **relative to itself** —
+
+        target_i = ((A − I) · obs(X_next))_i
+
+    Two exact properties make this the right target where "predict absolute next
+    state" failed:
+      * **drift-invariant** — A is row-stochastic, so a uniform external shift s
+        cancels ((A−I)·s = 0); an external drive cannot fake this target (defeats
+        drift-dragging, Failure B).
+      * **interaction load-bearing** — under the identity ablation A=I the target is
+        ≡ 0: no neighbours, nothing to model (P6 by construction).
+
+    pred_i = msg_i · W_p. `t` is unused now (the drive is intrinsic, not a target season)."""
+    obs = observe(X_next, cfg)
+    target = A @ obs - obs           # (A − I) · obs : neighbours' next obs relative to self
     pred = msg @ w.W_p
     return pred - target
 

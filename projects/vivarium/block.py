@@ -37,10 +37,11 @@ class Weights:
     W2: np.ndarray   # (h, d) MLP out
     b2: np.ndarray   # (d,)
     W_p: np.ndarray  # (d, m) prediction readout (m = pos+shape) — LEARNED at M1 (P9: in θ)
+    J_skew: np.ndarray  # (d, d) fixed skew-symmetric rotational drive (M2 Option 2)
 
     @staticmethod
     def array_names() -> tuple[str, ...]:
-        return ("W_c", "M", "W_v", "W1", "b1", "W2", "b2", "W_p")
+        return ("W_c", "M", "W_v", "W1", "b1", "W2", "b2", "W_p", "J_skew")
 
 
 def make_weights(cfg: VivariumConfig, seed: int) -> Weights:
@@ -63,7 +64,13 @@ def make_weights(cfg: VivariumConfig, seed: int) -> Weights:
     b2 = np.zeros(d)
     m = POS_DIM + twoK  # observable width (position + shape)
     W_p = rng.standard_normal((d, m)) / np.sqrt(d)
-    return Weights(W_c=W_c, M=M, W_v=W_v, W1=W1, b1=b1, W2=W2, b2=b2, W_p=W_p)
+    # a fixed skew-symmetric matrix → a non-gradient rotational drive (Helmholtz), so the
+    # dynamics cannot settle to a fixed point (intrinsic non-equilibrium; see potential_flux.md).
+    J_raw = rng.standard_normal((d, d)) / np.sqrt(d)
+    J_skew = J_raw - J_raw.T
+    return Weights(
+        W_c=W_c, M=M, W_v=W_v, W1=W1, b1=b1, W2=W2, b2=b2, W_p=W_p, J_skew=J_skew
+    )
 
 
 def neighbor_indices(pos: np.ndarray, k: int) -> np.ndarray:
@@ -140,7 +147,9 @@ def forward_verbose(
     interaction graph for the P6 control arms."""
     A = ablate_attention(attention_matrix(X, w, cfg), ablate, seed, tick)
     msg = A @ (X @ w.W_v)
-    X1 = _layernorm(X + msg)
+    # intrinsic rotational drive (skew ⇒ non-gradient ⇒ no fixed point). gain 0 = off.
+    spin = cfg.skew_gain * (X @ w.J_skew) if cfg.skew_gain > 0.0 else 0.0
+    X1 = _layernorm(X + msg + spin)
     X2 = _layernorm(X1 + _mlp(X1, w))
     return X2, A, msg
 

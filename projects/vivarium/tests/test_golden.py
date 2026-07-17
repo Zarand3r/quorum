@@ -16,9 +16,9 @@ from config import DEFAULTS, VivariumConfig
 from engine import Engine
 
 _GOLDEN_T = 100
-# Re-stamped at Step 2 (M1: one-clock learning on). Re-stamp only on intentional
-# dynamics changes (M0→M1 here; next at Step 4 tuning).
-_GOLDEN_HASH = "f319253256a44a28"
+# Re-stamped at the M2 objective pivot (signalling: relative-neighbour target).
+# Re-stamp only on intentional dynamics changes.
+_GOLDEN_HASH = "06a7902ee0a9aa14"
 
 
 def test_golden_path() -> None:
