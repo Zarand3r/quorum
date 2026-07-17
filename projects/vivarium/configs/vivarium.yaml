@@ -1,0 +1,10 @@
+# vivarium default config (organism track, Route A). Overrides DEFAULTS in config.py.
+# Channel split from d + n_harmonics: pos=2, shape=2*n_harmonics=6, hidden=8.
+N: 64
+d: 16
+n_harmonics: 3
+n_neighbors: 8
+dist_lambda: 0.5
+drift_rate: 0.02
+lr: 0.05
+seed: 0

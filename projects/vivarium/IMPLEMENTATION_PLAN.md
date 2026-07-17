@@ -99,7 +99,7 @@ seeding before any behavior can be gated.
 
 ### Acceptance
 - [ ] `bazel test //projects/vivarium/...` passes.
-- [ ] Nondeterministic seeding is absent: `grep -rEn "default_rng\(\s*\)|random\.random|random\.seed|time\(|datetime\.now|perf_counter" projects/vivarium/` returns empty. (Targets only the *unseeded/wall-clock* forms — seeded `default_rng(seed)` / `PCG64(seed)` in `rng.py` are allowed; the real guarantee is the P4 test.)
+- [ ] Nondeterministic seeding is absent: `grep -rEn --include="*.py" "default_rng\(\s*\)|random\.random|random\.seed|time\(|datetime\.now|perf_counter" projects/vivarium/` returns empty. (`--include="*.py"` so the gate scans code, not this doc. Targets only the *unseeded/wall-clock* forms — seeded `default_rng(seed)` / `PCG64(seed)` in `rng.py` are allowed; the real guarantee is the P4 test.)
 
 **Depends on:** —
 
@@ -189,7 +189,7 @@ have something to update, and it must exist before aliveness can be measured on 
 ### Acceptance
 - [ ] P2, P1-learning, P9, non-degeneracy, P7-learning tests green.
 - [ ] No separate phase / BPTT / autograd:
-  `grep -rEn "def train|def fit|for epoch|\.backward\(|autograd|import torch" projects/vivarium/`
+  `grep -rEn --include="*.py" "def train|def fit|for epoch|\.backward\(|autograd|import torch" projects/vivarium/`
   returns empty (Route A).
 - [ ] Single learnable module: no second parameter set outside the block —
   `grep -rEn "nn\.|Linear\(|Sequential\(|class .*Net|class .*MLP" projects/vivarium/predict.py`

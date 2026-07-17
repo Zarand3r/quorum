@@ -36,5 +36,12 @@ pip.parse(
 )
 use_repo(pip, "thermolife_deps")
 
+pip.parse(
+    hub_name = "vivarium_deps",
+    python_version = PYTHON_VERSION,
+    requirements_lock = "//projects/vivarium:requirements_lock.txt",
+)
+use_repo(pip, "vivarium_deps")
+
 # Future rules (rules_rust / rules_go / rules_oci) and per-project pip hubs
 # are added here as bazel-built work appears.

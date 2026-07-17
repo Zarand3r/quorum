@@ -1,0 +1,43 @@
+# vivarium — a petri dish whose interaction rule learns while it lives (SPEC.md).
+#
+# M0-M2 scope: organism/predictive track, Route A (one-clock local plasticity),
+# plain numpy + pyyaml only. Deps come from the ``vivarium_deps`` pip hub
+# (MODULE.bazel), pinned in ``requirements_lock.txt``. No autograd, no torch.
+
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("@vivarium_deps//:requirements.bzl", "requirement")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["requirements_lock.txt", "pytest.ini"])
+
+filegroup(
+    name = "configs",
+    srcs = glob(["configs/*.yaml"]),
+)
+
+py_library(
+    name = "vivarium",
+    srcs = glob(["*.py"], allow_empty = True),
+    data = [":configs"],
+    imports = ["."],  # put projects/vivarium on sys.path → `import config`, `import rng`
+    deps = [
+        requirement("numpy"),
+        requirement("pyyaml"),
+    ],
+)
+
+py_test(
+    name = "test_suite",
+    srcs = glob(["tests/**/*.py"]),
+    main = "tests/pytest_main.py",
+    data = [
+        ":configs",
+        "pytest.ini",
+    ],
+    imports = ["."],
+    deps = [
+        ":vivarium",
+        requirement("pytest"),
+    ],
+)
