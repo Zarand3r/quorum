@@ -17,7 +17,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from config import POS_DIM, VivariumConfig
-from rng import base_rng
+from rng import base_rng, rng_for
 from substrate import contour_coeffs, positions
 
 _MLP_HIDDEN_FACTOR = 2  # MLP hidden width = factor · d
@@ -112,12 +112,33 @@ def _mlp(X: np.ndarray, w: Weights) -> np.ndarray:
     return np.tanh(X @ w.W1 + w.b1) @ w.W2 + w.b2
 
 
+def ablate_attention(A: np.ndarray, mode: str, seed: int, tick: int) -> np.ndarray:
+    """Coupling ablations for the P6 irreducibility test (matched compute, different graph):
+      none      — the real local attention.
+      identity  — A = I: each agent sees only itself (no interaction at all).
+      shuffle   — columns permuted: same attention mass, wrong partners (deterministic)."""
+    if mode == "none":
+        return A
+    if mode == "identity":
+        return np.eye(A.shape[0])
+    if mode == "shuffle":
+        perm = rng_for(seed, tick).permutation(A.shape[0])
+        return A[:, perm]
+    raise ValueError(f"unknown ablation mode: {mode!r}")
+
+
 def forward_verbose(
-    X: np.ndarray, w: Weights, cfg: VivariumConfig
+    X: np.ndarray,
+    w: Weights,
+    cfg: VivariumConfig,
+    ablate: str = "none",
+    seed: int = 0,
+    tick: int = 0,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """One block application, also returning the attention `A` and message `msg`
-    (the intermediates the M1 plasticity rule consumes). Pure."""
-    A = attention_matrix(X, w, cfg)
+    (the intermediates the M1 plasticity rule consumes). Pure. `ablate` swaps the
+    interaction graph for the P6 control arms."""
+    A = ablate_attention(attention_matrix(X, w, cfg), ablate, seed, tick)
     msg = A @ (X @ w.W_v)
     X1 = _layernorm(X + msg)
     X2 = _layernorm(X1 + _mlp(X1, w))

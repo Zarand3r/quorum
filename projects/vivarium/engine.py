@@ -19,9 +19,10 @@ from substrate import init_state
 
 
 class Engine:
-    def __init__(self, cfg: VivariumConfig, seed: int) -> None:
+    def __init__(self, cfg: VivariumConfig, seed: int, ablate: str = "none") -> None:
         self.cfg = cfg
         self.seed = seed
+        self.ablate = ablate  # coupling ablation for the P6 control arms ("none" = real run)
         self.weights: Weights = make_weights(cfg, seed)
         self.X: np.ndarray = init_state(cfg, seed)
         self.t: int = 0
@@ -29,7 +30,9 @@ class Engine:
 
     def step(self) -> None:
         # one clock: forward, then a local weight update from the same tick's error.
-        X_next, A, msg = forward_verbose(self.X, self.weights, self.cfg)
+        X_next, A, msg = forward_verbose(
+            self.X, self.weights, self.cfg, self.ablate, self.seed, self.t
+        )
         self.weights, self.last_loss = learn(
             self.weights, self.X, A, msg, X_next, self.t, self.cfg
         )
