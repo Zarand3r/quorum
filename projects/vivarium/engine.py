@@ -1,16 +1,17 @@
-"""Engine: the one clock (IMPLEMENTATION_PLAN.md Step 1, M0).
+"""Engine: the one clock (IMPLEMENTATION_PLAN.md Step 2, M1).
 
-At M0 a `step()` advances *state only* through the fixed-weight block — no
-learning yet (that is M1). `snapshot()` is strictly read-only (P5). The drift
-field `s` is carried but static here; M1 makes it move (the J drive).
+A single `step()` advances **both** the state (block forward) **and** the weights
+(local predictive plasticity) — the simulation *is* the learning. There is no
+separate `train()`/`fit()` phase (P2). `snapshot()` is strictly read-only (P5).
 """
 
 from __future__ import annotations
 
 import numpy as np
 
-from block import Weights, forward, make_weights
+from block import Weights, forward_verbose, make_weights
 from config import VivariumConfig
+from plasticity import learn
 from render import snapshot as _snapshot
 from substrate import init_state
 
@@ -22,10 +23,15 @@ class Engine:
         self.weights: Weights = make_weights(cfg, seed)
         self.X: np.ndarray = init_state(cfg, seed)
         self.t: int = 0
-        self.s: float = 0.0  # external drift field (static at M0)
+        self.last_loss: float = float("nan")  # measured surprise (diagnostic, read-only)
 
     def step(self) -> None:
-        self.X = forward(self.X, self.weights, self.cfg)
+        # one clock: forward, then a local weight update from the same tick's error.
+        X_next, A, msg = forward_verbose(self.X, self.weights, self.cfg)
+        self.weights, self.last_loss = learn(
+            self.weights, self.X, A, msg, X_next, self.t, self.cfg
+        )
+        self.X = X_next
         self.t += 1
 
     def snapshot(self) -> dict:

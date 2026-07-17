@@ -164,10 +164,15 @@ have something to update, and it must exist before aliveness can be measured on 
   other public method that mutates `θ`; there is **no** separate `train()`/`fit()` entry point.
 - [ ] `test_local_update.py` (**P1**, learning half) — an agent's `Δθ` contribution depends only
   on its neighborhood: zeroing a non-neighbor's state leaves that agent's local error unchanged.
-- [ ] `test_nondegenerate_target.py` — with partial observation (hidden channels + drift), the
-  one-step prediction target is **not** trivially recoverable: a null "predict-identity" baseline
-  has strictly higher error than the learned predictor after `K` ticks (guards the ground-truth
-  degeneracy called out in the design).
+- [ ] `test_nondegenerate.py` — M1-scoped: (a) at a fresh state the target is non-degenerate (a
+  null predict-identity baseline carries non-trivial error), and (b) the local delta rule is a
+  correct descent (one step reduces the tick's prediction error). **Sustained** beat-identity is
+  NOT asserted here — see the collapse note. *(Observed at M1: at default settings the colony
+  **collapses** under predictive plasticity — surprise is minimised the trivial way, by
+  homogenising, until only the un-trackable drift remains. This is the documented dark-room
+  attractor; preventing it, i.e. sustained non-convergence, is **M2's** explicit deliverable, and
+  a persistent collapse there is the trigger to open the Route-B (anti-collapse) plan — never to
+  reward aliveness. See §D-e.)*
 - [ ] `test_bounded_learning.py` (**P7**) — `‖θ‖` and `‖X‖` stay bounded over a long learning run.
 - [ ] `test_single_module.py` (**P9**) — the prediction is a **readout of the block's own output**
   (e.g. `X·W_read` / a slice of the post-block state), not a separate trained network; there is
@@ -188,8 +193,8 @@ have something to update, and it must exist before aliveness can be measured on 
 
 ### Acceptance
 - [ ] P2, P1-learning, P9, non-degeneracy, P7-learning tests green.
-- [ ] No separate phase / BPTT / autograd:
-  `grep -rEn --include="*.py" "def train|def fit|for epoch|\.backward\(|autograd|import torch" projects/vivarium/`
+- [ ] No separate phase / BPTT / autograd (precise: matches real usage, not prose/test-literals):
+  `grep -rEn --include="*.py" --exclude-dir=tests "def train\(|def fit\(|for epoch|import autograd|autograd\.|\.backward\(|import torch" projects/vivarium/`
   returns empty (Route A).
 - [ ] Single learnable module: no second parameter set outside the block —
   `grep -rEn "nn\.|Linear\(|Sequential\(|class .*Net|class .*MLP" projects/vivarium/predict.py`

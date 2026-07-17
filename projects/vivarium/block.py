@@ -31,15 +31,16 @@ class Weights:
 
     W_c: np.ndarray  # (d, 2K) selection: extracts the shape channels → contour = query
     M: np.ndarray    # (2K, 2K) fixed π-rotation complementarity metric (diagonal ±1)
-    W_v: np.ndarray  # (d, d) value projection
+    W_v: np.ndarray  # (d, d) value projection            — LEARNED at M1
     W1: np.ndarray   # (d, h) MLP in
     b1: np.ndarray   # (h,)
     W2: np.ndarray   # (h, d) MLP out
     b2: np.ndarray   # (d,)
+    W_p: np.ndarray  # (d, m) prediction readout (m = pos+shape) — LEARNED at M1 (P9: in θ)
 
     @staticmethod
     def array_names() -> tuple[str, ...]:
-        return ("W_c", "M", "W_v", "W1", "b1", "W2", "b2")
+        return ("W_c", "M", "W_v", "W1", "b1", "W2", "b2", "W_p")
 
 
 def make_weights(cfg: VivariumConfig, seed: int) -> Weights:
@@ -60,7 +61,9 @@ def make_weights(cfg: VivariumConfig, seed: int) -> Weights:
     b1 = np.zeros(h)
     W2 = rng.standard_normal((h, d)) / np.sqrt(h)
     b2 = np.zeros(d)
-    return Weights(W_c=W_c, M=M, W_v=W_v, W1=W1, b1=b1, W2=W2, b2=b2)
+    m = POS_DIM + twoK  # observable width (position + shape)
+    W_p = rng.standard_normal((d, m)) / np.sqrt(d)
+    return Weights(W_c=W_c, M=M, W_v=W_v, W1=W1, b1=b1, W2=W2, b2=b2, W_p=W_p)
 
 
 def neighbor_indices(pos: np.ndarray, k: int) -> np.ndarray:
@@ -109,10 +112,18 @@ def _mlp(X: np.ndarray, w: Weights) -> np.ndarray:
     return np.tanh(X @ w.W1 + w.b1) @ w.W2 + w.b2
 
 
-def forward(X: np.ndarray, w: Weights, cfg: VivariumConfig) -> np.ndarray:
-    """One block application. Pure: returns a new array, mutates neither X nor θ."""
+def forward_verbose(
+    X: np.ndarray, w: Weights, cfg: VivariumConfig
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """One block application, also returning the attention `A` and message `msg`
+    (the intermediates the M1 plasticity rule consumes). Pure."""
     A = attention_matrix(X, w, cfg)
     msg = A @ (X @ w.W_v)
     X1 = _layernorm(X + msg)
     X2 = _layernorm(X1 + _mlp(X1, w))
-    return X2
+    return X2, A, msg
+
+
+def forward(X: np.ndarray, w: Weights, cfg: VivariumConfig) -> np.ndarray:
+    """One block application. Pure: returns a new array, mutates neither X nor θ."""
+    return forward_verbose(X, w, cfg)[0]

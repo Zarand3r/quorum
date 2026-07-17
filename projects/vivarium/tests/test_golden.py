@@ -16,16 +16,18 @@ from config import DEFAULTS, VivariumConfig
 from engine import Engine
 
 _GOLDEN_T = 100
-_GOLDEN_HASH_M0 = "325d04839dd7579a"  # stamped at M0 (Step 1); re-stamp only on intentional dynamics changes
+# Re-stamped at Step 2 (M1: one-clock learning on). Re-stamp only on intentional
+# dynamics changes (M0→M1 here; next at Step 4 tuning).
+_GOLDEN_HASH = "f319253256a44a28"
 
 
-def test_golden_path_m0() -> None:
+def test_golden_path() -> None:
     cfg = VivariumConfig(**DEFAULTS)
     e = Engine(cfg, seed=0)
     for _ in range(_GOLDEN_T):
         e.step()
     h = hashlib.sha256(e.X.tobytes()).hexdigest()[:16]
-    assert h == _GOLDEN_HASH_M0, f"golden-path drift at M0: got {h}"
+    assert h == _GOLDEN_HASH, f"golden-path drift: got {h}"
 
     snap = e.snapshot()
     assert snap["n"] == cfg.N
