@@ -4,7 +4,7 @@
 # plain numpy + pyyaml only. Deps come from the ``vivarium_deps`` pip hub
 # (MODULE.bazel), pinned in ``requirements_lock.txt``. No autograd, no torch.
 
-load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 load("@vivarium_deps//:requirements.bzl", "requirement")
 
 package(default_visibility = ["//visibility:public"])
@@ -25,6 +25,15 @@ py_library(
         requirement("numpy"),
         requirement("pyyaml"),
     ],
+)
+
+py_binary(
+    name = "probe",
+    srcs = ["probe.py"],
+    main = "probe.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
 )
 
 py_test(

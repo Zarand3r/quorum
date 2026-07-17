@@ -7,6 +7,8 @@ separate `train()`/`fit()` phase (P2). `snapshot()` is strictly read-only (P5).
 
 from __future__ import annotations
 
+import copy
+
 import numpy as np
 
 from block import Weights, forward_verbose, make_weights
@@ -36,3 +38,8 @@ class Engine:
 
     def snapshot(self) -> dict:
         return _snapshot(self.X, self.weights, self.cfg, self.t)
+
+    def fork(self) -> "Engine":
+        """A deep, independent copy — used by the read-only measurement harness to
+        probe the run without perturbing it (P5/P3). Stepping a fork never touches self."""
+        return copy.deepcopy(self)

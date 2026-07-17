@@ -1,0 +1,132 @@
+"""Aliveness — a measured, read-only, ungameable scoreboard (IMPLEMENTATION_PLAN.md Step 3).
+
+Scores a window of the *live* run. It is wired **one-way**: it forks the engine and
+rolls the fork, never touching the real engine (P5), and nothing here ever feeds back
+into the update (P3 — invariant, grep-checked).
+
+    aliveness = gate_finite · gate_spread · gate_motion · coherence · structure   ∈ [0, 1]
+
+Hard-zero gates kill the degenerate regimes the design forbids:
+  - gate_finite  : 0 on NaN/Inf (blow-up)
+  - gate_spread  : 0 if the colony collapses to a point OR explodes
+  - gate_motion  : 0 if frozen OR thrashing
+Smooth factors reward *organised, non-random* motion:
+  - coherence    : temporal — velocity is directed, not white noise
+  - structure    : spatial  — neighbours move together (coordination), not independently
+
+A twin-rollout Lyapunov exponent is reported alongside as an edge-of-chaos diagnostic
+(≈0 = edge; <0 contracting/dead; >0 chaotic). It is NOT part of the score.
+"""
+
+from __future__ import annotations
+
+import numpy as np
+
+from block import neighbor_indices
+from config import VivariumConfig
+
+# regime bands (measured, never optimised).
+_SPREAD_LO, _SPREAD_HI = 0.03, 8.0   # below → collapsed; above → blown up
+_MOTION_LO, _MOTION_HI = 1e-3, 2.0   # below → frozen; above → thrashing
+
+
+def rollout_states(engine, window: int) -> np.ndarray:
+    """Fork the engine and roll it `window` steps, returning states (window+1, N, d).
+    The real engine is untouched (P5)."""
+    tw = engine.fork()
+    states = [tw.X.copy()]
+    for _ in range(window):
+        tw.step()
+        states.append(tw.X.copy())
+    return np.stack(states)
+
+
+def _cos_rows(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """Row-wise cosine, 0 where either vector is ~0 (undefined direction)."""
+    denom = np.linalg.norm(a, axis=-1) * np.linalg.norm(b, axis=-1)
+    dot = np.sum(a * b, axis=-1)
+    return np.where(denom > 1e-12, dot / np.where(denom > 1e-12, denom, 1.0), 0.0)
+
+
+def _coherence(V: np.ndarray) -> float:
+    """Temporal: mean cosine between consecutive per-agent velocities (white noise → 0)."""
+    if V.shape[0] < 2:
+        return 0.0
+    return float(np.clip(np.mean(_cos_rows(V[:-1], V[1:])), 0.0, 1.0))
+
+
+def _structure(P: np.ndarray, V: np.ndarray, cfg: VivariumConfig) -> float:
+    """Spatial: mean alignment of each agent's velocity with its neighbours' mean velocity."""
+    k = min(cfg.n_neighbors, P.shape[1])
+    vals = []
+    for t in range(V.shape[0]):
+        idx = neighbor_indices(P[t], k)          # (N, k)
+        v = V[t]                                  # (N, 2)
+        mean_nbr_v = v[idx].mean(axis=1)          # (N, 2)
+        vals.append(np.mean(_cos_rows(v, mean_nbr_v)))
+    return float(np.clip(np.mean(vals), 0.0, 1.0)) if vals else 0.0
+
+
+def score(states: np.ndarray, cfg: VivariumConfig) -> dict:
+    """Score a (T, N, d) window. Pure — no engine, no side effects."""
+    states = np.asarray(states, dtype=np.float64)
+    if not np.all(np.isfinite(states)):
+        return _report(0.0, gate_finite=0.0)
+
+    P = states[:, :, :2]                          # positions (T, N, 2)
+    V = np.diff(P, axis=0)                         # velocities (T-1, N, 2)
+    spread = float(np.mean(P.std(axis=1)))        # spatial spread (std over agents)
+    motion = float(np.mean(np.linalg.norm(V, axis=2))) if V.size else 0.0
+
+    gate_spread = 1.0 if _SPREAD_LO <= spread <= _SPREAD_HI else 0.0
+    gate_motion = 1.0 if _MOTION_LO <= motion <= _MOTION_HI else 0.0
+    coherence = _coherence(V)
+    structure = _structure(P, V, cfg)
+    alive = 1.0 * gate_spread * gate_motion * coherence * structure
+    return _report(
+        alive,
+        gate_finite=1.0,
+        gate_spread=gate_spread,
+        gate_motion=gate_motion,
+        coherence=coherence,
+        structure=structure,
+        spread=spread,
+        motion=motion,
+    )
+
+
+def lyapunov(engine, window: int, eps: float = 1e-4) -> float:
+    """Twin-rollout largest-Lyapunov estimate: divergence rate of two forks that start
+    eps apart. ≈0 edge-of-chaos, <0 contracting (dead), >0 chaotic. Diagnostic only."""
+    a, b = engine.fork(), engine.fork()
+    b.X = b.X.copy()
+    b.X[0, 0] += eps
+    for _ in range(window):
+        a.step()
+        b.step()
+    dist = float(np.linalg.norm(a.X - b.X))
+    if dist <= 0.0:
+        return float("-inf")
+    return float(np.log(dist / eps) / window)
+
+
+def evaluate(engine, window: int = 40) -> dict:
+    """Full read-only report for the engine's current regime."""
+    report = score(rollout_states(engine, window), engine.cfg)
+    report["lyapunov"] = lyapunov(engine, window)
+    return report
+
+
+def _report(aliveness: float, **fields) -> dict:
+    base = {
+        "aliveness": float(aliveness),
+        "gate_finite": 0.0,
+        "gate_spread": 0.0,
+        "gate_motion": 0.0,
+        "coherence": 0.0,
+        "structure": 0.0,
+        "spread": 0.0,
+        "motion": 0.0,
+    }
+    base.update(fields)
+    return base
