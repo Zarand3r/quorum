@@ -68,6 +68,14 @@ def learn(
     g_Wp = msg.T @ e / n                          # (d, m)   dL/dW_p
     g_Wv = agg.T @ (e @ w.W_p.T) / n              # (d, d)   dL/dW_v via the message
 
+    # Option 1 — local anti-collapse (M2). Reward each agent's message for deviating from
+    # its attention-weighted neighbourhood, so the plasticity is pushed away from homogenising.
+    # da = (I − A)·agg is the local deviation; d = da·W_v; the diversity-reward gradient
+    # −(β/n)·(daᵀda)·W_v is linear in W_v (still a hand-derived one-step delta, still local).
+    if cfg.anticollapse > 0.0:
+        da = agg - A @ agg                        # (N, d)  deviation from neighbourhood
+        g_Wv = g_Wv - (cfg.anticollapse / n) * (da.T @ da) @ w.W_v
+
     W_p = w.W_p - cfg.lr * (g_Wp + _WEIGHT_DECAY * w.W_p)
     W_v = w.W_v - cfg.lr * (g_Wv + _WEIGHT_DECAY * w.W_v)
     return replace(w, W_p=W_p, W_v=W_v), loss

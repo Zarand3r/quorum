@@ -30,6 +30,7 @@ class VivariumConfig:
     dist_lambda: float  # λ in s = dock − λ‖Δp‖²  (locality strength; 0 = global softmax)
     drift_rate: float   # speed of the slow external field s(t) (the "season"; the J drive)
     lr: float           # local plasticity step size (used at M1)
+    anticollapse: float # β — local diversity term strength in the plasticity (M2; 0 = off)
     seed: int
 
     @property
@@ -53,6 +54,7 @@ DEFAULTS: dict = {
     "dist_lambda": 0.5,
     "drift_rate": 0.02,
     "lr": 0.05,
+    "anticollapse": 0.0,
     "seed": 0,
 }
 
@@ -68,6 +70,7 @@ def load_config(path: str | Path) -> VivariumConfig:
         dist_lambda=float(merged["dist_lambda"]),
         drift_rate=float(merged["drift_rate"]),
         lr=float(merged["lr"]),
+        anticollapse=float(merged["anticollapse"]),
         seed=int(merged["seed"]),
     )
     _validate(cfg)
@@ -91,6 +94,6 @@ def _validate(cfg: VivariumConfig) -> None:
         )
     if not (1 <= cfg.n_neighbors < cfg.N):
         raise ValueError(f"n_neighbors must be in [1, N) = [1, {cfg.N}); got {cfg.n_neighbors}")
-    for name in ("dist_lambda", "drift_rate", "lr"):
+    for name in ("dist_lambda", "drift_rate", "lr", "anticollapse"):
         if getattr(cfg, name) < 0.0:
             raise ValueError(f"{name} must be ≥ 0")

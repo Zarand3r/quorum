@@ -27,6 +27,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--lr", type=float, default=None)
     p.add_argument("--k", type=int, default=None)
     p.add_argument("--N", type=int, default=None)
+    p.add_argument("--ac", type=float, default=None, help="anti-collapse strength β")
     p.add_argument("--ablate", choices=["none", "identity", "shuffle"], default="none")
     a = p.parse_args(argv)
 
@@ -41,6 +42,8 @@ def main(argv: list[str] | None = None) -> int:
         over["n_neighbors"] = a.k
     if a.N is not None:
         over["N"] = a.N
+    if a.ac is not None:
+        over["anticollapse"] = a.ac
     cfg = VivariumConfig(**{**DEFAULTS, **over})
     e = Engine(cfg, a.seed, ablate=a.ablate)
     print(" tick  alive  spread  motion  cohere  struct    lyap     loss")
