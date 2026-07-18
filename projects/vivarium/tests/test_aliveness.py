@@ -63,16 +63,55 @@ def test_white_noise_scores_low() -> None:
     assert s["aliveness"] < 0.2
 
 
-def test_coordinated_motion_scores_positive() -> None:
+def test_rigid_drift_scores_low() -> None:
+    # R2 fix: a shared rigid translation (coherent drift) is TRIVIAL — it must NOT
+    # score as alive, even though it is smooth and moving.
     cfg = _cfg(N=32)
     rng = np.random.default_rng(4)
     P0 = rng.standard_normal((32, 2)) * 2.0
-    v = np.array([0.1, 0.05])  # a shared, smooth drift (flock)
+    v = np.array([0.1, 0.05])  # everyone moves identically
     P = np.stack([P0 + t * v for t in range(30)])
     s = score(_states(P, cfg), cfg)
-    assert s["gate_spread"] == 1.0 and s["gate_motion"] == 1.0
-    assert s["coherence"] > 0.9 and s["structure"] > 0.9
-    assert s["aliveness"] > 0.5
+    assert s["gate_motion"] == 1.0        # it IS moving...
+    assert s["structure"] < 0.1           # ...but has no relative structure
+    assert s["aliveness"] < 0.15          # so it is (correctly) not alive
+
+
+def test_rigid_rotation_scores_low() -> None:
+    # A rigid-body rotation has differentiated velocity (structure high) but preserves
+    # all pairwise distances → NOT morphing → deformation ~0 → not alive.
+    cfg = _cfg(N=32)
+    rng = np.random.default_rng(6)
+    P0 = rng.standard_normal((32, 2)) * 2.0
+    th = 0.12
+    R = np.array([[np.cos(th), -np.sin(th)], [np.sin(th), np.cos(th)]])
+    P = [P0]
+    for _ in range(29):
+        P.append(P[-1] @ R.T)
+    s = score(_states(np.stack(P), cfg), cfg)
+    assert s["deformation"] < 0.05        # rigid → relative config preserved
+    assert s["aliveness"] < 0.1           # so a spinning rigid blob is NOT alive
+
+
+def test_nonrigid_flow_scores_above_trivial() -> None:
+    # A shear flow: horizontal speed ∝ vertical position. Neighbours (similar height)
+    # move alike (structure high), but the configuration genuinely deforms
+    # (deformation high) — non-rigid, organised motion. It must score clearly above
+    # every trivial case (rigid drift, rigid rotation ≈ 0).
+    cfg = _cfg(N=48)
+    rng = np.random.default_rng(5)
+    P0 = rng.standard_normal((48, 2)) * 2.0
+    shear = 0.05
+    P = np.stack([P0 + t * np.stack([shear * P0[:, 1], np.zeros(48)], axis=1) for t in range(30)])
+    s = score(_states(P, cfg), cfg)
+
+    assert s["gate_motion"] == 1.0
+    assert s["structure"] > 0.5       # locally aligned relative motion
+    assert s["deformation"] > 0.1     # genuinely non-rigid (unlike rotation/translation)
+
+    # the discriminating claim: non-rigid organised flow ≫ trivial motions.
+    rigid = np.stack([P0 + t * np.array([0.1, 0.05]) for t in range(30)])
+    assert s["aliveness"] > 5.0 * score(_states(rigid, cfg), cfg)["aliveness"] + 0.05
 
 
 def test_evaluate_is_read_only() -> None:

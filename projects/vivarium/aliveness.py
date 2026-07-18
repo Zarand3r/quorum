@@ -56,15 +56,41 @@ def _coherence(V: np.ndarray) -> float:
 
 
 def _structure(P: np.ndarray, V: np.ndarray, cfg: VivariumConfig) -> float:
-    """Spatial: mean alignment of each agent's velocity with its neighbours' mean velocity."""
+    """Spatial: local organisation of the *relative* (drift-removed) velocity field.
+
+    We subtract the global mean velocity per frame first, so a rigid coherent
+    translation (all agents moving identically — the trivial "coherent drift" the
+    rigor review flagged) has zero relative velocity and scores ~0. Only genuinely
+    *differentiated* yet locally-aligned motion (counter-streams, vortices,
+    clusters moving apart) scores high.
+
+    (Known residual: a rigid-body *rotation* still shows differentiated velocity and
+    scores high — removing rigid rotation too would need a Procrustes step; deferred.)"""
     k = min(cfg.n_neighbors, P.shape[1])
     vals = []
     for t in range(V.shape[0]):
-        idx = neighbor_indices(P[t], k)          # (N, k)
-        v = V[t]                                  # (N, 2)
-        mean_nbr_v = v[idx].mean(axis=1)          # (N, 2)
+        v = V[t] - V[t].mean(axis=0, keepdims=True)   # remove rigid translation
+        idx = neighbor_indices(P[t], k)               # (N, k)
+        mean_nbr_v = v[idx].mean(axis=1)              # (N, 2)
         vals.append(np.mean(_cos_rows(v, mean_nbr_v)))
     return float(np.clip(np.mean(vals), 0.0, 1.0)) if vals else 0.0
+
+
+def _deformation(P: np.ndarray) -> float:
+    """Non-rigidity: how much the colony's *relative configuration* changes over the
+    window. A rigid body (pure translation OR rotation) preserves all pairwise
+    distances → 0. Genuine morphing/reconfiguration → > 0. This is the "morph" the
+    life must actually do — and it closes the rigid-rotation loophole `_structure`
+    leaves open."""
+    T, N = P.shape[0], P.shape[1]
+    if T < 2 or N < 2:
+        return 0.0
+    diff = P[:, :, None, :] - P[:, None, :, :]            # (T, N, N, 2)
+    D = np.sqrt(np.einsum("tijc,tijc->tij", diff, diff) + 1e-12)  # (T, N, N) pairwise dists
+    iu = np.triu_indices(N, k=1)
+    pair = D[:, iu[0], iu[1]]                              # (T, P) each pair's distance over time
+    cov = pair.std(axis=0) / (pair.mean(axis=0) + 1e-6)   # per-pair coefficient of variation
+    return float(np.clip(np.mean(cov), 0.0, 1.0))
 
 
 def score(states: np.ndarray, cfg: VivariumConfig) -> dict:
@@ -82,7 +108,8 @@ def score(states: np.ndarray, cfg: VivariumConfig) -> dict:
     gate_motion = 1.0 if _MOTION_LO <= motion <= _MOTION_HI else 0.0
     coherence = _coherence(V)
     structure = _structure(P, V, cfg)
-    alive = 1.0 * gate_spread * gate_motion * coherence * structure
+    deformation = _deformation(P)
+    alive = 1.0 * gate_spread * gate_motion * coherence * structure * deformation
     return _report(
         alive,
         gate_finite=1.0,
@@ -90,6 +117,7 @@ def score(states: np.ndarray, cfg: VivariumConfig) -> dict:
         gate_motion=gate_motion,
         coherence=coherence,
         structure=structure,
+        deformation=deformation,
         spread=spread,
         motion=motion,
     )
@@ -125,6 +153,7 @@ def _report(aliveness: float, **fields) -> dict:
         "gate_motion": 0.0,
         "coherence": 0.0,
         "structure": 0.0,
+        "deformation": 0.0,
         "spread": 0.0,
         "motion": 0.0,
     }

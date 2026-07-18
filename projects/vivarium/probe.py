@@ -49,12 +49,13 @@ def main(argv: list[str] | None = None) -> int:
         over["skew_gain"] = a.skew
     cfg = VivariumConfig(**{**DEFAULTS, **over})
     e = Engine(cfg, a.seed, ablate=a.ablate)
-    print(" tick  alive  spread  motion  cohere  struct    lyap     loss")
+    print(" tick  alive  spread  motion  cohere  struct  deform    lyap")
     for _ in range(0, a.ticks + 1, a.every):
         r = evaluate(e, a.window)
         print(
             f"{e.t:5d}  {r['aliveness']:.3f}  {r['spread']:.3f}  {r['motion']:.4f}"
-            f"   {r['coherence']:.3f}   {r['structure']:.3f}  {r['lyapunov']:+.3f}  {e.last_loss:.5f}"
+            f"   {r['coherence']:.3f}   {r['structure']:.3f}   {r['deformation']:.3f}"
+            f"  {r['lyapunov']:+.3f}"
         )
         for _ in range(a.every):
             e.step()
