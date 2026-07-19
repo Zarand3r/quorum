@@ -55,6 +55,15 @@ py_binary(
 )
 
 py_binary(
+    name = "pure",
+    srcs = ["pure.py"],
+    main = "pure.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
+py_binary(
     name = "serve",
     srcs = ["server.py"],
     main = "server.py",

@@ -92,6 +92,35 @@ weaker. It is interaction-driven **by construction** (identity ablation freezes 
 properly, or **macro selection** (select the rare rules that clear a higher bar) — the point at
 which hand-tuning should stop.
 
+## PURE TRANSFORMER — the transformer does everything (the strongest result)
+
+The force-based substrate used a bolt-on force law for motion. Question: can the *transformer
+itself* move positions AND resist collapse, with no external rules? Yes — and it beats the force
+law by ~5–9×. `pure.py`: position is just channels of `X`; the whole embedding is updated by one
+block (grounded attention + MLP + LayerNorm) with two **internal architecture changes**:
+
+- **Non-reciprocal attention** `A ← A + β(A − Aᵀ)` — injects the antisymmetric/circulating part,
+  which **defeats attention's contraction** (the rank-collapse the whole paper fights). This is
+  the key unlock; plain attention just clumps everyone.
+- **Skew term** `X·J` (fixed skew-symmetric) — non-gradient ⇒ no fixed point.
+- **Don't LayerNorm the position channels** — lets the dish spread instead of normalising to a
+  point; a **residual scale** on (message + skew) tames over-energetic seeds into the motion band.
+
+**Best config** (`dist_lambda=0.5, morph_spin=0.3, nonrecip=1.0, ln_pos=False, scale=0.5`):
+
+```
+sustained aliveness ~0.26 mean / ~0.42 best-seed   (force-based substrate: ~0.05)
+identity ablation ~0.17   →  P6 margin +0.10   (interaction is load-bearing, measured)
+motion in-band, coherence ~0.95, structure ~0.97, deformation ~0.44, steady to 3000+ ticks
+```
+
+**Honest nuance.** Unlike the force substrate (P6 by construction, identity→0), here the per-agent
+MLP produces a real *baseline* of motion (identity ~0.17), so P6 is **measured-positive (+0.10),
+not by-construction**. But the *interaction-driven increment* alone (~0.10) is already ~2× the
+force substrate's entire aliveness, and total aliveness is ~5× — a genuinely stronger, and
+*architecturally pure*, result. Non-reciprocal attention is the mechanism that lets a transformer
+move things without collapsing. (Branch: `vivarium-pure-transformer`.)
+
 ## Conclusions (this run)
 
 1. **Crystallization is the wall**, exactly as `potential_flux.md` predicts: symmetric gradient
