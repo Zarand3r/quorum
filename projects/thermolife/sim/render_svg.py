@@ -68,7 +68,7 @@ def render_fold(out: Path) -> None:
     palette = ["#5aa9e6", "#7fc8a9", "#e6a15a", "#c98bdb", "#e6708a",
                "#8ad0d0", "#d0c46a", "#b0b0e0"]
     parts = [_hdr("thermolife — trained docking fold",
-                  f'iteration {2*cfg.k_harmonics} · docked {int(100*snap.get("accuracy",0))}% '
+                  f'iteration {2*cfg.k_harmonics} · docked {int(100*(snap.get("accuracy") or 0))}% '
                   f'· 8 tokens fold into complementary pairs', "#141417")]
     # docking bonds first (under the blobs)
     for i, j, wgt in edges:

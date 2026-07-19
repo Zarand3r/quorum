@@ -154,9 +154,15 @@ the predicted direction, with a matched-compute control (the Stage-A baseline).
 - **E1 — Attention as the interaction operator.** Replace hand-coded sensing/transfer with the
   (fixed-random, then gene-modulated) attention block decoding move/harvest/transfer. **Gate:**
   still conserves; energy provably routes along attention edges; no per-token loop.
-- **E2 — Meta-learned viability (Stage A, ES).** Evolve θ for survival under drift. **Gate:**
+- **E2 — Meta-learned viability (Stage A, ES). ✅ DONE.** Evolve θ for survival under drift. **Gate:**
   trained θ beats random-θ and hand-forager on survival-ticks (held-out drift), and the freeze-
   attention / shuffle-edges ablations hurt. Controllable, not yet open-ended.
+  *Result (held-out, 8 seeds × 220 ticks): evolved 43.6k pop-ticks vs random 1.0k (**43.7×**) vs
+  hand-forager 33.0k (**1.32× — beats it**). Ablation of the learned θ: freeze A=I −14%, remove-
+  transfer −10%, **shuffle-edges −60%** (worse than freeze). Honest reading: individual chemotaxis
+  carries the base, but the interaction **structure** is load-bearing (mis-routing corrupts the
+  decode), and energy transfer is minor. `train/es_eco.py` (OpenAI-ES) · `tests/test_eco_es.py`
+  (5-test gate) · evolved θ watchable via `serve --eco --eco-policy attention --eco-theta …`.*
 - **E3 — Reproduction + evolving genes (Stage B).** θ frozen; genes mutate; selection = survival.
   **Gate:** population persists with lineage diversity > 1 **and** the emergence trio fires —
   **irreducibility** (not reproducible by independent tokens), **many-body** (≥3-body

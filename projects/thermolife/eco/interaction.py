@@ -123,18 +123,17 @@ def decode_actions(
     return dx, gate, t
 
 
-def make_attention_policy(
-    cfg: EcoConfig, *, k_harmonics: int = 4, hidden: int = 16, seed: int = 0,
-    mode: str = "dist",
-):
-    """Build the E1 policy: fixed random θ, distance-penalized interaction.
+def attention_policy(w: EcoWeights, cfg: EcoConfig, *, mode: str = "dist",
+                     ablation_seed: int = 0):
+    """Build the E1 policy closure over an EXPLICIT θ (``w``).
+
+    This is the injection point for evolved weights (E2/train/es_eco.py): the ES
+    trainer flattens/perturbs an ``EcoWeights`` and drops it straight in here. The
+    ``make_attention_policy`` wrapper is just this with a fresh random θ.
 
     mode: "dist" (default) | "softmax" | "hk" | "freeze_attention" |
     "shuffle_edges" | "remove_transfer" — the ablation arms are wrapped by the
     matched-compute harness in eco/ablations.py."""
-    w = EcoWeights.random(cfg, k_harmonics, hidden, seed)
-    ablation_rng = np.random.Generator(np.random.PCG64(seed + 777))
-
     def policy(state: EcoState, _cfg: EcoConfig):
         n = state.n
         if n == 0:
@@ -145,7 +144,13 @@ def make_attention_policy(
         if mode == "freeze_attention":
             a = np.eye(n)                       # no interaction: pure self-loop
         elif mode == "shuffle_edges":
-            perm = ablation_rng.permutation(n)  # break who-talks-to-whom, keep mass
+            # break who-talks-to-whom, keep the mass. The permutation is a pure
+            # function of (seed, tick) — NOT a running RNG — so re-invoking the
+            # policy for the same state (snapshot/render recompute) draws no fresh
+            # randomness and cannot perturb the trajectory (P4). A fresh RNG per
+            # tick still gives a different rewiring each step.
+            perm_rng = np.random.Generator(np.random.PCG64([ablation_seed + 777, state.t]))
+            perm = perm_rng.permutation(n)
             a = a[:, perm]
         dx, gate, t = decode_actions(state, a, w, cfg)
         if mode == "remove_transfer":
@@ -156,3 +161,16 @@ def make_attention_policy(
     policy.weights = w
     policy.last_attention = None
     return policy
+
+
+def make_attention_policy(
+    cfg: EcoConfig, *, k_harmonics: int = 4, hidden: int = 16, seed: int = 0,
+    mode: str = "dist", weights: EcoWeights | None = None,
+):
+    """Build the E1 policy with a fresh random θ (or an injected ``weights``).
+
+    ``weights=None`` (default) draws random θ from ``seed`` — the untrained
+    control. Pass an evolved ``EcoWeights`` (E2) to drive the population with a
+    learned chemistry; ``seed`` then only seeds the ablation permutation RNG."""
+    w = weights if weights is not None else EcoWeights.random(cfg, k_harmonics, hidden, seed)
+    return attention_policy(w, cfg, mode=mode, ablation_seed=seed)
