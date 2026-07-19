@@ -240,25 +240,25 @@ feeding back into dynamics or reward.
   (E2 meta-learning, E3 per-token selection), and are gated on measured observables, not on
   appearance.
 
-## 8. Where this points: learn-while-living (a program, not yet a result)
+## 8. We built it — and what measurement did to "the simulation is the training"
 
-Sections 3–6 keep the two clocks that the deep-learning default assumes: *train* the weights
-against an objective, then *run* the fixed net forward. The road out of collapse we have not yet
-walked collapses those two clocks into **one** — a transformer whose weights update *online, by
-a local rule, with no global loss*, so that the training iterations **are** the simulation. We
-sketch it here honestly as a direction, with **no results to report**; the detailed design lives
-in a sibling project (`vivarium`) and the code does not exist at the time of writing.
+Sections 3–6 keep the two clocks the deep-learning default assumes: *train* the weights against
+an objective, then *run* the fixed net forward. The natural next step collapses them into **one**
+— a transformer whose weights update *online, by a local rule, with no global loss*, so the
+training iterations **are** the simulation. We built this as a sibling project (`vivarium`) and
+let the same measure-don't-reward discipline judge it. The result is instructive, and mostly
+cautionary: the literal thesis did **not** survive contact with the metric, and the (faint)
+positive we did get came from *abandoning* online learning.
 
-**The one idea.** A bounded 2-D dish of `N` free-moving grounded-shape agents (the fold's
-contour readout, §2, carried over) that interact only through *local* distance-penalized
-attention (§5's chosen operator). The shared block is applied every tick, and every tick also
-nudges its weights by a **local learning rule** — the leading candidate is predictive plasticity
-(each agent reduces its surprise about its neighbours), which is the local message-passing form
-of a global variational-free-energy descent. A slow drifting field keeps the colony
-off-equilibrium so it never fully predicts and so never settles. Aliveness is **measured, never
-optimized**: the same ungameable gate product used elsewhere in this project, extended with an
-*irreducibility* term (ablate agent–agent coupling and the colony must be measurably *less*
-alive — the economy's shuffle test, §6, promoted to a pass/fail gate).
+**The initial design (online learning).** A bounded 2-D dish of `N` free-moving grounded-shape
+agents (the fold's contour readout, §2, carried over) interacting only through *local*
+distance-penalized attention (§5's chosen operator). The shared block was applied every tick, and
+every tick also nudged its weights by a **local learning rule** — predictive plasticity (each
+agent reduces its surprise about its neighbours), the local message-passing form of a global
+variational-free-energy descent. Aliveness was **measured, never optimized**: the same ungameable
+gate product used elsewhere in this project, extended with an *irreducibility* term (ablate
+agent–agent coupling and the colony must be measurably *less* alive — the economy's shuffle test,
+§6, promoted to a pass/fail gate). This design is the one that failed below.
 
 **Honest positioning against prior art.** None of the ingredients is new. Neural Cellular
 Automata [Mordvintsev+2020] iterate a learned local rule to grow patterns; **attention** as the
@@ -278,13 +278,35 @@ predicts *yes* under matched finite range and matched drive, *no* if the drive i
 (global converges, local keeps moving), and *collapse* for either if made mean-field — a
 prediction that can be refuted, not just admired.
 
-**The honest risk.** Online local plasticity with no global objective producing *rich,
-sustained, irreducible* emergence is ambitious and may simply not occur: predictive plasticity
-alone tends to converge (perfect prediction ⇒ frozen) or collapse, and the sibling morph sim
-plateaued at a low measured aliveness (~0.16) after search. The likely outcome to plan for is a
-*measured negative* — "we built the ungameable metric and the colony is not very alive" — which
-is worth reporting precisely because the metric cannot be gamed, but is not the triumphant result
-the framing invites. We record the direction, not a claim.
+**What measurement did to the online-learning idea.** It failed the way we flagged it might, and
+the ungameable metric caught every apparent success. Predictive plasticity **collapses** —
+minimising surprise homogenises the colony (the dark room); worse, a *frozen-weights control
+scored the same aliveness as the learned one*, so the learning was **not load-bearing** at all. A
+drift-invariant "relative-neighbour" objective provably removed the drift-dragging failure but
+still froze. Along the way the metric falsified three would-be results that eyeballing would have
+accepted: inflated scores from a too-weak metric (rewarding a rigid coherent *drift* as "alive"),
+aliveness that *survived ablating interaction* (independent agents, not a colony), and **dying
+transients** that a short measurement window mistook for sustained life. The measured-not-rewarded
+discipline earned its keep here — as a bullshit detector.
+
+**Where a faint positive finally came from — and its honest cost.** We obtained sustained,
+interaction-driven, *morphing* dynamics only by **abandoning online learning** for a fixed-rule,
+force-based substrate (Particle-Life-like): position moves by neighbour attract / repel /
+**non-reciprocal chase** forces, so an agent with no neighbours cannot move — interaction is
+load-bearing *by construction* (the irreducibility gate holds without tuning, unlike every
+learning variant). An exhaustive *measured* search then found a sustained configuration
+(non-reciprocal chase + inertia + a shape-rotation) that stays alive to 8000 ticks. But the score
+is **faint** — sustained aliveness ≈ 0.05, below the sibling morph's 0.16 — and, the honest cost,
+this substrate is **no longer "the simulation is the training"**: the rule is fixed on the fast
+clock. A *learn*-while-living system we could not make load-bearing at toy scale; a
+*measure*-while-living dynamics survived, weakly.
+
+**Net.** The literal thesis — weights that learn online, and that *being* the simulation — did not
+hold up under an honest metric at this scale. What survived is the *discipline*: an ungameable
+aliveness observable that repeatedly refuted illusory emergence, and a substrate where
+interaction-irreducibility is structural rather than hoped-for. The single global≡local
+experiment this section first promised remains unrun, and the evidence points to *selection over
+fixed rules* — not online learning within one life — as the next lever.
 
 ## 9. Conclusion
 
@@ -295,8 +317,10 @@ faithful (grounded readout), earned a non-trivial learned behavior (docking, wit
 cost of deep supervision), built a conserved substrate with real thermodynamic stakes, and
 resolved by measurement which local attention operator belongs where. The road to the goal —
 sustained, *computed*, irreducible emergence — runs through non-settling drives and selection
-on the heritable interface (and, one clock further, through weights that learn *while* they live,
-§8), with every step gated by falsifiable observables rather than by how alive it looks.
+on the heritable interface; the one-clock "weights that learn *while* they live" variant (§8) we
+could *not* make load-bearing under an honest metric, which now points us toward selection over
+fixed rules rather than online learning within a life. Every step is gated by falsifiable
+observables rather than by how alive it looks.
 
 ## References
 
