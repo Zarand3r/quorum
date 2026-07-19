@@ -21,7 +21,7 @@ Only genuine, coordinated, *morphing* motion counts.
 
 ### A. Runnable on the dock-and-morph substrate (swept — see table below)
 
-Latest sweep (seeds 0–4, T=1000), best aliveness first:
+Latest sweep (seeds 0–4, T=1000) at commit `64aef91`, best aliveness first:
 
 | idea | alive(mean) | alive(best) | P6 margin | deform | note |
 |---|---:|---:|---:|---:|---|
