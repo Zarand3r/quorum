@@ -36,6 +36,8 @@ class VivariumConfig:
     force_attract: float  # γ_a — pull toward complementary (attention-weighted) neighbours
     force_repel: float    # γ_r — short-range excluded-volume repulsion
     force_chase: float    # γ_c — NON-RECIPROCAL transport (A−Aᵀ): i chases j but not vice versa
+    force_typed: float    # γ_t — Particle-Life typed force: persistent non-reciprocal K[type_i,type_j]
+    n_types: int          # number of agent types for the typed force (Dale's-principle / E–I)
     momentum: float     # velocity inertia in [0,1): smooths jittery force into coherent motion
     morph_spin: float   # skew/rotational gain on the morph z (non-settling; keeps shape morphing)
     pos_bound: float    # dish half-size; positions are clipped to [−pos_bound, pos_bound] (P7)
@@ -68,6 +70,8 @@ DEFAULTS: dict = {
     "force_attract": 0.1,
     "force_repel": 0.05,
     "force_chase": 0.0,
+    "force_typed": 0.0,
+    "n_types": 4,
     "momentum": 0.0,
     "morph_spin": 0.1,
     "pos_bound": 6.0,
@@ -87,6 +91,8 @@ def load_config(path: str | Path) -> VivariumConfig:
         force_attract=float(merged["force_attract"]),
         force_repel=float(merged["force_repel"]),
         force_chase=float(merged["force_chase"]),
+        force_typed=float(merged["force_typed"]),
+        n_types=int(merged["n_types"]),
         momentum=float(merged["momentum"]),
         morph_spin=float(merged["morph_spin"]),
         pos_bound=float(merged["pos_bound"]),
@@ -112,9 +118,11 @@ def _validate(cfg: VivariumConfig) -> None:
         )
     if not (1 <= cfg.n_neighbors < cfg.N):
         raise ValueError(f"n_neighbors must be in [1, N) = [1, {cfg.N}); got {cfg.n_neighbors}")
-    for name in ("dist_lambda", "force_attract", "force_repel", "force_chase", "morph_spin"):
+    for name in ("dist_lambda", "force_attract", "force_repel", "force_chase", "force_typed", "morph_spin"):
         if getattr(cfg, name) < 0.0:
             raise ValueError(f"{name} must be ≥ 0")
+    if cfg.n_types < 1:
+        raise ValueError("n_types must be ≥ 1")
     if cfg.pos_bound <= 0.0:
         raise ValueError("pos_bound must be > 0")
     if not (0.0 <= cfg.momentum < 1.0):

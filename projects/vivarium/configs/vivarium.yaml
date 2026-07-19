@@ -1,11 +1,18 @@
-# vivarium default config (dock-and-morph dynamics). Overrides DEFAULTS in config.py.
-# Channel split from d + n_harmonics: pos=2, shape=2*n_harmonics=6, hidden=8.
+# vivarium default config (dock-and-morph dynamics).
+# The best SUSTAINED signs-of-life config found by exhaustive search (RESEARCH_LOG.md):
+# non-reciprocal chase + momentum + morph-spin, weak symmetric forces. Sustained aliveness
+# ~0.05 (peak transient ~0.15), confirmed steady to T=8000, interaction-driven (P6 by construction).
 N: 64
 d: 16
 n_harmonics: 3
 n_neighbors: 8
 dist_lambda: 0.5
-force_attract: 0.1
-force_repel: 0.05
+force_attract: 0.02
+force_repel: 0.02
+force_chase: 1.0
+force_typed: 0.0
+n_types: 4
+momentum: 0.6
+morph_spin: 0.4
 pos_bound: 6.0
 seed: 0

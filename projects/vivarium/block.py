@@ -43,10 +43,11 @@ class Weights:
     W2: np.ndarray   # (h, z_dim) MLP out
     b2: np.ndarray   # (z_dim,)
     J_spin: np.ndarray  # (z_dim, z_dim) fixed skew-symmetric → non-settling morph rotation
+    K: np.ndarray       # (n_types, n_types) NON-symmetric typed interaction (Particle-Life / E–I)
 
     @staticmethod
     def array_names() -> tuple[str, ...]:
-        return ("W_c", "M", "W_v", "W1", "b1", "W2", "b2", "J_spin")
+        return ("W_c", "M", "W_v", "W1", "b1", "W2", "b2", "J_spin", "K")
 
 
 def make_weights(cfg: VivariumConfig, seed: int) -> Weights:
@@ -68,7 +69,10 @@ def make_weights(cfg: VivariumConfig, seed: int) -> Weights:
     # skew-symmetric ⇒ non-gradient rotation on z: the morph never settles (Helmholtz).
     J_raw = rng.standard_normal((z, z)) / np.sqrt(z)
     J_spin = J_raw - J_raw.T
-    return Weights(W_c=W_c, M=M, W_v=W_v, W1=W1, b1=b1, W2=W2, b2=b2, J_spin=J_spin)
+    # non-symmetric typed interaction: K[a,b] = force sign/strength of type-b on type-a.
+    # asymmetry (K ≠ Kᵀ) is what makes types chase → persistent non-reciprocal motion.
+    K = rng.uniform(-1.0, 1.0, (cfg.n_types, cfg.n_types))
+    return Weights(W_c=W_c, M=M, W_v=W_v, W1=W1, b1=b1, W2=W2, b2=b2, J_spin=J_spin, K=K)
 
 
 # --- channel views ------------------------------------------------------------
@@ -127,10 +131,16 @@ def ablate_attention(A: np.ndarray, mode: str, seed: int, tick: int) -> np.ndarr
 
 
 # --- forces (motion) ----------------------------------------------------------
-def position_force(pos: np.ndarray, A: np.ndarray, cfg: VivariumConfig) -> np.ndarray:
+def position_force(
+    pos: np.ndarray,
+    A: np.ndarray,
+    cfg: VivariumConfig,
+    w: "Weights | None" = None,
+    types: np.ndarray | None = None,
+) -> np.ndarray:
     """Neighbour force on each agent: attract toward complementary neighbours + short-range
-    repel. Both derive from the interaction graph `A`, so with no neighbours (A = I) the
-    force is zero (P6). (N, 2)."""
+    repel (+ optional non-reciprocal chase / typed forces). Everything derives from the
+    interaction support, so with no neighbours (A = I) the force is zero (P6). (N, 2)."""
     # attract: toward attention-weighted neighbour centroid — (A − I)·p.
     attract = A @ pos - pos
     # repel: short-range (1/d²) push, over the attention support only (so identity ⇒ none).
@@ -148,6 +158,12 @@ def position_force(pos: np.ndarray, A: np.ndarray, cfg: VivariumConfig) -> np.nd
         B = A - A.T                                      # antisymmetric (N, N)
         chase = np.einsum("ij,ijc->ic", B, -diff)        # Σ_j B_ij (p_j − p_i)
         F = F + cfg.force_chase * chase
+    # typed (Particle-Life / E–I): persistent non-reciprocal force by type pair. K[t_i,t_j]>0
+    # ⇒ i pulled toward j; K asymmetric ⇒ chase. Over the support only (identity ⇒ 0).
+    if cfg.force_typed > 0.0 and w is not None and types is not None:
+        Kij = w.K[types[:, None], types[None, :]]        # (N, N) by type pair
+        typed = np.einsum("ij,ijc->ic", support * Kij / np.sqrt(d2), -diff)
+        F = F + cfg.force_typed * typed
     return F
 
 
@@ -169,13 +185,14 @@ def step_fields(
     ablate: str = "none",
     seed: int = 0,
     tick: int = 0,
+    types: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """One dock-and-morph evaluation. Returns (force on position, morphed z, A). Pure —
     the caller integrates position (with momentum, in the engine)."""
     A = ablate_attention(attention_matrix(X, w, cfg), ablate, seed, tick)
     z = morph_state(X)
 
-    force = position_force(positions(X), A, cfg)
+    force = position_force(positions(X), A, cfg, w, types)
 
     # morph: z updated by the block (message + MLP + LayerNorm), with a skew rotation so
     # the shape never settles → complementarity C keeps shifting → forces keep driving motion.

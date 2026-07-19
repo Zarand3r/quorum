@@ -45,6 +45,15 @@ py_binary(
     deps = [":vivarium"],
 )
 
+py_binary(
+    name = "grid",
+    srcs = ["grid.py"],
+    main = "grid.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
 py_test(
     name = "test_suite",
     srcs = glob(["tests/**/*.py"]),
