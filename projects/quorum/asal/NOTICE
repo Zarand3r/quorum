@@ -1,0 +1,33 @@
+quorum/asal — vendored reproduction of SakanaAI/asal
+=====================================================
+
+Upstream:   https://github.com/SakanaAI/asal
+Vendored at commit: 677ba0ea4d3b3ca78273c9906c6e84d2b1481ce7
+License:    Apache-2.0  (see LICENSE.upstream)
+
+The following files are copied verbatim from the upstream repository at the
+above commit, without behavioural modification:
+
+  rollout.py
+  asal_metrics.py
+  util.py
+  main_opt.py
+  main_illuminate.py
+  main_sweep_gol.py
+  substrates/*.py
+  foundation_models/*.py
+
+Local additions (BUILD.bazel, pyproject.toml, requirements_lock.txt, tests/*,
+this NOTICE) are original to this repository and licensed under whatever
+governs the surrounding monorepo.
+
+If upstream files are modified in place (rather than added alongside), each
+change is documented in the modifying commit's message. Prefer additive
+extensions where possible so the "vendored verbatim" claim stays true and
+the upstream diff stays small.
+
+Cite (from upstream README):
+
+  Kumar, A., Lu, C., Kirsch, L., Tang, Y., Stanley, K.O., Isola, P., Ha, D.
+  "Automating the Search for Artificial Life with Foundation Models."
+  Artificial Life 31(3), 2025.

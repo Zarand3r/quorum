@@ -1,0 +1,88 @@
+# quorum/asal — Bazel graph for the vendored SakanaAI/asal reproduction.
+#
+# The upstream repo uses flat imports (``import substrates``, ``import
+# foundation_models``, ``from rollout import rollout_simulation``) — the
+# project directory itself is the package root, so ``imports = ["."]``
+# places ``projects/quorum/asal/`` on ``sys.path`` for these targets.
+#
+# We vendor the code verbatim (see NOTICE) and add Bazel wiring around it.
+# Dependency set comes from the ``asal_deps`` pip hub declared in
+# ``MODULE.bazel``, pinned in ``requirements_lock.txt``.
+
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+load("@asal_deps//:requirements.bzl", "requirement")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["requirements_lock.txt"])
+
+# Common library — all vendored substrates + foundation models + rollout +
+# metrics + util. Every entry-point script pulls the whole thing.
+py_library(
+    name = "asal",
+    srcs = glob(
+        [
+            "rollout.py",
+            "asal_metrics.py",
+            "util.py",
+            "substrates/**/*.py",
+            "foundation_models/**/*.py",
+        ],
+    ),
+    imports = ["."],
+    deps = [
+        requirement("jax"),
+        requirement("jaxlib"),
+        requirement("flax"),
+        requirement("optax"),
+        requirement("chex"),
+        requirement("evosax"),
+        requirement("transformers"),
+        requirement("safetensors"),
+        requirement("numpy"),
+        requirement("scipy"),
+        requirement("einops"),
+        requirement("pillow"),
+        requirement("matplotlib"),
+        requirement("tqdm"),
+        requirement("dotmap"),
+    ],
+)
+
+# Supervised-target + open-endedness search (Sep-CMA-ES over policy weights).
+py_binary(
+    name = "main_opt",
+    srcs = ["main_opt.py"],
+    main = "main_opt.py",
+    imports = ["."],
+    deps = [":asal"],
+)
+
+# Illumination search — quality-diversity over the substrate.
+py_binary(
+    name = "main_illuminate",
+    srcs = ["main_illuminate.py"],
+    main = "main_illuminate.py",
+    imports = ["."],
+    deps = [":asal"],
+)
+
+# Game-of-Life brute-force search over discrete rule space.
+py_binary(
+    name = "main_sweep_gol",
+    srcs = ["main_sweep_gol.py"],
+    main = "main_sweep_gol.py",
+    imports = ["."],
+    deps = [":asal"],
+)
+
+py_test(
+    name = "test_suite",
+    srcs = glob(["tests/**/*.py"]),
+    main = "tests/pytest_main.py",
+    imports = ["."],
+    deps = [
+        ":asal",
+        requirement("pytest"),
+    ],
+)
