@@ -40,31 +40,43 @@ const BASE = location.pathname.replace(/\/(index\.html)?$/, '');
 
 function post(path){ fetch(BASE + path, {method:'POST'}); }
 
-function draw(s){
+// double-buffer snapshots and interpolate between them, so motion is smooth even when
+// frames arrive irregularly over the network.
+let PREV = null, CUR = null, CUR_T = 0;
+const POLL_MS = 120, INTERP_MS = 130;
+const lerp = (a,b,t)=> a + (b-a)*t;
+
+function draw(al){
+  const s = CUR; if(!s) return;
   document.getElementById('tick').textContent = s.tick;
   document.getElementById('n').textContent = s.n;
-  const a = document.getElementById('alive');
-  a.textContent = (s.aliveness ?? 0).toFixed(3);
-  a.style.color = s.aliveness > 0.02 ? '#34d399' : '#f59e0b';
+  const ae = document.getElementById('alive');
+  ae.textContent = (s.aliveness ?? 0).toFixed(3);
+  ae.style.color = s.aliveness > 0.02 ? '#34d399' : '#f59e0b';
 
-  ctx.clearRect(0,0,W,H);
+  const N = s.tokens.length;
+  const canInterp = PREV && PREV.tokens.length === N;
   const B = s.pos_bound || 6.0;
   const sc = (W*0.46)/B, cx = W/2, cy = H/2;
   const X = p => cx + p*sc, Y = p => cy - p*sc;
 
-  // local interaction edges
+  // interpolated screen positions
+  const px = new Array(N), py = new Array(N);
+  for(let i=0;i<N;i++){
+    const c = s.tokens[i];
+    const x = canInterp ? lerp(PREV.tokens[i].x, c.x, al) : c.x;
+    const y = canInterp ? lerp(PREV.tokens[i].y, c.y, al) : c.y;
+    px[i] = X(x); py[i] = Y(y);
+  }
+
+  ctx.clearRect(0,0,W,H);
   ctx.strokeStyle = 'rgba(56,189,248,0.10)'; ctx.lineWidth = 1;
   ctx.beginPath();
-  for(const [i,j] of s.edges){
-    const a=s.tokens[i], b=s.tokens[j];
-    ctx.moveTo(X(a.x),Y(a.y)); ctx.lineTo(X(b.x),Y(b.y));
-  }
+  for(const [i,j] of s.edges){ ctx.moveTo(px[i],py[i]); ctx.lineTo(px[j],py[j]); }
   ctx.stroke();
 
-  // grounded-contour blobs
-  for(let idx=0; idx<s.tokens.length; idx++){
-    const t = s.tokens[idx], c = t.c, K = c.length/2;
-    const px = X(t.x), py = Y(t.y);
+  for(let idx=0; idx<N; idx++){
+    const c = s.tokens[idx].c, K = c.length/2;
     const hue = (idx*47)%360;
     ctx.beginPath();
     const STEP = 24;
@@ -73,7 +85,7 @@ function draw(s){
       let r = 9;
       for(let k=1;k<=K;k++){ r += 5*(c[2*(k-1)]*Math.cos(k*th) + c[2*(k-1)+1]*Math.sin(k*th)); }
       r = Math.max(3, Math.min(26, r));
-      const x = px + r*Math.cos(th), y = py + r*Math.sin(th);
+      const x = px[idx] + r*Math.cos(th), y = py[idx] + r*Math.sin(th);
       if(m===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     }
     ctx.closePath();
@@ -83,11 +95,20 @@ function draw(s){
   }
 }
 
-async function tick(){
-  try { const r = await fetch(BASE + '/state'); draw(await r.json()); } catch(e){}
-  setTimeout(tick, 60);
+async function poll(){
+  try {
+    const r = await fetch(BASE + '/state');
+    const d = await r.json();
+    PREV = CUR; CUR = d; CUR_T = performance.now();
+  } catch(e){}
+  setTimeout(poll, POLL_MS);
 }
-tick();
+function render(){
+  const al = CUR ? Math.min(1, (performance.now() - CUR_T)/INTERP_MS) : 0;
+  draw(al);
+  requestAnimationFrame(render);
+}
+poll(); render();
 </script>
 </body>
 </html>

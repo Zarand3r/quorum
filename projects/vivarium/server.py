@@ -19,10 +19,13 @@ import json
 import sys
 import threading
 import time
+from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from aliveness import evaluate
+import numpy as np
+
+from aliveness import score
 from config import VivariumConfig, load_config
 from engine import Engine
 
@@ -44,6 +47,7 @@ class Sim:
         self.paused = False
         self._stop = False
         self._alive = 0.0
+        self._buf: deque = deque(maxlen=40)  # rolling positions for cheap aliveness (no fork)
         self._snap = self._build_snapshot()
         threading.Thread(target=self._run, daemon=True).start()
 
@@ -55,16 +59,19 @@ class Sim:
 
     def _run(self) -> None:
         dt = 1.0 / self.hz
+        n = 0
         while not self._stop:
             if not self.paused:
                 with self.lock:
                     self.engine.step()
-                    t = self.engine.t
+                    self._buf.append(self.engine.X[:, :2].copy())  # positions only (cheap)
                     snap = self._build_snapshot()
                 self._snap = snap
-                if t % 60 == 0:  # aliveness is expensive (forks + rolls) — sample periodically
-                    with self.lock:
-                        self._alive = round(float(evaluate(self.engine, 40)["aliveness"]), 3)
+                n += 1
+                # cheap aliveness on the rolling window — NO fork, NO extra stepping (fixes lag).
+                if n % 20 == 0 and len(self._buf) >= 10:
+                    states = np.stack(self._buf)
+                    self._alive = round(float(score(states, self.cfg)["aliveness"]), 3)
             time.sleep(dt)
 
     def state(self) -> dict:
@@ -120,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=8788)
     p.add_argument("--seed", type=int, default=None)
-    p.add_argument("--hz", type=float, default=30.0)
+    p.add_argument("--hz", type=float, default=18.0)
     p.add_argument("--config", default=str(_CONFIG))
     p.add_argument("--pure", action="store_true",
                    help="serve the PURE-TRANSFORMER engine (transformer moves + morphs everything)")
@@ -136,8 +143,11 @@ def main(argv: list[str] | None = None) -> int:
         from pure import PureEngine
         # the winning pure-transformer config: non-reciprocal attention + skew + free positions.
         cfg = replace(cfg, morph_spin=0.3, dist_lambda=0.5)
-        make_engine = lambda s: PureEngine(cfg, s, nonrecip=1.0, ln_pos=False, scale=0.5)  # noqa: E731
-        label = "PURE TRANSFORMER (non-reciprocal attention + skew, free positions)"
+        # flat-pos: skew drives only the shape, so positions move by interaction (no global spin);
+        # gentler scale for smoother, less-frantic motion.
+        make_engine = lambda s: PureEngine(  # noqa: E731
+            cfg, s, nonrecip=1.0, ln_pos=False, scale=0.3, spin_pos=False)
+        label = "PURE TRANSFORMER (non-reciprocal attention, shape-only skew, free positions)"
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     server.sim = Sim(cfg, seed, args.hz, make_engine)
     print(f"serving: {label}")
