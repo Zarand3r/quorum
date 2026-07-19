@@ -51,7 +51,7 @@ class Sim:
         self._snap = self._build_snapshot()
         threading.Thread(target=self._run, daemon=True).start()
 
-    _KNOBS = ("noise", "spin", "nonrecip", "scale")
+    _KNOBS = ("noise", "spin", "nonrecip", "scale", "rd")
 
     def _build_snapshot(self) -> dict:
         snap = self.engine.snapshot()
@@ -164,8 +164,8 @@ def main(argv: list[str] | None = None) -> int:
         # flat-pos: skew drives only the shape, so positions move by interaction (no global spin);
         # gentler scale for smoother, less-frantic motion.
         make_engine = lambda s: PureEngine(  # noqa: E731
-            cfg, s, nonrecip=1.0, ln_pos=False, scale=0.3, spin_pos=False)
-        label = "PURE TRANSFORMER (non-reciprocal attention, shape-only skew, free positions)"
+            cfg, s, nonrecip=1.0, ln_pos=False, scale=0.3, spin_pos=False, rd=0.5)
+        label = "PURE TRANSFORMER (non-reciprocal attention + reaction-diffusion, free positions)"
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     server.sim = Sim(cfg, seed, args.hz, make_engine)
     print(f"serving: {label}")
