@@ -14,6 +14,10 @@
            padding: 4px 10px; cursor: pointer; font: inherit; }
   button:hover { background: #334155; }
   .note { color: #64748b; margin-top: 6px; max-width: 720px; text-align: center; }
+  #knobs { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+  #knobs label { display: flex; flex-direction: column; align-items: center; gap: 3px; color: #94a3b8; }
+  #knobs input[type=range] { width: 130px; accent-color: #34d399; }
+  #knobs b { color: #e2e8f0; }
 </style>
 </head>
 <body>
@@ -27,6 +31,12 @@
     <button onclick="post('/restart')">restart (new seed)</button>
   </div>
   <canvas id="c" width="720" height="720"></canvas>
+  <div id="knobs">
+    <label>noise <input type="range" id="k_noise" min="0" max="1.5" step="0.02"><span>σ <b id="v_noise">–</b></span></label>
+    <label>skew-rotation <input type="range" id="k_spin" min="0" max="1" step="0.02"><b id="v_spin">–</b></label>
+    <label>non-reciprocal (circulation) <input type="range" id="k_nonrecip" min="0" max="3" step="0.05"><b id="v_nonrecip">–</b></label>
+    <label>speed <input type="range" id="k_scale" min="0.05" max="1" step="0.02"><b id="v_scale">–</b></label>
+  </div>
   <div class="note">Motion comes from neighbour forces (attract / repel / non-reciprocal chase);
   shapes morph via the transformer block. Interaction is load-bearing by construction — with no
   neighbours an agent cannot move. Aliveness is <i>measured, never optimized</i>.</div>
@@ -39,6 +49,34 @@ const W = cv.width, H = cv.height;
 const BASE = location.pathname.replace(/\/(index\.html)?$/, '');
 
 function post(path){ fetch(BASE + path, {method:'POST'}); }
+
+// live knobs
+const KNOBS = ['noise','spin','nonrecip','scale'];
+let knobsInit = false, setTimer = null;
+function initKnobs(k){
+  if(knobsInit || !k) return;
+  for(const name of KNOBS){
+    if(k[name] === undefined) continue;
+    const el = document.getElementById('k_'+name);
+    if(el){ el.value = k[name]; document.getElementById('v_'+name).textContent = (+k[name]).toFixed(2); }
+  }
+  knobsInit = true;
+}
+function pushKnobs(){
+  const q = KNOBS.map(n => {
+    const el = document.getElementById('k_'+n);
+    document.getElementById('v_'+n).textContent = (+el.value).toFixed(2);
+    return n+'='+el.value;
+  }).join('&');
+  fetch(BASE + '/set?' + q, {method:'POST'});
+}
+for(const name of KNOBS){
+  const el = document.getElementById('k_'+name);
+  el.addEventListener('input', () => {
+    document.getElementById('v_'+name).textContent = (+el.value).toFixed(2);
+    clearTimeout(setTimer); setTimer = setTimeout(pushKnobs, 80);
+  });
+}
 
 // double-buffer snapshots and interpolate between them, so motion is smooth even when
 // frames arrive irregularly over the network.
@@ -53,6 +91,7 @@ function draw(al){
   const ae = document.getElementById('alive');
   ae.textContent = (s.aliveness ?? 0).toFixed(3);
   ae.style.color = s.aliveness > 0.02 ? '#34d399' : '#f59e0b';
+  initKnobs(s.knobs);
 
   const N = s.tokens.length;
   const canInterp = PREV && PREV.tokens.length === N;

@@ -51,11 +51,24 @@ class Sim:
         self._snap = self._build_snapshot()
         threading.Thread(target=self._run, daemon=True).start()
 
+    _KNOBS = ("noise", "spin", "nonrecip", "scale")
+
     def _build_snapshot(self) -> dict:
         snap = self.engine.snapshot()
         snap["aliveness"] = self._alive
         snap["pos_bound"] = self.cfg.pos_bound
+        snap["knobs"] = {k: float(getattr(self.engine, k)) for k in self._KNOBS
+                         if hasattr(self.engine, k)}
         return snap
+
+    def set_knobs(self, updates: dict) -> None:
+        with self.lock:
+            for k in self._KNOBS:
+                if k in updates and hasattr(self.engine, k):
+                    try:
+                        setattr(self.engine, k, max(0.0, float(updates[k])))
+                    except (TypeError, ValueError):
+                        pass
 
     def _run(self) -> None:
         dt = 1.0 / self.hz
@@ -110,12 +123,17 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         sim = self.server.sim
-        if self.path.endswith("/pause"):
+        path = self.path.split("?", 1)[0]
+        if path.endswith("/pause"):
             sim.set_paused(True)
-        elif self.path.endswith("/resume"):
+        elif path.endswith("/resume"):
             sim.set_paused(False)
-        elif self.path.endswith("/restart"):
+        elif path.endswith("/restart"):
             sim.restart()
+        elif path.endswith("/set"):
+            from urllib.parse import parse_qs, urlparse
+            q = parse_qs(urlparse(self.path).query)
+            sim.set_knobs({k: v[0] for k, v in q.items()})
         else:
             self._send(404, b"not found", "text/plain")
             return

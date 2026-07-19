@@ -100,7 +100,7 @@ class PureEngine:
     n_neighbors. `nonrecip` injects non-reciprocal attention; `ln_pos` LayerNorms position too."""
 
     def __init__(self, cfg, seed, ablate="none", nonrecip=0.0, ln_pos=True, scale=1.0,
-                 spin_pos=True):
+                 spin_pos=True, noise=0.0):
         self.cfg = cfg
         self.seed = seed
         self.ablate = ablate
@@ -109,6 +109,8 @@ class PureEngine:
         self.scale = scale  # residual gain on (message + skew) — tames over-energetic seeds
         self.spin_pos = spin_pos  # if False, the skew drives only the shape (position moves by
         #                           interaction only) → less global rotation, more complex motion
+        self.noise = noise  # seeded per-step Gaussian noise (Langevin) → wandering / state-switching
+        self.spin = cfg.morph_spin  # skew-rotation gain (mutable live knob)
         self.w = make(cfg, seed)
         rng = base_rng(seed)
         X = rng.standard_normal((cfg.N, cfg.d)) * 0.5
@@ -128,16 +130,20 @@ class PureEngine:
         A = self._ablate(_attention(self.X, self.w, self.cfg, self.nonrecip))
         msg = A @ (self.X @ self.w.W_v)
         spin = 0.0
-        if self.cfg.morph_spin > 0:
+        if self.spin > 0:
             if self.spin_pos:
-                spin = self.cfg.morph_spin * (self.X @ self.w.J)  # rotates everything (global spin)
+                spin = self.spin * (self.X @ self.w.J)  # rotates everything (global spin)
             else:
                 # skew only the non-position channels → shape morphs, position doesn't globally rotate.
                 spin = np.zeros_like(self.X)
-                spin[:, POS_DIM:] = self.cfg.morph_spin * (
+                spin[:, POS_DIM:] = self.spin * (
                     self.X[:, POS_DIM:] @ self.w.J[POS_DIM:, POS_DIM:]
                 )
         X1 = self.X + self.scale * (msg + spin)
+        if self.noise > 0.0:
+            # seeded (reproducible) Gaussian kick — a Langevin drive: breaks symmetry, lets the
+            # colony escape metastable states and wander/switch instead of settling into one swirl.
+            X1 = X1 + self.noise * rng_for(self.seed, self.t).standard_normal(self.X.shape)
         X1 = self._norm(X1)
         X2 = self._norm(X1 + np.tanh(X1 @ self.w.W1 + self.w.b1) @ self.w.W2 + self.w.b2)
         self.X = X2
@@ -207,10 +213,10 @@ def search():
         print(f"  alive={al:.3f} | identity={idn:.3f} | P6={al-idn:+.3f} | deform={df:.3f} | {knobs}")
 
 
-def probe(nonrecip, ln_pos, spin, lam, seed, ablate="none", scale=0.5, spin_pos=True):
+def probe(nonrecip, ln_pos, spin, lam, seed, ablate="none", scale=0.5, spin_pos=True, noise=0.0):
     cfg = _cfg(dist_lambda=lam, morph_spin=spin)
     e = PureEngine(cfg, seed, ablate=ablate, nonrecip=nonrecip, ln_pos=ln_pos, scale=scale,
-                   spin_pos=spin_pos)
+                   spin_pos=spin_pos, noise=noise)
     print(" tick  alive  spread  motion  cohere  struct  deform")
     for k in range(0, 3001, 500):
         r = evaluate(e, 40)
@@ -233,11 +239,12 @@ def main(argv=None):
     p.add_argument("--scale", type=float, default=0.5)
     p.add_argument("--flat-pos", dest="spin_pos", action="store_false",
                    help="skew only the shape (position moves by interaction only → more complex)")
+    p.add_argument("--noise", type=float, default=0.0, help="seeded Langevin noise sigma")
     a = p.parse_args(argv)
     if a.search:
         search()
     else:
-        probe(a.nonrecip, a.ln_pos, a.spin, a.lam, a.seed, a.ablate, a.scale, a.spin_pos)
+        probe(a.nonrecip, a.ln_pos, a.spin, a.lam, a.seed, a.ablate, a.scale, a.spin_pos, a.noise)
     return 0
 
 
