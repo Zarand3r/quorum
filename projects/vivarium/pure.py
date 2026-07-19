@@ -135,6 +135,19 @@ class PureEngine:
         import copy
         return copy.deepcopy(self)
 
+    def snapshot(self):
+        from block import neighbor_indices
+        pos = self.X[:, :POS_DIM]
+        C = self.X @ self.w.W_c
+        tokens = [
+            {"x": float(pos[i, 0]), "y": float(pos[i, 1]), "c": C[i].tolist()}
+            for i in range(self.cfg.N)
+        ]
+        idx = neighbor_indices(pos, self.cfg.n_neighbors)
+        edges = [[int(i), int(j)] for i in range(self.cfg.N) for j in idx[i] if int(j) != i]
+        return {"status": "running", "tick": self.t, "n": self.cfg.N,
+                "tokens": tokens, "edges": edges}
+
     def _norm(self, X):
         if self.ln_pos:
             return _ln(X)

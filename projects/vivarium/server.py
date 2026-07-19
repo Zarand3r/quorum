@@ -32,14 +32,15 @@ _CONFIG = _HERE / "configs" / "vivarium.yaml"
 
 
 class Sim:
-    """Steps an Engine in a background thread; publishes the latest snapshot."""
+    """Steps an engine in a background thread; publishes the latest snapshot."""
 
-    def __init__(self, cfg: VivariumConfig, seed: int, hz: float) -> None:
+    def __init__(self, cfg: VivariumConfig, seed: int, hz: float, make_engine=None) -> None:
         self.cfg = cfg
         self.seed = seed
         self.hz = hz
+        self._make = make_engine or (lambda s: Engine(cfg, s))
         self.lock = threading.Lock()
-        self.engine = Engine(cfg, seed)
+        self.engine = self._make(seed)
         self.paused = False
         self._stop = False
         self._alive = 0.0
@@ -75,7 +76,7 @@ class Sim:
     def restart(self, seed: int | None = None) -> None:
         with self.lock:
             self.seed = self.seed + 1 if seed is None else seed
-            self.engine = Engine(self.cfg, self.seed)
+            self.engine = self._make(self.seed)
             self._alive = 0.0
             self._snap = self._build_snapshot()
 
@@ -121,12 +122,25 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--seed", type=int, default=None)
     p.add_argument("--hz", type=float, default=30.0)
     p.add_argument("--config", default=str(_CONFIG))
+    p.add_argument("--pure", action="store_true",
+                   help="serve the PURE-TRANSFORMER engine (transformer moves + morphs everything)")
     args = p.parse_args(argv)
 
     cfg = load_config(args.config)
     seed = cfg.seed if args.seed is None else args.seed
+    make_engine = None
+    label = "force-based dock-and-morph"
+    if args.pure:
+        from dataclasses import replace
+
+        from pure import PureEngine
+        # the winning pure-transformer config: non-reciprocal attention + skew + free positions.
+        cfg = replace(cfg, morph_spin=0.3, dist_lambda=0.5)
+        make_engine = lambda s: PureEngine(cfg, s, nonrecip=1.0, ln_pos=False, scale=0.5)  # noqa: E731
+        label = "PURE TRANSFORMER (non-reciprocal attention + skew, free positions)"
     server = ThreadingHTTPServer((args.host, args.port), Handler)
-    server.sim = Sim(cfg, seed, args.hz)
+    server.sim = Sim(cfg, seed, args.hz, make_engine)
+    print(f"serving: {label}")
     print(
         f"vivarium viewer on http://{args.host}:{server.server_address[1]}\n"
         f"expose on your tailnet:  tailscale serve --bg {server.server_address[1]}"
