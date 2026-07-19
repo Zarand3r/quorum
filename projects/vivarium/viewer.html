@@ -35,7 +35,10 @@
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 const W = cv.width, H = cv.height;
 
-function post(path){ fetch(path, {method:'POST'}); }
+// works whether served at / or under a path prefix (e.g. /vivarium via tailscale funnel).
+const BASE = location.pathname.replace(/\/(index\.html)?$/, '');
+
+function post(path){ fetch(BASE + path, {method:'POST'}); }
 
 function draw(s){
   document.getElementById('tick').textContent = s.tick;
@@ -81,7 +84,7 @@ function draw(s){
 }
 
 async function tick(){
-  try { const r = await fetch('/state'); draw(await r.json()); } catch(e){}
+  try { const r = await fetch(BASE + '/state'); draw(await r.json()); } catch(e){}
   setTimeout(tick, 60);
 }
 tick();

@@ -94,20 +94,19 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self) -> None:
-        if self.path in ("/", "/index.html"):
-            self._send(200, _VIEWER.read_bytes(), "text/html; charset=utf-8")
-        elif self.path == "/state":
+        # suffix-match so we work whether mounted at / or under a path prefix (e.g. /vivarium/).
+        if self.path.endswith("/state"):
             self._send(200, json.dumps(self.server.sim.state()).encode(), "application/json")
         else:
-            self._send(404, b"not found", "text/plain")
+            self._send(200, _VIEWER.read_bytes(), "text/html; charset=utf-8")
 
     def do_POST(self) -> None:
         sim = self.server.sim
-        if self.path == "/pause":
+        if self.path.endswith("/pause"):
             sim.set_paused(True)
-        elif self.path == "/resume":
+        elif self.path.endswith("/resume"):
             sim.set_paused(False)
-        elif self.path == "/restart":
+        elif self.path.endswith("/restart"):
             sim.restart()
         else:
             self._send(404, b"not found", "text/plain")
