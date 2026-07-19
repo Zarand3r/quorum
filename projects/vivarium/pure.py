@@ -227,11 +227,13 @@ def search():
 
 
 def probe(nonrecip, ln_pos, spin, lam, seed, ablate="none", scale=0.5, spin_pos=True, noise=0.0,
-          rd=0.0):
+          rd=0.0, uniform_d=False):
     cfg = _cfg(dist_lambda=lam, morph_spin=spin)
     e = PureEngine(cfg, seed, ablate=ablate, nonrecip=nonrecip, ln_pos=ln_pos, scale=scale,
                    spin_pos=spin_pos, noise=noise)
     e.rd = rd
+    if uniform_d:
+        e.D = np.ones_like(e.D)  # control: kill the differential (Turing) rates → plain diffusion
     print(" tick  alive  spread  motion  cohere  struct  deform")
     for k in range(0, 3001, 500):
         r = evaluate(e, 40)
@@ -256,12 +258,14 @@ def main(argv=None):
                    help="skew only the shape (position moves by interaction only → more complex)")
     p.add_argument("--noise", type=float, default=0.0, help="seeded Langevin noise sigma")
     p.add_argument("--rd", type=float, default=0.0, help="reaction-diffusion strength")
+    p.add_argument("--uniform-d", dest="uniform_d", action="store_true",
+                   help="control: uniform diffusion rates (kills the Turing differential)")
     a = p.parse_args(argv)
     if a.search:
         search()
     else:
         probe(a.nonrecip, a.ln_pos, a.spin, a.lam, a.seed, a.ablate, a.scale, a.spin_pos, a.noise,
-              a.rd)
+              a.rd, a.uniform_d)
     return 0
 
 
