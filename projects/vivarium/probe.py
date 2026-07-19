@@ -25,6 +25,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--lam", type=float, default=None, help="dist_lambda (attention locality)")
     p.add_argument("--ga", type=float, default=None, help="force_attract γ_a")
     p.add_argument("--gr", type=float, default=None, help="force_repel γ_r")
+    p.add_argument("--gc", type=float, default=None, help="force_chase γ_c (non-reciprocal)")
+    p.add_argument("--spin", type=float, default=None, help="morph_spin")
+    p.add_argument("--mom", type=float, default=None, help="momentum (inertia)")
     p.add_argument("--k", type=int, default=None, help="n_neighbors")
     p.add_argument("--N", type=int, default=None)
     p.add_argument("--ablate", choices=["none", "identity", "shuffle"], default="none")
@@ -37,6 +40,12 @@ def main(argv: list[str] | None = None) -> int:
         over["force_attract"] = a.ga
     if a.gr is not None:
         over["force_repel"] = a.gr
+    if a.gc is not None:
+        over["force_chase"] = a.gc
+    if a.spin is not None:
+        over["morph_spin"] = a.spin
+    if a.mom is not None:
+        over["momentum"] = a.mom
     if a.k is not None:
         over["n_neighbors"] = a.k
     if a.N is not None:

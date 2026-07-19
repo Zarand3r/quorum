@@ -140,7 +140,15 @@ def position_force(pos: np.ndarray, A: np.ndarray, cfg: VivariumConfig) -> np.nd
     np.fill_diagonal(support, 0.0)                       # never repel from self
     weight = support / d2                                # (N, N)
     repel = np.einsum("ij,ijc->ic", weight, diff)
-    return cfg.force_attract * attract + cfg.force_repel * repel
+    F = cfg.force_attract * attract + cfg.force_repel * repel
+    # chase: non-reciprocal transport from the antisymmetric part of A (E–I / Dale's-principle
+    # asymmetry) — i is pulled toward j iff A_ij > A_ji. Vanishes under identity (A−Aᵀ=0), so
+    # P6 still holds. This is the mechanism that can break crystallisation (chase ≠ settle).
+    if cfg.force_chase > 0.0:
+        B = A - A.T                                      # antisymmetric (N, N)
+        chase = np.einsum("ij,ijc->ic", B, -diff)        # Σ_j B_ij (p_j − p_i)
+        F = F + cfg.force_chase * chase
+    return F
 
 
 # --- morph --------------------------------------------------------------------
@@ -154,6 +162,30 @@ def _mlp(Z: np.ndarray, w: Weights) -> np.ndarray:
     return np.tanh(Z @ w.W1 + w.b1) @ w.W2 + w.b2
 
 
+def step_fields(
+    X: np.ndarray,
+    w: Weights,
+    cfg: VivariumConfig,
+    ablate: str = "none",
+    seed: int = 0,
+    tick: int = 0,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """One dock-and-morph evaluation. Returns (force on position, morphed z, A). Pure —
+    the caller integrates position (with momentum, in the engine)."""
+    A = ablate_attention(attention_matrix(X, w, cfg), ablate, seed, tick)
+    z = morph_state(X)
+
+    force = position_force(positions(X), A, cfg)
+
+    # morph: z updated by the block (message + MLP + LayerNorm), with a skew rotation so
+    # the shape never settles → complementarity C keeps shifting → forces keep driving motion.
+    spin = cfg.morph_spin * (z @ w.J_spin) if cfg.morph_spin > 0.0 else 0.0
+    msg = A @ (z @ w.W_v)
+    z1 = _layernorm(z + msg + spin)
+    z2 = _layernorm(z1 + _mlp(z1, w))
+    return force, z2, A
+
+
 def forward_verbose(
     X: np.ndarray,
     w: Weights,
@@ -162,20 +194,9 @@ def forward_verbose(
     seed: int = 0,
     tick: int = 0,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """One dock-and-morph step. Returns (X_next, A). Pure."""
-    A = ablate_attention(attention_matrix(X, w, cfg), ablate, seed, tick)
-    p, z = positions(X), morph_state(X)
-
-    # motion: position by neighbour forces, clipped to the dish (P7).
-    p_next = np.clip(p + position_force(p, A, cfg), -cfg.pos_bound, cfg.pos_bound)
-
-    # morph: z updated by the block (message + MLP + LayerNorm), with a skew rotation so
-    # the shape never settles → complementarity C keeps shifting → forces keep driving motion.
-    spin = cfg.morph_spin * (z @ w.J_spin) if cfg.morph_spin > 0.0 else 0.0
-    msg = A @ (z @ w.W_v)
-    z1 = _layernorm(z + msg + spin)
-    z2 = _layernorm(z1 + _mlp(z1, w))
-
+    """One momentum-free dock-and-morph step (position += force). Returns (X_next, A). Pure."""
+    force, z2, A = step_fields(X, w, cfg, ablate, seed, tick)
+    p_next = np.clip(positions(X) + force, -cfg.pos_bound, cfg.pos_bound)
     return np.concatenate([p_next, z2], axis=1), A
 
 
