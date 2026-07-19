@@ -54,6 +54,18 @@ py_binary(
     deps = [":vivarium"],
 )
 
+py_binary(
+    name = "serve",
+    srcs = ["server.py"],
+    main = "server.py",
+    data = [
+        ":configs",
+        "viewer.html",
+    ],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
 py_test(
     name = "test_suite",
     srcs = glob(["tests/**/*.py"]),
