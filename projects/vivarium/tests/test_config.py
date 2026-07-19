@@ -42,7 +42,7 @@ def test_rejects_neighbourhood_ge_population() -> None:
 
 def test_rejects_negative_knobs() -> None:
     with pytest.raises(ValueError):
-        load_config_from_dict({"drift_rate": -0.1})
+        load_config_from_dict({"force_attract": -0.1})
 
 
 def test_roundtrip(tmp_path: Path) -> None:

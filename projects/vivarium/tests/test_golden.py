@@ -16,9 +16,9 @@ from config import DEFAULTS, VivariumConfig
 from engine import Engine
 
 _GOLDEN_T = 100
-# Re-stamped at the M2 objective pivot (signalling: relative-neighbour target).
+# Re-stamped: dock-and-morph substrate with morph-spin (motion by neighbour forces).
 # Re-stamp only on intentional dynamics changes.
-_GOLDEN_HASH = "06a7902ee0a9aa14"
+_GOLDEN_HASH = "3ea55eadd89c0c7a"
 
 
 def test_golden_path() -> None:

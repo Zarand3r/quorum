@@ -120,21 +120,19 @@ def test_evaluate_is_read_only() -> None:
     for _ in range(5):
         e.step()
     X0, t0 = e.X.copy(), e.t
-    Wv0, Wp0 = e.weights.W_v.copy(), e.weights.W_p.copy()
+    Wv0 = e.weights.W_v.copy()
 
     report = evaluate(e, window=20)
 
     assert np.array_equal(e.X, X0) and e.t == t0
-    assert np.array_equal(e.weights.W_v, Wv0) and np.array_equal(e.weights.W_p, Wp0)
-    assert set(report) >= {"aliveness", "gate_spread", "coherence", "structure", "lyapunov"}
+    assert np.array_equal(e.weights.W_v, Wv0)
+    assert set(report) >= {"aliveness", "gate_spread", "coherence", "structure", "deformation", "lyapunov"}
 
 
 def test_measure_not_rewarded_static() -> None:
-    # P3: no update-path module may reference aliveness.
+    # P3: no dynamics module may reference aliveness (measured, never fed back).
     import block
     import engine
-    import plasticity
-    import predict
 
-    for mod in (plasticity, predict, block, engine):
+    for mod in (block, engine):
         assert "aliveness" not in inspect.getsource(mod), f"{mod.__name__} touches aliveness"

@@ -10,11 +10,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from block import attention_matrix, make_weights
+from block import attention_matrix, contour_coeffs, make_weights, morph_state
 from config import DEFAULTS, VivariumConfig
 from engine import Engine
 from render import snapshot, token_contours
-from substrate import contour_coeffs, init_state
+from substrate import init_state
 
 
 def _cfg(**over) -> VivariumConfig:
@@ -46,8 +46,8 @@ def test_render_uses_the_blocks_own_Wc() -> None:
     cfg = _cfg()
     X = init_state(cfg, seed=0)
     w = make_weights(cfg, seed=0)
-    assert np.array_equal(token_contours(X, w), contour_coeffs(X, w.W_c)), (
-        "the renderer must read X·W_c with the block's own W_c (identity, not correlation)"
+    assert np.array_equal(token_contours(X, w), contour_coeffs(morph_state(X), w.W_c)), (
+        "the renderer must read z·W_c with the block's own W_c (identity, not correlation)"
     )
 
 

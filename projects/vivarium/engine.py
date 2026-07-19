@@ -1,8 +1,9 @@
-"""Engine: the one clock (IMPLEMENTATION_PLAN.md Step 2, M1).
+"""Engine: the fast clock (dock-and-morph dynamics).
 
-A single `step()` advances **both** the state (block forward) **and** the weights
-(local predictive plasticity) — the simulation *is* the learning. There is no
-separate `train()`/`fit()` phase (P2). `snapshot()` is strictly read-only (P5).
+A `step()` advances the state by one fixed-rule dock-and-morph application — motion
+by neighbour forces, morph by the block. No per-tick learning: the rule is fixed on
+this clock (a slow/macro clock that adapts the rule is future work). `snapshot()` is
+read-only (P5); `fork()` gives the measurement harness an independent copy (P5/P3).
 """
 
 from __future__ import annotations
@@ -13,7 +14,6 @@ import numpy as np
 
 from block import Weights, forward_verbose, make_weights
 from config import VivariumConfig
-from plasticity import learn
 from render import snapshot as _snapshot
 from substrate import init_state
 
@@ -26,17 +26,9 @@ class Engine:
         self.weights: Weights = make_weights(cfg, seed)
         self.X: np.ndarray = init_state(cfg, seed)
         self.t: int = 0
-        self.last_loss: float = float("nan")  # measured surprise (diagnostic, read-only)
 
     def step(self) -> None:
-        # one clock: forward, then a local weight update from the same tick's error.
-        X_next, A, msg = forward_verbose(
-            self.X, self.weights, self.cfg, self.ablate, self.seed, self.t
-        )
-        self.weights, self.last_loss = learn(
-            self.weights, self.X, A, msg, X_next, self.t, self.cfg
-        )
-        self.X = X_next
+        self.X, _ = forward_verbose(self.X, self.weights, self.cfg, self.ablate, self.seed, self.t)
         self.t += 1
 
     def snapshot(self) -> dict:
@@ -44,5 +36,5 @@ class Engine:
 
     def fork(self) -> "Engine":
         """A deep, independent copy — used by the read-only measurement harness to
-        probe the run without perturbing it (P5/P3). Stepping a fork never touches self."""
+        probe the run without perturbing it (P5/P3)."""
         return copy.deepcopy(self)

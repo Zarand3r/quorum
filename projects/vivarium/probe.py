@@ -21,32 +21,26 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--ticks", type=int, default=3000)
     p.add_argument("--every", type=int, default=300)
     p.add_argument("--window", type=int, default=40)
-    # config overrides (M2 exploration knobs)
-    p.add_argument("--drift", type=float, default=None)
-    p.add_argument("--lam", type=float, default=None)
-    p.add_argument("--lr", type=float, default=None)
-    p.add_argument("--k", type=int, default=None)
+    # config overrides (dock-and-morph knobs)
+    p.add_argument("--lam", type=float, default=None, help="dist_lambda (attention locality)")
+    p.add_argument("--ga", type=float, default=None, help="force_attract γ_a")
+    p.add_argument("--gr", type=float, default=None, help="force_repel γ_r")
+    p.add_argument("--k", type=int, default=None, help="n_neighbors")
     p.add_argument("--N", type=int, default=None)
-    p.add_argument("--ac", type=float, default=None, help="anti-collapse strength β")
-    p.add_argument("--skew", type=float, default=None, help="intrinsic rotational drive gain")
     p.add_argument("--ablate", choices=["none", "identity", "shuffle"], default="none")
     a = p.parse_args(argv)
 
     over = {}
-    if a.drift is not None:
-        over["drift_rate"] = a.drift
     if a.lam is not None:
         over["dist_lambda"] = a.lam
-    if a.lr is not None:
-        over["lr"] = a.lr
+    if a.ga is not None:
+        over["force_attract"] = a.ga
+    if a.gr is not None:
+        over["force_repel"] = a.gr
     if a.k is not None:
         over["n_neighbors"] = a.k
     if a.N is not None:
         over["N"] = a.N
-    if a.ac is not None:
-        over["anticollapse"] = a.ac
-    if a.skew is not None:
-        over["skew_gain"] = a.skew
     cfg = VivariumConfig(**{**DEFAULTS, **over})
     e = Engine(cfg, a.seed, ablate=a.ablate)
     print(" tick  alive  spread  motion  cohere  struct  deform    lyap")
