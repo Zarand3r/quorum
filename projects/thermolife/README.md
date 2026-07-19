@@ -1,10 +1,10 @@
 # thermolife
 
-> **Embedding folding as ligand–receptor docking.** Status: **S0 implemented** — a
-> toy transformer whose token embeddings fold through iterated attention, each
-> rendered as a grounded 2D contour blob that docks with complementary blobs, on a
-> Tailscale-hosted live viewer. Training + the thermodynamic objective are M2–M3.
-> See [`PLAN.md`](PLAN.md).
+> **A transformer block as a programmable interaction engine.** There are now
+> **three simulations** on one substrate — **fold** (docking, trained), **economy**
+> (survival, evolved), and **morph** (reaction–diffusion, untrained). Each is a
+> separate engine sharing the same grounded-contour readout, local attention, and
+> web viewer. **Full map: [`docs/SIMULATIONS.md`](docs/SIMULATIONS.md).**
 
 Hinton's observation is that a token's embedding **morphs** as it passes through the
 attention blocks of a transformer — a trajectory, like a protein folding. thermolife

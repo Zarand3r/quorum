@@ -1,0 +1,29 @@
+# Reaction–diffusion morphogenesis (fold/morph.py). Fold/contour knobs are read
+# by load_fold_config; the RD knobs (dt, diffusion, …) by load_morph.
+d: 6                 # embedding dim — a little room for pattern to live in
+k_harmonics: 4       # contour harmonics (blob detail)
+use_mlp: true        # the reaction term
+mlp_width: 24
+seed: 0
+rho0: 1.0
+amp: 0.5             # contour harmonic amplitude
+r_min: 0.18
+render_scale: 0.16   # blob size in the position plane (tuned for a growing field)
+init_scale: 1.0
+contour_points: 56
+edge_threshold: 0.16 # min attention to draw a diffusion bond
+
+# reaction–diffusion dynamics — TUNED by train/morph_search.py against the
+# aliveness objective (train/aliveness.py). This config scores ~0.16 (rank 1.8,
+# spread 1.45, Lyapunov +0.005 — sustained, structured, edge-of-chaos), vs ~0.003
+# for the hand-set values. Re-run the search to push it further.
+dt: 0.056            # small ⇒ shapes move/morph continuously (no discrete jumps)
+diffusion: 0.074     # D — attention (graph-Laplacian) strength (LOW: high D homogenizes)
+reaction: 0.41       # R — MLP kinetics strength
+omega: 0.73          # Ω — oscillatory (skew) core: the anti-collapse floor of motion
+lam: 3.5             # locality λ (0 = global softmax ⇒ homogenizes/collapses)
+split_every: 14      # ticks between cell divisions
+n_max: 48            # field grows 1 → 48
+jitter: 0.86         # daughter embedding noise at division
+converge_eps: 5.0e-4
+min_iters: 220       # grow + morph at least this long before it can hold

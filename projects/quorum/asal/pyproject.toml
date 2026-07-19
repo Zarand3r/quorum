@@ -1,0 +1,56 @@
+[project]
+# Automated Search for Artificial Life (ASAL) — SakanaAI reproduction, vendored
+# under Apache-2.0. See NOTICE for upstream attribution.
+#
+# This project reproduces the ASAL pipeline (foundation-model-as-judge over
+# rendered simulations, evolutionary search over per-simulation parameters).
+# The dependency set mirrors ASAL's upstream requirements.txt, pinned loosely
+# enough that uv can resolve a consistent JAX + Flax + evosax + transformers
+# stack on a modern Linux + CUDA 12 setup.
+
+name = "quorum-asal"
+version = "0.0.0"
+description = "Vendored reproduction of SakanaAI/asal within the quorum monorepo."
+requires-python = ">=3.12,<3.13"
+
+# Direct dependencies. Transitives resolve via uv lock.
+dependencies = [
+  # JAX + linear algebra
+  "jax==0.4.38",
+  "jaxlib==0.4.38",
+  # Neural-net + optim
+  "flax==0.10.2",
+  "optax==0.2.4",
+  "chex==0.1.88",
+  # Evolutionary search (Sep-CMA-ES)
+  "evosax==0.1.6",
+  # Foundation model (CLIP via HuggingFace transformers, JAX backend)
+  "transformers==4.47.1",
+  "safetensors>=0.4.5",
+  # Array + I/O utilities used by ASAL
+  "numpy>=2.0,<3.0",
+  "scipy>=1.14,<2.0",
+  "einops==0.8.0",
+  "pillow>=11.0",
+  "matplotlib>=3.10",
+  "tqdm>=4.67",
+  "dotmap>=1.3",
+  # Test runner is part of the base lock so ``bazel test`` works without a
+  # separate extras-installed lock.
+  "pytest>=8.0",
+]
+
+[project.optional-dependencies]
+# Optional: pull JAX CUDA 12 wheels for GPU execution. Not committed to the
+# base lock (a CPU-only lock is smaller and works on any host); regenerate
+# via ``uv lock --extra gpu`` when you want a GPU-enabled requirements_lock.txt.
+gpu = [
+  "jax[cuda12]==0.4.38",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["asal"]

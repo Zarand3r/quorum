@@ -14,7 +14,7 @@ exports_files(["requirements_lock.txt", "pytest.ini"])
 # Declarative config (PLAN.md §7) — fold.yaml.
 filegroup(
     name = "configs",
-    srcs = glob(["configs/*.yaml"]),
+    srcs = glob(["configs/*.yaml", "configs/*.npz"]),  # yaml knobs + trained/evolved weights
 )
 
 # Fold mechanism + operational code. train/ is a stub until M2 (torch training).
@@ -89,6 +89,33 @@ py_binary(
     name = "train_fold",
     srcs = ["train/train.py"],
     main = "train/train.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":thermolife"],
+)
+
+py_binary(
+    name = "train_es",
+    srcs = ["train/es_eco.py"],
+    main = "train/es_eco.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":thermolife"],
+)
+
+py_binary(
+    name = "aliveness",
+    srcs = ["train/aliveness.py"],
+    main = "train/aliveness.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":thermolife"],
+)
+
+py_binary(
+    name = "morph_search",
+    srcs = ["train/morph_search.py"],
+    main = "train/morph_search.py",
     data = [":configs"],
     imports = ["."],
     deps = [":thermolife"],

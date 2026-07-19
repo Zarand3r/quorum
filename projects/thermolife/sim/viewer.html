@@ -97,9 +97,13 @@ function draw(state) {
     document.getElementById("s-acc").textContent = Math.round(state.accuracy * 100) + "%";
   } else accWrap.style.display = "none";
 
-  // scene change → flash a toast so the reset is never silent/discontinuous
-  if (lastScene !== null && state.fold !== lastScene) flashToast("scene " + state.fold + " ▸");
-  lastScene = state.fold;
+  // scene change → flash a toast so the reset is never silent/discontinuous.
+  // Guard on `fold` being defined: the IDLE/stopped snapshot omits it, and an
+  // undefined→N transition must not flash a bogus "scene undefined" toast.
+  if (state.fold != null) {
+    if (lastScene !== null && state.fold !== lastScene) flashToast("scene " + state.fold + " ▸");
+    lastScene = state.fold;
+  }
   // held (settled): show a banner + arm the New-scene button (reset is gated)
   const held = !!state.held;
   document.getElementById("hold").style.display = held ? "flex" : "none";
@@ -116,6 +120,7 @@ function draw(state) {
   // trained mode: green = bond to the true partner, red = a wrong bond.
   const partner = state.partner;
   for (const [i, j, w] of state.edges || []) {
+    if (!tokens[i] || !tokens[j]) continue;   // guard stale edges (match eco viewer)
     const [ax, ay] = T(tokens[i].pos), [bx, by] = T(tokens[j].pos);
     let rgb = "127,209,185";
     if (partner) rgb = (partner[i] === j) ? "110,231,140" : "235,110,110";
