@@ -64,6 +64,15 @@ py_binary(
 )
 
 py_binary(
+    name = "render_frame",
+    srcs = ["render_frame.py"],
+    main = "render_frame.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
+py_binary(
     name = "pack",
     srcs = ["pack.py"],
     main = "pack.py",

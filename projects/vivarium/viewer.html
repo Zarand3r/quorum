@@ -31,13 +31,7 @@
     <button onclick="post('/restart')">restart (new seed)</button>
   </div>
   <canvas id="c" width="720" height="720"></canvas>
-  <div id="knobs">
-    <label>noise <input type="range" id="k_noise" min="0" max="1.5" step="0.02"><span>σ <b id="v_noise">–</b></span></label>
-    <label>skew-rotation <input type="range" id="k_spin" min="0" max="1" step="0.02"><b id="v_spin">–</b></label>
-    <label>non-reciprocal (circulation) <input type="range" id="k_nonrecip" min="0" max="3" step="0.05"><b id="v_nonrecip">–</b></label>
-    <label>reaction-diffusion <input type="range" id="k_rd" min="0" max="2" step="0.05"><b id="v_rd">–</b></label>
-    <label>speed <input type="range" id="k_scale" min="0.05" max="1" step="0.02"><b id="v_scale">–</b></label>
-  </div>
+  <div id="knobs"></div>
   <div class="note">Motion comes from neighbour forces (attract / repel / non-reciprocal chase);
   shapes morph via the transformer block. Interaction is load-bearing by construction — with no
   neighbours an agent cannot move. Aliveness is <i>measured, never optimized</i>.</div>
@@ -51,32 +45,29 @@ const BASE = location.pathname.replace(/\/(index\.html)?$/, '');
 
 function post(path){ fetch(BASE + path, {method:'POST'}); }
 
-// live knobs
-const KNOBS = ['noise','spin','nonrecip','scale','rd'];
-let knobsInit = false, setTimer = null;
-function initKnobs(k){
-  if(knobsInit || !k) return;
-  for(const name of KNOBS){
-    if(k[name] === undefined) continue;
-    const el = document.getElementById('k_'+name);
-    if(el){ el.value = k[name]; document.getElementById('v_'+name).textContent = (+k[name]).toFixed(2); }
+// live knobs — built dynamically from whatever the engine exposes
+let knobsBuilt = false, setTimer = null;
+const KMAX = {noise:1.5, spin:1.5, nonrecip:3, scale:1, rd:2,
+              repel:0.6, attract:1, skew:2, morph:1.5, momentum:0.98};
+function buildKnobs(k){
+  if(knobsBuilt || !k) return;
+  const box = document.getElementById('knobs'); box.innerHTML = '';
+  for(const [name,val] of Object.entries(k)){
+    const max = KMAX[name] ?? Math.max(1, val*2);
+    const lab = document.createElement('label');
+    const cap = document.createElement('span'); cap.textContent = name;
+    const inp = document.createElement('input');
+    inp.type='range'; inp.min=0; inp.max=max; inp.step=max/100; inp.value=val; inp.dataset.knob=name;
+    const b = document.createElement('b'); b.textContent=(+val).toFixed(2);
+    inp.addEventListener('input', ()=>{ b.textContent=(+inp.value).toFixed(2);
+      clearTimeout(setTimer); setTimer=setTimeout(pushKnobs, 80); });
+    lab.append(cap, inp, b); box.appendChild(lab);
   }
-  knobsInit = true;
+  knobsBuilt = true;
 }
 function pushKnobs(){
-  const q = KNOBS.map(n => {
-    const el = document.getElementById('k_'+n);
-    document.getElementById('v_'+n).textContent = (+el.value).toFixed(2);
-    return n+'='+el.value;
-  }).join('&');
+  const q = [...document.querySelectorAll('#knobs input')].map(i=>i.dataset.knob+'='+i.value).join('&');
   fetch(BASE + '/set?' + q, {method:'POST'});
-}
-for(const name of KNOBS){
-  const el = document.getElementById('k_'+name);
-  el.addEventListener('input', () => {
-    document.getElementById('v_'+name).textContent = (+el.value).toFixed(2);
-    clearTimeout(setTimer); setTimer = setTimeout(pushKnobs, 80);
-  });
 }
 
 // double-buffer snapshots and interpolate between them, so motion is smooth even when
@@ -92,7 +83,7 @@ function draw(al){
   const ae = document.getElementById('alive');
   ae.textContent = (s.aliveness ?? 0).toFixed(3);
   ae.style.color = s.aliveness > 0.02 ? '#34d399' : '#f59e0b';
-  initKnobs(s.knobs);
+  buildKnobs(s.knobs);
 
   const N = s.tokens.length;
   const canInterp = PREV && PREV.tokens.length === N;
@@ -129,8 +120,8 @@ function draw(al){
       if(m===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     }
     ctx.closePath();
-    ctx.fillStyle = `hsla(${hue},70%,60%,0.35)`;
-    ctx.strokeStyle = `hsla(${hue},70%,70%,0.9)`;
+    ctx.fillStyle = `hsla(${hue},65%,58%,0.92)`;   // solid, so packing/boundaries are visible
+    ctx.strokeStyle = `hsla(${hue},70%,78%,1.0)`;
     ctx.lineWidth = 1.3; ctx.fill(); ctx.stroke();
   }
 }

@@ -37,11 +37,13 @@ _CONFIG = _HERE / "configs" / "vivarium.yaml"
 class Sim:
     """Steps an engine in a background thread; publishes the latest snapshot."""
 
-    def __init__(self, cfg: VivariumConfig, seed: int, hz: float, make_engine=None) -> None:
+    def __init__(self, cfg: VivariumConfig, seed: int, hz: float, make_engine=None,
+                 knob_names=("noise", "spin", "nonrecip", "scale", "rd")) -> None:
         self.cfg = cfg
         self.seed = seed
         self.hz = hz
         self._make = make_engine or (lambda s: Engine(cfg, s))
+        self.knob_names = knob_names
         self.lock = threading.Lock()
         self.engine = self._make(seed)
         self.paused = False
@@ -51,19 +53,17 @@ class Sim:
         self._snap = self._build_snapshot()
         threading.Thread(target=self._run, daemon=True).start()
 
-    _KNOBS = ("noise", "spin", "nonrecip", "scale", "rd")
-
     def _build_snapshot(self) -> dict:
         snap = self.engine.snapshot()
         snap["aliveness"] = self._alive
         snap["pos_bound"] = self.cfg.pos_bound
-        snap["knobs"] = {k: float(getattr(self.engine, k)) for k in self._KNOBS
+        snap["knobs"] = {k: float(getattr(self.engine, k)) for k in self.knob_names
                          if hasattr(self.engine, k)}
         return snap
 
     def set_knobs(self, updates: dict) -> None:
         with self.lock:
-            for k in self._KNOBS:
+            for k in self.knob_names:
                 if k in updates and hasattr(self.engine, k):
                     try:
                         setattr(self.engine, k, max(0.0, float(updates[k])))
@@ -149,13 +149,23 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--config", default=str(_CONFIG))
     p.add_argument("--pure", action="store_true",
                    help="serve the PURE-TRANSFORMER engine (transformer moves + morphs everything)")
+    p.add_argument("--pack", action="store_true",
+                   help="serve the PACKING engine (boundaries + induced-fit, periodic domain)")
     args = p.parse_args(argv)
 
     cfg = load_config(args.config)
     seed = cfg.seed if args.seed is None else args.seed
     make_engine = None
+    knob_names = ("noise", "spin", "nonrecip", "scale", "rd")
     label = "force-based dock-and-morph"
-    if args.pure:
+    if args.pack:
+        from pure import PureEngine  # noqa: F401  (keep import graph stable)
+
+        from pack import PackEngine
+        make_engine = lambda s: PackEngine(cfg, s)  # noqa: E731  (alive-packing defaults)
+        knob_names = ("repel", "attract", "skew", "morph", "momentum")
+        label = "PACKING (1/d² clash-repel + complementary-fit + induced morph, periodic)"
+    elif args.pure:
         from dataclasses import replace
 
         from pure import PureEngine
@@ -167,7 +177,7 @@ def main(argv: list[str] | None = None) -> int:
             cfg, s, nonrecip=1.0, ln_pos=False, scale=0.3, spin_pos=False, rd=0.5)
         label = "PURE TRANSFORMER (non-reciprocal attention + reaction-diffusion, free positions)"
     server = ThreadingHTTPServer((args.host, args.port), Handler)
-    server.sim = Sim(cfg, seed, args.hz, make_engine)
+    server.sim = Sim(cfg, seed, args.hz, make_engine, knob_names)
     print(f"serving: {label}")
     print(
         f"vivarium viewer on http://{args.host}:{server.server_address[1]}\n"
