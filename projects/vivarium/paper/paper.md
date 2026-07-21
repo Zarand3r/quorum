@@ -178,6 +178,15 @@ is eyeballed.
 
 - **Modest aliveness.** The packing droplet sustains ~0.06; the pure-attention variant reaches
   ~0.26–0.42 on [0,1]. Genuinely alive-looking motion, but faint in absolute terms.
+- **Measuring aliveness is itself an open problem.** The metric is a *validated heuristic, not a
+  proven measure* — a product of six hand-designed factors with hand-tuned thresholds that
+  operationalizes "not-obviously-dead + non-trivially organized and morphing." It has already
+  required two corrections (a rigid-rotation loophole; the periodicity bug above), which is
+  evidence it closes *known* degenerate cases rather than defining life. Its real value is as a
+  **bullshit detector and relative comparator** (it caught several illusory results), not as an
+  absolute truth; the absolute number should be read as "all gates pass, each factor moderate,"
+  not as a percentage of life. A principled, adversarially-hardened aliveness measure is left as
+  open future work.
 - **Weights are fixed.** The *state* is optimized, not the parameters. The full "learn while living"
   thesis is unrealized (§5).
 - **Soft boundaries.** Bounded-attention excluded volume is strong-but-not-hard; shapes strongly

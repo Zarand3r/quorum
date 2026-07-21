@@ -102,6 +102,25 @@
       <div class="abox tok"><span class="t">token xᵢ′</span>
         <span class="muted">→ next frame</span></div>
 
+      <div class="abox" style="margin-top:10px; border-color:#b45309">
+        <div class="t" style="color:#fbbf24">softmax = the Boltzmann distribution (temperature dial)</div>
+        <div class="muted">Attention <i>is</i> statistical mechanics. The softmax weight
+        <code>A_ij = exp(scoreᵢⱼ/τ) / Σₖ exp(scoreᵢₖ/τ)</code> is exactly the <b>Boltzmann /
+        Gibbs distribution</b> <code>p_j ∝ e^(−E_j / kT)</code> with the binding score as
+        <b>negative energy</b> (<code>E = −score</code>), the softmax denominator as the
+        <b>partition function Z</b>, and the <b>temperature τ as kT</b>. So each agent's attention
+        is the thermal occupation of its neighbour "states". The <b>temperature</b> slider is a
+        real thermodynamic temperature:
+        <ul style="margin:4px 0">
+          <li><b>low τ</b> → sharp (→ argmax): each agent commits to its single best bond →
+            discrete lock-and-key pairing, ordered/crystalline, resists collapse but can freeze.</li>
+          <li><b>high τ</b> → flat (→ uniform): attention averages over all neighbours →
+            mean-field consensus → homogenization / collapse (the rank-collapse the block fights).</li>
+        </ul>
+        This is the same identity that makes modern Hopfield networks
+        (attention = one energy-descent step) exact.</div>
+      </div>
+
       <div class="obj" style="margin-top:10px">
         <div class="t">objective &amp; physical law — living = inference = optimization</div>
         <div class="muted">No separate train / infer / run phases: <b>each tick IS one transformer
