@@ -3,9 +3,10 @@
 Everything is driven by the GROUNDED overlap of the drawn contours (Parseval: the attention
 dock score IS the contour overlap), so agents pack like puzzle pieces:
 
-  * repel head  — attention gated by *direct* overlap ⟨C_i, C_j⟩ (shapes clashing / occupying the
-    same space), with a 1/d² kernel (EM-like) → excluded volume / boundaries. Linear-attention
-    aggregation of relative displacements (the one piece that is force-like; see dynamics_zoo.md).
+  * repel head  — a bounded REPULSIVE ATTENTION (softmax over direct-clash ⟨C_i,C_j⟩ − λ·d²):
+    attend to close/clashing neighbours, move away from that weighted set. Row-stochastic ⇒
+    bounded (soft excluded volume), a genuine attention op — NOT a divergent 1/d² kernel
+    (strict transformer-only, see design/HARD_REQUIREMENT.md).
   * attract head — softmax attention on *complementary* overlap ⟨C_i, C_j·M⟩ (lock-and-key) → agents
     pull toward neighbours they can interlock with.
   * induced-fit morph — the block updates the shape channels via the complementarity attention +
@@ -29,7 +30,7 @@ from rng import base_rng, rng_for
 
 _LN_EPS = 1e-5
 _MLP_H = 2
-_REPEL_EPS = 1e-2
+_DIR_EPS = 1e-4  # softening for the unit-direction normalisation (not a force kernel)
 
 
 def _ln(X):
@@ -124,10 +125,21 @@ class PackEngine:
         A_fit = np.where(denom > 0, A_fit / np.where(denom > 0, denom, 1.0), 0.0)
         attract = -np.einsum("ij,ijc->ic", A_fit, delta)  # toward complementary neighbours
 
-        # repel head: 1/d² (EM-like), gated by direct clash, over neighbours
-        clash = np.maximum(S_direct, 0.0) * mask
-        wr = clash / (d2 * np.sqrt(d2) + _REPEL_EPS)      # |delta|/d³ ⇒ 1/d² force magnitude
-        repel = np.einsum("ij,ijc->ic", wr, delta)        # away from clashing neighbours
+        # repel head: bounded repulsive ATTENTION (transformer-only, HARD_REQUIREMENT). Attend to
+        # close, clashing neighbours (softmax over clash − λ·d²), then move AWAY from that
+        # attention-weighted set: (I − A_repel)·p in relative terms = Σ_j A_repel_ij·delta_ij.
+        # A_repel is row-stochastic → bounded (soft excluded volume), NOT a divergent 1/d² kernel.
+        rscore = np.where(mask, S_direct - cfg.dist_lambda * d2, -np.inf)
+        rm = np.max(rscore, axis=1, keepdims=True)
+        rm = np.where(np.isfinite(rm), rm, 0.0)
+        A_repel = np.exp(rscore - rm) * mask
+        rdenom = A_repel.sum(1, keepdims=True)
+        A_repel = np.where(rdenom > 0, A_repel / np.where(rdenom > 0, rdenom, 1.0), 0.0)
+        # aggregate the UNIT direction away (the value is the relative *direction*), so the push
+        # stays finite as neighbours touch (delta→0) — otherwise soft repel vanishes at contact and
+        # agents overlap. Softmax weight (bounded) sets how much; unit vector sets which way.
+        dirn = delta / np.sqrt(d2[..., None] + _DIR_EPS)
+        repel = np.einsum("ij,ijc->ic", A_repel, dirn)    # away from close/clashing neighbours
 
         force = self.attract * attract + self.repel * repel
         self.vel = self.momentum * self.vel + force        # inertia → coherent, non-freezing motion
