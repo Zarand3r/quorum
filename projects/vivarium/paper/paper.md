@@ -114,6 +114,26 @@ weights *actually learning*. The effect is modest and not yet rigorously charact
 config, three seeds), but it is a genuine, reproducible, transformer-only instance of "weights
 that learn while alive."
 
+**Future extension: from simple things following simple rules to complex things following
+*learned, complex* rules.** The plasticity above is the smallest possible version of a much larger
+research direction, and the most interesting one this work points to. Static-rule simulations —
+Boids, Schelling, cellular automata, and vivarium's own fixed-rule substrate — produce a
+*bounded, settling* repertoire of emergent patterns, and their macro behavior is often *reducible*
+(analytically derivable, so you need not run the sim). Open-ended, novelty-generating collective
+systems — ecologies, economies, **human markets**, cultures, institutions, language — are
+different: their agents are *complex things following complex rules*, and, crucially, **the rules
+of interaction are themselves learned and rewritten while the system runs** (norms, prices,
+strategies, culture). We conjecture this is *why* such systems resist static-rule modelling: the
+macro behavior depends on the accumulated *learning history*, making the emergence *irreducible*
+— there is no shortcut but to run it. The plasticity here shows, at toy scale, the first step of
+that ladder: learned couplings outperform fixed ones for sustained complexity. The open research
+program is to climb it — replacing the Hebbian fast-weight rule with progressively richer *learned
+interaction rules* (predictive, strategic, model-based; eventually agents that model each other),
+and asking at each rung whether the emergence becomes measurably irreducible. Extending the engine
+from *simple things following simple rules* toward *complex things following learned complex rules*
+— e.g. a market of agents whose trading strategies adapt to each other — is, in our view, the most
+promising and important direction beyond this paper.
+
 ## 4. What it does (measured)
 
 Aliveness is a single ungameable gauge, **measured over a window and never fed back** into the
