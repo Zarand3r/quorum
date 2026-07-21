@@ -48,7 +48,7 @@ function post(path){ fetch(BASE + path, {method:'POST'}); }
 // live knobs — built dynamically from whatever the engine exposes
 let knobsBuilt = false, setTimer = null;
 const KMAX = {noise:1.5, spin:1.5, nonrecip:3, scale:1, rd:2,
-              repel:0.6, attract:1, skew:2, morph:1.5, momentum:0.98};
+              repel:0.6, attract:1, skew:2, morph:1.5, momentum:0.98, speed:1.5};
 function buildKnobs(k){
   if(knobsBuilt || !k) return;
   const box = document.getElementById('knobs'); box.innerHTML = '';
@@ -93,10 +93,17 @@ function draw(al){
 
   // interpolated screen positions
   const px = new Array(N), py = new Array(N);
+  const wrap = B;  // if an agent moved more than half the domain between frames, it wrapped the
+                   // periodic torus — snap instead of lerping (else it streaks across the screen).
   for(let i=0;i<N;i++){
     const c = s.tokens[i];
-    const x = canInterp ? lerp(PREV.tokens[i].x, c.x, al) : c.x;
-    const y = canInterp ? lerp(PREV.tokens[i].y, c.y, al) : c.y;
+    let x = c.x, y = c.y;
+    if(canInterp){
+      const p = PREV.tokens[i];
+      if(Math.abs(c.x - p.x) < wrap && Math.abs(c.y - p.y) < wrap){
+        x = lerp(p.x, c.x, al); y = lerp(p.y, c.y, al);
+      }
+    }
     px[i] = X(x); py[i] = Y(y);
   }
 

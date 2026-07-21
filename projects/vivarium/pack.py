@@ -41,15 +41,17 @@ def _ln(X):
 
 class PackEngine:
     def __init__(self, cfg, seed, ablate="none", repel=0.1, attract=0.35, skew=1.0, morph=0.5,
-                 momentum=0.85):
+                 momentum=0.7, speed=1.0, maxvel=0.25):
         self.cfg = cfg
         self.seed = seed
         self.ablate = ablate
-        self.repel = repel      # 1/d² excluded-volume strength (boundaries)
+        self.repel = repel      # bounded repulsive-attention strength (soft excluded volume)
         self.attract = attract  # complementary-fit attraction (interlocking)
         self.skew = skew        # non-settling shape rotation
         self.morph = morph      # induced-fit morph gain
-        self.momentum = momentum  # position inertia: keeps the packed lattice rearranging, not frozen
+        self.momentum = momentum  # position inertia (lower = less zippy; steady speed ≈ force/(1−mom))
+        self.speed = speed      # dt-like multiplier on per-step displacement (slow it down to watch)
+        self.maxvel = maxvel    # cap on per-step displacement — prevents agents zipping/overshooting
         self.vel = np.zeros((cfg.N, POS_DIM))
         self.L = 2.0 * cfg.pos_bound
         rng = base_rng(seed + 1)
@@ -143,7 +145,10 @@ class PackEngine:
 
         force = self.attract * attract + self.repel * repel
         self.vel = self.momentum * self.vel + force        # inertia → coherent, non-freezing motion
-        p = self.X[:, :POS_DIM] + self.vel
+        # cap per-step displacement so nothing zips across the dish (overshoot control)
+        sp = np.linalg.norm(self.vel, axis=1, keepdims=True)
+        self.vel = np.where(sp > self.maxvel, self.vel * self.maxvel / (sp + 1e-9), self.vel)
+        p = self.X[:, :POS_DIM] + self.speed * self.vel
         p = ((p + cfg.pos_bound) % self.L) - cfg.pos_bound  # wrap to the torus
 
         # induced-fit morph: block updates shape/hidden, coupled through the fit attention
