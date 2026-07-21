@@ -291,7 +291,89 @@ enables, and it sits *inside* all the hard requirements.
 
 ---
 
-## 7. Cross-cutting: the profound scientific framing
+## 7. Species & self-assembly — amphiphiles → membranes (water + lipid → bilayer)
+
+### The target
+Right now all agents are one homogeneous species → a single droplet. The goal: **multiple species
+with very different properties that self-organise into higher-order structure** — the archetype
+being water + lipid → **lipid bilayer / membrane / vesicle**, the structure that makes cells
+possible (a boundary that separates inside from outside).
+
+### The crucial insight (why "different species" alone is not enough)
+Naively, "add a second species that repels the first" gives you **phase separation** — oil-in-water
+demixing into two blobs (that *is* worth having; it's differential adhesion / cell sorting). But it
+does **not** give a membrane. Membranes require one specific, deeper ingredient:
+
+> **Amphiphilicity = anisotropy: the *same* molecule has *opposite* affinities on its two ends.**
+> A lipid's head loves water; its tail hates water. That single-molecule *polarity* is what forces
+> the tails-in / heads-out bilayer — the tails hide from water, the heads face it.
+
+So the ladder of heterogeneity is:
+1. **One species** → droplet (current).
+2. **≥2 species, isotropic differential affinity** (a species×species affinity matrix, like the
+   Particle-Life `K` / Dale's-principle E–I matrix) → **phase separation** (oil + water → two
+   blobs; emulsions; cell sorting). Faithful, and already half-latent in type-based adhesion (§2).
+3. **≥2 species, one AMPHIPHILIC (anisotropic)** → **micelles, bilayers, membranes, vesicles.** The
+   extra ingredient is *orientation-dependent* interaction, not just species identity.
+
+### How each stays transformer-only
+
+**Species (faithful, easy):** one **shared** block (the laws), but each agent carries a **type /
+gene channel** (§6) that the block reads. Species differ in *genotype*, expressed through the *same
+physics* — exactly how water and lipid obey the same electromagnetism but differ in structure. The
+species×species affinity is **content-based attention** on the type channels (we already compute
+content attention for binding). A learned/fixed affinity matrix `K[s_i, s_j]` gives differential
+adhesion → phase separation. Fixed N still holds (the pool is partitioned into water-tokens and
+lipid-tokens).
+
+**Amphiphilicity / anisotropy (faithful, harder — the interesting part):** the missing ingredient
+is that an agent must **present different faces in different directions**, and the interaction must
+read *which face* points at the neighbour. The beautiful thing: **our grounded contour already has
+angular structure.** `C_i(θ) = Σ_k c_k cos kθ + s_k sin kθ` is a function of angle — an agent
+already has an orientation and directionally-varying surface. So the faithful move is to make the
+interaction **orientation-dependent**: the affinity between i and j depends on i's contour *in the
+direction toward j* and j's contour *in the direction toward i* — "which part of me faces you."
+Then a lipid with a hydrophilic arc (high water-affinity) and a hydrophobic arc (repels water,
+attracts other tails) will **self-orient** so tails meet tails and heads meet water → a bilayer.
+This is attention made **directional/orientational** (query/key modulated by relative bearing) —
+still attention, still transformer-only, but a real architectural extension (the current forces are
+largely radial/isotropic in how they drive *position*).
+
+### Why this is a profound target (not just prettier)
+- **It is the emergence of *structure with a function*: a boundary.** A membrane separates an
+  inside from an outside — the precondition for individuality, homeostasis, and eventually a "cell."
+  It is qualitatively above a droplet: a droplet is a blob; a vesicle is a *container*.
+- **It is the cleanest "very different properties → self-organised architecture" demonstration** in
+  all of soft matter, and it comes from *local, simple* rules (each lipid only feels its neighbours)
+  → a textbook case of the reducible-vs-irreducible story, and a strong visual.
+- **It unifies several followups:** species = distinct **genes/types** (§6); amphiphilicity needs
+  **anisotropic / richer shape** (§1 — the contour must express head/tail polarity, so variable
+  shape complexity is a prerequisite, not a garnish); membranes then **bud, split, and form
+  vesicles** (§2 fission — a vesicle dividing is cell-like); and species assignment is **heritable**
+  (§6 — offspring inherit species), enabling selection over *compositions*.
+- **New emergent structures to look for and measure:** phase-separation index (do species demix?);
+  **nematic/orientational order** (do amphiphiles align antiparallel?); **bilayer detection**
+  (paired, oppositely-oriented rows with tails inward); closed **vesicle** formation (a membrane
+  enclosing a region of the other species). These are principled order parameters, not hand-tuned
+  gates — and they connect to the better-aliveness profile (§0).
+
+### Honest caveats
+- **Anisotropy is the real work.** Species-identity + affinity-matrix (level 2) is easy and gives
+  demixing; the *orientational* interaction (level 3) that yields *membranes* is a genuine
+  extension of the force/attention computation, and the crux.
+- **2-D membranes are lines**, not sheets — a 2-D bilayer is a double row of oppositely-oriented
+  lipids (well-precedented in 2-D lipid models); a vesicle is a closed loop. Recognisable, but not
+  the 3-D image.
+- **Composition must be set** — species assigned at init (a fixed gene) or heritable (§6). The
+  water:lipid ratio and the affinity contrasts become the self-assembly control knobs (too little
+  contrast → mixed soup; too much → frozen aggregate; the bilayer lives in between — an
+  edge-of-assembly regime to find and *measure*, à la the drift `v*`).
+- Keep it **measured, not rewarded**: never optimise for "make a membrane"; set up amphiphilic
+  species and *measure* whether bilayers self-assemble.
+
+---
+
+## 8. Cross-cutting: the profound scientific framing
 
 The single most profound reframe these threads point at: **the transformer forward pass is active
 (living) matter — softmax row-normalisation is generically non-reciprocal, producing a
