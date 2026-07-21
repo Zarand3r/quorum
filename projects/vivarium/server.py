@@ -42,6 +42,7 @@ class Sim:
         self.cfg = cfg
         self.seed = seed
         self.hz = hz
+        self.stream_hz = min(30.0, hz)   # SSE push rate (≤ sim rate; no point pushing faster)
         self._make = make_engine or (lambda s: Engine(cfg, s))
         self.knob_names = knob_names
         self.lock = threading.Lock()
@@ -145,10 +146,30 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         # suffix-match so we work whether mounted at / or under a path prefix (e.g. /vivarium/).
-        if self.path.endswith("/state"):
+        if self.path.endswith("/stream"):
+            self._stream()
+        elif self.path.endswith("/state"):
             self._send(200, json.dumps(self.server.sim.state()).encode(), "application/json")
         else:
             self._send(200, _VIEWER.read_bytes(), "text/html; charset=utf-8")
+
+    def _stream(self) -> None:
+        """Server-Sent Events: push a snapshot every frame over ONE persistent connection, so the
+        browser never does a per-frame round-trip — the fix for network-bound rendering lag."""
+        try:
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.send_header("Cache-Control", "no-cache")
+            self.send_header("X-Accel-Buffering", "no")   # ask proxies not to buffer the stream
+            self.end_headers()
+            dt = 1.0 / self.server.sim.stream_hz
+            while not self.server.sim._stop:
+                payload = json.dumps(self.server.sim.state())
+                self.wfile.write(f"data: {payload}\n\n".encode())
+                self.wfile.flush()
+                time.sleep(dt)
+        except (BrokenPipeError, ConnectionResetError, OSError):
+            pass  # client went away — end this stream thread
 
     def do_POST(self) -> None:
         sim = self.server.sim
@@ -176,7 +197,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=8788)
     p.add_argument("--seed", type=int, default=None)
-    p.add_argument("--hz", type=float, default=18.0)
+    p.add_argument("--hz", type=float, default=30.0)
     p.add_argument("--config", default=str(_CONFIG))
     p.add_argument("--pure", action="store_true",
                    help="serve the PURE-TRANSFORMER engine (transformer moves + morphs everything)")

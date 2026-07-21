@@ -339,7 +339,14 @@ function draw(al){
   ctx.clearRect(0,0,W,H);
 
   for(let idx=0; idx<N; idx++){
-    const c = s.tokens[idx].c, K = c.length/2;
+    let c = s.tokens[idx].c; const K = c.length/2;
+    // interpolate the SHAPE coefficients too (not just position) — otherwise blobs morph in
+    // stutters at the frame rate while positions glide. Shape doesn't wrap, so always lerp.
+    if(canInterp){
+      const pc = PREV.tokens[idx].c, ic = new Array(c.length);
+      for(let q=0;q<c.length;q++) ic[q] = lerp(pc[q], c[q], al);
+      c = ic;
+    }
     // colour by SPIKINESS: k-weighted high-harmonic power (higher harmonics = spikier). A few
     // extra mults per token, reusing coefficients already in hand — no extra data/passes.
     let spik = 0;
@@ -375,24 +382,24 @@ function draw(al){
   }
 }
 
-async function poll(){
-  const t0 = performance.now();
-  try {
-    const r = await fetch(BASE + '/state');
-    const d = await r.json();
+// STREAM frames over one persistent Server-Sent-Events connection — no per-frame round-trip,
+// so the frame rate is the server's push rate, independent of network round-trip latency.
+function connect(){
+  const ev = new EventSource(BASE + '/stream');
+  ev.onmessage = (e) => {
+    let d; try { d = JSON.parse(e.data); } catch(_) { return; }
     const now = performance.now();
-    if(CUR_T) pollDt = 0.7*pollDt + 0.3*Math.max(40, Math.min(400, now - CUR_T)); // EMA of real gap
+    if(CUR_T) pollDt = 0.7*pollDt + 0.3*Math.max(20, Math.min(400, now - CUR_T)); // EMA of real gap
     PREV = CUR; CUR = d; CUR_T = now;
-  } catch(e){}
-  // keep a steady poll cadence regardless of how long the request took
-  setTimeout(poll, Math.max(0, POLL_MS - (performance.now() - t0)));
+  };
+  ev.onerror = () => { ev.close(); setTimeout(connect, 1000); };  // auto-reconnect on drop
 }
 function render(){
   const al = CUR ? Math.min(1, (performance.now() - CUR_T)/pollDt) : 0;
   draw(al);
   requestAnimationFrame(render);
 }
-poll(); render();
+connect(); render();
 </script>
 </body>
 </html>
