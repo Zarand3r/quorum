@@ -187,11 +187,13 @@ archTog.addEventListener('click', () => {
 // live knobs — built dynamically from whatever the engine exposes
 let knobsBuilt = false, setTimer = null;
 const KMAX = {noise:1.5, spin:1.5, nonrecip:3, scale:1, rd:2,
-              repel:0.6, attract:1, cohesion:0.8, skew:2, morph:1.5, momentum:0.98, speed:1.5};
+              repel:0.6, attract:1, cohesion:0.8, temperature:3, skew:2, morph:1.5,
+              momentum:0.98, speed:1.5};
 const KDESC = {
   repel:    "soft excluded volume — push apart from clashing/overlapping neighbours (boundaries)",
   attract:  "pull toward complementary-fit ‘lock-and-key’ neighbours (interlocking)",
   cohesion: "surface tension — pull toward the neighbourhood centroid; merges fragments into one droplet",
+  temperature: "softmax temperature τ (Boltzmann kT): low → sharp discrete bonds (order); high → uniform mean-field (collapse)",
   skew:     "rotational drive on the shape (z·J) — keeps shapes cycling so the packing never freezes",
   morph:    "induced fit — how strongly an agent reshapes its blob to fit its binding partners (0 = shape morphs on its own)",
   momentum: "position inertia / glidiness — steady speed ≈ force/(1−momentum); higher = smoother, faster drift",

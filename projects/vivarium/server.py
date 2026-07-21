@@ -84,7 +84,8 @@ class Sim:
                 # cheap aliveness on the rolling window — NO fork, NO extra stepping (fixes lag).
                 if n % 20 == 0 and len(self._buf) >= 10:
                     states = np.stack(self._buf)
-                    self._alive = round(float(score(states, self.cfg)["aliveness"]), 3)
+                    period = getattr(self.engine, "L", None)  # min-image for the periodic torus
+                    self._alive = round(float(score(states, self.cfg, period)["aliveness"]), 3)
             time.sleep(dt)
 
     def state(self) -> dict:
@@ -176,7 +177,8 @@ def main(argv: list[str] | None = None) -> int:
 
         from pack import PackEngine
         make_engine = lambda s: PackEngine(cfg, s)  # noqa: E731  (alive-packing defaults)
-        knob_names = ("repel", "attract", "cohesion", "skew", "morph", "momentum", "speed")
+        knob_names = ("repel", "attract", "cohesion", "temperature", "skew", "morph",
+                      "momentum", "speed")
         label = "PACKING (1/d² clash-repel + complementary-fit + induced morph, periodic)"
     elif args.pure:
         from dataclasses import replace

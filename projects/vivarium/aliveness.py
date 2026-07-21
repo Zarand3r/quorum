@@ -55,7 +55,7 @@ def _coherence(V: np.ndarray) -> float:
     return float(np.clip(np.mean(_cos_rows(V[:-1], V[1:])), 0.0, 1.0))
 
 
-def _structure(P: np.ndarray, V: np.ndarray, cfg: VivariumConfig) -> float:
+def _structure(P: np.ndarray, V: np.ndarray, cfg: VivariumConfig, period=None) -> float:
     """Spatial: local organisation of the *relative* (drift-removed) velocity field.
 
     We subtract the global mean velocity per frame first, so a rigid coherent
@@ -70,13 +70,26 @@ def _structure(P: np.ndarray, V: np.ndarray, cfg: VivariumConfig) -> float:
     vals = []
     for t in range(V.shape[0]):
         v = V[t] - V[t].mean(axis=0, keepdims=True)   # remove rigid translation
-        idx = neighbor_indices(P[t], k)               # (N, k)
+        idx = _neighbors_periodic(P[t], k, period)    # (N, k) — min-image on a torus
         mean_nbr_v = v[idx].mean(axis=1)              # (N, 2)
         vals.append(np.mean(_cos_rows(v, mean_nbr_v)))
     return float(np.clip(np.mean(vals), 0.0, 1.0)) if vals else 0.0
 
 
-def _deformation(P: np.ndarray) -> float:
+def _min_image(diff: np.ndarray, period) -> np.ndarray:
+    """Wrap displacements to the nearest periodic image (no-op if period is None)."""
+    if period is None:
+        return diff
+    return diff - period * np.round(diff / period)
+
+
+def _neighbors_periodic(P_t: np.ndarray, k: int, period) -> np.ndarray:
+    d = _min_image(P_t[:, None, :] - P_t[None, :, :], period)
+    d2 = np.einsum("ijc,ijc->ij", d, d)
+    return np.argsort(d2, axis=1, kind="stable")[:, :k]
+
+
+def _deformation(P: np.ndarray, period=None) -> float:
     """Non-rigidity: how much the colony's *relative configuration* changes over the
     window. A rigid body (pure translation OR rotation) preserves all pairwise
     distances → 0. Genuine morphing/reconfiguration → > 0. This is the "morph" the
@@ -86,6 +99,7 @@ def _deformation(P: np.ndarray) -> float:
     if T < 2 or N < 2:
         return 0.0
     diff = P[:, :, None, :] - P[:, None, :, :]            # (T, N, N, 2)
+    diff = _min_image(diff, period)                       # min-image on a torus (no-op if None)
     D = np.sqrt(np.einsum("tijc,tijc->tij", diff, diff) + 1e-12)  # (T, N, N) pairwise dists
     iu = np.triu_indices(N, k=1)
     pair = D[:, iu[0], iu[1]]                              # (T, P) each pair's distance over time
@@ -93,22 +107,24 @@ def _deformation(P: np.ndarray) -> float:
     return float(np.clip(np.mean(cov), 0.0, 1.0))
 
 
-def score(states: np.ndarray, cfg: VivariumConfig) -> dict:
-    """Score a (T, N, d) window. Pure — no engine, no side effects."""
+def score(states: np.ndarray, cfg: VivariumConfig, period=None) -> dict:
+    """Score a (T, N, d) window. Pure — no engine, no side effects. `period` (the torus size L)
+    makes velocities and pairwise distances min-image, so wrap-arounds don't register as
+    spurious huge jumps — pass it for the periodic pack engine; leave None for clipped domains."""
     states = np.asarray(states, dtype=np.float64)
     if not np.all(np.isfinite(states)):
         return _report(0.0, gate_finite=0.0)
 
     P = states[:, :, :2]                          # positions (T, N, 2)
-    V = np.diff(P, axis=0)                         # velocities (T-1, N, 2)
+    V = _min_image(np.diff(P, axis=0), period)    # velocities (T-1, N, 2), min-image on a torus
     spread = float(np.mean(P.std(axis=1)))        # spatial spread (std over agents)
     motion = float(np.mean(np.linalg.norm(V, axis=2))) if V.size else 0.0
 
     gate_spread = 1.0 if _SPREAD_LO <= spread <= _SPREAD_HI else 0.0
     gate_motion = 1.0 if _MOTION_LO <= motion <= _MOTION_HI else 0.0
     coherence = _coherence(V)
-    structure = _structure(P, V, cfg)
-    deformation = _deformation(P)
+    structure = _structure(P, V, cfg, period)
+    deformation = _deformation(P, period)
     alive = 1.0 * gate_spread * gate_motion * coherence * structure * deformation
     return _report(
         alive,
@@ -140,7 +156,8 @@ def lyapunov(engine, window: int, eps: float = 1e-4) -> float:
 
 def evaluate(engine, window: int = 40) -> dict:
     """Full read-only report for the engine's current regime."""
-    report = score(rollout_states(engine, window), engine.cfg)
+    period = getattr(engine, "L", None)   # periodic torus size for pack; None for clipped domains
+    report = score(rollout_states(engine, window), engine.cfg, period)
     report["lyapunov"] = lyapunov(engine, window)
     return report
 

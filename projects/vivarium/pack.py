@@ -58,6 +58,8 @@ class PackEngine:
         self.cohere_lambda = 0.08           # broad distance kernel (long reach → crosses gaps)
         self.edge_radius = 0.6              # render: draw an edge only between agents this close
         #                                    (small → only touching pairs, not a dense mesh)
+        self.temperature = 1.0             # softmax temperature τ (Boltzmann kT): low → sharp
+        #   discrete bonds; high → uniform mean-field (collapse). score/τ before softmax.
         self.vel = np.zeros((cfg.N, POS_DIM))
         self.L = 2.0 * cfg.pos_bound
         rng = base_rng(seed + 1)
@@ -108,7 +110,8 @@ class PackEngine:
         np.put_along_axis(mask, idx, True, axis=1)
         np.fill_diagonal(mask, False)
         S_comp = (C @ (C @ self.M).T) / np.sqrt(self.tK)
-        score = np.where(mask, S_comp - self.cfg.dist_lambda * d2, -np.inf)
+        tau = max(1e-2, self.temperature)
+        score = np.where(mask, (S_comp - self.cfg.dist_lambda * d2) / tau, -np.inf)
         m = np.max(score, axis=1, keepdims=True)
         m = np.where(np.isfinite(m), m, 0.0)
         A = np.exp(score - m) * mask
@@ -136,6 +139,7 @@ class PackEngine:
 
     def step(self):
         cfg = self.cfg
+        tau = max(1e-2, self.temperature)   # softmax temperature (Boltzmann kT); guard ÷0
         C = self._contour()
         delta, d2 = self._periodic_delta()
         idx = self._neighbors(d2, cfg.n_neighbors)
@@ -150,8 +154,8 @@ class PackEngine:
         if self.ablate == "identity":
             mask = np.zeros_like(mask)                  # no neighbours → no forces (P6 control)
 
-        # attract head: softmax on complementary fit − distance penalty
-        score = np.where(mask, S_comp - cfg.dist_lambda * d2, -np.inf)
+        # attract head: softmax on complementary fit − distance penalty, at temperature τ
+        score = np.where(mask, (S_comp - cfg.dist_lambda * d2) / tau, -np.inf)
         m = np.max(score, axis=1, keepdims=True)
         m = np.where(np.isfinite(m), m, 0.0)
         A_fit = np.exp(score - m) * mask
@@ -163,7 +167,7 @@ class PackEngine:
         # close, clashing neighbours (softmax over clash − λ·d²), then move AWAY from that
         # attention-weighted set: (I − A_repel)·p in relative terms = Σ_j A_repel_ij·delta_ij.
         # A_repel is row-stochastic → bounded (soft excluded volume), NOT a divergent 1/d² kernel.
-        rscore = np.where(mask, S_direct - cfg.dist_lambda * d2, -np.inf)
+        rscore = np.where(mask, (S_direct - cfg.dist_lambda * d2) / tau, -np.inf)
         rm = np.max(rscore, axis=1, keepdims=True)
         rm = np.where(np.isfinite(rm), rm, 0.0)
         A_repel = np.exp(rscore - rm) * mask
@@ -188,7 +192,7 @@ class PackEngine:
             np.fill_diagonal(cmask, False)
             if self.ablate == "identity":
                 cmask = np.zeros_like(cmask)
-            cscore = np.where(cmask, -self.cohere_lambda * d2, -np.inf)
+            cscore = np.where(cmask, (-self.cohere_lambda * d2) / tau, -np.inf)
             cm = np.max(cscore, axis=1, keepdims=True)
             cm = np.where(np.isfinite(cm), cm, 0.0)
             A_coh = np.exp(cscore - cm) * cmask

@@ -17,8 +17,9 @@ whole update is **strictly transformer-only** — attention, MLP, LayerNorm — 
 law, no energy ledger, and no variable token count*. We show that this produces a compact,
 conserved, continually-rearranging **droplet of bound, morphing shapes**, watchable live and
 instrumented with an *ungameable, measured-not-rewarded* aliveness gauge. The result is a
-demonstration, not a triumph: measured aliveness is modest (~0.05–0.3 on [0,1]) and the network
-*weights are fixed* (the **state** is optimized, not the parameters). We report the built system,
+demonstration, not a triumph: measured aliveness is modest (the packing droplet ~0.06; a
+pure-attention variant reaches ~0.26–0.42 on [0,1]) and the network *weights are fixed* (the
+**state** is optimized, not the parameters). We report the built system,
 its visualizations, and — prominently — what the honest metric refused to certify.
 
 ---
@@ -110,11 +111,18 @@ clusters**, not one droplet.
 
 ### 4.2 Cohesion merges fragments into one droplet
 Turning on the cohesion head (surface tension) merges them: at strength 0.15 the largest cluster
-goes 41% → **100%** (one cluster), occupancy 0.21 → 0.05 (compact, empty space around it), and the
-droplet is *more alive* — aliveness ~0.3 with deformation ~1.0 (a continually morphing, rearranging
-droplet, not a frozen clump). **Honest limit:** cohesion has finite range, so in a 2× box the
-fragments — now farther apart than the reach — re-fragment. Surface tension is local; the single
-droplet holds at the default density.
+goes 41% → **100%** (one cluster) and occupancy 0.21 → 0.05 (compact, empty space around it). The
+droplet is *more alive* and continually rearranging — sustained aliveness **~0.06** with
+deformation ~0.42 (measured with the periodicity-correct metric; see the note below). **Honest
+limit:** cohesion has finite range, so in a 2× box the fragments — now farther apart than the
+reach — re-fragment. Surface tension is local; the single droplet holds at the default density.
+
+*(Measurement caveat, found in review: an earlier version of the aliveness metric used raw
+Euclidean velocities on the periodic torus, so agent wrap-arounds registered as spurious huge
+jumps and inflated the packing aliveness ~5× — early notes citing "~0.3" were this artifact. The
+metric is now min-image (periodicity-aware); the corrected sustained figure is ~0.06. The
+pure-transformer engine (§4.3) clips its domain rather than wrapping, so its numbers were never
+affected.)*
 
 ### 4.3 A pure-transformer variant moves *everything* by attention
 A second engine ([`pure.py`](../pure.py)) drops the force framing entirely: position is just
@@ -168,8 +176,8 @@ is eyeballed.
 
 ## 8. Honest limitations
 
-- **Modest aliveness.** ~0.05–0.3 on [0,1] — genuinely alive-looking motion, but faint; the sibling
-  morph sim reached ~0.16, and absolute "aliveness" here is not high.
+- **Modest aliveness.** The packing droplet sustains ~0.06; the pure-attention variant reaches
+  ~0.26–0.42 on [0,1]. Genuinely alive-looking motion, but faint in absolute terms.
 - **Weights are fixed.** The *state* is optimized, not the parameters. The full "learn while living"
   thesis is unrealized (§5).
 - **Soft boundaries.** Bounded-attention excluded volume is strong-but-not-hard; shapes strongly
