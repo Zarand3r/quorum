@@ -240,7 +240,58 @@ has always wanted, finally measurable — and it directly tests the simple→com
 
 ---
 
-## 6. Cross-cutting: the profound scientific framing
+## 6. A DNA analogue — a stable genotype layer (unifies shape + heredity + evolution)
+
+### Is DNA "plasticity with more capacity"? Partly — but the essence is timescale, not size.
+DNA and plasticity are **opposite ends** of biology's information hierarchy, not the same thing
+scaled:
+- **Plasticity (our fast weights):** fast, activity-driven, **decaying**, low-capacity, *within*-life,
+  adapts *couplings*.
+- **DNA:** **stable** (read-only within a life), high-capacity, **heritable**, changes only by mutation
+  *across* generations, specifies *form* (genotype→phenotype).
+So "DNA = plasticity + capacity" conflates two *complementary* layers. DNA's essence is
+**persistence + heritability + specifying form**; they should **coexist** (fast plastic adaptation on
+top of a stable heritable gene).
+
+### The design (faithful): a stable, heritable gene sub-embedding
+Give each token a **gene**: a stable, high-capacity sub-vector of its embedding that the block
+*reads* (attention/MLP) to produce its shape/dynamics, but that the fast morph does **not**
+overwrite (a read-only sub-embedding). It changes only on **inheritance** — at fission, daughters
+**copy** the parent's gene (± mutation noise). Transformer-only (gene = embedding channels, read
+natively); fixed N (copied within the fixed pool — informational heredity, §2); high-capacity (as
+wide as you like).
+
+### Why it unifies the followups
+- **Variable/dynamic shape complexity (§1):** the gene specifies each agent's shape *program*
+  (which harmonics, what complexity, morph tendencies) → shape complexity becomes **per-agent,
+  heritable, selectable**, not a fixed global `K`; it expands the addressable *form space* (lifts
+  §1's capped-harmonics ceiling on open-endedness).
+- **Heredity & selection (§2):** the gene **is** what's inherited on fission → **fixed-N Darwinian
+  evolution of form** (which genotypes persist/spread) — the concrete realisation of
+  "heredity is information, not token creation."
+- **The full biological hierarchy in one transformer:** **genotype** (gene, stable/heritable) →
+  **development** (the forward pass *expresses* the gene into a phenotype) → **phenotype** (shape +
+  behaviour) → **plasticity** (§3, fast weights adapt within life) → **selection** (§2, viable
+  daughters spread their genes). The forward pass = *ontogeny*; fission + inheritance = *phylogeny*.
+
+### The deep payoff — learning × evolution (Baldwin)
+With both a heritable gene (slow) and plasticity (fast) in the *same* substrate, you can study their
+interaction — the **Baldwin effect** (within-life learning guiding/being assimilated into
+evolution), a classic question, here **measurable**: does a plastic adaptation that helps get
+absorbed into the gene over generations? This is a genuinely profound experiment the DNA layer
+enables, and it sits *inside* all the hard requirements.
+
+### Honest caveats
+- Keep the gene **stable** (read-only within life) — if the fast dynamics overwrite it, it is just
+  more state, not a gene; the persistence/heritability is what *makes* it DNA.
+- The genotype→phenotype map must be **non-trivial** (the gene *specifies* the shape program, not
+  *equals* the shape), else it is a relabel.
+- It needs the fission + viability machinery (§2) to actually *select*, and mutation-rate /
+  selection-strength become the evolutionary knobs.
+
+---
+
+## 7. Cross-cutting: the profound scientific framing
 
 The single most profound reframe these threads point at: **the transformer forward pass is active
 (living) matter — softmax row-normalisation is generically non-reciprocal, producing a
