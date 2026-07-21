@@ -177,9 +177,24 @@ def probe(seed, ablate, repel, attract, skew, morph, momentum):
             e.step()
 
 
+def measure_gas_or_droplet(seed):
+    from metrics_pack import measure
+    print("=== M0: is the packing engine a DROPLET (matter) or a GAS? ===")
+    for scale, lab in ((1.0, "1x box"), (2.0, "2x box")):
+        cfg = _cfg(pos_bound=DEFAULTS["pos_bound"] * scale)
+        e = PackEngine(cfg, seed)
+        for _ in range(600):
+            e.step()
+        m = measure(e.X[:, :POS_DIM], e.L, radius=1.0)
+        print(f"{lab:8s} occupancy={m['occupancy']:.2f}  largest_cluster={m['largest_frac']:.2f}  "
+              f"n_clusters={m['n_clusters']:2d}  Rg={m['rg']:.2f}  Rg/box={m['rg_over_box']:.2f}")
+    print("GAS: occupancy high, fragments, Rg/box grows. MATTER: occupancy<1, one cluster, Rg box-independent.")
+
+
 def main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("--probe", action="store_true")
+    p.add_argument("--measure", action="store_true")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--ablate", choices=["none", "identity"], default="none")
     p.add_argument("--repel", type=float, default=0.1)
@@ -188,7 +203,10 @@ def main(argv=None):
     p.add_argument("--morph", type=float, default=0.5)
     p.add_argument("--mom", type=float, default=0.85)
     a = p.parse_args(argv)
-    probe(a.seed, a.ablate, a.repel, a.attract, a.skew, a.morph, a.mom)
+    if a.measure:
+        measure_gas_or_droplet(a.seed)
+    else:
+        probe(a.seed, a.ablate, a.repel, a.attract, a.skew, a.morph, a.mom)
     return 0
 
 
