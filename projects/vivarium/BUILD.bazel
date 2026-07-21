@@ -111,6 +111,15 @@ py_binary(
     deps = [":vivarium"],
 )
 
+py_binary(
+    name = "serve_membrane",
+    srcs = ["membrane_server.py"],
+    main = "membrane_server.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
 py_test(
     name = "test_suite",
     srcs = glob(["tests/**/*.py"]),
