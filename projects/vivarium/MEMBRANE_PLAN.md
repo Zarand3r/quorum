@@ -53,3 +53,38 @@ match what the eye sees before we trust them to tune.
 Micelles are the robust first outcome; a true **bilayer** is the narrow "edge-of-assembly" regime
 (the lipid *packing parameter*: head/tail balance). Expect several tuning passes. "Micelles" is a
 real partial win; "bilayer ribbon" is the target; "vesicle" is the stretch.
+
+## Findings (2026-07-21)
+
+**Result: amphiphilic tokens self-assemble from a random soup into a single orientationally-ordered,
+one-particle-thick membrane band spanning the box** — director order `S≈1.0`, sheet aspect `≈12`,
+`clusters→1`, water excluded. Emerges from a purely local anisotropic affinity LAW (relative-position
+attention in per-token orientation + bearing); **no dictated bonds, fixed N, transformer-faithful.**
+See `membrane_timelapse.png` (random → nucleate → merge → one band). Showcase config is the default in
+`membrane.py` / `render_membrane.py`; reproduce with `bazel run //projects/vivarium:membrane -- --probe`.
+
+**The path there — four ingredients, each a physical law, discovered by iteration:**
+1. **Hydrophobic effect done right.** Affinity must attract ONLY hydrophobic (tail) patches
+   (`a = h_i·h_j`, `h∈[0,1]`); the first attempt let hydrophilic surfaces attract too, collapsing
+   everything into thick blobs. Hydrophilic-neutral is what lets tails bury into a THIN sheet.
+2. **Anisotropic packing (Yuan+2010).** Attraction favoured side-by-side (bond ⊥ normal) + parallel
+   normals → tile a leaflet, not a chain. Gives the correct local motif (`S=0.997`, visible
+   side-by-side parallel pairs) but fragments into many frozen patches.
+3. **Thermostat + weak isotropic cohesion.** Kinetically-trapped patches don't coalesce; an annealed
+   thermal kick (`temp`, quenched to 0) + a soft long-range lipid pull (`gc`) let them merge into one
+   domain. Standard self-assembly annealing.
+4. **Rod-shaped steric (the token IS a shape).** Isotropic (disk) steric fills the interior → a round
+   raft. Making the excluded volume a ROD (long along the normal, `kappa`) forbids end-on stacking, so
+   lipids can only pack side-by-side → forced one-particle-thick → the extended band.
+
+**Honest limitation.** In this **2D single-bead** model the equilibrium ordered domain is a nematic
+band/raft — the correct membrane *packing motif* and unambiguous self-assembly, but NOT the iconic
+closed **bilayer/vesicle** (two leaflets tail-to-tail enclosing water). The signed-vs-unsigned test
+confirms order is real; the tail-to-tail inter-leaflet term (`gi`) is implemented but a clean closed
+bilayer needs a genuinely **shaped token** (Gay-Berne ellipsoid / 2-bead lipid — still one token,
+squarely the grounded-contour idea) or **3D**. That is the documented next step, and `kappa` is the
+first move toward it.
+
+**Metric trust.** `metrics_membrane.measure` now also returns director order `S` (unsigned `|o_i·o_j|`,
+so both antiparallel leaflets count) and side-by-side fraction — both validated on hand-built fixtures
+(`test_order_parameter_matches_eye`). As with H/sheetness, the numbers provably match what the eye sees.

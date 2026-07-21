@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from metrics_membrane import LIPID, WATER, measure
+from metrics_membrane import LIPID, WATER, measure, membrane_order
 
 _L = 14.0
 
@@ -77,3 +77,14 @@ def test_bilayer_beats_disordered_and_is_a_sheet() -> None:
     b, mi, d = measure(*_bilayer(), _L), measure(*_micelle(), _L), measure(*_disordered(), _L)
     assert b["H"] > d["H"] and mi["H"] > d["H"]
     assert b["sheetness"] > mi["sheetness"], "a bilayer ribbon must be more elongated than a micelle"
+
+
+def test_order_parameter_matches_eye() -> None:
+    # director order S (unsigned): a bilayer's two antiparallel leaflets still share ONE axis → S→1;
+    # side (bond ⊥ normal): a bilayer's neighbours are beside within a leaflet → side high. Disorder → both low.
+    Sb, sideb = membrane_order(*_bilayer(), _L)
+    Sd, _ = membrane_order(*_disordered(), _L)
+    assert Sb > 0.85, f"bilayer leaflets share one director, S={Sb}"
+    # in-leaflet neighbours are beside (side→1), cross-leaflet ones are stacked (side→0); the mix sits ~0.6
+    assert sideb > 0.6, f"bilayer neighbours mostly side-by-side, side={sideb}"
+    assert Sb > Sd, f"ordered membrane must out-score disorder on director order ({Sb} vs {Sd})"

@@ -55,6 +55,24 @@ py_binary(
 )
 
 py_binary(
+    name = "membrane",
+    srcs = ["membrane.py"],
+    main = "membrane.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
+py_binary(
+    name = "render_membrane",
+    srcs = ["render_membrane.py"],
+    main = "render_membrane.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
+py_binary(
     name = "pure",
     srcs = ["pure.py"],
     main = "pure.py",

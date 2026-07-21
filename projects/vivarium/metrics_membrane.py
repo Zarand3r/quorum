@@ -99,7 +99,27 @@ def sheetness(pos, species, L, radius=1.6) -> tuple[float, int]:
     return float(np.sqrt(ev[-1] / ev[0])), len(groups)
 
 
+def membrane_order(pos, species, orient, L, radius=1.6) -> tuple[float, float]:
+    """Over lipid neighbour pairs (min-image): (director order S = mean |o_i·o_j|, side-by-side
+    fraction = mean 1−(o_i·r̂_ij)²). UNSIGNED so both leaflets of a bilayer (which are antiparallel)
+    count as ordered: S→1 means every lipid shares one axis. A disordered thread has S≈½, side≈½."""
+    species = np.asarray(species)
+    within, rhat, _ = _neighbors_within(pos, L, radius)
+    lip = (species == LIPID)
+    pair = within & lip[:, None] & lip[None, :]
+    ii, jj = np.where(pair)
+    if ii.size == 0:
+        return 0.0, 0.0
+    oo = np.einsum("kc,kc->k", orient[ii], orient[jj])
+    oir = np.einsum("kc,kc->k", orient[ii], rhat[ii, jj])
+    S = float(np.mean(np.abs(oo)))
+    side = float(np.mean(1.0 - oir ** 2))
+    return S, side
+
+
 def measure(pos, species, orient, L, radius=1.6) -> dict:
     H = hydrophobic_shielding(pos, species, orient, L, radius)
     aspect, nclust = sheetness(pos, species, L, radius)
-    return {"H": round(H, 3), "sheetness": round(aspect, 2), "n_lipid_clusters": nclust}
+    S, side = membrane_order(pos, species, orient, L, radius)
+    return {"H": round(H, 3), "sheetness": round(aspect, 2), "n_lipid_clusters": nclust,
+            "S": round(S, 3), "side": round(side, 3)}
