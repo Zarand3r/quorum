@@ -186,7 +186,7 @@ def main(argv: list[str] | None = None) -> int:
         from pack import PackEngine
         make_engine = lambda s: PackEngine(cfg, s)  # noqa: E731  (alive-packing defaults)
         knob_names = ("repel", "attract", "cohesion", "temperature", "skew", "morph",
-                      "momentum", "speed")
+                      "momentum", "speed", "plasticity")
         label = "PACKING (1/d² clash-repel + complementary-fit + induced morph, periodic)"
     elif args.pure:
         from dataclasses import replace

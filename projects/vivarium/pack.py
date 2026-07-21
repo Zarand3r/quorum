@@ -76,6 +76,17 @@ class PackEngine:
         self.b2 = np.zeros(zdim)
         Jr = rng.standard_normal((zdim, zdim)) / np.sqrt(zdim)
         self.J = Jr - Jr.T
+        # --- plasticity: fast weights = Hebbian linear-attention memory (weights that learn while
+        #     alive). W_v/W1/W2/M/J above are the FIXED "slow" weights (the physics/laws). W_fast is
+        #     a plastic (z×z) memory that accumulates Hebbian outer products of activity each tick
+        #     (= a linear-attention write) with decay (homeostasis), and is read to modulate the
+        #     message. Slow weights = fixed laws; fast weights = plastic synapses. Default off. ---
+        self.W_k = rng.standard_normal((zdim, zdim)) / np.sqrt(zdim)  # key projection (fixed)
+        self.W_val = rng.standard_normal((zdim, zdim)) / np.sqrt(zdim)  # value projection (fixed)
+        self.W_fast = np.zeros((zdim, zdim))  # the plastic memory — starts empty, learns while alive
+        self.plasticity = 0.0    # read gain (0 = off → identical to the fixed-rule sim)
+        self.plast_decay = 0.98  # γ: forgetting / homeostasis (gated linear attention)
+        self.plast_lr = 0.05     # η: Hebbian write rate
         r = base_rng(seed)
         X = np.zeros((cfg.N, d))
         X[:, :POS_DIM] = r.uniform(-cfg.pos_bound, cfg.pos_bound, (cfg.N, POS_DIM))
@@ -212,6 +223,19 @@ class PackEngine:
         # induced-fit morph: block updates shape/hidden, coupled through the fit attention
         z = self.X[:, POS_DIM:]
         msg = A_fit @ (z @ self.W_v)
+
+        # PLASTICITY (weights that learn while alive) — a gated Hebbian fast-weight memory, i.e. the
+        # fast-weight form of linear attention. Write: W_fast ← γ·W_fast + η·(kᵀv) (Hebbian outer
+        # product = linear-attention memory write) with decay γ (homeostasis). Read: add z·W_fast to
+        # the message → the interaction adapts with the history of activity. Slow weights stay fixed
+        # (the laws); only these fast weights learn. Default plasticity=0 → skipped entirely.
+        if self.plasticity > 0.0:
+            k = z @ self.W_k
+            v = z @ self.W_val
+            if self.ablate != "freeze_plasticity":         # ablation: stop learning, keep reading
+                self.W_fast = self.plast_decay * self.W_fast + self.plast_lr * (k.T @ v) / z.shape[0]
+            msg = msg + self.plasticity * (z @ self.W_fast)
+
         spin = self.skew * (z @ self.J) if self.skew > 0 else 0.0
         z1 = _ln(z + self.morph * msg + spin)
         z2 = _ln(z1 + np.tanh(z1 @ self.W1 + self.b1) @ self.W2 + self.b2)
@@ -224,9 +248,10 @@ def _cfg(**over):
     return VivariumConfig(**{**DEFAULTS, **over})
 
 
-def probe(seed, ablate, repel, attract, skew, morph, momentum, cohesion=0.0):
+def probe(seed, ablate, repel, attract, skew, morph, momentum, cohesion=0.0, plasticity=0.0):
     e = PackEngine(_cfg(), seed, ablate=ablate, repel=repel, attract=attract, skew=skew,
                    morph=morph, momentum=momentum, cohesion=cohesion)
+    e.plasticity = plasticity
     print(" tick  alive  spread  motion  cohere  struct  deform  minsep")
     for _ in range(0, 2001, 400):
         r = evaluate(e, 40)
@@ -259,18 +284,19 @@ def main(argv=None):
     p.add_argument("--probe", action="store_true")
     p.add_argument("--measure", action="store_true")
     p.add_argument("--seed", type=int, default=0)
-    p.add_argument("--ablate", choices=["none", "identity"], default="none")
+    p.add_argument("--ablate", choices=["none", "identity", "freeze_plasticity"], default="none")
     p.add_argument("--repel", type=float, default=0.15)
     p.add_argument("--attract", type=float, default=0.45)
     p.add_argument("--skew", type=float, default=1.2)
     p.add_argument("--morph", type=float, default=0.7)
     p.add_argument("--mom", type=float, default=0.85)
     p.add_argument("--cohesion", type=float, default=0.0)
+    p.add_argument("--plasticity", type=float, default=0.0)
     a = p.parse_args(argv)
     if a.measure:
         measure_gas_or_droplet(a.seed, a.cohesion)
     else:
-        probe(a.seed, a.ablate, a.repel, a.attract, a.skew, a.morph, a.mom, a.cohesion)
+        probe(a.seed, a.ablate, a.repel, a.attract, a.skew, a.morph, a.mom, a.cohesion, a.plasticity)
     return 0
 
 

@@ -18,8 +18,10 @@ law, no energy ledger, and no variable token count*. We show that this produces 
 conserved, continually-rearranging **droplet of bound, morphing shapes**, watchable live and
 instrumented with an *ungameable, measured-not-rewarded* aliveness gauge. The result is a
 demonstration, not a triumph: measured aliveness is modest (the packing droplet ~0.06; a
-pure-attention variant reaches ~0.26–0.42 on [0,1]) and the network *weights are fixed* (the
-**state** is optimized, not the parameters). We report the built system,
+pure-attention variant reaches ~0.26–0.42 on [0,1]). By default the network weights are fixed (the
+**state** is optimized, not the parameters), but an optional, transformer-faithful **plasticity**
+— fast-weight Hebbian memory, i.e. the fast-weight form of linear attention — lets the *coupling*
+weights learn while the sim runs, and is *load-bearing* when on. We report the built system,
 its visualizations, and — prominently — what the honest metric refused to certify.
 
 ---
@@ -86,10 +88,31 @@ plus a rotational flux that keeps it from settling. The *inference* relaxing `Φ
 So vivarium *does* embody a thermodynamic objective — it simply is not a *training* loss.
 
 **Honest scope of "no separation."** *living = inference = optimization* holds at the **state**
-level: the embeddings (the "fold") are what the forward pass optimizes. It does **not** hold at
-the **weight** level — the parameters are fixed. Full *"weights that learn while alive"* (training
-= living, one clock) is the harder predictive-plasticity direction we built, measured, and set
-aside (§5).
+level: the embeddings (the "fold") are what the forward pass optimizes. By default the network
+weights are fixed. But *"weights that learn while alive"* is now available as an optional,
+transformer-faithful mechanism (§3.1) — off by default, and it is **load-bearing** when on.
+
+### 3.1 Optional plasticity: weights that learn while alive (fast-weight linear attention)
+
+Biology adapts within a life not by changing the laws of physics but by changing **coupling
+strengths** — synaptic plasticity, driven by activity. We implement the analog **without leaving
+the transformer**, using a fact that is easy to miss: a Hebbian outer-product weight update **is**
+the fast-weight form of linear attention [Schlag+2021; Schmidhuber1992]. Concretely, a plastic
+memory `W_fast` accumulates `W_fast ← γ·W_fast + η·(kᵀv)` — a Hebbian write (= a linear-attention
+memory write) with a decay `γ` that is a gated-linear-attention forget gate (homeostasis, the
+brake our earlier attempt lacked). It is read as `z·W_fast` and added to the message, so the
+interaction adapts with the history of activity. Crucially, **only these *fast* weights learn**;
+the *slow* weights that encode the physics — grounding, complementarity `M`, the energy `Φ` —
+stay **fixed**. So plasticity changes *couplings, not laws*: faithful to synaptic plasticity, not
+to evolution.
+
+This is behind a `plasticity` knob (default 0 → skipped, identical to the fixed-rule sim). When
+on, it is **load-bearing** — the property the earlier predictive-plasticity attempt (§5) failed:
+across three seeds, learning sustains aliveness ~0.038–0.045 while *freezing* the fast weights
+(reading them but stopping the learning) drops it to ~0–0.017. The gain comes entirely from the
+weights *actually learning*. The effect is modest and not yet rigorously characterized (one
+config, three seeds), but it is a genuine, reproducible, transformer-only instance of "weights
+that learn while alive."
 
 ## 4. What it does (measured)
 
@@ -187,8 +210,11 @@ is eyeballed.
   absolute truth; the absolute number should be read as "all gates pass, each factor moderate,"
   not as a percentage of life. A principled, adversarially-hardened aliveness measure is left as
   open future work.
-- **Weights are fixed.** The *state* is optimized, not the parameters. The full "learn while living"
-  thesis is unrealized (§5).
+- **Weights learn only optionally, and only the fast ones.** By default the parameters are fixed
+  (the *state* is optimized). The optional fast-weight plasticity (§3.1) makes *coupling* weights
+  learn while alive — load-bearing, but modest and not yet rigorously characterized; and the *slow*
+  physics weights deliberately never learn. "Full training = living" (all weights, a global
+  objective) remains unrealized.
 - **Soft boundaries.** Bounded-attention excluded volume is strong-but-not-hard; shapes strongly
   avoid overlap but there is no guaranteed wall (the price of strict transformer-only).
 - **Cohesion is finite-range.** One droplet holds at the default density; a larger box re-fragments.
@@ -215,6 +241,8 @@ dish you can open and watch.
 [Chan2019] Lenia — Biology of Artificial Life, arXiv:1812.05433 (Flow Lenia, arXiv:2212.07906).
 [Reynolds1987] Flocks, Herds and Schools, SIGGRAPH '87.
 [Ramsauer+2020] Hopfield Networks is All You Need, arXiv:2008.02217.
+[Schlag+2021] Linear Transformers Are Secretly Fast Weight Programmers, ICML (arXiv:2102.11174);
+[Schmidhuber1992] Learning to control fast-weight memories, Neural Computation 4(1).
 [Rao&Ballard1999] Predictive coding in the visual cortex, Nature Neuroscience 2(1).
 [Friston2010] The free-energy principle, Nature Rev. Neuroscience 11(2).
 [Battle+2016] Broken detailed balance at mesoscopic scales in living systems, Science 352:604.

@@ -16,6 +16,15 @@
 - **Architecture modifications** are explicitly permitted — new heads, new linear terms,
   new attention variants — *as long as the operation is attention / MLP / norm / structured
   linear.*
+- **Fast-weight plasticity** (weights that learn while alive): permitted, because a Hebbian
+  outer-product write `W_fast ← γ·W_fast + η·(kᵀv)` **is the fast-weight form of linear
+  attention** (Schlag, Irie, Schmidhuber 2021, "Linear Transformers Are Secretly Fast Weight
+  Programmers"; roots in Schmidhuber 1992). The decay `γ` is a gated-linear-attention forget
+  gate (homeostasis). So a plastic fast-weight memory read via `z·W_fast` is a linear-attention
+  head, not a bolted-on learning rule. **Constraint:** only the *fast* weights may learn; the
+  *slow* weights that encode the physics/laws (grounding `W_c`, complementarity `M`, the energy
+  `Φ`) stay **fixed** — changing those would be "learning different physics," which is out of
+  scope (that is evolution, across generations, not plasticity within a life).
 
 ## What is FORBIDDEN (breaks the requirement)
 
