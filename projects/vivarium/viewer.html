@@ -248,9 +248,11 @@ function pushKnobs(){
 }
 
 // double-buffer snapshots and interpolate between them, so motion is smooth even when
-// frames arrive irregularly over the network.
+// frames arrive irregularly over the network. The interp window ADAPTS to the measured poll
+// interval (EMA), so a late/early poll doesn't cause a freeze-then-jump.
 let PREV = null, CUR = null, CUR_T = 0;
-const POLL_MS = 120, INTERP_MS = 130;
+let pollDt = 100;                       // adaptive gap between polls (ms), smoothed
+const POLL_MS = 90;
 const lerp = (a,b,t)=> a + (b-a)*t;
 
 function draw(al){
@@ -320,15 +322,19 @@ function draw(al){
 }
 
 async function poll(){
+  const t0 = performance.now();
   try {
     const r = await fetch(BASE + '/state');
     const d = await r.json();
-    PREV = CUR; CUR = d; CUR_T = performance.now();
+    const now = performance.now();
+    if(CUR_T) pollDt = 0.7*pollDt + 0.3*Math.max(40, Math.min(400, now - CUR_T)); // EMA of real gap
+    PREV = CUR; CUR = d; CUR_T = now;
   } catch(e){}
-  setTimeout(poll, POLL_MS);
+  // keep a steady poll cadence regardless of how long the request took
+  setTimeout(poll, Math.max(0, POLL_MS - (performance.now() - t0)));
 }
 function render(){
-  const al = CUR ? Math.min(1, (performance.now() - CUR_T)/INTERP_MS) : 0;
+  const al = CUR ? Math.min(1, (performance.now() - CUR_T)/pollDt) : 0;
   draw(al);
   requestAnimationFrame(render);
 }

@@ -49,17 +49,12 @@ class Sim:
         self.paused = False
         self._stop = False
         self._alive = 0.0
-        self._buf: deque = deque(maxlen=40)  # rolling positions for cheap aliveness (no fork)
-        self._snap = self._build_snapshot()
+        self._buf: deque = deque(maxlen=40)  # rolling positions for aliveness
+        # Two dedicated threads keep the step loop hot: stepping is the ONLY thing on the critical
+        # path. The (expensive) aliveness runs on its own clock, and the snapshot is built lazily
+        # per poll — so neither ever hitches the frame cadence (fixes rendering lag).
         threading.Thread(target=self._run, daemon=True).start()
-
-    def _build_snapshot(self) -> dict:
-        snap = self.engine.snapshot()
-        snap["aliveness"] = self._alive
-        snap["pos_bound"] = self.cfg.pos_bound
-        snap["knobs"] = {k: float(getattr(self.engine, k)) for k in self.knob_names
-                         if hasattr(self.engine, k)}
-        return snap
+        threading.Thread(target=self._alive_loop, daemon=True).start()
 
     def set_knobs(self, updates: dict) -> None:
         with self.lock:
@@ -71,25 +66,39 @@ class Sim:
                         pass
 
     def _run(self) -> None:
+        """The hot loop: step + buffer positions, nothing else. Paced to a steady cadence."""
         dt = 1.0 / self.hz
-        n = 0
         while not self._stop:
+            t0 = time.perf_counter()
             if not self.paused:
                 with self.lock:
                     self.engine.step()
                     self._buf.append(self.engine.X[:, :2].copy())  # positions only (cheap)
-                    snap = self._build_snapshot()
-                self._snap = snap
-                n += 1
-                # cheap aliveness on the rolling window — NO fork, NO extra stepping (fixes lag).
-                if n % 20 == 0 and len(self._buf) >= 10:
+            # sleep the *remaining* time so the cadence is stable regardless of step cost
+            time.sleep(max(0.0, dt - (time.perf_counter() - t0)))
+
+    def _alive_loop(self) -> None:
+        """Aliveness on its own clock, off the step thread. Copies the buffer under the lock
+        (fast), then computes the (expensive) score without holding it."""
+        while not self._stop:
+            states = period = None
+            with self.lock:
+                if len(self._buf) >= 10:
                     states = np.stack(self._buf)
-                    period = getattr(self.engine, "L", None)  # min-image for the periodic torus
-                    self._alive = round(float(score(states, self.cfg, period)["aliveness"]), 3)
-            time.sleep(dt)
+                    period = getattr(self.engine, "L", None)
+            if states is not None:
+                self._alive = round(float(score(states, self.cfg, period)["aliveness"]), 3)
+            time.sleep(0.7)
 
     def state(self) -> dict:
-        return self._snap
+        """Build the snapshot on demand (only when the viewer polls) — off the step hot loop."""
+        with self.lock:
+            snap = self.engine.snapshot()
+        snap["aliveness"] = self._alive
+        snap["pos_bound"] = self.cfg.pos_bound
+        snap["knobs"] = {k: float(getattr(self.engine, k)) for k in self.knob_names
+                         if hasattr(self.engine, k)}
+        return snap
 
     def set_paused(self, paused: bool) -> None:
         self.paused = paused
@@ -108,7 +117,6 @@ class Sim:
             self.vel_reset()
             self._alive = 0.0
             self._buf.clear()
-            self._snap = self._build_snapshot()
 
     def vel_reset(self) -> None:
         if hasattr(self.engine, "vel"):

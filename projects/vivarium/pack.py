@@ -40,8 +40,8 @@ def _ln(X):
 
 
 class PackEngine:
-    def __init__(self, cfg, seed, ablate="none", repel=0.15, attract=0.35, skew=1.0, morph=0.5,
-                 momentum=0.7, speed=1.0, maxvel=0.25, cohesion=0.15):
+    def __init__(self, cfg, seed, ablate="none", repel=0.15, attract=0.45, skew=1.2, morph=0.7,
+                 momentum=0.85, speed=1.5, maxvel=0.25, cohesion=0.08):
         self.cfg = cfg
         self.seed = seed
         self.ablate = ablate
@@ -58,8 +58,9 @@ class PackEngine:
         self.cohere_lambda = 0.08           # broad distance kernel (long reach → crosses gaps)
         self.edge_radius = 0.6              # render: draw an edge only between agents this close
         #                                    (small → only touching pairs, not a dense mesh)
-        self.temperature = 1.0             # softmax temperature τ (Boltzmann kT): low → sharp
-        #   discrete bonds; high → uniform mean-field (collapse). score/τ before softmax.
+        self.temperature = 0.0             # softmax temperature τ (Boltzmann kT); guarded to 1e-2
+        #   in step. Default 0 = sharp (near-argmax) → strong non-reciprocity → SPLIT-AND-CHASE.
+        #   high → uniform mean-field (collapse/merge). score/τ before softmax.
         self.vel = np.zeros((cfg.N, POS_DIM))
         self.L = 2.0 * cfg.pos_bound
         rng = base_rng(seed + 1)
@@ -259,10 +260,10 @@ def main(argv=None):
     p.add_argument("--measure", action="store_true")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--ablate", choices=["none", "identity"], default="none")
-    p.add_argument("--repel", type=float, default=0.1)
-    p.add_argument("--attract", type=float, default=0.35)
-    p.add_argument("--skew", type=float, default=1.0)
-    p.add_argument("--morph", type=float, default=0.5)
+    p.add_argument("--repel", type=float, default=0.15)
+    p.add_argument("--attract", type=float, default=0.45)
+    p.add_argument("--skew", type=float, default=1.2)
+    p.add_argument("--morph", type=float, default=0.7)
     p.add_argument("--mom", type=float, default=0.85)
     p.add_argument("--cohesion", type=float, default=0.0)
     a = p.parse_args(argv)
