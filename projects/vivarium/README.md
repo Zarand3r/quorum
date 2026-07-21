@@ -20,6 +20,9 @@ count. Watchable live in the browser.
 - **`pack.py`** — dock-and-morph packing: attract (complementary fit) + repel (soft excluded
   volume) + cohesion (surface tension) + induced-fit morph, on a periodic torus. Motion from
   neighbour attention → interaction load-bearing by construction (identity ablation → frozen).
+  Optional **plasticity** (`plasticity` knob, default off): a Hebbian fast-weight memory — the
+  fast-weight form of linear attention (no backprop) — so the *coupling* weights **learn while
+  alive**, while the *physics* weights stay fixed. Load-bearing when on (paper §3.1).
 - **`pure.py`** — everything (move + morph) by one block with non-reciprocal attention
   `A+β(A−Aᵀ)`; higher aliveness, P6 measured-positive (not by-construction).
 - **`engine.py`** — legacy force-based engine (NOT transformer-only; kept for history).
@@ -40,7 +43,9 @@ transformer-only) · `signalling.md`, `m2_collapse.md` (the honest negative resu
 `related_work.md`, `two_tracks.md`, `global_vs_local.md`.
 
 ## Honest status
-Measured aliveness is modest (~0.05–0.3 on [0,1]); the network **weights are fixed** (the *state*
-is optimized, not the parameters — "weights that learn while alive" is unrealized). It is a
-demonstration and a discipline (measured-not-rewarded aliveness that repeatedly caught illusory
-emergence), not a claim of strong artificial life.
+Measured aliveness is modest (packing droplet ~0.06; pure-attention variant ~0.26–0.42 on [0,1]).
+By default the network weights are fixed (the *state* is optimized); the optional fast-weight
+**plasticity** makes *coupling* weights learn while alive — load-bearing but modest, and the *slow*
+physics weights never learn. It is a demonstration and a discipline (measured-not-rewarded aliveness
+that repeatedly caught illusory emergence — and has itself needed correction), not a claim of strong
+artificial life. Aliveness measurement is left as an open problem.

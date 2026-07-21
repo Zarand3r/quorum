@@ -98,6 +98,13 @@ class Sim:
         snap["pos_bound"] = self.cfg.pos_bound
         snap["knobs"] = {k: float(getattr(self.engine, k)) for k in self.knob_names
                          if hasattr(self.engine, k)}
+        # live plasticity readout: ‖W_fast‖ shows how much has been learned (0 → grows → plateaus).
+        # The matrix itself (small) is sent only when plasticity is on, for the live heatmap.
+        if hasattr(self.engine, "W_fast"):
+            wf = self.engine.W_fast
+            snap["plast_norm"] = round(float(np.linalg.norm(wf)), 3)
+            if getattr(self.engine, "plasticity", 0.0) > 0.0:
+                snap["plast_w"] = [[round(float(x), 3) for x in row] for row in wf]
         return snap
 
     def set_paused(self, paused: bool) -> None:
@@ -151,7 +158,9 @@ class Handler(BaseHTTPRequestHandler):
         elif path.endswith("/resume"):
             sim.set_paused(False)
         elif path.endswith("/restart"):
-            sim.restart()
+            from urllib.parse import parse_qs, urlparse
+            same = "same" in parse_qs(urlparse(self.path).query)
+            sim.restart(seed=sim.seed if same else None)  # same seed → replay identical run
         elif path.endswith("/set"):
             from urllib.parse import parse_qs, urlparse
             q = parse_qs(urlparse(self.path).query)

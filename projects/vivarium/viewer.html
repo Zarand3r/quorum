@@ -47,17 +47,25 @@
     <span>tick <b id="tick">0</b></span>
     <span>agents <b id="n">0</b></span>
     <span>aliveness <b id="alive">–</b></span>
+    <span id="learnedwrap" style="display:none">learned ‖W‖ <b id="learned">–</b></span>
     <button onclick="post('/pause')">pause</button>
     <button onclick="post('/resume')">resume</button>
+    <button onclick="post('/restart?same=1')">restart (same seed)</button>
     <button onclick="post('/restart')">restart (new seed)</button>
     <label style="color:#94a3b8"><input type="checkbox" id="showedges" checked> binding lines</label>
   </div>
   <canvas id="c" width="720" height="720"></canvas>
+  <div id="fwwrap" style="display:none; text-align:center; margin-top:8px; color:#94a3b8; font-size:11px">
+    fast-weight memory W_fast (learning live · Hebbian, no backprop)<br>
+    <canvas id="fw" width="196" height="196" style="margin-top:4px; border:1px solid #1e293b; image-rendering:pixelated; width:140px; height:140px"></canvas>
+  </div>
   <div id="knobs"></div>
   <div class="note">Each agent is one token; it moves and morphs by attention over its local
-  neighbours. <span style="color:#fbbf24">Amber lines</span> = each agent's strongest
-  complementary-fit <i>binding</i> (the actual attention the transformer computes; brighter =
-  stronger). Interaction is load-bearing — with no neighbours an agent cannot move. Aliveness is
+  neighbours. Blob <b>colour = spikiness</b> (<span style="color:#4da3ff">blue</span> smooth →
+  <span style="color:#ff5a5a">red</span> spiky), changing live as shapes morph.
+  <span style="color:#fbbf24">Amber lines</span> = each agent's strongest complementary-fit
+  <i>binding</i> (the actual attention the transformer computes; brighter = stronger). Interaction
+  is load-bearing — with no neighbours an agent cannot move. Aliveness is
   <i>measured, never optimized</i>.</div>
 
   <div id="arch">
@@ -132,11 +140,23 @@
         a non-gradient <b>skew flux</b> <code>zJ</code> so it never settles —
         <code>ẋ = −D∇Φ + J</code>, the potential-flux form of a living, dissipative system.
         <b>So there IS a thermodynamic objective</b> (Φ); the inference relaxing it is the living.
-        <br><br><b>Honest caveat:</b> in this engine the network <b>weights are fixed</b> — what is
-        optimized is the <i>state</i> (the embeddings / the fold), not the parameters. The full
-        <i>“weights that learn while alive”</i> (training = living, one clock) is the harder
-        predictive-plasticity direction we tried and set aside. Aliveness above is measured, never
-        fed back (measure-don't-reward).</div>
+        <br><br><b>State vs weights:</b> by default the network <b>weights are fixed</b> (the physics
+        /laws) and only the <i>state</i> (the embeddings / the fold) is optimized. Aliveness above is
+        measured, never fed back (measure-don't-reward).</div>
+      </div>
+
+      <div class="abox" style="margin-top:10px; border-color:#7c3aed">
+        <div class="t" style="color:#a78bfa">plasticity — weights that learn while alive (Hebbian, NO backprop)</div>
+        <div class="muted">Turn up the <b>plasticity</b> slider and a plastic memory <code>W_fast</code>
+        (the heatmap under the dish) <b>learns while the sim runs</b> — you watch <code>‖W‖</code> grow
+        from 0. <b>How it learns:</b> a local <b>Hebbian outer-product</b> write
+        <code>W_fast ← γ·W_fast + η·(kᵀv)</code> — no loss, no gradient, <b>no backprop</b> — which is
+        exactly the <b>fast-weight form of linear attention</b> (Schlag+2021; Schmidhuber 1992). The
+        decay <code>γ</code> is a gated-linear-attention forget gate (homeostasis). It's read as
+        <code>z·W_fast</code> into the message, so the <i>interaction</i> adapts with the history of
+        activity. Only the <b>fast</b> weights learn; the <b>slow</b> physics weights stay fixed →
+        <b>plasticity changes couplings, not laws</b> (faithful to synaptic plasticity, not evolution).
+        It is <b>load-bearing</b>: freezing the learning removes its aliveness gain.</div>
       </div>
     </div>
   </div>
@@ -149,6 +169,33 @@ const W = cv.width, H = cv.height;
 const BASE = location.pathname.replace(/\/(index\.html)?$/, '');
 
 function post(path){ fetch(BASE + path, {method:'POST'}); }
+
+// live plasticity: the "learned ‖W‖" readout + a heatmap of the fast-weight memory as it learns.
+const fwCtx = document.getElementById('fw').getContext('2d');
+function drawFastWeights(s){
+  const on = s.plast_w != null;
+  document.getElementById('learnedwrap').style.display = (s.plast_norm!=null) ? '' : 'none';
+  document.getElementById('fwwrap').style.display = on ? '' : 'none';
+  if(s.plast_norm!=null){
+    const L = document.getElementById('learned');
+    L.textContent = (+s.plast_norm).toFixed(2);
+    L.style.color = s.plast_norm > 0.05 ? '#a78bfa' : '#64748b';   // purple once it has learned
+  }
+  if(!on) return;
+  const M = s.plast_w, n = M.length;
+  const fw = document.getElementById('fw');
+  if(fw.width !== n){ fw.width = n; fw.height = n; }   // internal grid = matrix; CSS scales it up
+  let mx = 1e-6; for(const row of M) for(const v of row) mx = Math.max(mx, Math.abs(v));
+  const img = fwCtx.createImageData(n, n);
+  for(let i=0;i<n;i++) for(let j=0;j<n;j++){
+    const v = M[i][j]/mx, o = 4*(i*n+j);   // diverging: +ve → purple, −ve → teal
+    img.data[o]   = v>0 ? 40+180*v : 20;
+    img.data[o+1] = v>0 ? 20 : 30-40*v;
+    img.data[o+2] = v>0 ? 60+140*v : 60-120*v;
+    img.data[o+3] = 255;
+  }
+  fwCtx.putImageData(img, 0, 0);
+}
 
 // network geometry diagram — actual tensor shapes from the engine
 function renderArch(dims){
@@ -265,6 +312,7 @@ function draw(al){
   ae.style.color = s.aliveness > 0.02 ? '#34d399' : '#f59e0b';
   buildKnobs(s.knobs);
   renderArch(s.dims);
+  drawFastWeights(s);
 
   const N = s.tokens.length;
   const canInterp = PREV && PREV.tokens.length === N;
@@ -292,7 +340,12 @@ function draw(al){
 
   for(let idx=0; idx<N; idx++){
     const c = s.tokens[idx].c, K = c.length/2;
-    const hue = (idx*47)%360;
+    // colour by SPIKINESS: k-weighted high-harmonic power (higher harmonics = spikier). A few
+    // extra mults per token, reusing coefficients already in hand — no extra data/passes.
+    let spik = 0;
+    for(let k=1;k<=K;k++){ spik += k*(c[2*(k-1)]*c[2*(k-1)] + c[2*(k-1)+1]*c[2*(k-1)+1]); }
+    const t = Math.max(0, Math.min(1, (spik - 4)/14));
+    const hue = 210*(1 - t);          // smooth → blue, spiky → red (changes as it morphs)
     ctx.beginPath();
     const STEP = 24;
     for(let m=0; m<=STEP; m++){
