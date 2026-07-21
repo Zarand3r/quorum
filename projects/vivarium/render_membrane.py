@@ -137,10 +137,15 @@ def main(argv=None):
     p.add_argument("--lam", type=float, default=0.6)
     p.add_argument("--diag", action="store_true")
     p.add_argument("--zoom", action="store_true")
+    p.add_argument("--rod", action="store_true", help="render the 2-bead rod-lipid engine instead")
     a = p.parse_args(argv)
-    e = MembraneEngine(a.seed, N=a.N, water_frac=a.water, beta=a.beta, ga=a.ga, gr=a.gr, gc=a.gc,
-                       gi=a.gi, kappa=a.kappa, torque=a.torque, nematic=a.nematic, momentum=a.mom,
-                       dist_lambda=a.lam, temp=a.temp, anneal=a.anneal)
+    if a.rod:
+        from lipid_rod import RodEngine
+        e = RodEngine(a.seed, N=a.N, water_frac=a.water)
+    else:
+        e = MembraneEngine(a.seed, N=a.N, water_frac=a.water, beta=a.beta, ga=a.ga, gr=a.gr, gc=a.gc,
+                           gi=a.gi, kappa=a.kappa, torque=a.torque, nematic=a.nematic, momentum=a.mom,
+                           dist_lambda=a.lam, temp=a.temp, anneal=a.anneal)
     for _ in range(a.ticks):
         e.step()
     if a.diag:

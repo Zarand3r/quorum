@@ -177,10 +177,15 @@ def _cfg_from(a):
 
 def probe(a):
     e = MembraneEngine(a.seed, **_cfg_from(a))
-    print(" tick    S    side  sheet  clusters   (order S→1; side-by-side→1; one band → sheet≫1, clusters→1)")
+    lip = (e.species == LIPID)
+    print(" tick    S    side  sheet  clust   speed   drift   (drift≈speed → whole band STREAMS)")
     for _ in range(0, a.ticks + 1, a.every):
         m = e.measure()
-        print(f"{e.t:6d}  {m['S']:.3f}  {m['side']:.3f}  {m['sheetness']:5.2f}   {m['n_lipid_clusters']:3d}")
+        v = e.vel[lip]
+        speed = float(np.mean(np.linalg.norm(v, axis=1)))       # mean per-lipid speed
+        drift = float(np.linalg.norm(v.mean(0)))                # net centre-of-mass drift
+        print(f"{e.t:6d}  {m['S']:.3f}  {m['side']:.3f}  {m['sheetness']:5.2f}  {m['n_lipid_clusters']:3d}   "
+              f"{speed:.4f}  {drift:.4f}")
         for _ in range(a.every):
             e.step()
 

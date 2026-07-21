@@ -112,6 +112,15 @@ py_binary(
 )
 
 py_binary(
+    name = "lipid_rod",
+    srcs = ["lipid_rod.py"],
+    main = "lipid_rod.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
+py_binary(
     name = "serve_membrane",
     srcs = ["membrane_server.py"],
     main = "membrane_server.py",
