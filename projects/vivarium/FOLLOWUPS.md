@@ -1,139 +1,257 @@
 # vivarium — followups (reasoning-only backlog)
 
-Open directions to explore, reasoned through but **not implemented**. Every one is constrained to
-respect the project's hard requirements:
+Open directions, reasoned through but **not implemented**. Each respects the hard requirements:
 
 - **Strict transformer-only** — every dynamical op is attention / MLP / LayerNorm / structured
-  linear (see `design/HARD_REQUIREMENT.md`). No force kernels, no energy ledgers, no global terms.
+  linear (`design/HARD_REQUIREMENT.md`). No force kernels, energy ledgers, or global terms.
 - **Fixed token count N** — no reproduction / variable-length tokens.
 - **Measure, don't reward** — aliveness is observed, never fed into the update.
-- **Fixed physics, plastic couplings** — the laws (grounding, complementarity `M`, energy `Φ`)
-  stay fixed; only fast/coupling weights may learn.
+- **Fixed physics, plastic couplings** — the laws (grounding, `M`, energy `Φ`) stay fixed; only
+  fast/coupling weights may learn.
+
+---
+
+## 0. A better aliveness measure (the current one is distrusted — for good reason)
+
+### The problem (observed, not hypothetical)
+The current score `gate_finite · gate_spread · gate_motion · coherence · structure · deformation`
+is a **hand-tuned product** measuring one narrow thing: *coordinated morphing motion in a velocity
+band, with rigid drift and rotation subtracted.* It **disagrees with informed visual judgment** —
+genuinely interesting, alive-looking behaviour (split-and-chase pursuit, blobs forming and
+splitting) scores ~0. The honest verdict: the metric is a decent **"definitely dead" filter**
+(freeze / collapse / blow-up / drift-fakes-interaction) but a poor **"how alive / how interesting"
+ruler**. A single hand-designed scalar is the *wrong shape* for aliveness, and it should not
+overrule the eye on the non-degenerate regimes.
+
+### The epistemic fix (the most important part)
+**Flip the ground truth: informed human judgment is the *calibration target*, not the thing to be
+overruled.** A better measure earns trust by *correlating* with "this looks alive/interesting" on a
+labelled set of clips — it does not assert authority over the eye. Concretely: collect a small
+labelled corpus from our own runs (alive / dead / interesting / boring), and **select and validate
+measures by how well they match the labels.** Whatever correlates is kept; whatever doesn't is
+discarded *even if it is "principled."* This inverts the whole session's stance ("trust the
+ungameable metric over the eye"), which was wrong for the rich regimes.
+
+### Design principles for the replacement
+- **Principled**, grounded in a *theory* of life (thermodynamic / information / complexity) — not
+  hand-set thresholds.
+- **Multi-dimensional** — a **profile (vector)**, not one scalar. Life is off-equilibrium *and*
+  responsive *and* complex *and* self-maintaining; a product collapses exactly the distinctions
+  that matter (and is fragile — one low factor zeros it).
+- **Parameter-light / self-calibrating** — few hand constants.
+- **Validated against the eye** (above), and **read-only** (measure-don't-reward preserved).
+
+### Candidate axes (ranked by: principled + matches-eye + computable)
+1. **Off-equilibrium — entropy production / broken detailed balance.** *The* physics-of-life axis:
+   living matter breaks detailed balance and sustains a probability current (Battle+2016); a
+   gradient system settles (dead). Measure via broken-detailed-balance area loops in a
+   coarse-grained phase space, or entropy production from forward-vs-time-reversed trajectory
+   probabilities. Matches the eye (a chase *is* off-equilibrium); principled; connects directly to
+   the "transformer = active matter" claim (§3.1 of the paper / `potential_flux.md`).
+2. **Responsiveness / agency — inter-agent mutual information & transfer entropy.** Do agents carry
+   information about each other (MI)? Does A's past predict B's future beyond B's own past
+   (transfer entropy = *directed* influence — who drives whom)? This captures the "they're reacting
+   to / chasing each other" that the eye reads, and is the *principled* form of "interaction is
+   load-bearing" (replacing the ablation heuristic with an information measure).
+3. **Complexity / edge-of-chaos — statistical complexity & trajectory compressibility.** Life sits
+   between crystal (too ordered → trivially compressible) and gas (too random → incompressible);
+   statistical complexity (Crutchfield) peaks in between, and a compression ratio (Lempel-Ziv) of
+   the coarse trajectory is a cheap proxy. Captures "interesting." Lyapunov ≈ 0 (already computed)
+   is the cheapest edge-of-chaos proxy.
+4. **Self-maintenance / homeostasis — perturbation recovery.** Kick the system; does it *recover*
+   its organization (cluster structure, spectral distribution)? Regeneration is a strong, distinct
+   life signature (the headline of Growing-NCA). Cheap to run: perturb a fork, measure return.
+5. **Open-endedness / novelty — non-saturating state-space exploration.** Does it keep visiting new
+   regions of behaviour over long runs, or cycle/settle? Rate of novel-region discovery; does it
+   plateau (settled) or persist (open-ended)?
+
+### What to actually build
+Report a **profile over these axes**, validate it against the labelled clip set, and only *then*
+consider a scalar (a validated combination — or just keep the profile). **Prioritise #1 (entropy
+production) and #2 (mutual information)**: both principled, both match the eye, both feed the deeper
+scientific claims (off-equilibrium activity; agency/responsiveness). This replaces "trust the
+hand-tuned gate product" with "measure the physics and the information flow, and confirm they match
+what a human sees." The old gate product survives only as a fast *dead-regime filter*.
 
 ---
 
 ## 1. Variable / dynamic shape complexity (variable number of curves-spikes)
 
 ### Where we are
-`n_harmonics = 3` → `shape_dim = 6`, contour `r(θ) = R₀ + Σ_{k=1}^{3} c_k cos kθ + s_k sin kθ` →
-up to ~3 lobes/spikes. The spike **count is already emergent** (0–3, from which coefficients
-dominate) and **already dynamic** (it's what the spikiness colouring shows) — but the **maximum is
-capped at 3**, and every agent has the same budget.
-
-### The question
-Can blobs have a **variable, dynamic** number of curves/spikes — some smooth, some highly
-featured, changing over time and differing across agents?
+`n_harmonics = 3` → `shape_dim = 6` → up to ~3 lobes; the spike count is already emergent (0–3) and
+dynamic, but **capped at 3** and identical budget for every agent.
 
 ### Faithful mechanisms
-- **(a) Bigger harmonic budget — simplest.** Raise `K` (e.g. 6–10). Blobs can then express up to
-  `K` spikes; the *effective* number active per agent **emerges** from the morph concentrating or
-  spreading spectral power. So "variable spike count" is emergent, not hard-coded. Fully faithful
-  (still the grounded contour, still attention/MLP). **Constraint:** the embedding size stays
-  *uniform* across agents (same as fixed-N) — variability is in *expression*, not channel count.
-- **(b) Spectral gating.** An attention/MLP head that modulates *which* harmonics are active
-  (gates the shape channels) from the agent's state / neighbourhood → agents can "grow" or "shed"
-  spikes dynamically. This is (a) + a learned concentration mechanism; the existing morph already
-  does a weak version.
-- **(c) NOT faithful:** literally different channel counts per agent (variable-size tokens) —
-  breaks the uniform-token structure, exactly as reproduction breaks fixed-N. Avoid. Make the
-  count variable in *expression*, never in *dimensionality*.
+- **(a) Bigger harmonic budget** (raise `K`): blobs can express up to `K` spikes; the *effective*
+  count emerges from the morph concentrating/spreading spectral power. Faithful. Constraint:
+  embedding size stays **uniform** (variability in *expression*, not dimensionality — variable
+  channel count would break uniform tokens, like reproduction breaks fixed-N).
+- **(b) Spectral gating**: an attention/MLP head that modulates *which* harmonics are active → agents
+  grow/shed spikes dynamically (the morph already does a weak version).
 
-### Why it might be genuinely interesting (not just prettier)
-- **Finer binding specificity.** More harmonics → finer lock-and-key complementarity → more
-  *selective, specific* bonds (richer molecular recognition) vs the coarse 3-scale fit now.
-- **Agent differentiation / specialization.** If agents settle into different spectral
-  complexities (spiky specialists vs smooth generalists), emergent **types** appear — which feeds
-  cell-sorting / demixing / fission (§2).
-- **Higher-dimensional, harder-to-settle morph.** More shape DOF → richer conformational dynamics
-  → possibly *more sustained* morphing (more room to avoid settling — directly relevant to the
-  perpetual-aliveness problem).
-- **Biologically faithful:** real surfaces have variable, dynamically exposed/hidden binding-site
-  multiplicity (folding, allostery).
+### Deeper: why this matters more than it looks
+- **LayerNorm conserves total spectral power**, so raising `K` alone spreads power thin and the high
+  harmonics wash out. The real lever is **adaptive concentration** — a per-harmonic scale (fixed or
+  gated) that lets an agent *commit* power to specific frequencies. Without it, more `K` is cosmetic;
+  with it, agents can specialise their surface.
+- **Bounded shape space is a hidden ceiling on open-endedness.** `K=3` → a *bounded* vocabulary of
+  shapes → a bounded space of possible bindings → **bounded novelty**. Open-ended ALife needs an
+  unbounded (or growing) space of forms; capped harmonics quietly forecloses it. Variable complexity
+  is a *prerequisite* for open-ended shape evolution, not a garnish.
+- **It is the substrate for emergent *types*.** More harmonics → finer, more distinguishable keys →
+  agents can differentiate. **Measurable prediction:** at higher `K`, the across-agent distribution
+  of spectral complexity should become *multimodal* (distinct types) rather than unimodal — and
+  emergent types are exactly what powers type-based fission / cell sorting (§2).
+- **Finer binding specificity** (high-frequency complementarity = specific lock-and-key) → selective,
+  specific bonds rather than the coarse 3-scale fit — the difference between "everything sticks to
+  everything" and "specific recognition."
 
 ### Honest caveats
-- **LayerNorm normalizes total shape power**, so high harmonics can wash out — likely need
-  per-harmonic scaling / a k-weighting so high-frequency features aren't suppressed.
-- More dims → harder to tune (small compute cost at N=64).
-- Whether variable complexity yields *measurably* richer emergence (vs. cosmetic) is empirical —
-  **measure it**: spectral diversity across agents, and whether spectral complexity correlates
-  with binding selectivity or with sustained aliveness.
+More dims → harder to tune; whether variable complexity yields *measurably* richer emergence (vs
+prettier) must be tested — measure spectral diversity across agents and whether complexity
+correlates with binding selectivity and with the aliveness *profile* (§0), not just eyeballed.
 
 ---
 
 ## 2. Blob fission (blobs that split apart)
 
-### The key distinction (resolves "does it need reproduction?")
-- **Blob = aggregate of many agents.** "A blob splits" = the fixed set of agents **redistributes**
-  into two clusters. N stays fixed → transformer-only ✓, life-faithful (a colony / tissue /
-  droplet dividing).
-- **Agent/token splits into two** = literal replication → N **grows** → requires dynamic N →
-  **NOT transformer-only.** Only needed if the population/mass must grow.
-- **So blob fission does NOT require reproduction.** Reproduction is a different, out-of-scope
-  thing (a growing lineage).
+### The distinction that resolves "does it need reproduction?"
+- **Blob = aggregate of agents.** "A blob splits" = the fixed agents **redistribute** into two
+  clusters. N fixed → transformer-only ✓, life-faithful (a colony / tissue / droplet dividing).
+- **Agent/token splits** = replication → N grows → **not** transformer-only. Only needed if the
+  *population/mass* must grow. **So blob fission does NOT require reproduction.**
 
-### Faithful, life-faithful mechanisms (all fixed-N)
-1. **Finite-range cohesion instability — already latent.** Cohesion is a broad but *finite-range*
-   attention; we observed "at 2× box the fragments re-fragment." A blob **larger than the cohesion
-   range is intrinsically unstable to splitting** (the ends stop feeling each other). Let blobs
-   grow past that range → they *want* to divide. Rayleigh–Plateau-like; pure attention.
-2. **Type-based differential adhesion (cell sorting).** Types = embedding channels; adhesion =
-   content attention on shape complementarity. Two sub-populations complementary *within* but not
-   *between* → the blob **demixes and splits by type** (Steinberg's differential adhesion). Pure
-   attention; deeply faithful.
-3. **Morph-driven bond-breaking (induced *misfit*).** Shapes morph (skew + MLP); if a subset
-   morphs to become mutually complementary but *incompatible* with the rest, the blob **fractures
-   along that fault line** — the flip side of induced fit.
-4. **Oscillatory cohesion (aggregation–fragmentation cycles).** If binding strength oscillates
-   (skew already cycles the shape → binding), blobs merge / grow / split / repeat — *Dictyostelium*
-   streaming. The most dynamically alive.
-5. **Non-reciprocal chase splitting — we already OBSERVE this.** The split-and-chase default:
-   row-softmax + k-NN asymmetry → non-reciprocal forces tear a blob along the pursuit axis, and
-   momentum keeps the pieces chasing. Already present — fission driven by the non-conservative
-   flux `J`.
+### Faithful mechanisms (fixed-N)
+1. **Finite-range cohesion instability — already latent** (we saw "re-fragments in a 2× box"): a blob
+   larger than the cohesion range is intrinsically unstable to splitting (Rayleigh–Plateau-like).
+2. **Type-based differential adhesion** (cell sorting; Steinberg): sub-populations complementary
+   *within* but not *between* → demix and split.
+3. **Morph-driven bond-breaking** (induced *misfit*): a subset morphs incompatible with the rest →
+   fracture along the fault line.
+4. **Oscillatory cohesion** (aggregation–fragmentation cycles; *Dictyostelium*): binding strength
+   oscillates → merge/grow/split/repeat.
+5. **Non-reciprocal chase splitting — already observed** (split-and-chase): asymmetric forces tear a
+   blob along the pursuit axis; the fission *is* the flux `J`.
 
-### Promising next steps (faithful)
-- **Cleanest / most latent:** exploit the finite-range cohesion — arrange for blobs to grow past
-  the cohesion range so they **intrinsically split**, and add a mild type/morph fault line so
-  daughters are **viable** (they reconfigure and persist), not mere fragmentation. Most elegant
-  because we already have the seed (#1 + #3).
-- **Sharpen the chase-fission** we already see into clean **binary** fission (tune
-  non-reciprocity / momentum / cohesion).
-- **Metaball / field rendering** so merged vs split blobs read as single outlines — *rendering
-  only*, doesn't touch the dynamics, doesn't count against transformer-only.
-- **Measure it, don't eyeball:** a fission diagnostic — cluster count over time (single-linkage,
-  which `metrics_pack.py` already computes) + **conservation** (daughter areas ≈ parent area).
-  Fission = count 1→2 with area conserved; distinguish from *fragmentation* (death) by daughter
-  **viability** (each daughter sustains aliveness).
+### Deeper: fission vs fragmentation, and heredity without new tokens
+- **The crux is *viability*, not splitting.** Anything can fall apart (fragmentation = death). The
+  interesting thing is fission into **viable daughters** — each self-maintaining (cohesive,
+  persists), able to re-bind/grow, ideally carrying structure. A fission diagnostic must therefore
+  check *daughter viability* (each daughter independently sustains the aliveness *profile*, §0), not
+  just cluster-count 1→2.
+- **The profound reframe — heredity is information, not token creation.** If daughters *inherit* the
+  parent's learned state — its plastic couplings `W_fast`, its shape distribution — then **fission +
+  inheritance = a primitive reproduction of *information* on a fixed token pool.** Heredity is about
+  what is *transmitted and persists*, not about creating new tokens. This partially **dissolves the
+  "reproduction needs dynamic N" boundary**: you *can* have **selection and heredity at fixed N** if
+  what is selected is the *learned/shape state* rather than the token count — like a chemostat with
+  constant cell number but evolving genotypes, or memes spreading through a fixed population. Fixed N
+  caps *population* growth but **not informational evolution.** This is the faithful route to
+  Darwinian dynamics inside the constraint, and it is genuinely novel.
+
+### Promising next steps
+- Exploit finite-range cohesion (#1) + a type/morph fault line (#2/#3) for viable division; **measure
+  daughter viability** (each sustains the profile) and **conservation** (daughter areas ≈ parent).
+- Add **inheritance** (daughters carry `W_fast` / shape distribution) and ask whether *selection*
+  emerges (which daughter-types persist/spread) — the fixed-N Darwinian experiment.
+- **Metaball / field rendering** to see merged/split blobs as single outlines (rendering only).
 
 ### Honest boundary
-- Fixed-N fission **conserves total mass** — blobs split *and* can re-merge (an emulsion / a
-  closed cell population). Life-faithful for a *closed* system.
-- Open-ended **Darwinian reproduction** (a growing lineage) needs dynamic N → out of scope under
-  transformer-only. That is the one thing "division that adds mass" requires and that we cannot do
-  faithfully.
+Fixed-N fission *conserves mass* (blobs split and can re-merge — an emulsion / closed population);
+open-ended *mass-growing* reproduction needs dynamic N and is out of scope. But **informational**
+heredity/selection is *in* scope (above) — the interesting part survives the constraint.
 
 ---
 
-## 3. Other open threads (brief)
+## 3. Per-pair (relationship-specific) plasticity — from chemistry to society
 
-- **Per-pair (relationship-specific) plasticity.** Current plasticity is a *shared, global*
-  fast-weight (a self-morph modulation applied uniformly), **not per-neighbour** — it stores the
-  population's aggregate activity correlations, not "who I've bonded with." A Hebbian on the
-  *actual binding between specific agents* (strengthen the bond between two that bind) would be
-  per-neighbour, closer to classic synaptic plasticity, and still faithful (an attention memory
-  indexed by pair).
-- **Sustained (non-converging) learning.** The fast-weight matrix converges in ~50 ticks
-  (`τ = −1/ln γ`) because the activity statistics become stationary — so the "learning" is a
-  one-time adaptation, not life-long. Sustained learning needs **non-stationarity**: a drifting
-  drive, or genuine **co-adaptive complexity** (Red Queen / markets). See paper §3.1.
-- **Simple → complex learned rules (the big one).** Replace the Hebbian rule with progressively
-  richer *learned* interaction rules (predictive → strategic → model-based → agents that model
-  each other), toward markets/cultures where the rules perpetually co-adapt → *irreducible*
-  emergence. Paper §3.1.
-- **Aliveness metric is an open problem.** A validated heuristic, not a proven measure; corrected
-  twice already. Needs adversarial hardening (construct known-non-living flows, confirm rejection).
-  Paper §8.
+### Where we are
+Current plasticity is a **shared, global** fast-weight (a self-morph modulation applied uniformly);
+it stores the population's *aggregate* activity correlations, **not** "who I've bonded with." No
+memory of specific relationships.
 
-*See also:* [`paper/paper.md`](paper/paper.md), [`design/dynamics_zoo.md`](design/dynamics_zoo.md)
-(drives + what stays transformer-only), [`design/HARD_REQUIREMENT.md`](design/HARD_REQUIREMENT.md),
-[`RESEARCH_LOG.md`](RESEARCH_LOG.md).
+### The idea, deepened
+A Hebbian memory on the **edge** (specific pair), not the node: augment the attention logit with a
+learned per-pair term that strengthens with successful binding,
+`score_ij += β · m_ij`, `m_ij ← γ·m_ij + η·(binding_ij)`. This is **linear-attention memory indexed
+by pair** — transformer-native (attention *is* pairwise), O(N²) memory (fine at N=64), and
+homeostatic via `γ`. Faithful.
+
+**Why it's a phase change, not a tweak:** per-pair plasticity is the transition from **chemistry
+(aggregate couplings) to society (specific, persistent relationships).** It gives the substrate for
+*reciprocity, reputation, preferential attachment, and social networks* — none expressible with a
+shared global memory. It is the concrete first step toward the "human markets / culture" direction:
+markets and cultures are built on *specific, remembered, asymmetric relationships*, which require
+per-pair memory. Measurable: does a persistent, structured interaction graph emerge (stable
+partnerships, hubs) rather than a memoryless well-mixed soup?
+
+---
+
+## 4. Sustained (non-converging) learning — the Red Queen
+
+### The observation
+The fast-weight matrix **converges in ~50 ticks** (`τ = −1/ln γ`) because the activity statistics
+become stationary. So the "learning" is a one-time adaptation, not life-long. This is the
+learning-level version of "everything settles."
+
+### The deep reason, and the fix
+Hebbian *correlation* converges because correlations stabilise — it is chasing a **stationary
+target.** Sustained learning requires a **moving target**, and there are two faithful ways:
+- **External non-stationarity** — a drifting field so the statistics never settle (a band-aid: the
+  system adapts to the drift and re-converges relative to it).
+- **Co-adaptive complexity (the real answer) — Red Queen dynamics.** If agents *learn to
+  predict/exploit each other*, any effective strategy gets countered → perpetual arms race → the
+  target is never stationary because *my adaptation changes what you should model, which changes what
+  I should model.* This is **why markets never settle.** It requires the learning rule to be
+  **predictive/strategic**, not Hebbian-correlational — a correlational rule fixpoints; a predictive
+  one against an adapting opponent does not.
+- **Measurable signature of sustained learning:** `‖ΔW‖` does *not* decay to 0, and one agent's
+  *prediction error about another* plateaus **above** zero (the challenge stays hard) rather than →0
+  (solved/converged). This is a clean, principled "is it still learning?" test.
+
+---
+
+## 5. Simple → complex learned rules (the ladder — the most important direction)
+
+The paper (§3.1) conjectures that learned rules make emergence *irreducible*. The concrete,
+transformer-faithful **ladder of learning rules**, each a rung to climb and measure:
+
+- **Rung 0 (have it):** Hebbian fast-weight (correlational, converges).
+- **Rung 1:** predictive plasticity *done right* — the local rule reduces surprise about neighbours,
+  now *with* the homeostasis/anti-collapse we understand (a variance floor / decorrelation), which
+  the first attempt lacked.
+- **Rung 2:** strategic — the update responds to a *local* proxy for success (e.g. acquiring binding
+  partners). **Care:** the local objective must not secretly be the global aliveness reward
+  (measure-don't-reward); "acquire local bonds" is a legitimate local objective, "increase global
+  order" is not.
+- **Rung 3:** model-based — agents maintain a predictive model of *specific* others (needs per-pair
+  state, §3).
+- **Rung 4:** recursive — agents model each other's *models* (theory of mind), expressible as
+  attention over attention (meta-attention).
+
+**The measured spine (this is the profound experiment):** operationalise **irreducibility** as *the
+failure of any cheap surrogate to shortcut the macro-state* — train a fast predictor to skip ahead;
+if it succeeds, reducible; if error stays high regardless of surrogate capacity, irreducible. Then
+show a **measured transition** up the ladder: fixed rules → reducible; Hebbian → slightly less;
+predictive/strategic/co-adaptive → irreducible. Same substrate, one axis (rule complexity), a
+measured phase boundary. This is the "computed / irreducible emergence" result the parent programme
+has always wanted, finally measurable — and it directly tests the simple→complex thesis, with
+**markets** (perpetually co-adapting strategies) as the archetype at the top of the ladder.
+
+---
+
+## 6. Cross-cutting: the profound scientific framing
+
+The single most profound reframe these threads point at: **the transformer forward pass is active
+(living) matter — softmax row-normalisation is generically non-reciprocal, producing a
+non-conservative flux (broken detailed balance = the thermodynamic signature of life), and adding
+learned couplings drives a measurable reducible→irreducible transition.** It connects transformers,
+active-matter physics, non-equilibrium thermodynamics, and computational irreducibility. The
+measurable results that would establish it: (1) **entropy production** of the attention dynamics
+(§0.1) — attention is off-equilibrium *by construction*; (2) the **irreducibility transition** up
+the learning ladder (§5). Everything else here (better metric §0, shape openness §1, fission+heredity
+§2, per-pair society §3, Red Queen §4) supplies the ingredients and the measurements.
+
+*See also:* [`paper/paper.md`](paper/paper.md), [`design/potential_flux.md`](design/potential_flux.md)
+(the flux/entropy-production program), [`design/dynamics_zoo.md`](design/dynamics_zoo.md),
+[`design/HARD_REQUIREMENT.md`](design/HARD_REQUIREMENT.md), [`RESEARCH_LOG.md`](RESEARCH_LOG.md).
