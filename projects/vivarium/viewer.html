@@ -52,7 +52,9 @@
   <canvas id="c" width="720" height="720"></canvas>
   <div id="knobs"></div>
   <div class="note">Each agent is one token; it moves and morphs by attention over its local
-  neighbours. Interaction is load-bearing — with no neighbours an agent cannot move. Aliveness is
+  neighbours. <span style="color:#fbbf24">Amber lines</span> = each agent's strongest
+  complementary-fit <i>binding</i> (the actual attention the transformer computes; brighter =
+  stronger). Interaction is load-bearing — with no neighbours an agent cannot move. Aliveness is
   <i>measured, never optimized</i>.</div>
 
   <div id="arch">
@@ -188,14 +190,6 @@ function draw(al){
   }
 
   ctx.clearRect(0,0,W,H);
-  ctx.strokeStyle = 'rgba(56,189,248,0.18)'; ctx.lineWidth = 1;
-  ctx.beginPath();
-  const maxlen = W * 0.35;  // skip edges that span too far on screen (wrapped across the torus)
-  for(const [i,j] of s.edges){
-    if(Math.hypot(px[i]-px[j], py[i]-py[j]) > maxlen) continue;
-    ctx.moveTo(px[i],py[i]); ctx.lineTo(px[j],py[j]);
-  }
-  ctx.stroke();
 
   for(let idx=0; idx<N; idx++){
     const c = s.tokens[idx].c, K = c.length/2;
@@ -214,6 +208,17 @@ function draw(al){
     ctx.fillStyle = `hsla(${hue},65%,58%,0.92)`;   // solid, so packing/boundaries are visible
     ctx.strokeStyle = `hsla(${hue},70%,78%,1.0)`;
     ctx.lineWidth = 1.3; ctx.fill(); ctx.stroke();
+  }
+
+  // binding graph ON TOP: each agent's strongest complementary-fit attention (the real
+  // interaction the transformer computes), opacity ∝ attention weight. Amber = a bond.
+  const maxlen = W * 0.35;  // skip wrapped edges that would streak across the torus
+  ctx.lineWidth = 1.6;
+  for(const e of s.edges){
+    const i = e[0], j = e[1], w = e[2] ?? 0.5;
+    if(Math.hypot(px[i]-px[j], py[i]-py[j]) > maxlen) continue;
+    ctx.strokeStyle = `rgba(251,191,36,${Math.min(0.9, 0.25 + w)})`;
+    ctx.beginPath(); ctx.moveTo(px[i],py[i]); ctx.lineTo(px[j],py[j]); ctx.stroke();
   }
 }
 

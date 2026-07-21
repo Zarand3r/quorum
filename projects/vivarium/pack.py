@@ -97,20 +97,38 @@ class PackEngine:
         import copy
         return copy.deepcopy(self)
 
+    def _binding_edges(self):
+        """The REAL interaction the transformer computes: each agent's strongest complementary-fit
+        attention (A_fit) partner, with the attention weight. This is the honest 'who is binding to
+        whom' graph — not a proximity heuristic. Returns [[i, j, weight], ...] for meaningful bonds."""
+        C = self._contour()
+        delta, d2 = self._periodic_delta()
+        idx = self._neighbors(d2, self.cfg.n_neighbors)
+        mask = np.zeros_like(d2, dtype=bool)
+        np.put_along_axis(mask, idx, True, axis=1)
+        np.fill_diagonal(mask, False)
+        S_comp = (C @ (C @ self.M).T) / np.sqrt(self.tK)
+        score = np.where(mask, S_comp - self.cfg.dist_lambda * d2, -np.inf)
+        m = np.max(score, axis=1, keepdims=True)
+        m = np.where(np.isfinite(m), m, 0.0)
+        A = np.exp(score - m) * mask
+        den = A.sum(1, keepdims=True)
+        A = np.where(den > 0, A / np.where(den > 0, den, 1.0), 0.0)
+        top = np.argmax(A, axis=1)
+        edges = []
+        for i in range(self.cfg.N):
+            w = float(A[i, top[i]])
+            if w > 0.25:                     # only the meaningful bonds
+                edges.append([int(i), int(top[i]), round(w, 2)])
+        return edges
+
     def snapshot(self):
         pos = self.X[:, :POS_DIM]
         C = self._contour()
         tokens = [{"x": float(pos[i, 0]), "y": float(pos[i, 1]), "c": C[i].tolist()}
                   for i in range(self.cfg.N)]
-        # PROXIMITY edges: draw a line only between agents genuinely close (min-image distance <
-        # edge_radius), so lines reflect actual proximity and appear/disappear as agents move —
-        # NOT the fixed k-NN graph (which keeps k lines regardless of how far the neighbours drift).
-        _, d2 = self._periodic_delta()
-        iu = np.triu_indices(self.cfg.N, k=1)
-        r2 = self.edge_radius ** 2
-        edges = [[int(i), int(j)] for i, j in zip(iu[0], iu[1]) if d2[i, j] < r2]
         return {"status": "running", "tick": self.t, "n": self.cfg.N,
-                "tokens": tokens, "edges": edges}
+                "tokens": tokens, "edges": self._binding_edges()}
 
     def step(self):
         cfg = self.cfg
