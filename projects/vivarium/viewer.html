@@ -16,8 +16,10 @@
   .note { color: #64748b; margin-top: 6px; max-width: 720px; text-align: center; }
   #knobs { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
   #knobs label { display: flex; flex-direction: column; align-items: center; gap: 3px; color: #94a3b8; }
-  #knobs input[type=range] { width: 130px; accent-color: #34d399; }
+  #knobs input[type=range] { width: 140px; accent-color: #34d399; }
   #knobs b { color: #e2e8f0; }
+  #knobs label { width: 150px; }
+  .kdesc { color: #64748b; font-size: 10.5px; line-height: 1.3; text-align: center; margin-top: 2px; }
   #arch { max-width: 760px; margin-top: 14px; width: 100%; }
   #archtoggle { width: 100%; text-align: left; }
   #archbody { border: 1px solid #1e293b; border-top: none; border-radius: 0 0 6px 6px;
@@ -64,6 +66,10 @@
       <div class="muted">One weight-tied transformer block, iterated — each application is one
         frame. Strict transformer-only: every operation is attention / MLP / LayerNorm.</div>
 
+      <div class="muted" style="margin-top:12px">network geometry — actual tensor shapes:</div>
+      <div id="archgeo" style="overflow-x:auto"></div>
+
+
       <div class="abox tok"><span class="t">token xᵢ =</span>
         <span class="c-pos">position ·2</span>
         <span class="c-shape">shape / contour ·2K</span>
@@ -97,14 +103,21 @@
         <span class="muted">→ next frame</span></div>
 
       <div class="obj" style="margin-top:10px">
-        <div class="t">objective function — measured, never optimized</div>
-        <div class="muted">There is <b>no trained loss and no gradient descent</b> — this is a
-        fixed-rule dynamical system (the weights Wᵥ, MLP, J, M are fixed). What the local forces
-        <i>effectively descend</i> is a <b>packing / binding energy</b> — ↓ steric clash
-        <code>⟨Cᵢ,Cⱼ⟩</code>, ↑ complementary fit <code>⟨Cᵢ,M·Cⱼ⟩</code> — plus a non-gradient
-        skew term (<code>zJ</code>) that keeps it off-equilibrium so it never settles. The
-        <b>aliveness</b> readout above is a one-way measurement; it never feeds back into the
-        update (measure-don't-reward).</div>
+        <div class="t">objective &amp; physical law — living = inference = optimization</div>
+        <div class="muted">No separate train / infer / run phases: <b>each tick IS one transformer
+        forward pass</b>, so running the sim <i>is</i> the computation <i>is</i> the optimization —
+        no separation. The <b>physical law is baked into the grounded attention</b>: the dock score
+        <code>⟨Cᵢ, M·Cⱼ⟩</code> is a real <b>binding energy</b> (by Parseval, attention = contour
+        overlap). The dynamics descend a packing/binding free energy Φ (↓ steric clash
+        <code>⟨Cᵢ,Cⱼ⟩</code>, ↑ complementary fit <code>⟨Cᵢ,M·Cⱼ⟩</code>) driven off-equilibrium by
+        a non-gradient <b>skew flux</b> <code>zJ</code> so it never settles —
+        <code>ẋ = −D∇Φ + J</code>, the potential-flux form of a living, dissipative system.
+        <b>So there IS a thermodynamic objective</b> (Φ); the inference relaxing it is the living.
+        <br><br><b>Honest caveat:</b> in this engine the network <b>weights are fixed</b> — what is
+        optimized is the <i>state</i> (the embeddings / the fold), not the parameters. The full
+        <i>“weights that learn while alive”</i> (training = living, one clock) is the harder
+        predictive-plasticity direction we tried and set aside. Aliveness above is measured, never
+        fed back (measure-don't-reward).</div>
       </div>
     </div>
   </div>
@@ -117,6 +130,49 @@ const W = cv.width, H = cv.height;
 const BASE = location.pathname.replace(/\/(index\.html)?$/, '');
 
 function post(path){ fetch(BASE + path, {method:'POST'}); }
+
+// network geometry diagram — actual tensor shapes from the engine
+function renderArch(dims){
+  const el = document.getElementById('archgeo');
+  if(!dims || !el || el.dataset.done) return;
+  el.dataset.done = '1';
+  const {d,pos,shape,hidden,z,h,N,k} = dims;
+  const W=680;
+  const box=(x,y,w,hh,fill,stroke,label,sub)=>{
+    let s=`<rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="4" fill="${fill}" stroke="${stroke}"/>`;
+    s+=`<text x="${x+w/2}" y="${y+(sub?hh/2-1:hh/2+4)}" fill="#e2e8f0" text-anchor="middle" font-size="10.5">${label}</text>`;
+    if(sub) s+=`<text x="${x+w/2}" y="${y+hh/2+12}" fill="#94a3b8" text-anchor="middle" font-size="9">${sub}</text>`;
+    return s;
+  };
+  const arr=(x,y1,y2)=>`<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="#475569" marker-end="url(#ah)"/>`;
+  let s=`<svg width="${W}" height="326" viewBox="0 0 ${W} 326" font-family="monospace">`;
+  s+=`<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#475569"/></marker></defs>`;
+  const bx=24, bw=W-48, by=6, bh=30;
+  let x=bx;
+  const seg=(w,color,label)=>{ const px=bw*w/d;
+    s+=`<rect x="${x}" y="${by}" width="${px}" height="${bh}" fill="${color}" stroke="#0b0e13"/>`+
+       `<text x="${x+px/2}" y="${by+bh/2+4}" fill="#0b0e13" text-anchor="middle" font-size="10">${label}</text>`; x+=px; };
+  seg(pos,'#60a5fa',`pos ${pos}`); seg(shape,'#c084fc',`shape ${shape}`); seg(hidden,'#94a3b8',`hidden ${hidden}`);
+  s+=`<text x="${bx}" y="${by+bh+13}" fill="#64748b" font-size="9.5">token xᵢ ∈ ℝ^${d}  ·  ${N} agents  ·  contour Cᵢ = shape channels (ℝ^${shape}) = attention query</text>`;
+  const ay=74;  s+=arr(W/2, by+bh+17, ay);
+  s+=box(bx, ay, bw, 42, '#0f2036', '#1d4ed8',
+    `grounded local attention  ·  Q,K = Cᵢ ∈ ℝ^${shape}  ·  softmax over k=${k} neighbours`,
+    `dock ⟨Cᵢ, M·Cⱼ⟩ = contour overlap (Parseval)  →  A (${N}×${N}, local)`);
+  const my=144;  s+=arr(W/2, ay+42, my);
+  s+=box(bx, my, bw*0.44, 56, '#0e2a1e','#059669','position update (2-D)',
+    'attract + repel + cohesion heads: Δp = Σⱼ A·Δpⱼ');
+  const rx=bx+bw*0.5;
+  s+=box(rx, my, bw*0.5, 56, '#1a1836','#6366f1',`shape morph  z ∈ ℝ^${z}`,
+    'z ← LN(z + morph·A·zWᵥ + skew·zJ); z ← LN(z + MLP)');
+  const qy=214;  s+=`<text x="${rx}" y="${qy-3}" fill="#64748b" font-size="9.5">fixed weights:</text>`;
+  const mat=(mx,label,dim)=>box(mx,qy,`${(bw*0.5-20)/3}`,32,'#111827','#334155',label,dim);
+  const mw=(bw*0.5-20)/3;
+  s+=mat(rx,'Wᵥ',`${z}×${z}`)+mat(rx+mw+10,'MLP',`${z}→${h}→${z}`)+mat(rx+2*(mw+10),'J skew',`${z}×${z}`);
+  s+=arr(W/2, my+56, 276);
+  s+=box(bx, 276, bw, 26, '#111827','#334155','token xᵢ′  →  next frame','');
+  s+='</svg>';
+  el.innerHTML=s;
+}
 
 // architecture panel toggle
 const archBody = document.getElementById('archbody');
@@ -132,19 +188,36 @@ archTog.addEventListener('click', () => {
 let knobsBuilt = false, setTimer = null;
 const KMAX = {noise:1.5, spin:1.5, nonrecip:3, scale:1, rd:2,
               repel:0.6, attract:1, cohesion:0.8, skew:2, morph:1.5, momentum:0.98, speed:1.5};
+const KDESC = {
+  repel:    "soft excluded volume — push apart from clashing/overlapping neighbours (boundaries)",
+  attract:  "pull toward complementary-fit ‘lock-and-key’ neighbours (interlocking)",
+  cohesion: "surface tension — pull toward the neighbourhood centroid; merges fragments into one droplet",
+  skew:     "rotational drive on the shape (z·J) — keeps shapes cycling so the packing never freezes",
+  morph:    "induced fit — how strongly an agent reshapes its blob to fit its binding partners (0 = shape morphs on its own)",
+  momentum: "position inertia / glidiness — steady speed ≈ force/(1−momentum); higher = smoother, faster drift",
+  speed:    "viewing speed — slows/quickens the whole sim (per-step displacement multiplier)",
+  noise:    "seeded Langevin randomness — jitter and symmetry-breaking",
+  spin:     "skew rotation on the embedding — rotational anti-collapse drive",
+  nonrecip: "non-reciprocal attention A+β(A−Aᵀ) — circulation that resists collapse",
+  scale:    "residual gain — overall motion strength per step",
+  rd:       "differential-rate diffusion of the shape field (Turing-style coupling)",
+};
 function buildKnobs(k){
   if(knobsBuilt || !k) return;
   const box = document.getElementById('knobs'); box.innerHTML = '';
   for(const [name,val] of Object.entries(k)){
     const max = KMAX[name] ?? Math.max(1, val*2);
     const lab = document.createElement('label');
+    lab.title = KDESC[name] || '';
     const cap = document.createElement('span'); cap.textContent = name;
     const inp = document.createElement('input');
     inp.type='range'; inp.min=0; inp.max=max; inp.step=max/100; inp.value=val; inp.dataset.knob=name;
     const b = document.createElement('b'); b.textContent=(+val).toFixed(2);
     inp.addEventListener('input', ()=>{ b.textContent=(+inp.value).toFixed(2);
       clearTimeout(setTimer); setTimer=setTimeout(pushKnobs, 80); });
-    lab.append(cap, inp, b); box.appendChild(lab);
+    const desc = document.createElement('div'); desc.className = 'kdesc';
+    desc.textContent = KDESC[name] || '';
+    lab.append(cap, inp, b, desc); box.appendChild(lab);
   }
   knobsBuilt = true;
 }
@@ -167,6 +240,7 @@ function draw(al){
   ae.textContent = (s.aliveness ?? 0).toFixed(3);
   ae.style.color = s.aliveness > 0.02 ? '#34d399' : '#f59e0b';
   buildKnobs(s.knobs);
+  renderArch(s.dims);
 
   const N = s.tokens.length;
   const canInterp = PREV && PREV.tokens.length === N;

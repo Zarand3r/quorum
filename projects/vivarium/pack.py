@@ -128,7 +128,11 @@ class PackEngine:
         tokens = [{"x": float(pos[i, 0]), "y": float(pos[i, 1]), "c": C[i].tolist()}
                   for i in range(self.cfg.N)]
         return {"status": "running", "tick": self.t, "n": self.cfg.N,
-                "tokens": tokens, "edges": self._binding_edges()}
+                "tokens": tokens, "edges": self._binding_edges(),
+                "dims": {"d": self.cfg.d, "pos": POS_DIM, "shape": self.cfg.shape_dim,
+                         "hidden": self.cfg.hidden_dim, "z": self.cfg.z_dim,
+                         "h": _MLP_H * self.cfg.z_dim, "N": self.cfg.N,
+                         "k": self.cfg.n_neighbors}}
 
     def step(self):
         cfg = self.cfg
