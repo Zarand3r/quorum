@@ -79,6 +79,10 @@
           <code>A_rep = softmax_j( ⟨Cᵢ, Cⱼ⟩ − λ‖Δp‖² )</code><br>
           <span class="muted">direct overlap (shapes in the same space) → move <b>away</b> from
           clashing neighbours (bounded ⇒ soft boundaries).</span></div>
+        <div class="head-attract" style="margin-top:8px"><span class="t" style="color:#34d399">cohesion head</span> —
+          <code>A_coh = softmax_j( − λ_c‖Δp‖² )</code> over a broad neighbourhood<br>
+          <span class="muted">surface tension: pull toward the neighbourhood centroid → fragments
+          coalesce into <b>one droplet</b> (a smoothing/consensus attention).</span></div>
         <div class="head-morph" style="margin-top:8px"><span class="t" style="color:#60a5fa">shape morph</span> —
           <code>z ← LN(z + morph·A_fit·zWᵥ + skew·zJ); z ← LN(z + MLP(z))</code><br>
           <span class="muted">induced fit: deform the contour to fit binding partners; skew (J = −Jᵀ)
@@ -124,7 +128,7 @@ archTog.addEventListener('click', () => {
 // live knobs — built dynamically from whatever the engine exposes
 let knobsBuilt = false, setTimer = null;
 const KMAX = {noise:1.5, spin:1.5, nonrecip:3, scale:1, rd:2,
-              repel:0.6, attract:1, skew:2, morph:1.5, momentum:0.98, speed:1.5};
+              repel:0.6, attract:1, cohesion:0.8, skew:2, morph:1.5, momentum:0.98, speed:1.5};
 function buildKnobs(k){
   if(knobsBuilt || !k) return;
   const box = document.getElementById('knobs'); box.innerHTML = '';
@@ -184,9 +188,13 @@ function draw(al){
   }
 
   ctx.clearRect(0,0,W,H);
-  ctx.strokeStyle = 'rgba(56,189,248,0.10)'; ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(56,189,248,0.18)'; ctx.lineWidth = 1;
   ctx.beginPath();
-  for(const [i,j] of s.edges){ ctx.moveTo(px[i],py[i]); ctx.lineTo(px[j],py[j]); }
+  const maxlen = W * 0.35;  // skip edges that span too far on screen (wrapped across the torus)
+  for(const [i,j] of s.edges){
+    if(Math.hypot(px[i]-px[j], py[i]-py[j]) > maxlen) continue;
+    ctx.moveTo(px[i],py[i]); ctx.lineTo(px[j],py[j]);
+  }
   ctx.stroke();
 
   for(let idx=0; idx<N; idx++){

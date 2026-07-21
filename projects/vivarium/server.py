@@ -95,10 +95,23 @@ class Sim:
 
     def restart(self, seed: int | None = None) -> None:
         with self.lock:
+            # preserve the current knob values across restart — a fresh engine would otherwise
+            # revert to defaults, silently ignoring the sliders (e.g. attract snapping back to 0.35).
+            knobs = {k: getattr(self.engine, k) for k in self.knob_names
+                     if hasattr(self.engine, k)}
             self.seed = self.seed + 1 if seed is None else seed
             self.engine = self._make(self.seed)
+            for k, v in knobs.items():
+                if hasattr(self.engine, k):
+                    setattr(self.engine, k, v)
+            self.vel_reset()
             self._alive = 0.0
+            self._buf.clear()
             self._snap = self._build_snapshot()
+
+    def vel_reset(self) -> None:
+        if hasattr(self.engine, "vel"):
+            self.engine.vel[:] = 0.0
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -163,7 +176,7 @@ def main(argv: list[str] | None = None) -> int:
 
         from pack import PackEngine
         make_engine = lambda s: PackEngine(cfg, s)  # noqa: E731  (alive-packing defaults)
-        knob_names = ("repel", "attract", "skew", "morph", "momentum", "speed")
+        knob_names = ("repel", "attract", "cohesion", "skew", "morph", "momentum", "speed")
         label = "PACKING (1/d² clash-repel + complementary-fit + induced morph, periodic)"
     elif args.pure:
         from dataclasses import replace

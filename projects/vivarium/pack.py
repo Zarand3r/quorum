@@ -40,18 +40,24 @@ def _ln(X):
 
 
 class PackEngine:
-    def __init__(self, cfg, seed, ablate="none", repel=0.1, attract=0.35, skew=1.0, morph=0.5,
-                 momentum=0.7, speed=1.0, maxvel=0.25):
+    def __init__(self, cfg, seed, ablate="none", repel=0.15, attract=0.35, skew=1.0, morph=0.5,
+                 momentum=0.7, speed=1.0, maxvel=0.25, cohesion=0.15):
         self.cfg = cfg
         self.seed = seed
         self.ablate = ablate
         self.repel = repel      # bounded repulsive-attention strength (soft excluded volume)
         self.attract = attract  # complementary-fit attraction (interlocking)
+        self.cohesion = cohesion  # surface tension: broad attention → pull toward neighbourhood
+        #                           centroid; merges fragments into ONE droplet (M1). 0 = off.
         self.skew = skew        # non-settling shape rotation
         self.morph = morph      # induced-fit morph gain
         self.momentum = momentum  # position inertia (lower = less zippy; steady speed ≈ force/(1−mom))
         self.speed = speed      # dt-like multiplier on per-step displacement (slow it down to watch)
         self.maxvel = maxvel    # cap on per-step displacement — prevents agents zipping/overshooting
+        self.cohere_k = min(24, cfg.N - 1)  # cohesion neighbourhood (broader than interaction k)
+        self.cohere_lambda = 0.08           # broad distance kernel (long reach → crosses gaps)
+        self.edge_radius = 0.6              # render: draw an edge only between agents this close
+        #                                    (small → only touching pairs, not a dense mesh)
         self.vel = np.zeros((cfg.N, POS_DIM))
         self.L = 2.0 * cfg.pos_bound
         rng = base_rng(seed + 1)
@@ -96,9 +102,13 @@ class PackEngine:
         C = self._contour()
         tokens = [{"x": float(pos[i, 0]), "y": float(pos[i, 1]), "c": C[i].tolist()}
                   for i in range(self.cfg.N)]
+        # PROXIMITY edges: draw a line only between agents genuinely close (min-image distance <
+        # edge_radius), so lines reflect actual proximity and appear/disappear as agents move —
+        # NOT the fixed k-NN graph (which keeps k lines regardless of how far the neighbours drift).
         _, d2 = self._periodic_delta()
-        idx = self._neighbors(d2, self.cfg.n_neighbors)
-        edges = [[int(i), int(j)] for i in range(self.cfg.N) for j in idx[i] if int(j) != i]
+        iu = np.triu_indices(self.cfg.N, k=1)
+        r2 = self.edge_radius ** 2
+        edges = [[int(i), int(j)] for i, j in zip(iu[0], iu[1]) if d2[i, j] < r2]
         return {"status": "running", "tick": self.t, "n": self.cfg.N,
                 "tokens": tokens, "edges": edges}
 
@@ -144,6 +154,27 @@ class PackEngine:
         repel = np.einsum("ij,ijc->ic", A_repel, dirn)    # away from close/clashing neighbours
 
         force = self.attract * attract + self.repel * repel
+
+        # cohesion head (surface tension, M1): a BROAD attention over a larger neighbourhood pulls
+        # each agent toward its distance-weighted neighbourhood centroid → fragments coalesce into
+        # one droplet. Pure attention (a smoothing/consensus head). Broad kernel reaches across gaps.
+        if self.cohesion > 0.0:
+            ck = self.cohere_k
+            cidx = self._neighbors(d2, ck)
+            cmask = np.zeros_like(d2, dtype=bool)
+            np.put_along_axis(cmask, cidx, True, axis=1)
+            np.fill_diagonal(cmask, False)
+            if self.ablate == "identity":
+                cmask = np.zeros_like(cmask)
+            cscore = np.where(cmask, -self.cohere_lambda * d2, -np.inf)
+            cm = np.max(cscore, axis=1, keepdims=True)
+            cm = np.where(np.isfinite(cm), cm, 0.0)
+            A_coh = np.exp(cscore - cm) * cmask
+            cden = A_coh.sum(1, keepdims=True)
+            A_coh = np.where(cden > 0, A_coh / np.where(cden > 0, cden, 1.0), 0.0)
+            cohere = -np.einsum("ij,ijc->ic", A_coh, delta)   # toward the neighbourhood centroid
+            force = force + self.cohesion * cohere
+
         self.vel = self.momentum * self.vel + force        # inertia → coherent, non-freezing motion
         # cap per-step displacement so nothing zips across the dish (overshoot control)
         sp = np.linalg.norm(self.vel, axis=1, keepdims=True)
@@ -166,9 +197,9 @@ def _cfg(**over):
     return VivariumConfig(**{**DEFAULTS, **over})
 
 
-def probe(seed, ablate, repel, attract, skew, morph, momentum):
+def probe(seed, ablate, repel, attract, skew, morph, momentum, cohesion=0.0):
     e = PackEngine(_cfg(), seed, ablate=ablate, repel=repel, attract=attract, skew=skew,
-                   morph=morph, momentum=momentum)
+                   morph=morph, momentum=momentum, cohesion=cohesion)
     print(" tick  alive  spread  motion  cohere  struct  deform  minsep")
     for _ in range(0, 2001, 400):
         r = evaluate(e, 40)
@@ -182,18 +213,18 @@ def probe(seed, ablate, repel, attract, skew, morph, momentum):
             e.step()
 
 
-def measure_gas_or_droplet(seed):
+def measure_gas_or_droplet(seed, cohesion=0.0):
     from metrics_pack import measure
-    print("=== M0: is the packing engine a DROPLET (matter) or a GAS? ===")
+    print(f"=== is the packing engine a DROPLET / ONE cluster?  (cohesion={cohesion}) ===")
     for scale, lab in ((1.0, "1x box"), (2.0, "2x box")):
         cfg = _cfg(pos_bound=DEFAULTS["pos_bound"] * scale)
-        e = PackEngine(cfg, seed)
+        e = PackEngine(cfg, seed, cohesion=cohesion)
         for _ in range(600):
             e.step()
         m = measure(e.X[:, :POS_DIM], e.L, radius=1.0)
         print(f"{lab:8s} occupancy={m['occupancy']:.2f}  largest_cluster={m['largest_frac']:.2f}  "
               f"n_clusters={m['n_clusters']:2d}  Rg={m['rg']:.2f}  Rg/box={m['rg_over_box']:.2f}")
-    print("GAS: occupancy high, fragments, Rg/box grows. MATTER: occupancy<1, one cluster, Rg box-independent.")
+    print("ONE droplet: largest_cluster→1, n_clusters→1, occupancy<1, Rg box-independent.")
 
 
 def main(argv=None):
@@ -207,11 +238,12 @@ def main(argv=None):
     p.add_argument("--skew", type=float, default=1.0)
     p.add_argument("--morph", type=float, default=0.5)
     p.add_argument("--mom", type=float, default=0.85)
+    p.add_argument("--cohesion", type=float, default=0.0)
     a = p.parse_args(argv)
     if a.measure:
-        measure_gas_or_droplet(a.seed)
+        measure_gas_or_droplet(a.seed, a.cohesion)
     else:
-        probe(a.seed, a.ablate, a.repel, a.attract, a.skew, a.morph, a.mom)
+        probe(a.seed, a.ablate, a.repel, a.attract, a.skew, a.morph, a.mom, a.cohesion)
     return 0
 
 
