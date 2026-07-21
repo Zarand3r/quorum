@@ -16,8 +16,11 @@ count. Watchable live in the browser.
 - **[RESEARCH_LOG.md](RESEARCH_LOG.md)** — every idea tried, with its commit and its (often
   negative) result.
 - **[FOLLOWUPS.md](FOLLOWUPS.md)** — reasoned-through future directions (variable shape complexity,
-  blob fission, per-pair plasticity, sustained/co-adaptive learning) — all kept faithful to the
-  hard requirements.
+  blob fission, per-pair plasticity, sustained/co-adaptive learning, DNA/genes, species &
+  membranes) — all kept faithful to the hard requirements.
+- **[EXPERIMENT_PLAN.md](EXPERIMENT_PLAN.md)** — the ordered plan: each idea refined,
+  requirement-checked, with an implementation sketch and a **visual** success criterion, plus the
+  recommended order to try them.
 
 ## The engines
 - **`pack.py`** — dock-and-morph packing: attract (complementary fit) + repel (soft excluded
