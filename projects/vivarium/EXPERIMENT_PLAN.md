@@ -35,6 +35,24 @@ solid win first. Steps 1–3 are the "different species → membrane" arc you as
 reusable gene/type + shape substrate; 4–5 add division and evolution on top; 6–7 are the deep,
 harder, less-visual learning results.
 
+**Risk calibration (fresh review):** step 1 low-risk / moderate-effort (demixing is robust); step 2
+low/low; **step 3 HIGH-risk** (a true bilayer is finicky — micelles are the likely first outcome);
+step 4 moderate; step 5 moderate-high (needs the Moran fixed-N process below); step 6 low-moderate;
+**step 7 highest-risk** (the earlier predictive-plasticity attempt *collapsed* — it may not work
+without the homeostatic brake + strictly-local objective).
+
+**Optional swap:** if you want the *safest, quickest* first trust-builder over the foundational one,
+do **step 2 (richer shape)** first — it is the lowest-effort, lowest-risk guaranteed visual change
+(more varied blobs). I recommend species (step 1) first anyway because it directly answers your
+species/membrane interest and lays the gene substrate — but the swap is a legitimate lower-risk
+opening.
+
+**Two MDR ⚠ flags (the only requirement tensions):** step 5 (fixed-N selection) and step 7 (Red
+Queen) must keep their *fitness / learning objective* a **local dynamical quantity** and must
+**never read the aliveness gauge** — this will be grep/test-enforced. A blanket rule applies to all
+steps: **hand-tuning a physical knob to find a regime is allowed; feeding any reward signal into the
+per-tick update is not.**
+
 ---
 
 ## 1. Species + differential adhesion (demixing) — DO FIRST
@@ -46,15 +64,19 @@ attract/repel scores: like-with-like (or a fixed/learned `K[s_i,s_j]` affinity m
 species prefer their own kind. Robust result in all particle systems: **phase separation** — the
 species demix.
 
-**Requirements:** TX ✓ (type = embedding channels; affinity = content attention on them — the same
-op we already use for binding). N ✓ (partition the fixed pool into species). MDR ✓ (no reward; we
-just set affinities and watch). LAW ✓ (`K` is a fixed/structured map or a slow gene, not a learned
-physics law; the grounding stays fixed).
+**Requirements:** TX ✓ (the affinity is an **attention-logit bias** `+ K[s_i,s_j]` on the existing
+attract/repel scores — a learned/relative attention bias, exactly the transformer's own mechanism,
+*not* a separate force). N ✓ (partition the fixed pool). MDR ✓ (we *set* affinities and watch;
+hand-tuning a physical knob to find a regime is allowed — it is not feeding a reward into the loop).
+LAW ✓ (`K` is a fixed structured map; the grounding / `M` / `Φ` stay fixed).
 
-**Implementation sketch.** In `pack.py`: add `type` channels to the init (assign N agents to S
-species); a `K` affinity matrix (S×S, fixed); fold `K[type_i,type_j]` into the attract/repel score.
-Colour blobs by species in the viewer (a per-species hue, overriding/optioning the spikiness hue).
-~50–80 lines, one new engine knob (`species_affinity` strength, default 0 → single species).
+**Implementation sketch — note the shared foundation.** This step actually builds the **minimal
+gene layer** (§6) that steps 5/7 reuse: a **protected, read-only sub-embedding** holding the type
+code. *Key implementation detail:* the morph currently updates all of `z`; the type channels must be
+**carved out and NOT overwritten by the morph** (else "species" is transient state, not identity).
+So: reserve K_type channels, init them per species, exclude them from the `z ← LN(z + …)` update,
+fold `K[type_i,type_j]` into the attract/repel logits, and colour blobs by species in the viewer.
+~60–100 lines, one knob (`species_affinity`, default 0 → single species, current behaviour intact).
 
 **VISUAL success (you judge):** turn on 2–3 species and watch them **visibly sort into distinct,
 same-coloured regions/blobs** — oil-and-water demixing. Failure = they stay mixed (soup) or one
@@ -114,8 +136,11 @@ ribbon, and ideally a **closed vesicle enclosing water**. This is unmistakable b
 demo. Failure = amphiphiles clump into a blob (micelle-ish) or stay disordered.
 *Secondary:* nematic/orientational order parameter; bilayer detection (paired antiparallel rows).
 
-**Effort:** high (the anisotropy). **Risk:** moderate (orientation-dependent attention must be got
-right; the bilayer regime is a narrow "edge-of-assembly" band to find).
+**Effort:** high (the anisotropy). **Risk: HIGH** (revised up on review) — a *genuine bilayer* is the
+narrowest regime in soft matter; the likely first outcome is **micelles** (tails-in balls) or
+disorder, and a true 2-D bilayer/vesicle may need several attempts and a careful head/tail contrast.
+Treat "micelles form" as a real partial win and "closed vesicle" as the stretch goal. This is the
+plan's highest-risk visual step; do it *after* the cheaper wins so momentum is banked first.
 
 ---
 
@@ -144,18 +169,26 @@ cluster count 1→2 with both daughters sustaining motion; area roughly conserve
 
 ## 5. Heritable gene evolution (Baldwin)
 
-**Refined mechanism.** Make the gene (step 1) **heritable** on fission (copy ± mutation), and let
-**selection** act (viable daughters spread their genes; non-viable lineages vanish) — Darwinian
-dynamics at fixed N (informational heredity). With plasticity also on, test the **Baldwin effect**:
-does a within-life plastic adaptation get assimilated into the gene over generations?
+**Refined mechanism — the fixed-N subtlety made explicit.** Simple fission (step 4) does *not*
+create selection on its own: the daughters are the *same* agents keeping their *same* genes, so
+nothing evolves. Real Darwinian dynamics at fixed N need a **Moran-style birth–death / conversion**
+process: when an agent "dies" (loses cohesion / fails to bind for long enough — a **dynamical**
+failure, not a low aliveness score), its slot is **reborn carrying a *successful neighbour's* gene
+± mutation.** N is constant; what "reproduces" is the gene, spreading through the fixed pool
+(a chemostat / meme dynamic). *That* is where variation + differential success + heredity → evolution.
+With plasticity also on, test the **Baldwin effect**: does a within-life plastic adaptation get
+assimilated into the gene over generations?
 
-**Requirements:** TX ✓ (gene = channels; expression = the block reading them). N ✓ (fixed pool;
-heredity is informational, not new tokens). MDR ✓ (selection is via *viability/persistence*, an
-emergent survival, not a rewarded aliveness score — care: "survival" must be dynamical persistence,
-not the aliveness gauge). LAW ✓ (genes are a slow heritable code, not the physics laws).
+**Requirements:** TX ✓ (gene = channels; a gene-copy is an attention/gather op over neighbours). N ✓
+(Moran keeps N *exactly* fixed — a death is immediately a birth). **MDR ⚠ (the crux):** the "fitness"
+that decides who copies whom **must be a local dynamical quantity** (persistence, local binding
+success), and **must never read the aliveness gauge or any global order metric** — enforce with a
+grep/test. This is the one place the fixed-N-selection design can accidentally smuggle in a reward.
+LAW ✓ (genes are a slow heritable code; the physics laws stay fixed).
 
-**Implementation sketch.** Gene copy+mutate on fission; track lineages; measure gene-distribution
-drift and whether a plastic trait migrates into the gene. **Depends on:** steps 1 + 4.
+**Implementation sketch.** A local death rule (no bonds / lost cluster for T ticks) → gene overwrite
+from a live neighbour + mutation noise; lineage tracking; measure gene-distribution drift and Baldwin
+assimilation. **Depends on:** steps 1 + 4. ~80–120 lines.
 
 **VISUAL success:** over a long run, the **population visibly shifts composition** — some
 species/shapes take over, others die out; you can *see* selection happen (a colour/shape becomes
