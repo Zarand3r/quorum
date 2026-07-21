@@ -48,6 +48,7 @@
     <button onclick="post('/pause')">pause</button>
     <button onclick="post('/resume')">resume</button>
     <button onclick="post('/restart')">restart (new seed)</button>
+    <label style="color:#94a3b8"><input type="checkbox" id="showedges" checked> binding lines</label>
   </div>
   <canvas id="c" width="720" height="720"></canvas>
   <div id="knobs"></div>
@@ -212,6 +213,7 @@ function draw(al){
 
   // binding graph ON TOP: each agent's strongest complementary-fit attention (the real
   // interaction the transformer computes), opacity ∝ attention weight. Amber = a bond.
+  if(!document.getElementById('showedges').checked) return;
   const maxlen = W * 0.35;  // skip wrapped edges that would streak across the torus
   ctx.lineWidth = 1.6;
   for(const e of s.edges){
