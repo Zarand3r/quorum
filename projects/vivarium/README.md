@@ -15,6 +15,9 @@ count. Watchable live in the browser.
 - **[design/HARD_REQUIREMENT.md](design/HARD_REQUIREMENT.md)** — the strict transformer-only rule.
 - **[RESEARCH_LOG.md](RESEARCH_LOG.md)** — every idea tried, with its commit and its (often
   negative) result.
+- **[FOLLOWUPS.md](FOLLOWUPS.md)** — reasoned-through future directions (variable shape complexity,
+  blob fission, per-pair plasticity, sustained/co-adaptive learning) — all kept faithful to the
+  hard requirements.
 
 ## The engines
 - **`pack.py`** — dock-and-morph packing: attract (complementary fit) + repel (soft excluded
