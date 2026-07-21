@@ -18,6 +18,25 @@
   #knobs label { display: flex; flex-direction: column; align-items: center; gap: 3px; color: #94a3b8; }
   #knobs input[type=range] { width: 130px; accent-color: #34d399; }
   #knobs b { color: #e2e8f0; }
+  #arch { max-width: 760px; margin-top: 14px; width: 100%; }
+  #archtoggle { width: 100%; text-align: left; }
+  #archbody { border: 1px solid #1e293b; border-top: none; border-radius: 0 0 6px 6px;
+              padding: 14px; background: #0e131b; font-size: 12.5px; line-height: 1.5; }
+  .abox { border: 1px solid #334155; border-radius: 6px; padding: 8px 11px; margin: 6px 0;
+          background: #111827; }
+  .abox .t { color: #e2e8f0; font-weight: bold; }
+  .arrow { text-align: center; color: #475569; margin: 2px 0; }
+  .tok span { display: inline-block; padding: 2px 8px; margin: 2px; border-radius: 4px; }
+  .c-pos { background: #1e3a5f; color: #93c5fd; }
+  .c-shape { background: #3f2d5c; color: #d8b4fe; }
+  .c-hid { background: #334155; color: #cbd5e1; }
+  .head-attract { border-left: 3px solid #34d399; padding-left: 8px; }
+  .head-repel { border-left: 3px solid #f87171; padding-left: 8px; }
+  .head-morph { border-left: 3px solid #60a5fa; padding-left: 8px; }
+  .obj { border: 1px solid #b45309; background: #1c1408; border-radius: 6px; padding: 9px 11px; }
+  .obj .t { color: #fbbf24; }
+  code { color: #a5b4fc; font-size: 12px; }
+  .muted { color: #64748b; }
 </style>
 </head>
 <body>
@@ -32,9 +51,56 @@
   </div>
   <canvas id="c" width="720" height="720"></canvas>
   <div id="knobs"></div>
-  <div class="note">Motion comes from neighbour forces (attract / repel / non-reciprocal chase);
-  shapes morph via the transformer block. Interaction is load-bearing by construction — with no
-  neighbours an agent cannot move. Aliveness is <i>measured, never optimized</i>.</div>
+  <div class="note">Each agent is one token; it moves and morphs by attention over its local
+  neighbours. Interaction is load-bearing — with no neighbours an agent cannot move. Aliveness is
+  <i>measured, never optimized</i>.</div>
+
+  <div id="arch">
+    <button id="archtoggle">ⓘ  architecture &amp; objective  ▾</button>
+    <div id="archbody">
+      <div class="muted">One weight-tied transformer block, iterated — each application is one
+        frame. Strict transformer-only: every operation is attention / MLP / LayerNorm.</div>
+
+      <div class="abox tok"><span class="t">token xᵢ =</span>
+        <span class="c-pos">position ·2</span>
+        <span class="c-shape">shape / contour ·2K</span>
+        <span class="c-hid">hidden</span>
+        <span class="muted">— the drawn blob <b>is</b> the shape channels (grounded readout)</span>
+      </div>
+
+      <div class="arrow">▼&nbsp; grounded attention · dock score = contour overlap (Parseval)</div>
+
+      <div class="abox">
+        <div class="head-attract"><span class="t" style="color:#34d399">attract head</span> —
+          <code>A_fit = softmax_j( ⟨Cᵢ, M·Cⱼ⟩ − λ‖Δp‖² )</code><br>
+          <span class="muted">complementary overlap (bump-meets-pocket, M = π-rotation) → move
+          <b>toward</b> neighbours you can interlock with.</span></div>
+        <div class="head-repel" style="margin-top:8px"><span class="t" style="color:#f87171">repel head</span> —
+          <code>A_rep = softmax_j( ⟨Cᵢ, Cⱼ⟩ − λ‖Δp‖² )</code><br>
+          <span class="muted">direct overlap (shapes in the same space) → move <b>away</b> from
+          clashing neighbours (bounded ⇒ soft boundaries).</span></div>
+        <div class="head-morph" style="margin-top:8px"><span class="t" style="color:#60a5fa">shape morph</span> —
+          <code>z ← LN(z + morph·A_fit·zWᵥ + skew·zJ); z ← LN(z + MLP(z))</code><br>
+          <span class="muted">induced fit: deform the contour to fit binding partners; skew (J = −Jᵀ)
+          keeps shapes rotating so the packing never freezes.</span></div>
+      </div>
+
+      <div class="arrow">▼&nbsp; position: <code>v ← μv + force</code> (capped), torus wrap &nbsp;·&nbsp; new shape</div>
+      <div class="abox tok"><span class="t">token xᵢ′</span>
+        <span class="muted">→ next frame</span></div>
+
+      <div class="obj" style="margin-top:10px">
+        <div class="t">objective function — measured, never optimized</div>
+        <div class="muted">There is <b>no trained loss and no gradient descent</b> — this is a
+        fixed-rule dynamical system (the weights Wᵥ, MLP, J, M are fixed). What the local forces
+        <i>effectively descend</i> is a <b>packing / binding energy</b> — ↓ steric clash
+        <code>⟨Cᵢ,Cⱼ⟩</code>, ↑ complementary fit <code>⟨Cᵢ,M·Cⱼ⟩</code> — plus a non-gradient
+        skew term (<code>zJ</code>) that keeps it off-equilibrium so it never settles. The
+        <b>aliveness</b> readout above is a one-way measurement; it never feeds back into the
+        update (measure-don't-reward).</div>
+      </div>
+    </div>
+  </div>
 </div>
 <script>
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
@@ -44,6 +110,16 @@ const W = cv.width, H = cv.height;
 const BASE = location.pathname.replace(/\/(index\.html)?$/, '');
 
 function post(path){ fetch(BASE + path, {method:'POST'}); }
+
+// architecture panel toggle
+const archBody = document.getElementById('archbody');
+const archTog = document.getElementById('archtoggle');
+archBody.style.display = 'none';
+archTog.addEventListener('click', () => {
+  const open = archBody.style.display === 'none';
+  archBody.style.display = open ? 'block' : 'none';
+  archTog.textContent = 'ⓘ  architecture & objective  ' + (open ? '▴' : '▾');
+});
 
 // live knobs — built dynamically from whatever the engine exposes
 let knobsBuilt = false, setTimer = null;
