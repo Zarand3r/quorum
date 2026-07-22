@@ -203,6 +203,8 @@ def main(argv: list[str] | None = None) -> int:
                    help="serve the PURE-TRANSFORMER engine (transformer moves + morphs everything)")
     p.add_argument("--pack", action="store_true",
                    help="serve the PACKING engine (boundaries + induced-fit, periodic domain)")
+    p.add_argument("--polar", action="store_true",
+                   help="serve the POLAR PACK engine (charge from the morphing contour + water)")
     args = p.parse_args(argv)
 
     cfg = load_config(args.config)
@@ -229,6 +231,16 @@ def main(argv: list[str] | None = None) -> int:
         make_engine = lambda s: PureEngine(  # noqa: E731
             cfg, s, nonrecip=1.0, ln_pos=False, scale=0.3, spin_pos=False, rd=0.5)
         label = "PURE TRANSFORMER (non-reciprocal attention + reaction-diffusion, free positions)"
+    elif args.polar:
+        from pack import PackEngine  # noqa: F401  (keep import graph stable)
+
+        from polar_pack import PolarPackEngine
+        # charge is a FUNCTIONAL of the morphing contour: prongs +, centre −, plus water. The blobs
+        # develop polarity BECAUSE they morph; charge drives assembly. Viewer colours by that polarity.
+        make_engine = lambda s: PolarPackEngine(cfg, s, water_frac=0.4)  # noqa: E731
+        knob_names = ("repel", "attract", "charge", "cohesion", "temperature", "skew", "morph",
+                      "momentum", "speed")
+        label = "POLAR PACK (charge from the morphing contour: prongs + / centre −, + water)"
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     server.sim = Sim(cfg, seed, args.hz, make_engine, knob_names)
     print(f"serving: {label}")
