@@ -33,7 +33,7 @@ from config import DEFAULTS, POS_DIM, VivariumConfig
 from pack import PackEngine, _ln
 from rng import base_rng
 
-WATER, ACTIVE = 0, 1
+WATER, ACTIVE, OIL = 0, 1, 2
 _EPS = 1e-9
 
 
@@ -41,7 +41,8 @@ class PolarPackEngine(PackEngine):
     """pack.py's morphing blobs + a FAITHFUL electrostatic polarity head (bounded, bearing-aware) + water."""
 
     def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2,
-                 water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, sink_polarity=0.0, **kw):
+                 water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, sink_polarity=0.0,
+                 oil_frac=0.0, **kw):
         super().__init__(cfg, seed, **kw)
         self.sink_polarity = sink_polarity  # electrostatics = LONGEST range → low sink (slow decay)
         self.r0 = r0                        # base radius (render only)
@@ -58,7 +59,12 @@ class PolarPackEngine(PackEngine):
         # and reorients but does not change shape). Active tokens morph freely (all harmonics).
         self._water_tpl = self._mickey_template(water_dipole)
         r = base_rng(seed + 7)
-        self.species = (r.random(cfg.N) > water_frac).astype(int)   # 1 active (morphs), 0 water
+        # WATER (polar dipole) / OIL (round, apolar — nonpolar solute) / ACTIVE (morphs freely)
+        u = r.random(cfg.N)
+        self.species = np.where(u < water_frac, WATER,
+                                np.where(u < water_frac + oil_frac, OIL, ACTIVE)).astype(int)
+        self._oi = np.where(self.species == OIL)[0]
+        self.X[self._oi, POS_DIM:POS_DIM + self.tK] = 0.0           # oil is round → C≈0 → apolar (nf≈0)
         self._wi = np.where(self.species == WATER)[0]
         self.water_phi = r.uniform(0.0, 2.0 * np.pi, self._wi.size)  # each water's orientation angle
         if self._wi.size:
@@ -160,6 +166,8 @@ class PolarPackEngine(PackEngine):
         # gradient. Active tokens deform to charge-fit their neighbours; water is re-constrained below.
         if self.polarity > 0.0 and self._pol_morph is not None:
             z2[:, :self.tK] = z2[:, :self.tK] + self.pol_morph * self._pol_morph
+        if self._oi.size:
+            z2[self._oi, :self.tK] = 0.0       # OIL stays round/apolar (nonpolar solute)
         if self._wi.size:
             # WATER keeps its rigid Mickey shape but REORIENTS: turn its +H axis toward the local field
             # (where neighbours present − charge), then rewrite the rotated template (overwrites the
@@ -296,6 +304,31 @@ def water_liquid_test(a):
             e.step()
 
 
+def demix_test(a):
+    """WATER + OIL: does the hydrophobic effect EMERGE? Water self-associates (electrostatics ≫ vdW) and
+    should exclude the nonpolar oil → phase separation. like-frac = of each token's close neighbours,
+    the fraction that are the SAME species (baseline = species fraction 0.5; →1 = fully demixed)."""
+    e = PolarPackEngine(_cfg(), a.seed, water_frac=0.5, oil_frac=0.5, polarity=a.polarity, skew=0.0,
+                        repel=a.repel, attract=0.4, cohesion=0.0, momentum=a.mom, water_dipole=a.wcharge)
+    e.conservative = a.cons
+    e.repel_contact = a.contact
+    e.sink_attract, e.sink_polarity = a.satt, a.spol
+    e.selectivity, e.temperature = a.sel, a.kt
+    sp = e.species
+    print(" tick  like-frac  water-near-water  oil-near-oil   (→1 = demixed; 0.5 = mixed)")
+    for t in range(0, a.ticks + 1, a.every):
+        _, d2 = e._periodic_delta()
+        near = (d2 < 1.6 ** 2); np.fill_diagonal(near, False)
+        same = (sp[:, None] == sp[None, :])
+        lf = (near & same).sum() / max(1, near.sum())
+        wn = near[sp == WATER]; ww = (wn & (sp[None, :] == WATER)).sum() / max(1, wn.sum())
+        on = near[sp == OIL]; oo = (on & (sp[None, :] == OIL)).sum() / max(1, on.sum())
+        print(f"{t:5d}   {lf:.3f}      {ww:.3f}          {oo:.3f}")
+        for _ in range(a.every):
+            e.step()
+    return 0
+
+
 def decay_check():
     """Show that the attract force now DECAYS with distance once the sink is on (and did NOT before).
     Single neighbour at separation d, fixed complementary-fit content; force proxy = weight × d."""
@@ -320,8 +353,10 @@ def main(argv=None):
     p.add_argument("--verify", action="store_true")
     p.add_argument("--decay", action="store_true")
     p.add_argument("--watertest", action="store_true")
+    p.add_argument("--demix", action="store_true")
     p.add_argument("--wcharge", type=float, default=0.8)
     p.add_argument("--repel", type=float, default=0.2)
+    p.add_argument("--oil", type=float, default=0.0)
     p.add_argument("--cons", action="store_true", help="conservative symmetric forces")
     p.add_argument("--contact", type=float, default=0.0, help="repel_contact (overlap distance)")
     p.add_argument("--mom", type=float, default=0.3, help="momentum (overdamped ~0.3)")
@@ -344,13 +379,15 @@ def main(argv=None):
         return decay_check()
     if a.watertest:
         return water_liquid_test(a)
+    if a.demix:
+        return demix_test(a)
     if a.verify:
         return verify_base_case()
     if a.out:
         attract = 0.0 if a.water >= 0.999 else 0.4
-        e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, polarity=a.polarity, skew=a.skew,
-                            sink_polarity=a.spol, repel=a.repel, cohesion=a.cohesion, attract=attract,
-                            water_dipole=a.wcharge)
+        e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, oil_frac=a.oil, polarity=a.polarity,
+                            skew=a.skew, sink_polarity=a.spol, repel=a.repel, cohesion=a.cohesion,
+                            attract=attract, water_dipole=a.wcharge)
         e.sink_repel, e.sink_attract = a.srep, a.satt
         e.selectivity = a.sel
         e.temperature = a.kt
