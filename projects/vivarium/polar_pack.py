@@ -33,7 +33,7 @@ from config import DEFAULTS, POS_DIM, VivariumConfig
 from pack import PackEngine, _ln
 from rng import base_rng
 
-WATER, ACTIVE, OIL = 0, 1, 2
+WATER, ACTIVE, OIL, LIPID = 0, 1, 2, 3
 _EPS = 1e-9
 
 
@@ -42,8 +42,15 @@ class PolarPackEngine(PackEngine):
 
     def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2,
                  water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, sink_polarity=0.0,
-                 oil_frac=0.0, **kw):
+                 oil_frac=0.0, lipid_frac=0.0, lip_ell=0.55, k_tail=1.5, k_hydro=1.0,
+                 lip_range=0.7, lip_torque=0.15, **kw):
         super().__init__(cfg, seed, **kw)
+        self.lip_ell = lip_ell       # half-length head↔tail
+        self.k_tail = k_tail         # tail–tail hydrophobic cohesion (drives the bilayer core)
+        self.k_hydro = k_hydro       # hydrophobic effect: tail↔water repel + head↔water attract
+        self.lip_range = lip_range   # Gaussian range λ of the lipid site forces
+        self.lip_torque = lip_torque # rate a lipid reorients (head→water, tail→tails)
+        self._lip_torque = None
         self.sink_polarity = sink_polarity  # electrostatics = LONGEST range → low sink (slow decay)
         self.r0 = r0                        # base radius (render only)
         self.amp = amp                      # contour amplitude (render only)
@@ -62,9 +69,14 @@ class PolarPackEngine(PackEngine):
         # WATER (polar dipole) / OIL (round, apolar — nonpolar solute) / ACTIVE (morphs freely)
         u = r.random(cfg.N)
         self.species = np.where(u < water_frac, WATER,
-                                np.where(u < water_frac + oil_frac, OIL, ACTIVE)).astype(int)
+                       np.where(u < water_frac + oil_frac, OIL,
+                       np.where(u < water_frac + oil_frac + lipid_frac, LIPID, ACTIVE))).astype(int)
         self._oi = np.where(self.species == OIL)[0]
         self.X[self._oi, POS_DIM:POS_DIM + self.tK] = 0.0           # oil is round → C≈0 → apolar (nf≈0)
+        self._li = np.where(self.species == LIPID)[0]
+        self.X[self._li, POS_DIM:POS_DIM + self.tK] = 0.0           # lipid body is round (rod handled explicitly)
+        ao = r.uniform(0.0, 2.0 * np.pi, self._li.size)
+        self.lipid_o = np.stack([np.cos(ao), np.sin(ao)], axis=1)   # each lipid's head↔tail unit axis
         self._wi = np.where(self.species == WATER)[0]
         self.water_phi = r.uniform(0.0, 2.0 * np.pi, self._wi.size)  # each water's orientation angle
         if self._wi.size:
@@ -100,6 +112,52 @@ class PolarPackEngine(PackEngine):
             z[self._wi, 2 * (k - 1)] = ak * ck - bk * sk
             z[self._wi, 2 * (k - 1) + 1] = ak * sk + bk * ck
 
+    def _lipid_force(self):
+        """Explicit amphiphile physics (Cooke–Deserno style). Each LIPID is a rod: head at −ℓ·ô, tail at
+        +ℓ·ô. Conservative site forces: tail↔tail ATTRACT (hydrophobic core), tail↔water REPEL and
+        head↔water ATTRACT (the hydrophobic effect). Returns the per-token centre force; stores the
+        reorientation torque. Every force has its Newton-3rd reaction on water → momentum-consistent."""
+        li = self._li
+        N = self.cfg.N
+        F = np.zeros((N, 2))
+        if not li.size:
+            self._lip_torque = None
+            return F
+        L, lam = self.L, self.lip_range
+        pos = self.X[:, :POS_DIM]
+        o = self.lipid_o
+        head = pos[li] - self.lip_ell * o
+        tail = pos[li] + self.lip_ell * o
+        wat = pos[self._wi] if self._wi.size else np.zeros((0, 2))
+        th = np.zeros(len(li))
+
+        def force_AB(A, B):
+            """unit-direction field A→B and Gaussian weight g (nA,nB); min-image."""
+            d = B[None, :, :] - A[:, None, :]
+            d = d - L * np.round(d / L)
+            d2 = np.einsum("ijc,ijc->ij", d, d) + 1e-6
+            return d / np.sqrt(d2)[..., None], np.exp(-lam * d2)
+
+        # tail–tail cohesion (attract toward each other), symmetric, self excluded
+        u, g = force_AB(tail, tail); np.fill_diagonal(g, 0.0)
+        f_tail = self.k_tail * np.einsum("ij,ijc->ic", g, u)
+        # tail–water repel (hydrophobic) + head–water attract (hydrophilic); reactions go onto water
+        if wat.size:
+            u, g = force_AB(tail, wat)
+            f_tail = f_tail - self.k_hydro * np.einsum("ij,ijc->ic", g, u)     # tail away from water
+            F[self._wi] += self.k_hydro * np.einsum("ij,ijc->jc", g, u)        # reaction: water pushed from tail
+            u, g = force_AB(head, wat)
+            f_head = self.k_hydro * np.einsum("ij,ijc->ic", g, u)             # head toward water
+            F[self._wi] -= self.k_hydro * np.einsum("ij,ijc->jc", g, u)        # reaction on water (pulled)
+        else:
+            f_head = np.zeros_like(f_tail)
+        F[li] += f_head + f_tail
+        lever_h, lever_t = -self.lip_ell * o, self.lip_ell * o
+        th = (lever_h[:, 0] * f_head[:, 1] - lever_h[:, 1] * f_head[:, 0]
+              + lever_t[:, 0] * f_tail[:, 1] - lever_t[:, 1] * f_tail[:, 0])
+        self._lip_torque = th
+        return F
+
     def _near_face(self, C, ang):
         """⟨C, basis(ang)⟩ — the contour radius-deviation each token presents along bearing `ang` (N,N).
         >0 a prong faces that way (positive charge), <0 a valley/centre faces it (negative)."""
@@ -111,10 +169,11 @@ class PolarPackEngine(PackEngine):
         return nf
 
     def _extra_force(self):
-        """The electrostatic polarity head, added to pack.py's step. Bounded softmax attention over the
-        bearing-resolved near-face charges — NO /d² kernel. Returns 0 when polarity=0 (base case)."""
+        """The electrostatic polarity head + the explicit amphiphile (lipid) forces, added to pack.py's
+        step. Bounded, bearing-resolved — NO /d² kernel. Reduces to 0 when polarity=0 & no lipids."""
+        lipf = self._lipid_force()          # explicit amphiphile forces (0 if no lipids)
         if self.polarity <= 0.0:
-            return 0.0
+            return lipf
         cfg = self.cfg
         C = self._contour()
         delta, d2 = self._periodic_delta()                 # delta = p_i − p_j
@@ -156,7 +215,7 @@ class PolarPackEngine(PackEngine):
             basis[:, :, 2 * (k - 1)] = np.cos(k * ang_ij)
             basis[:, :, 2 * (k - 1) + 1] = np.sin(k * ang_ij)
         self._pol_morph = np.einsum("ij,ijc->ic", w * (-nf_j), basis)
-        return self.polarity * disp
+        return lipf + self.polarity * disp
 
     def _post_morph(self, z2):
         """WATER is a permanent dipole (k=1 harmonic, fixed magnitude, higher harmonics zeroed) that
@@ -168,6 +227,13 @@ class PolarPackEngine(PackEngine):
             z2[:, :self.tK] = z2[:, :self.tK] + self.pol_morph * self._pol_morph
         if self._oi.size:
             z2[self._oi, :self.tK] = 0.0       # OIL stays round/apolar (nonpolar solute)
+        if self._li.size:
+            z2[self._li, :self.tK] = 0.0       # lipid body round (the rod is handled explicitly)
+            if self._lip_torque is not None:   # reorient: head→water, tail→tails
+                dth = np.clip(self.lip_torque * self._lip_torque, -0.4, 0.4)
+                c, s = np.cos(dth), np.sin(dth)
+                ox, oy = self.lipid_o[:, 0], self.lipid_o[:, 1]
+                self.lipid_o = np.stack([c * ox - s * oy, s * ox + c * oy], axis=1)
         if self._wi.size:
             # WATER keeps its rigid Mickey shape but REORIENTS: turn its +H axis toward the local field
             # (where neighbours present − charge), then rewrite the rotated template (overwrites the
@@ -357,6 +423,7 @@ def main(argv=None):
     p.add_argument("--wcharge", type=float, default=0.8)
     p.add_argument("--repel", type=float, default=0.2)
     p.add_argument("--oil", type=float, default=0.0)
+    p.add_argument("--lipid", type=float, default=0.0)
     p.add_argument("--cons", action="store_true", help="conservative symmetric forces")
     p.add_argument("--contact", type=float, default=0.0, help="repel_contact (overlap distance)")
     p.add_argument("--mom", type=float, default=0.3, help="momentum (overdamped ~0.3)")
@@ -385,7 +452,7 @@ def main(argv=None):
         return verify_base_case()
     if a.out:
         attract = 0.0 if a.water >= 0.999 else 0.4
-        e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, oil_frac=a.oil, polarity=a.polarity,
+        e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, oil_frac=a.oil, lipid_frac=a.lipid, polarity=a.polarity,
                             skew=a.skew, sink_polarity=a.spol, repel=a.repel, cohesion=a.cohesion,
                             attract=attract, water_dipole=a.wcharge)
         e.sink_repel, e.sink_attract = a.srep, a.satt

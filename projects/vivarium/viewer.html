@@ -58,6 +58,7 @@
     <button onclick="post('/resume')">resume</button>
     <button onclick="post('/restart?same=1')">restart (same seed)</button>
     <button onclick="post('/restart')">restart (new seed)</button>
+    <button onclick="resetKnobs()">reset sliders to defaults</button>
     <label style="color:#94a3b8"><input type="checkbox" id="showedges" checked> binding lines</label>
   </div>
   <canvas id="c" width="720" height="720"></canvas>
@@ -304,8 +305,10 @@ function makeSlider(parent, name, val, cls){
   const desc = document.createElement('div'); desc.className='kdesc'; desc.textContent = KDESC[name]||'';
   wrap.append(cap, inp, b, desc); parent.appendChild(wrap); return wrap;
 }
+let KDEFAULTS = null;
 function buildKnobs(k){
   if(knobsBuilt || !k) return;
+  KDEFAULTS = {...k};                                   // the server's showcase defaults (for reset)
   const box = document.getElementById('knobs'); box.innerHTML = '';
   for(const [name,val] of Object.entries(k)){
     if(SINK_NAMES.has(name)) continue;                 // sinks are placed under their force, not here
@@ -317,6 +320,18 @@ function buildKnobs(k){
     box.appendChild(lab);
   }
   knobsBuilt = true;
+}
+function resetKnobs(){
+  if(!KDEFAULTS) return;
+  for(const inp of document.querySelectorAll('#knobs input')){
+    const name = inp.dataset.knob;
+    if(name in KDEFAULTS){
+      inp.value = KDEFAULTS[name];
+      const b = inp.parentNode.querySelector('b');
+      if(b) b.textContent = (+KDEFAULTS[name]).toFixed(2);
+    }
+  }
+  pushKnobs();                                          // push every slider back to the default at once
 }
 function pushKnobs(){
   const q = [...document.querySelectorAll('#knobs input')].map(i=>i.dataset.knob+'='+i.value).join('&');
