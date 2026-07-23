@@ -40,15 +40,24 @@ _EPS = 1e-9
 class PolarPackEngine(PackEngine):
     """pack.py's morphing blobs + a FAITHFUL electrostatic polarity head (bounded, bearing-aware) + water."""
 
-    def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2, **kw):
+    def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2,
+                 water_dipole=0.8, **kw):
         super().__init__(cfg, seed, **kw)
         self.r0 = r0                        # base radius (render only)
         self.amp = amp                      # contour amplitude (render only)
         self.polarity = polarity            # gain on the electrostatic head (0 = off → base case)
         self.pol_gain = pol_gain            # tanh sharpness of the signed attract/repel push
+        self.water_dipole = water_dipole    # water's PERMANENT dipole magnitude (real water is polar)
         r = base_rng(seed + 7)
-        self.species = (r.random(cfg.N) > water_frac).astype(int)   # 1 active (morphs), 0 water (round)
-        self.X[self.species == WATER, POS_DIM:POS_DIM + self.tK] = 0.0   # water starts (stays) round
+        self.species = (r.random(cfg.N) > water_frac).astype(int)   # 1 active (morphs), 0 water (dipole)
+        # WATER is a permanent DIPOLE (the k=1 harmonic = a lopsided/teardrop contour), random initial
+        # orientation, free to reorient — real water is polar. Active tokens morph freely (all harmonics).
+        wi = np.where(self.species == WATER)[0]
+        if wi.size:
+            ang = r.uniform(0.0, 2.0 * np.pi, wi.size)
+            self.X[wi, POS_DIM:POS_DIM + self.tK] = 0.0
+            self.X[wi, POS_DIM] = water_dipole * np.cos(ang)       # a_1
+            self.X[wi, POS_DIM + 1] = water_dipole * np.sin(ang)   # b_1
 
     def _near_face(self, C, ang):
         """⟨C, basis(ang)⟩ — the contour radius-deviation each token presents along bearing `ang` (N,N).
@@ -92,9 +101,16 @@ class PolarPackEngine(PackEngine):
         return self.polarity * disp
 
     def _post_morph(self, z2):
-        """Freeze the water species' shape channels → water stays round. No-op when there is no water,
-        so the base case is unchanged."""
-        z2[self.species == WATER, : self.tK] = 0.0
+        """Constrain WATER to a permanent dipole: keep only the k=1 harmonic, renormalised to a fixed
+        magnitude (so water is always polar, free to reorient), higher harmonics zeroed. No-op when
+        there is no water → the base case is unchanged."""
+        wi = np.where(self.species == WATER)[0]
+        if wi.size:
+            a1, b1 = z2[wi, 0], z2[wi, 1]
+            norm = np.sqrt(a1 * a1 + b1 * b1) + 1e-9
+            z2[wi, 0] = self.water_dipole * a1 / norm
+            z2[wi, 1] = self.water_dipole * b1 / norm
+            z2[wi, 2:self.tK] = 0.0
         return z2
 
     # NOTE: no step() override — we inherit PackEngine.step() and only add the two hooks above, so

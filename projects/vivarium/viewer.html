@@ -271,7 +271,7 @@ const KDESC = {
   rd:       "differential-rate diffusion of the shape field (Turing-style coupling)",
   plasticity: "weights that learn while alive — a Hebbian fast-weight memory (linear-attention) that adapts the interaction with activity, with decay for homeostasis. 0 = off (fixed rule)",
   polarity: "electrostatic head: a blob's PRONGS are + charge, its CENTRE −; opposite faces attract via a bounded bearing-aware attention. Polarity emerges as blobs morph. 0 = off → exact previous vivarium",
-  water: "fraction of tokens that are WATER — a round, apolar species (changing this restarts the dish). 0 = no water",
+  water: "fraction of tokens that are WATER — a permanent DIPOLE (real water is polar): a fixed teardrop k=1 shape, free to reorient. Changing this restarts the dish. 0 = no water",
 };
 function buildKnobs(k){
   if(knobsBuilt || !k) return;
