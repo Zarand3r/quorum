@@ -254,7 +254,7 @@ archTog.addEventListener('click', () => {
 let knobsBuilt = false, setTimer = null;
 const KMAX = {noise:1.5, spin:1.5, nonrecip:3, scale:1, rd:2,
               repel:0.6, attract:1, cohesion:0.8, temperature:3, skew:2, morph:1.5,
-              momentum:0.98, speed:1.5, plasticity:1.0};
+              momentum:0.98, speed:1.5, plasticity:1.0, polarity:1.5, water:0.85};
 const KDESC = {
   repel:    "soft excluded volume — push apart from clashing/overlapping neighbours (boundaries)",
   attract:  "pull toward complementary-fit ‘lock-and-key’ neighbours (interlocking)",
@@ -270,6 +270,8 @@ const KDESC = {
   scale:    "residual gain — overall motion strength per step",
   rd:       "differential-rate diffusion of the shape field (Turing-style coupling)",
   plasticity: "weights that learn while alive — a Hebbian fast-weight memory (linear-attention) that adapts the interaction with activity, with decay for homeostasis. 0 = off (fixed rule)",
+  polarity: "electrostatic head: a blob's PRONGS are + charge, its CENTRE −; opposite faces attract via a bounded bearing-aware attention. Polarity emerges as blobs morph. 0 = off → exact previous vivarium",
+  water: "fraction of tokens that are WATER — a round, apolar species (changing this restarts the dish). 0 = no water",
 };
 function buildKnobs(k){
   if(knobsBuilt || !k) return;

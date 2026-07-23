@@ -45,6 +45,9 @@ class Sim:
         self.stream_hz = min(30.0, hz)   # SSE push rate (≤ sim rate; no point pushing faster)
         self._make = make_engine or (lambda s: Engine(cfg, s))
         self.knob_names = knob_names
+        # pseudo-knobs: name → (getter, setter). Unlike real knobs (a live setattr), these need a
+        # restart (e.g. changing the water COUNT re-assigns species). Set after construction.
+        self.pseudo: dict = {}
         self.lock = threading.Lock()
         self.engine = self._make(seed)
         self.paused = False
@@ -65,6 +68,13 @@ class Sim:
                         setattr(self.engine, k, max(0.0, float(updates[k])))
                     except (TypeError, ValueError):
                         pass
+        # pseudo-knobs are applied OUTSIDE the lock — their setter may call restart() (re-acquires it).
+        for name, (_get, setr) in self.pseudo.items():
+            if name in updates:
+                try:
+                    setr(float(updates[name]))
+                except (TypeError, ValueError):
+                    pass
 
     def _run(self) -> None:
         """The hot loop: step + buffer positions, nothing else. Paced to a steady cadence."""
@@ -99,6 +109,8 @@ class Sim:
         snap["pos_bound"] = self.cfg.pos_bound
         snap["knobs"] = {k: float(getattr(self.engine, k)) for k in self.knob_names
                          if hasattr(self.engine, k)}
+        for name, (get, _set) in self.pseudo.items():
+            snap["knobs"][name] = round(float(get()), 3)
         # live plasticity readout: ‖W_fast‖ shows how much has been learned (0 → grows → plateaus).
         # The matrix itself (small) is sent only when plasticity is on, for the live heatmap.
         if hasattr(self.engine, "W_fast"):
@@ -204,7 +216,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--pack", action="store_true",
                    help="serve the PACKING engine (boundaries + induced-fit, periodic domain)")
     p.add_argument("--polar", action="store_true",
-                   help="serve the POLAR PACK engine (charge from the morphing contour + water)")
+                   help="serve the POLAR PACK engine (electrostatic polarity head from the contour + water)")
     args = p.parse_args(argv)
 
     cfg = load_config(args.config)
@@ -235,14 +247,23 @@ def main(argv: list[str] | None = None) -> int:
         from pack import PackEngine  # noqa: F401  (keep import graph stable)
 
         from polar_pack import PolarPackEngine
-        # charge is a FUNCTIONAL of the morphing contour: prongs +, centre −, plus water. The blobs
-        # develop polarity BECAUSE they morph; charge drives assembly. Viewer colours by that polarity.
-        make_engine = lambda s: PolarPackEngine(cfg, s, water_frac=0.4)  # noqa: E731
-        knob_names = ("repel", "attract", "charge", "cohesion", "temperature", "skew", "morph",
-                      "momentum", "speed")
-        label = "POLAR PACK (charge from the morphing contour: prongs + / centre −, + water)"
+        # polarity is a FUNCTIONAL of the morphing contour (prongs +, centre −), realised as ONE bounded
+        # bearing-aware attention head (transformer-only) — the electrostatic complement to the steric
+        # attract/repel heads. `water` is a pseudo-knob (changing the count needs a restart).
+        water_box = [0.4]
+        make_engine = lambda s: PolarPackEngine(cfg, s, water_frac=water_box[0])  # noqa: E731
+        knob_names = ("repel", "attract", "polarity", "cohesion", "temperature", "skew", "morph",
+                      "momentum", "speed", "plasticity")
+        label = "POLAR PACK (electrostatic polarity head from the morphing contour + water)"
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     server.sim = Sim(cfg, seed, args.hz, make_engine, knob_names)
+    if args.polar:
+        def _set_water(v):
+            v = max(0.0, min(0.85, v))
+            if abs(v - water_box[0]) > 0.02:
+                water_box[0] = v
+                server.sim.restart(seed=server.sim.seed)   # same seed → only the water count changes
+        server.sim.pseudo = {"water": (lambda: water_box[0], _set_water)}
     print(f"serving: {label}")
     print(
         f"vivarium viewer on http://{args.host}:{server.server_address[1]}\n"

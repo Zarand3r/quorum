@@ -1,22 +1,26 @@
-"""Polarity that EMERGES from the morphing contour blob — the user's actual idea.
+"""Polarity that EMERGES from the morphing contour blob — as a FAITHFUL attention head.
 
 The grounded-contour tokens of `pack.py` start spherical and MORPH into pronged shapes (K=3 → up to
-three protrusions). Here the charge is a FUNCTIONAL of that live contour, not a bolted-on template:
+three protrusions). A protrusion is a POSITIVE charge, the body/centre is NEGATIVE — so the blob becomes
+polar *because it deformed* (this is the same spikiness the viewer already colours by). The electrostatic
+interaction is added as ONE bounded, bearing-aware attention head — NOT a Coulomb `1/d²` force kernel
+(design/HARD_REQUIREMENT.md forbids that). It is transformer-only:
 
-    r_i(θ) = R0 · (1 + Σ_k a_k cos kθ + b_k sin kθ)        the drawn blob (a_k,b_k = shape channels)
-    positive charge at each boundary point ∝ r_i(θ)         → concentrated at the PROTRUSIONS (+)
-    a single negative charge −Q at the centre x_i           → the body is negative (−)
+    near-face charge i presents toward j:  nf_i(j) = ⟨C_i, basis(θ_{i→j})⟩          (grounded readout of
+        the contour at the relative BEARING to j — a RoPE-style relative-position attention term; a prong
+        facing j → nf>0, a valley/centre facing j → nf<0)
+    electrostatic pair term:               prod = nf_i(j)·nf_j(i)                    (>0 like faces, <0 opp.)
+    bounded weight (row-stochastic):       w = softmax_j( |prod| − λ·d² )           (which neighbours couple)
+    signed unit push:                      s = −tanh(g·prod) ∈ [−1,1]               (opposite → attract)
+    displacement:                          Δp_i = polarity · Σ_j w_ij·s_ij·r̂_{i→j}   (|Δp| ≤ 1, no /d²)
 
-So a round blob is radially polar (uniform + rim, − centre); as it morphs a prong, positive charge
-gathers at the prong tip → the blob becomes POLAR *because it deformed*. Polarity = the same spikiness
-the viewer already colours by. Add WATER (a species kept round → radially polar), and the charges drive
-assembly: a prong (+) of one blob is pulled onto the negative centre of a neighbour (opposite attract),
-prongs repel prongs. Interaction = Coulomb over the contour-derived charge points = a symmetric
-relative-position attention readout (β=0, conservative); excluded volume is pack.py's bounded repel.
+This is the ELECTROSTATIC complement to pack.py's STERIC heads (attract = complementary shape overlap,
+repel = clash overlap): shape-fit and charge-fit are independent real filters, both bounded attention.
+WATER is a round species (C≈0 → apolar). We inherit pack.py's morph+motion and add ONLY this head via a
+hook, so `polarity=0, water=0` is byte-identical to the previous vivarium.
 
-We inherit pack.py's real morph+motion and ADD the charge force; water's shape is frozen round.
-
-    bazel run //projects/vivarium:polar_pack -- --probe
+    bazel run //projects/vivarium:polar_pack -- --probe      # assembly
+    bazel run //projects/vivarium:polar_pack -- --verify     # base-case identity vs PackEngine
 """
 
 from __future__ import annotations
@@ -34,118 +38,69 @@ _EPS = 1e-9
 
 
 class PolarPackEngine(PackEngine):
-    """pack.py's morphing blobs + a charge read off the contour (protrusions +, centre −) + water."""
+    """pack.py's morphing blobs + a FAITHFUL electrostatic polarity head (bounded, bearing-aware) + water."""
 
-    def __init__(self, cfg, seed, water_frac=0.4, m_samples=10, r0=0.9, amp=0.5,
-                 charge=0.6, soft=0.2, charge_k=None, **kw):
+    def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2, **kw):
         super().__init__(cfg, seed, **kw)
-        self.m_samples = m_samples          # boundary sample points per blob
-        self.r0 = r0                        # base radius (world units)
-        self.amp = amp                      # contour amplitude (how far prongs stick out)
-        self.charge = charge                # Coulomb gain on the contour charges
-        self.soft = soft                    # Coulomb softening
-        self.charge_k = charge_k or min(12, cfg.N - 1)   # neighbours for the charge sum
+        self.r0 = r0                        # base radius (render only)
+        self.amp = amp                      # contour amplitude (render only)
+        self.polarity = polarity            # gain on the electrostatic head (0 = off → base case)
+        self.pol_gain = pol_gain            # tanh sharpness of the signed attract/repel push
         r = base_rng(seed + 7)
         self.species = (r.random(cfg.N) > water_frac).astype(int)   # 1 active (morphs), 0 water (round)
         self.X[self.species == WATER, POS_DIM:POS_DIM + self.tK] = 0.0   # water starts (stays) round
-        th = np.linspace(0.0, 2.0 * np.pi, m_samples, endpoint=False)
-        self._th = th
-        K = cfg.n_harmonics
-        # angular basis for r(θ): columns ordered (cos1,sin1,cos2,sin2,…) to match the shape channels
-        basis = np.zeros((m_samples, 2 * K))
+
+    def _near_face(self, C, ang):
+        """⟨C, basis(ang)⟩ — the contour radius-deviation each token presents along bearing `ang` (N,N).
+        >0 a prong faces that way (positive charge), <0 a valley/centre faces it (negative)."""
+        K = self.cfg.n_harmonics
+        nf = np.zeros_like(ang)
         for k in range(1, K + 1):
-            basis[:, 2 * (k - 1)] = np.cos(k * th)
-            basis[:, 2 * (k - 1) + 1] = np.sin(k * th)
-        self._basis = basis
-        self._dir = np.stack([np.cos(th), np.sin(th)], axis=1)      # (M,2) outward unit directions
+            nf = nf + C[:, 2 * (k - 1)][:, None] * np.cos(k * ang) \
+                    + C[:, 2 * (k - 1) + 1][:, None] * np.sin(k * ang)
+        return nf
 
-    def _charge_points(self):
-        """From each blob's live contour: M boundary + charges (∝ radius, concentrated at prongs) and
-        one centre − charge. Returns (point_pos, charge, owner)."""
-        C = self._contour()                                  # (N, 2K)
-        pos = self.X[:, :POS_DIM]
-        rad = self.r0 * (1.0 + self.amp * (C @ self._basis.T))   # (N, M) radius at each angle
-        rad = np.clip(rad, 0.15, None)
-        wsum = rad.sum(1, keepdims=True) + _EPS
-        qpos = rad / wsum                                    # positive charge per boundary point (Σ=1)
-        # boundary point positions: centre + r·direction (broadcast (N,M,2))
-        bpts = pos[:, None, :] + rad[:, :, None] * self._dir[None, :, :]
-        N, M = rad.shape
-        pp = np.concatenate([bpts.reshape(N * M, 2), pos], axis=0)
-        ch = np.concatenate([qpos.reshape(N * M), -np.ones(N)], axis=0)   # + rim, − centre (net 0)
-        own = np.concatenate([np.repeat(np.arange(N), M), np.arange(N)])
-        return pp, ch, own
-
-    def _charge_force(self):
-        """Coulomb between charge points of DIFFERENT blobs → net force per token. Conservative."""
-        pp, ch, own = self._charge_points()
-        d = pp[None, :, :] - pp[:, None, :]
-        d = d - self.L * np.round(d / self.L)
-        d2 = np.einsum("ijc,ijc->ij", d, d) + _EPS
-        rhat = d / np.sqrt(d2)[..., None]
-        qq = ch[:, None] * ch[None, :]
-        mag = -self.charge * qq / (d2 + self.soft)           # + along r̂ when opposite → attract
-        same = own[:, None] == own[None, :]
-        mag = np.where(same, 0.0, mag)
-        fb = np.einsum("ij,ijc->ic", mag, rhat)              # per charge point
-        F = np.zeros((self.cfg.N, POS_DIM))
-        np.add.at(F, own, fb)
-        return F
-
-    def step(self):
+    def _extra_force(self):
+        """The electrostatic polarity head, added to pack.py's step. Bounded softmax attention over the
+        bearing-resolved near-face charges — NO /d² kernel. Returns 0 when polarity=0 (base case)."""
+        if self.polarity <= 0.0:
+            return 0.0
         cfg = self.cfg
-        tau = max(1e-2, self.temperature)
         C = self._contour()
-        delta, d2 = self._periodic_delta()
+        delta, d2 = self._periodic_delta()                 # delta = p_i − p_j
         idx = self._neighbors(d2, cfg.n_neighbors)
         mask = np.zeros_like(d2, dtype=bool)
         np.put_along_axis(mask, idx, True, axis=1)
         np.fill_diagonal(mask, False)
-        S_direct = (C @ C.T) / np.sqrt(self.tK)
-        S_comp = (C @ (C @ self.M).T) / np.sqrt(self.tK)
-
-        # bounded repulsive attention = soft excluded volume (unchanged from pack.py)
-        rscore = np.where(mask, (S_direct - cfg.dist_lambda * d2) / tau, -np.inf)
-        rm = np.max(rscore, axis=1, keepdims=True)
-        rm = np.where(np.isfinite(rm), rm, 0.0)
-        A_repel = np.exp(rscore - rm) * mask
-        rdenom = A_repel.sum(1, keepdims=True)
-        A_repel = np.where(rdenom > 0, A_repel / np.where(rdenom > 0, rdenom, 1.0), 0.0)
-        dirn = delta / np.sqrt(d2[..., None] + 1e-4)
-        repel = np.einsum("ij,ijc->ic", A_repel, dirn)
-
-        # complementary-fit attraction (kept, weak) — drives the induced-fit MORPH below
-        score = np.where(mask, (S_comp - cfg.dist_lambda * d2) / tau, -np.inf)
+        dij = -delta                                       # i → j
+        dist = np.sqrt(d2 + 1e-4)
+        ang_ij = np.arctan2(dij[..., 1], dij[..., 0])      # bearing i→j
+        ang_ji = np.arctan2(delta[..., 1], delta[..., 0])  # bearing j→i
+        nf_i = self._near_face(C, ang_ij)                  # what i presents toward j
+        nf_j = self._near_face(C, ang_ji).T                # what j presents toward i (transpose to (i,j))
+        prod = nf_i * nf_j                                 # >0 like charges, <0 opposite
+        tau = max(1e-2, self.temperature)
+        score = np.where(mask, (np.abs(prod) - cfg.dist_lambda * d2) / tau, -np.inf)
         m = np.max(score, axis=1, keepdims=True)
         m = np.where(np.isfinite(m), m, 0.0)
-        A_fit = np.exp(score - m) * mask
-        denom = A_fit.sum(1, keepdims=True)
-        A_fit = np.where(denom > 0, A_fit / np.where(denom > 0, denom, 1.0), 0.0)
-        attract = -np.einsum("ij,ijc->ic", A_fit, delta)
+        w = np.exp(score - m) * mask
+        wden = w.sum(1, keepdims=True)
+        w = np.where(wden > 0, w / np.where(wden > 0, wden, 1.0), 0.0)   # row-stochastic → bounded
+        s = -np.tanh(self.pol_gain * prod)                 # opposite faces (prod<0) → +1 attract
+        unit = dij / dist[..., None]
+        disp = np.einsum("ij,ij,ijc->ic", w, s, unit)      # Σ_j w·s·r̂  (|disp| ≤ 1)
+        return self.polarity * disp
 
-        # THE NEW TERM: force from the contour-derived charges (protrusion + ↔ centre −)
-        charge_force = self._charge_force()
+    def _post_morph(self, z2):
+        """Freeze the water species' shape channels → water stays round. No-op when there is no water,
+        so the base case is unchanged."""
+        z2[self.species == WATER, : self.tK] = 0.0
+        return z2
 
-        force = self.repel * repel + self.attract * attract + charge_force
+    # NOTE: no step() override — we inherit PackEngine.step() and only add the two hooks above, so
+    # with polarity=0 and water_frac=0 the trajectory is byte-identical to the previous vivarium.
 
-        self.vel = self.momentum * self.vel + force
-        sp = np.linalg.norm(self.vel, axis=1, keepdims=True)
-        self.vel = np.where(sp > self.maxvel, self.vel * self.maxvel / (sp + 1e-9), self.vel)
-        p = self.X[:, :POS_DIM] + self.speed * self.vel
-        p = ((p + cfg.pos_bound) % self.L) - cfg.pos_bound
-
-        # induced-fit morph (active tokens only) — pack.py's block; water stays round
-        z = self.X[:, POS_DIM:]
-        msg = A_fit @ (z @ self.W_v)
-        spin = self.skew * (z @ self.J) if self.skew > 0 else 0.0
-        z1 = _ln(z + self.morph * msg + spin)
-        z2 = _ln(z1 + np.tanh(z1 @ self.W1 + self.b1) @ self.W2 + self.b2)
-        z2[self.species == WATER, : self.tK] = 0.0           # freeze water's shape → round
-
-        self.X = np.concatenate([p, z2], axis=1)
-        self.t += 1
-
-    def polarity(self):
+    def token_polarity(self):
         """Per-token spikiness Σ_k k·(a_k²+b_k²) — the emergent polarity the viewer already colours by."""
         C = self._contour()
         K = self.cfg.n_harmonics
@@ -157,7 +112,7 @@ class PolarPackEngine(PackEngine):
     def measure(self):
         from metrics_pack import measure as mpack
         m = mpack(self.X[:, :POS_DIM], self.L, radius=1.0)
-        pol = self.polarity()
+        pol = self.token_polarity()
         act = self.species == ACTIVE
         return {"clusters": m["n_clusters"], "largest": round(m["largest_frac"], 3),
                 "polarity": round(float(pol[act].mean()) if act.any() else 0.0, 3)}
@@ -170,14 +125,14 @@ def render_svg(e, W=720):
     X = lambda x: (x + B) * sc
     C = e._contour()
     pos = e.X[:, :POS_DIM]
-    pol = e.polarity()
+    pol = e.token_polarity()
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{W}" viewBox="0 0 {W} {W}">',
              f'<rect width="{W}" height="{W}" fill="#0e131b"/>']
     th = np.linspace(0, 2 * np.pi, 48, endpoint=False)
     K = e.cfg.n_harmonics
     for i in range(e.cfg.N):
-        r = e.r0 * (1.0 + e.amp * sum(C[i, 2 * (k - 1)] * np.cos((k + 1) * th)
-                                      + C[i, 2 * (k - 1) + 1] * np.sin((k + 1) * th) for k in range(1, K + 1)))
+        r = e.r0 * (1.0 + e.amp * sum(C[i, 2 * (k - 1)] * np.cos(k * th)
+                                      + C[i, 2 * (k - 1) + 1] * np.sin(k * th) for k in range(1, K + 1)))
         r = np.clip(r, 0.15, None)
         xs = X(pos[i, 0] + r * np.cos(th)); ys = X(pos[i, 1] + r * np.sin(th))
         pts = " ".join(f"{x:.1f},{y:.1f}" for x, y in zip(xs, ys))
@@ -201,7 +156,7 @@ def _cfg(**over):
 
 
 def probe(a):
-    e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, charge=a.charge, attract=a.attract)
+    e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, polarity=a.polarity)
     lip = e.species == ACTIVE
     print(" tick  polarity  clusters  largest  speed")
     for _ in range(0, a.ticks + 1, a.every):
@@ -212,19 +167,35 @@ def probe(a):
             e.step()
 
 
+def verify_base_case(seed=0, steps=300):
+    """The base case (polarity=0, water=0) must be byte-identical to the previous vivarium (PackEngine)."""
+    from pack import PackEngine
+    a = PackEngine(_cfg(), seed)
+    b = PolarPackEngine(_cfg(), seed, water_frac=0.0, polarity=0.0)
+    for _ in range(steps):
+        a.step(); b.step()
+    diff = float(np.max(np.abs(a.X - b.X)))
+    ok = diff == 0.0
+    print(f"base-case identity vs PackEngine after {steps} steps: max|ΔX| = {diff:.2e}  "
+          f"→ {'IDENTICAL ✓' if ok else 'DIFFERS ✗'}")
+    return 0 if ok else 1
+
+
 def main(argv=None):
     p = argparse.ArgumentParser()
+    p.add_argument("--verify", action="store_true")
     p.add_argument("--probe", action="store_true")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--ticks", type=int, default=2000)
     p.add_argument("--every", type=int, default=400)
     p.add_argument("--water", type=float, default=0.4)
-    p.add_argument("--charge", type=float, default=0.6)
-    p.add_argument("--attract", type=float, default=0.15)
+    p.add_argument("--polarity", type=float, default=0.6)
     p.add_argument("--out", default=None, help="render final frame to this SVG path")
     a = p.parse_args(argv)
+    if a.verify:
+        return verify_base_case()
     if a.out:
-        e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, charge=a.charge, attract=a.attract)
+        e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, polarity=a.polarity)
         for _ in range(a.ticks):
             e.step()
         with open(a.out, "w") as f:

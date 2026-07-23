@@ -213,6 +213,8 @@ class PackEngine:
             cohere = -np.einsum("ij,ijc->ic", A_coh, delta)   # toward the neighbourhood centroid
             force = force + self.cohesion * cohere
 
+        force = force + self._extra_force()   # subclass hook (default 0.0) — e.g. contour-charge force
+
         self.vel = self.momentum * self.vel + force        # inertia → coherent, non-freezing motion
         # cap per-step displacement so nothing zips across the dish (overshoot control)
         sp = np.linalg.norm(self.vel, axis=1, keepdims=True)
@@ -239,9 +241,18 @@ class PackEngine:
         spin = self.skew * (z @ self.J) if self.skew > 0 else 0.0
         z1 = _ln(z + self.morph * msg + spin)
         z2 = _ln(z1 + np.tanh(z1 @ self.W1 + self.b1) @ self.W2 + self.b2)
+        z2 = self._post_morph(z2)             # subclass hook (default identity) — e.g. freeze water shape
 
         self.X = np.concatenate([p, z2], axis=1)
         self.t += 1
+
+    # --- extension hooks: default to NO-OP so PackEngine behaviour is unchanged (base case). A
+    #     subclass adds contour-charge forces / a frozen water species purely additively. ---
+    def _extra_force(self):
+        return 0.0
+
+    def _post_morph(self, z2):
+        return z2
 
 
 def _cfg(**over):
