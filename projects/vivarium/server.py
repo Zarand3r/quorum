@@ -48,6 +48,7 @@ class Sim:
         # pseudo-knobs: name → (getter, setter). Unlike real knobs (a live setattr), these need a
         # restart (e.g. changing the water COUNT re-assigns species). Set after construction.
         self.pseudo: dict = {}
+        self.autopause = 0        # if >0, auto-pause when engine.t reaches this step (resumable)
         self.lock = threading.Lock()
         self.engine = self._make(seed)
         self.paused = False
@@ -85,6 +86,8 @@ class Sim:
                 with self.lock:
                     self.engine.step()
                     self._buf.append(self.engine.X[:, :2].copy())  # positions only (cheap)
+                if self.autopause and self.engine.t >= self.autopause:
+                    self.paused = True                            # auto-pause at the given step (resumable)
             # sleep the *remaining* time so the cadence is stable regardless of step cost
             time.sleep(max(0.0, dt - (time.perf_counter() - t0)))
 
@@ -137,6 +140,7 @@ class Sim:
             self.vel_reset()
             self._alive = 0.0
             self._buf.clear()
+        self.paused = False        # a restart resumes (past any auto-pause)
 
     def vel_reset(self) -> None:
         if hasattr(self.engine, "vel"):
@@ -250,7 +254,8 @@ def main(argv: list[str] | None = None) -> int:
         # polarity is a FUNCTIONAL of the morphing contour (prongs +, centre −), realised as ONE bounded
         # bearing-aware attention head (transformer-only) — the electrostatic complement to the steric
         # attract/repel heads. `water` is a pseudo-knob (changing the count needs a restart).
-        water_box = [0.4]
+        water_box = [0.55]
+        lipid_box = [0.45]     # amphiphile lipids → membrane self-assembly (water + lipid demo)
 
         def make_engine(s):
             # sensible SHOWCASE defaults (base-case identity is defined vs PackEngine's own defaults, so
@@ -264,29 +269,35 @@ def main(argv: list[str] | None = None) -> int:
             # viscous dish is). Energy hierarchy: excluded volume (repel) ≫ electrostatics / H-bond
             # (polarity, ~10 kT) ≫ van der Waals dispersion (attract, ~1 kT) ~ thermal kT (temperature).
             # Range hierarchy: Pauli (repel) < vdW (attract) < electrostatic (polarity).
-            e = PolarPackEngine(cfg, s, water_frac=water_box[0], repel=2.00, attract=0.40,
-                                polarity=1.00, cohesion=0.00, skew=0.00, morph=0.70,
-                                momentum=0.30, speed=1.20)   # momentum 0.3 ≈ overdamped (viscous solvent)
+            e = PolarPackEngine(cfg, s, water_frac=water_box[0], lipid_frac=lipid_box[0],
+                                repel=2.00, attract=0.40, polarity=1.00, cohesion=0.00, skew=0.00,
+                                morph=0.70, momentum=0.30, speed=1.20)   # momentum 0.3 ≈ overdamped
             e.conservative = True      # symmetric CONSERVATIVE forces → relaxes to a free-energy min
             e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, 1.0, 0.25   # Gaussian decay rates λ
-            e.repel_contact = 1.00     # σ = particle diameter = the length unit; repel acts only on overlap
+            e.repel_contact = 1.00     # σ = particle diameter; repel acts only on overlap
             e.rigidity = 0.00
             e.selectivity = 0.30
-            e.temperature = 0.15       # kT ≈ the vdW scale → liquid regime (not frozen, not a gas)
+            e.temperature = 0.05       # low kT → let the membrane settle
+            e.k_tail, e.k_hydro = 1.5, 1.0   # amphiphile: tail cohesion + hydrophobic effect
             return e
         knob_names = ("repel", "sink_repel", "repel_contact", "attract", "sink_attract",
-                      "polarity", "sink_polarity", "morph", "rigidity", "selectivity", "temperature",
-                      "momentum", "speed")
-        label = "POLAR PACK (electrostatic polarity head from the morphing contour + water)"
+                      "polarity", "sink_polarity", "k_tail", "k_hydro", "morph", "rigidity",
+                      "selectivity", "temperature", "momentum", "speed")
+        label = "POLAR PACK (water + amphiphile lipids → membrane self-assembly)"
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     server.sim = Sim(cfg, seed, args.hz, make_engine, knob_names)
     if args.polar:
-        def _set_water(v):
-            v = max(0.0, min(0.85, v))
-            if abs(v - water_box[0]) > 0.02:
-                water_box[0] = v
-                server.sim.restart(seed=server.sim.seed)   # same seed → only the water count changes
-        server.sim.pseudo = {"water": (lambda: water_box[0], _set_water)}
+        server.sim.autopause = 5000       # auto-pause at 5000 steps (resumable / restart resumes)
+
+        def _restarter(box, v, lo, hi):
+            v = max(lo, min(hi, v))
+            if abs(v - box[0]) > 0.02:
+                box[0] = v
+                server.sim.restart(seed=server.sim.seed)
+        server.sim.pseudo = {
+            "water": (lambda: water_box[0], lambda v: _restarter(water_box, v, 0.0, 0.9)),
+            "lipid": (lambda: lipid_box[0], lambda v: _restarter(lipid_box, v, 0.0, 0.9)),
+        }
     print(f"serving: {label}")
     print(
         f"vivarium viewer on http://{args.host}:{server.server_address[1]}\n"

@@ -267,6 +267,14 @@ class PolarPackEngine(PackEngine):
         return {"clusters": m["n_clusters"], "largest": round(m["largest_frac"], 3),
                 "polarity": round(float(pol[act].mean()) if act.any() else 0.0, 3)}
 
+    def snapshot(self):
+        snap = super().snapshot()
+        snap["species"] = [int(x) for x in self.species]        # 0 water · 1 active · 2 oil · 3 lipid
+        snap["lip_ell"] = float(self.lip_ell)
+        snap["lipids"] = {int(i): [float(self.lipid_o[k, 0]), float(self.lipid_o[k, 1])]
+                          for k, i in enumerate(self._li)}       # per-lipid head↔tail axis (for rods)
+        return snap
+
 
 def render_svg(e, W=720):
     """Draw the actual contour blobs, coloured by emergent polarity (blue apolar → red polar); water
@@ -288,12 +296,26 @@ def render_svg(e, W=720):
         pts = " ".join(f"{x:.1f},{y:.1f}" for x, y in zip(xs, ys))
         t = max(0.0, min(1.0, (pol[i] - 4.0) / 14.0))
         hue = 210 * (1 - t)
+        if e.species[i] == LIPID:
+            continue                                  # drawn as rods below
         if e.species[i] == WATER:
             parts.append(f'<polygon points="{pts}" fill="#1e3a5f" stroke="#38bdf8" '
                          f'stroke-width="1.3" opacity="0.85"/>')
+        elif e.species[i] == OIL:
+            parts.append(f'<circle cx="{X(pos[i,0]):.1f}" cy="{X(pos[i,1]):.1f}" r="{0.6*sc:.1f}" '
+                         f'fill="#3f3f46" stroke="#71717a" stroke-width="1"/>')  # nonpolar oil = grey
         else:
             parts.append(f'<polygon points="{pts}" fill="hsla({hue:.0f},65%,58%,0.92)" '
                          f'stroke="#0b0e13" stroke-width="1.2"/>')
+    # LIPIDS as rods: head (blue, hydrophilic) — tail (orange, hydrophobic)
+    for k, i in enumerate(e._li):
+        o = e.lipid_o[k]
+        hx, hy = X(pos[i, 0] - e.lip_ell * o[0]), X(pos[i, 1] - e.lip_ell * o[1])
+        tx, ty = X(pos[i, 0] + e.lip_ell * o[0]), X(pos[i, 1] + e.lip_ell * o[1])
+        parts.append(f'<line x1="{hx:.1f}" y1="{hy:.1f}" x2="{tx:.1f}" y2="{ty:.1f}" '
+                     f'stroke="#f59e0b" stroke-width="3" opacity="0.8"/>')          # tail rod
+        parts.append(f'<circle cx="{tx:.1f}" cy="{ty:.1f}" r="3.5" fill="#f59e0b"/>')  # tail tip
+        parts.append(f'<circle cx="{hx:.1f}" cy="{hy:.1f}" r="4.5" fill="#38bdf8"/>')  # hydrophilic head
     m = e.measure()
     parts.append(f'<text x="10" y="{W-14}" fill="#cbd5e0" font-family="monospace" font-size="15">'
                  f't={e.t}  mean polarity={m["polarity"]:.2f}  clusters={m["clusters"]}  '

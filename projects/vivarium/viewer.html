@@ -263,7 +263,7 @@ const KMAX = {noise:1.5, spin:1.5, nonrecip:3, scale:1, rd:2,
               repel:0.6, attract:1, cohesion:0.8, temperature:3, skew:2, morph:1.5,
               momentum:0.98, speed:1.5, plasticity:1.0, polarity:1.5, water:0.85, attn_sink:5,
               selectivity:3, temperature:1.0, sink_repel:8, sink_attract:8, sink_polarity:4,
-              repel_contact:3, collision:1, rigidity:1};
+              repel_contact:3, collision:1, rigidity:1, k_tail:4, k_hydro:3, lipid:0.9};
 const KDESC = {
   repel:    "PAULI EXCLUSION (soft excluded volume) — the hard-core repulsion that stops blobs overlapping. Mandatory: electrostatics alone would collapse (Earnshaw).",
   attract:  "VAN DER WAALS + shape complementarity (lock-and-key) — charge-blind adhesion between shapes that fit; also drives the induced-fit morph.",
@@ -283,6 +283,9 @@ const KDESC = {
   repel_contact: "CONTACT DISTANCE — repel (excluded volume) acts ONLY when two agents are closer than this (interpenetrate); 0 = old always-on soft repel. This makes it a real, symmetric Pauli exclusion that conserves momentum.",
   collision: "ELASTIC COLLISION — on overlap, the pair exchanges velocity along the contact normal → momentum transfers between colliding agents (conserved). Needs contact>0.",
   rigidity: "RIGIDITY (elastic stiffness) — restoring pull of the shape back toward round each step; the OPPOSITE of morph (flexibility). 0 = fully flexible/deformable, 1 = stiff.",
+  k_tail: "TAIL COHESION — hydrophobic attraction between lipid tails; builds the membrane core (higher → stronger aggregation).",
+  k_hydro: "HYDROPHOBIC EFFECT — lipid tails repelled from water + heads attracted to water; drives heads-out / tails-in.",
+  lipid: "LIPID FRACTION — amphiphiles (blue head + orange tail rods). Changing restarts the dish. 0 = no lipids.",
   noise:    "THERMAL FLUCTUATION (Langevin) — seeded random jitter / symmetry-breaking. Equilibrium-seeking (unlike skew).",
   spin:     "GYROSCOPIC drive on the embedding — rotational anti-collapse (skew on z).",
   nonrecip: "NON-RECIPROCAL ATTENTION A+β(A−Aᵀ) — the antisymmetric part breaks detailed balance → active-matter circulation (the most faithful ‘alive’ drive).",
@@ -382,6 +385,15 @@ function draw(al){
   ctx.clearRect(0,0,W,H);
 
   for(let idx=0; idx<N; idx++){
+    if(s.species && s.species[idx]===3){          // LIPID → draw as a rod (blue head, orange tail)
+      const o = (s.lipids && s.lipids[idx]) || [1,0], e2 = (s.lip_ell||0.55)*sc;
+      const hx=px[idx]-o[0]*e2, hy=py[idx]+o[1]*e2, tx=px[idx]+o[0]*e2, ty=py[idx]-o[1]*e2;
+      ctx.strokeStyle='rgba(245,158,11,0.85)'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(hx,hy); ctx.lineTo(tx,ty); ctx.stroke();
+      ctx.fillStyle='#f59e0b'; ctx.beginPath(); ctx.arc(tx,ty,3.5,0,7); ctx.fill();   // hydrophobic tail
+      ctx.fillStyle='#38bdf8'; ctx.beginPath(); ctx.arc(hx,hy,4.5,0,7); ctx.fill();   // hydrophilic head
+      continue;
+    }
     let c = s.tokens[idx].c; const K = c.length/2;
     // interpolate the SHAPE coefficients too (not just position) — otherwise blobs morph in
     // stutters at the frame rate while positions glide. Shape doesn't wrap, so always lerp.
