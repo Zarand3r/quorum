@@ -259,15 +259,19 @@ def main(argv: list[str] | None = None) -> int:
             # tension must EMERGE from attraction), no artificial skew, no plasticity. PER-FORCE decay
             # ranges: repel/attract die within ~a diameter (short-ranged Pauli/vdW), polarity reaches
             # farther (electrostatics). selectivity = softmax τ; temperature = REAL thermal noise.
-            e = PolarPackEngine(cfg, s, water_frac=water_box[0], repel=0.50, attract=0.40,
+            e = PolarPackEngine(cfg, s, water_frac=water_box[0], repel=1.00, attract=0.40,
                                 polarity=0.70, cohesion=0.00, skew=0.00, morph=0.70,
                                 momentum=0.85, speed=1.20)
             e.sink_repel, e.sink_attract, e.sink_polarity = 4.0, 3.0, 0.5
+            e.repel_contact = 1.20     # excluded volume acts ONLY on overlap (real Pauli, symmetric)
+            e.collision = 0.30         # elastic momentum transfer on contact
+            e.rigidity = 0.00          # active tokens fully flexible (dial up to stiffen)
             e.selectivity = 0.30
             e.temperature = 0.10
             return e
-        knob_names = ("repel", "attract", "polarity", "sink_repel", "sink_attract", "sink_polarity",
-                      "selectivity", "temperature", "morph", "momentum", "speed")
+        knob_names = ("repel", "sink_repel", "repel_contact", "collision", "attract", "sink_attract",
+                      "polarity", "sink_polarity", "morph", "rigidity", "selectivity", "temperature",
+                      "momentum", "speed")
         label = "POLAR PACK (electrostatic polarity head from the morphing contour + water)"
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     server.sim = Sim(cfg, seed, args.hz, make_engine, knob_names)

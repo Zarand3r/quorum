@@ -58,7 +58,15 @@ class PackEngine:
         self.cohesion = cohesion  # surface tension: broad attention → pull toward neighbourhood
         #                           centroid; merges fragments into ONE droplet (M1). 0 = off.
         self.skew = skew        # non-settling shape rotation
-        self.morph = morph      # induced-fit morph gain
+        self.morph = morph      # induced-fit FLEXIBILITY: how strongly a token reshapes to fit partners
+        self.rigidity = 0.0     # ELASTIC STIFFNESS: restoring pull of the contour toward its ROUND rest
+        #   shape each step (C_rest=0). 0 = no restoring (base case); 1 = snaps rigid/round. The true
+        #   rigidity ↔ flexibility (morph) tension: morph grows prongs, rigidity relaxes them back.
+        self.repel_contact = 0.0  # if >0, repel is a SYMMETRIC overlap force: it acts ONLY when two
+        #   agents interpenetrate (d < repel_contact), ∝ overlap depth, zero otherwise (real excluded
+        #   volume). Being symmetric (F_ij=−F_ji), it also CONSERVES momentum. 0 → old softmax repel.
+        self.collision = 0.0    # elastic COLLISION head: on overlap, exchange the normal velocity
+        #   component between the pair (equal-mass elastic bounce) → momentum transfers on contact. 0=off.
         self.momentum = momentum  # position inertia (lower = less zippy; steady speed ≈ force/(1−mom))
         self.speed = speed      # dt-like multiplier on per-step displacement (slow it down to watch)
         self.maxvel = maxvel    # cap on per-step displacement — prevents agents zipping/overshooting
@@ -192,16 +200,21 @@ class PackEngine:
         A_fit = self._attn(score, mask, self.sink_attract)                   # sink-aware → decays with distance
         attract = -np.einsum("ij,ijc->ic", A_fit, delta)  # toward complementary neighbours
 
-        # repel head: bounded repulsive ATTENTION (transformer-only, HARD_REQUIREMENT). Attend to
-        # close, clashing neighbours (softmax over clash − λ·d²), then move AWAY from that
-        # attention-weighted set. Bounded (soft excluded volume), NOT a divergent 1/d² kernel.
-        rscore = np.where(mask, (S_direct - cfg.dist_lambda * d2) / tau, -np.inf)
-        A_repel = self._attn(rscore, mask, self.sink_repel)
-        # aggregate the UNIT direction away (the value is the relative *direction*), so the push
-        # stays finite as neighbours touch (delta→0) — otherwise soft repel vanishes at contact and
-        # agents overlap. Softmax weight (bounded) sets how much; unit vector sets which way.
-        dirn = delta / np.sqrt(d2[..., None] + _DIR_EPS)
-        repel = np.einsum("ij,ijc->ic", A_repel, dirn)    # away from close/clashing neighbours
+        # repel head. Two modes:
+        #  (a) repel_contact>0 → SYMMETRIC OVERLAP force: acts ONLY when agents interpenetrate
+        #      (d < repel_contact), magnitude ∝ overlap depth, zero otherwise = real soft excluded
+        #      volume. relu(depth) is bounded and →0 at contact (not a divergent 1/d² kernel), and
+        #      because overlap_ij = overlap_ji it is symmetric (F_ij=−F_ji) → conserves momentum.
+        #  (b) else → the previous bounded repulsive ATTENTION (softmax over clash − λ·d²).
+        dist = np.sqrt(d2 + _DIR_EPS)
+        dirn = delta / dist[..., None]                    # unit direction i away from j
+        if self.repel_contact > 0.0:
+            overlap = np.clip(self.repel_contact - dist, 0.0, None) * mask   # depth, 0 beyond contact
+            repel = np.einsum("ij,ijc->ic", overlap, dirn)
+        else:
+            rscore = np.where(mask, (S_direct - cfg.dist_lambda * d2) / tau, -np.inf)
+            A_repel = self._attn(rscore, mask, self.sink_repel)
+            repel = np.einsum("ij,ijc->ic", A_repel, dirn)
 
         force = self.attract * attract + self.repel * repel
 
@@ -224,6 +237,18 @@ class PackEngine:
         force = force + self._extra_force()   # subclass hook (default 0.0) — e.g. contour-charge force
 
         self.vel = self.momentum * self.vel + force        # inertia → coherent, non-freezing motion
+
+        # COLLISION head (momentum transfer): when two agents overlap, EXCHANGE their velocity component
+        # along the collision normal — an equal-mass elastic bounce, so momentum passes from one to the
+        # other on contact. Δv_i = collision·Σ_j overlap_ij·((v_j−v_i)·n̂)·n̂ (n̂ = i-from-j direction);
+        # symmetric ⇒ Δv_j = −Δv_i ⇒ total momentum conserved. Attention over neighbour velocities
+        # (value = v_j), gated by overlap — transformer-only. Needs repel_contact>0 to define contact.
+        if self.collision > 0.0 and self.repel_contact > 0.0:
+            overlap = np.clip(self.repel_contact - dist, 0.0, None) * mask
+            dv = self.vel[None, :, :] - self.vel[:, None, :]         # v_j − v_i  (N,N,2)
+            reln = np.einsum("ijc,ijc->ij", dv, dirn)                # (v_j−v_i)·n̂_ij
+            self.vel = self.vel + self.collision * np.einsum("ij,ij,ijc->ic", overlap, reln, dirn)
+
         # cap per-step displacement so nothing zips across the dish (overshoot control)
         sp = np.linalg.norm(self.vel, axis=1, keepdims=True)
         self.vel = np.where(sp > self.maxvel, self.vel * self.maxvel / (sp + 1e-9), self.vel)
@@ -254,6 +279,10 @@ class PackEngine:
         spin = self.skew * (z @ self.J) if self.skew > 0 else 0.0
         z1 = _ln(z + self.morph * msg + spin)
         z2 = _ln(z1 + np.tanh(z1 @ self.W1 + self.b1) @ self.W2 + self.b2)
+        # RIGIDITY: elastic restoring of the contour toward its round rest shape (C_rest=0). A stiff
+        # molecule relaxes its induced deformation back each step; morph is the flexibility that fights it.
+        if self.rigidity > 0.0:
+            z2[:, :self.tK] = z2[:, :self.tK] * (1.0 - self.rigidity)
         z2 = self._post_morph(z2)             # subclass hook (default identity) — e.g. freeze water shape
 
         self.X = np.concatenate([p, z2], axis=1)
