@@ -15,11 +15,17 @@
   button:hover { background: #334155; }
   .note { color: #64748b; margin-top: 6px; max-width: 720px; text-align: center; }
   #knobs { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
-  #knobs label { display: flex; flex-direction: column; align-items: center; gap: 3px; color: #94a3b8; }
+  #knobs label { display: flex; flex-direction: column; align-items: center; gap: 3px; color: #94a3b8; width: 160px; }
+  #knobs label > div { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; }
   #knobs input[type=range] { width: 140px; accent-color: #34d399; }
   #knobs b { color: #e2e8f0; }
-  #knobs label { width: 150px; }
+  .kcap { color: #94a3b8; font-size: 12px; }
   .kdesc { color: #64748b; font-size: 10.5px; line-height: 1.3; text-align: center; margin-top: 2px; }
+  /* the per-force decay-range sink, nested UNDER its force's strength slider */
+  .subknob { margin-top: 5px; padding-top: 5px; border-top: 1px dashed #334155; opacity: 0.9; }
+  .subknob input[type=range] { width: 120px; accent-color: #60a5fa; }
+  .subknob .kcap { font-size: 10px; color: #64748b; }
+  .subknob b { color: #93c5fd; font-size: 12px; }
   #arch { max-width: 760px; margin-top: 14px; width: 100%; }
   #archtoggle { width: 100%; text-align: left; }
   #archbody { border: 1px solid #1e293b; border-top: none; border-radius: 0 0 6px 6px;
@@ -278,22 +284,33 @@ const KDESC = {
   scale:    "residual gain — overall motion strength per step (integration scale).",
   rd:       "REACTION–DIFFUSION — differential-rate diffusion of the shape field (Turing pattern coupling).",
 };
+// each force's decay-range sink is shown nested UNDER that force's strength slider
+const SINK_OF = {repel:'sink_repel', attract:'sink_attract', polarity:'sink_polarity'};
+const SINK_NAMES = new Set(Object.values(SINK_OF));
+function makeSlider(parent, name, val, cls){
+  const max = KMAX[name] ?? Math.max(1, val*2);
+  const wrap = document.createElement('div'); if(cls) wrap.className = cls;
+  wrap.title = KDESC[name] || '';
+  const cap = document.createElement('span'); cap.textContent = name; cap.className = 'kcap';
+  const inp = document.createElement('input');
+  inp.type='range'; inp.min=0; inp.max=max; inp.step=max/100; inp.value=val; inp.dataset.knob=name;
+  const b = document.createElement('b'); b.textContent=(+val).toFixed(2);
+  inp.addEventListener('input', ()=>{ b.textContent=(+inp.value).toFixed(2);
+    clearTimeout(setTimer); setTimer=setTimeout(pushKnobs, 80); });
+  const desc = document.createElement('div'); desc.className='kdesc'; desc.textContent = KDESC[name]||'';
+  wrap.append(cap, inp, b, desc); parent.appendChild(wrap); return wrap;
+}
 function buildKnobs(k){
   if(knobsBuilt || !k) return;
   const box = document.getElementById('knobs'); box.innerHTML = '';
   for(const [name,val] of Object.entries(k)){
-    const max = KMAX[name] ?? Math.max(1, val*2);
+    if(SINK_NAMES.has(name)) continue;                 // sinks are placed under their force, not here
     const lab = document.createElement('label');
-    lab.title = KDESC[name] || '';
-    const cap = document.createElement('span'); cap.textContent = name;
-    const inp = document.createElement('input');
-    inp.type='range'; inp.min=0; inp.max=max; inp.step=max/100; inp.value=val; inp.dataset.knob=name;
-    const b = document.createElement('b'); b.textContent=(+val).toFixed(2);
-    inp.addEventListener('input', ()=>{ b.textContent=(+inp.value).toFixed(2);
-      clearTimeout(setTimer); setTimer=setTimeout(pushKnobs, 80); });
-    const desc = document.createElement('div'); desc.className = 'kdesc';
-    desc.textContent = KDESC[name] || '';
-    lab.append(cap, inp, b, desc); box.appendChild(lab);
+    makeSlider(lab, name, val);                          // the force-strength slider
+    const sinkName = SINK_OF[name];
+    if(sinkName && sinkName in k)                         // nest its decay-range sink beneath it
+      makeSlider(lab, sinkName, k[sinkName], 'subknob');
+    box.appendChild(lab);
   }
   knobsBuilt = true;
 }
