@@ -251,7 +251,15 @@ def main(argv: list[str] | None = None) -> int:
         # bearing-aware attention head (transformer-only) — the electrostatic complement to the steric
         # attract/repel heads. `water` is a pseudo-knob (changing the count needs a restart).
         water_box = [0.4]
-        make_engine = lambda s: PolarPackEngine(cfg, s, water_frac=water_box[0])  # noqa: E731
+
+        def make_engine(s):
+            # sensible SHOWCASE defaults (base-case identity is defined vs PackEngine's own defaults, so
+            # setting these here does not weaken it — dial polarity→0, water→0 to recover the prev sim).
+            e = PolarPackEngine(cfg, s, water_frac=water_box[0], repel=0.20, attract=0.40,
+                                polarity=0.70, cohesion=0.10, skew=0.80, morph=0.70,
+                                momentum=0.85, speed=1.20)
+            e.temperature = 0.30    # a little thermal softening (not frozen); base sim used 0
+            return e
         knob_names = ("repel", "attract", "polarity", "cohesion", "temperature", "skew", "morph",
                       "momentum", "speed", "plasticity")
         label = "POLAR PACK (electrostatic polarity head from the morphing contour + water)"
