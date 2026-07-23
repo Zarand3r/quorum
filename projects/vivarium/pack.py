@@ -65,8 +65,6 @@ class PackEngine:
         self.repel_contact = 0.0  # if >0, repel is a SYMMETRIC overlap force: it acts ONLY when two
         #   agents interpenetrate (d < repel_contact), ∝ overlap depth, zero otherwise (real excluded
         #   volume). Being symmetric (F_ij=−F_ji), it also CONSERVES momentum. 0 → old softmax repel.
-        self.collision = 0.0    # elastic COLLISION head: on overlap, exchange the normal velocity
-        #   component between the pair (equal-mass elastic bounce) → momentum transfers on contact. 0=off.
         self.momentum = momentum  # position inertia (lower = less zippy; steady speed ≈ force/(1−mom))
         self.speed = speed      # dt-like multiplier on per-step displacement (slow it down to watch)
         self.maxvel = maxvel    # cap on per-step displacement — prevents agents zipping/overshooting
@@ -208,8 +206,13 @@ class PackEngine:
         #  (b) else → the previous bounded repulsive ATTENTION (softmax over clash − λ·d²).
         dist = np.sqrt(d2 + _DIR_EPS)
         dirn = delta / dist[..., None]                    # unit direction i away from j
+        overlap = None
         if self.repel_contact > 0.0:
-            overlap = np.clip(self.repel_contact - dist, 0.0, None) * mask   # depth, 0 beyond contact
+            # SYMMETRIC overlap over ALL pairs (NOT the asymmetric k-NN mask — that would break
+            # symmetry and momentum). overlap_ij = overlap_ji since d is symmetric; contact is short-
+            # ranged so this stays local anyway. Zero the diagonal (no self-overlap).
+            overlap = np.clip(self.repel_contact - dist, 0.0, None)
+            np.fill_diagonal(overlap, 0.0)
             repel = np.einsum("ij,ijc->ic", overlap, dirn)
         else:
             rscore = np.where(mask, (S_direct - cfg.dist_lambda * d2) / tau, -np.inf)
@@ -236,18 +239,12 @@ class PackEngine:
 
         force = force + self._extra_force()   # subclass hook (default 0.0) — e.g. contour-charge force
 
-        self.vel = self.momentum * self.vel + force        # inertia → coherent, non-freezing motion
-
-        # COLLISION head (momentum transfer): when two agents overlap, EXCHANGE their velocity component
-        # along the collision normal — an equal-mass elastic bounce, so momentum passes from one to the
-        # other on contact. Δv_i = collision·Σ_j overlap_ij·((v_j−v_i)·n̂)·n̂ (n̂ = i-from-j direction);
-        # symmetric ⇒ Δv_j = −Δv_i ⇒ total momentum conserved. Attention over neighbour velocities
-        # (value = v_j), gated by overlap — transformer-only. Needs repel_contact>0 to define contact.
-        if self.collision > 0.0 and self.repel_contact > 0.0:
-            overlap = np.clip(self.repel_contact - dist, 0.0, None) * mask
-            dv = self.vel[None, :, :] - self.vel[:, None, :]         # v_j − v_i  (N,N,2)
-            reln = np.einsum("ijc,ijc->ij", dv, dirn)                # (v_j−v_i)·n̂_ij
-            self.vel = self.vel + self.collision * np.einsum("ij,ij,ijc->ic", overlap, reln, dirn)
+        # OVERDAMPED (Brownian / DPD) integration: a molecule in a viscous solvent has negligible
+        # inertia — velocity tracks force (v ≈ μ·F), drag dominates. `momentum` is the small inertial
+        # memory (0 = fully overdamped, the physical limit for a dish; >0 adds glide for viewing).
+        # Momentum-transfer-on-collision is NOT a separate law: it EMERGES from the symmetric repulsive
+        # force + this inertia (and in the true overdamped limit the solvent absorbs momentum anyway).
+        self.vel = self.momentum * self.vel + force
 
         # cap per-step displacement so nothing zips across the dish (overshoot control)
         sp = np.linalg.norm(self.vel, axis=1, keepdims=True)

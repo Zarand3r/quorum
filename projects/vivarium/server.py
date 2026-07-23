@@ -259,17 +259,21 @@ def main(argv: list[str] | None = None) -> int:
             # tension must EMERGE from attraction), no artificial skew, no plasticity. PER-FORCE decay
             # ranges: repel/attract die within ~a diameter (short-ranged Pauli/vdW), polarity reaches
             # farther (electrostatics). selectivity = softmax τ; temperature = REAL thermal noise.
-            e = PolarPackEngine(cfg, s, water_frac=water_box[0], repel=1.00, attract=0.40,
-                                polarity=0.70, cohesion=0.00, skew=0.00, morph=0.70,
-                                momentum=0.85, speed=1.20)
-            e.sink_repel, e.sink_attract, e.sink_polarity = 4.0, 3.0, 0.5
-            e.repel_contact = 1.20     # excluded volume acts ONLY on overlap (real Pauli, symmetric)
-            e.collision = 0.30         # elastic momentum transfer on contact
-            e.rigidity = 0.00          # active tokens fully flexible (dial up to stiffen)
+            # FUNDAMENTAL FORCES ONLY, tuned to the real molecular hierarchy (a soft-potential / DPD
+            # regime, since the hard requirement forbids divergent 1/r kernels; overdamped, as a
+            # viscous dish is). Energy hierarchy: excluded volume (repel) ≫ electrostatics / H-bond
+            # (polarity, ~10 kT) ≫ van der Waals dispersion (attract, ~1 kT) ~ thermal kT (temperature).
+            # Range hierarchy: Pauli (repel) < vdW (attract) < electrostatic (polarity).
+            e = PolarPackEngine(cfg, s, water_frac=water_box[0], repel=2.00, attract=0.15,
+                                polarity=1.00, cohesion=0.00, skew=0.00, morph=0.70,
+                                momentum=0.30, speed=1.20)   # momentum 0.3 ≈ overdamped (viscous solvent)
+            e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, 4.0, 0.4
+            e.repel_contact = 1.00     # σ = particle diameter = the length unit; repel acts only on overlap
+            e.rigidity = 0.00
             e.selectivity = 0.30
-            e.temperature = 0.10
+            e.temperature = 0.15       # kT ≈ the vdW scale → liquid regime (not frozen, not a gas)
             return e
-        knob_names = ("repel", "sink_repel", "repel_contact", "collision", "attract", "sink_attract",
+        knob_names = ("repel", "sink_repel", "repel_contact", "attract", "sink_attract",
                       "polarity", "sink_polarity", "morph", "rigidity", "selectivity", "temperature",
                       "momentum", "speed")
         label = "POLAR PACK (electrostatic polarity head from the morphing contour + water)"
