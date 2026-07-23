@@ -125,10 +125,18 @@ class PolarPackEngine(PackEngine):
         prod = nf_i * nf_j                                 # >0 like charges, <0 opposite
         tau = max(1e-2, self.selectivity)
         score = np.where(mask, (np.abs(prod) - cfg.dist_lambda * d2) / tau, -np.inf)
-        w = self._attn(score, mask, self.sink_polarity)    # sink-aware bounded → decays with distance
-        s = -np.tanh(self.pol_gain * prod)                 # opposite faces (prod<0) → +1 attract
-        unit = dij / dist[..., None]
-        disp = np.einsum("ij,ij,ijc->ic", w, s, unit)      # Σ_j w·s·r̂  (|disp| ≤ 1)
+        w = self._attn(score, mask, self.sink_polarity)    # softmax weights (drive the field + morph)
+        unit = dij / dist[..., None]                       # toward j
+        if self.conservative:
+            # CONSERVATIVE electrostatics: force_i = −Σ_j prod_ij·K(d)·û  with K=exp(−λ_p·d²). prod and K
+            # are symmetric, û antisymmetric ⇒ F_ij=−F_ji ⇒ conservative. prod<0 (opposite faces) → pull
+            # together, prod>0 (like) → push apart. All pairs, diagonal zeroed.
+            g = np.clip(prod, -3.0, 3.0) * np.exp(-self.sink_polarity * d2)   # clip for stability
+            np.fill_diagonal(g, 0.0)
+            disp = -np.einsum("ij,ijc->ic", g, unit)
+        else:
+            s = -np.tanh(self.pol_gain * prod)             # opposite faces (prod<0) → +1 attract
+            disp = np.einsum("ij,ij,ijc->ic", w, s, unit)  # Σ_j w·s·r̂  (|disp| ≤ 1)
         # electrostatic TORQUE target: a token's + face should point where neighbours present − charge
         # (nf_j(i) < 0). Stored for _post_morph to reorient dipoles (this is how real water aligns).
         self._pol_field = np.einsum("ij,ij,ijc->ic", w, -nf_j, unit)
@@ -229,6 +237,7 @@ def probe(a):
     e.sink_repel, e.sink_attract = a.srep, a.satt
     e.selectivity = a.sel
     e.temperature = a.kt
+    e.conservative = a.cons
     lip = e.species == ACTIVE
     print(f" tick  polarity  clusters  largest  speed   (skew={a.skew} sel={a.sel} kt={a.kt})")
     for _ in range(0, a.ticks + 1, a.every):
@@ -264,6 +273,9 @@ def water_liquid_test(a):
     e.sink_repel, e.sink_attract = a.srep, a.satt
     e.selectivity = a.sel
     e.temperature = a.kt
+    e.conservative = a.cons
+    e.repel_contact = a.contact
+    e.momentum = a.mom
     print(f" tick  largest  nclust  coord  hbond%  speed   (pol={a.polarity} sel={a.sel} kt={a.kt} "
           f"srep={a.srep} satt={a.satt} spol={a.spol} repel={a.repel} q={a.wcharge})")
     for t in range(0, a.ticks + 1, a.every):
@@ -310,6 +322,9 @@ def main(argv=None):
     p.add_argument("--watertest", action="store_true")
     p.add_argument("--wcharge", type=float, default=0.8)
     p.add_argument("--repel", type=float, default=0.2)
+    p.add_argument("--cons", action="store_true", help="conservative symmetric forces")
+    p.add_argument("--contact", type=float, default=0.0, help="repel_contact (overlap distance)")
+    p.add_argument("--mom", type=float, default=0.3, help="momentum (overdamped ~0.3)")
     p.add_argument("--cohesion", type=float, default=0.08)
     p.add_argument("--probe", action="store_true")
     p.add_argument("--seed", type=int, default=0)
@@ -339,6 +354,9 @@ def main(argv=None):
         e.sink_repel, e.sink_attract = a.srep, a.satt
         e.selectivity = a.sel
         e.temperature = a.kt
+        e.conservative = a.cons
+        e.repel_contact = a.contact
+        e.momentum = a.mom
         for _ in range(a.ticks):
             e.step()
         with open(a.out, "w") as f:

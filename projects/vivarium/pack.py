@@ -65,6 +65,9 @@ class PackEngine:
         self.repel_contact = 0.0  # if >0, repel is a SYMMETRIC overlap force: it acts ONLY when two
         #   agents interpenetrate (d < repel_contact), ∝ overlap depth, zero otherwise (real excluded
         #   volume). Being symmetric (F_ij=−F_ji), it also CONSERVES momentum. 0 → old softmax repel.
+        self.conservative = False  # if True, attract & polarity use SYMMETRIC bounded kernels (F_ij=−F_ji)
+        #   instead of row-normalised softmax → every force is a gradient of an energy, so the system
+        #   RELAXES to a free-energy minimum and STRUCTURES EMERGE. False → old (non-conservative) heads.
         self.momentum = momentum  # position inertia (lower = less zippy; steady speed ≈ force/(1−mom))
         self.speed = speed      # dt-like multiplier on per-step displacement (slow it down to watch)
         self.maxvel = maxvel    # cap on per-step displacement — prevents agents zipping/overshooting
@@ -193,19 +196,29 @@ class PackEngine:
         if self.ablate == "identity":
             mask = np.zeros_like(mask)                  # no neighbours → no forces (P6 control)
 
-        # attract head: softmax on complementary fit − distance penalty, at temperature τ
+        dist = np.sqrt(d2 + _DIR_EPS)
+        dirn = delta / dist[..., None]                    # unit direction i away from j
+
+        # attract head. A_fit (softmax over complementary fit) always drives the induced-fit MORPH.
+        # The attractive FORCE is either the CONSERVATIVE van der Waals kernel (symmetric ⇒ relaxes to
+        # an energy minimum) or the old non-conservative −Σ A_fit·Δp (centroid pull).
         score = np.where(mask, (S_comp - cfg.dist_lambda * d2) / tau, -np.inf)
-        A_fit = self._attn(score, mask, self.sink_attract)                   # sink-aware → decays with distance
-        attract = -np.einsum("ij,ijc->ic", A_fit, delta)  # toward complementary neighbours
+        A_fit = self._attn(score, mask, self.sink_attract)
+        if self.conservative:
+            # g_ij = sigmoid(S_comp/τ)·exp(−λ_a·d²): symmetric (S_comp, d symmetric), bounded, decaying
+            # (a soft vdW well). force = −Σ_j g·dirn = pull toward j; F_ij=−F_ji ⇒ conservative. All
+            # pairs (NOT the asymmetric k-NN mask), diagonal zeroed.
+            g = (1.0 / (1.0 + np.exp(-S_comp / tau))) * np.exp(-self.sink_attract * d2)
+            np.fill_diagonal(g, 0.0)
+            attract = -np.einsum("ij,ijc->ic", g, dirn)
+        else:
+            attract = -np.einsum("ij,ijc->ic", A_fit, delta)
 
         # repel head. Two modes:
         #  (a) repel_contact>0 → SYMMETRIC OVERLAP force: acts ONLY when agents interpenetrate
         #      (d < repel_contact), magnitude ∝ overlap depth, zero otherwise = real soft excluded
-        #      volume. relu(depth) is bounded and →0 at contact (not a divergent 1/d² kernel), and
-        #      because overlap_ij = overlap_ji it is symmetric (F_ij=−F_ji) → conserves momentum.
+        #      volume. relu(depth) is bounded and →0 at contact, and overlap_ij=overlap_ji ⇒ symmetric.
         #  (b) else → the previous bounded repulsive ATTENTION (softmax over clash − λ·d²).
-        dist = np.sqrt(d2 + _DIR_EPS)
-        dirn = delta / dist[..., None]                    # unit direction i away from j
         overlap = None
         if self.repel_contact > 0.0:
             # SYMMETRIC overlap over ALL pairs (NOT the asymmetric k-NN mask — that would break
