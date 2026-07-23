@@ -41,13 +41,15 @@ class PolarPackEngine(PackEngine):
     """pack.py's morphing blobs + a FAITHFUL electrostatic polarity head (bounded, bearing-aware) + water."""
 
     def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2,
-                 water_dipole=0.8, **kw):
+                 water_dipole=0.8, pol_torque=0.35, **kw):
         super().__init__(cfg, seed, **kw)
         self.r0 = r0                        # base radius (render only)
         self.amp = amp                      # contour amplitude (render only)
         self.polarity = polarity            # gain on the electrostatic head (0 = off → base case)
         self.pol_gain = pol_gain            # tanh sharpness of the signed attract/repel push
         self.water_dipole = water_dipole    # water's PERMANENT dipole magnitude (real water is polar)
+        self.pol_torque = pol_torque        # rate water reorients its dipole toward the local field
+        self._pol_field = None              # per-token field direction (set by the polarity head)
         r = base_rng(seed + 7)
         self.species = (r.random(cfg.N) > water_frac).astype(int)   # 1 active (morphs), 0 water (dipole)
         # WATER is a permanent DIPOLE (the k=1 harmonic = a lopsided/teardrop contour), random initial
@@ -98,18 +100,27 @@ class PolarPackEngine(PackEngine):
         s = -np.tanh(self.pol_gain * prod)                 # opposite faces (prod<0) → +1 attract
         unit = dij / dist[..., None]
         disp = np.einsum("ij,ij,ijc->ic", w, s, unit)      # Σ_j w·s·r̂  (|disp| ≤ 1)
+        # electrostatic TORQUE target: a token's + face should point where neighbours present − charge
+        # (nf_j(i) < 0). Stored for _post_morph to reorient dipoles (this is how real water aligns).
+        self._pol_field = np.einsum("ij,ij,ijc->ic", w, -nf_j, unit)
         return self.polarity * disp
 
     def _post_morph(self, z2):
-        """Constrain WATER to a permanent dipole: keep only the k=1 harmonic, renormalised to a fixed
-        magnitude (so water is always polar, free to reorient), higher harmonics zeroed. No-op when
-        there is no water → the base case is unchanged."""
+        """WATER is a permanent dipole (k=1 harmonic, fixed magnitude, higher harmonics zeroed) that
+        REORIENTS toward the local field — its + face turns to point at neighbours' − charge, exactly
+        as a real polar molecule aligns. No-op without water → base case unchanged."""
         wi = np.where(self.species == WATER)[0]
         if wi.size:
-            a1, b1 = z2[wi, 0], z2[wi, 1]
-            norm = np.sqrt(a1 * a1 + b1 * b1) + 1e-9
-            z2[wi, 0] = self.water_dipole * a1 / norm
-            z2[wi, 1] = self.water_dipole * b1 / norm
+            cur = z2[wi, :2]
+            cdir = cur / (np.linalg.norm(cur, axis=1, keepdims=True) + 1e-9)
+            newdir = cdir
+            if self.polarity > 0.0 and self._pol_field is not None:
+                fld = self._pol_field[wi]
+                fdir = fld / (np.linalg.norm(fld, axis=1, keepdims=True) + 1e-9)   # field direction
+                blend = (1.0 - self.pol_torque) * cdir + self.pol_torque * fdir    # rotate toward field
+                newdir = blend / (np.linalg.norm(blend, axis=1, keepdims=True) + 1e-9)
+            z2[wi, 0] = self.water_dipole * newdir[:, 0]
+            z2[wi, 1] = self.water_dipole * newdir[:, 1]
             z2[wi, 2:self.tK] = 0.0
         return z2
 
@@ -172,9 +183,10 @@ def _cfg(**over):
 
 
 def probe(a):
-    e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, polarity=a.polarity)
+    e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, polarity=a.polarity, skew=a.skew)
+    e.temperature = a.temp
     lip = e.species == ACTIVE
-    print(" tick  polarity  clusters  largest  speed")
+    print(f" tick  polarity  clusters  largest  speed   (skew={a.skew} temp={a.temp} → speed>0 = still lively)")
     for _ in range(0, a.ticks + 1, a.every):
         m = e.measure()
         speed = float(np.mean(np.linalg.norm(e.vel[lip], axis=1))) if lip.any() else 0.0
@@ -206,6 +218,8 @@ def main(argv=None):
     p.add_argument("--every", type=int, default=400)
     p.add_argument("--water", type=float, default=0.4)
     p.add_argument("--polarity", type=float, default=0.6)
+    p.add_argument("--skew", type=float, default=0.0)
+    p.add_argument("--temp", type=float, default=0.4)
     p.add_argument("--out", default=None, help="render final frame to this SVG path")
     a = p.parse_args(argv)
     if a.verify:

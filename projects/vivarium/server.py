@@ -256,9 +256,11 @@ def main(argv: list[str] | None = None) -> int:
             # sensible SHOWCASE defaults (base-case identity is defined vs PackEngine's own defaults, so
             # setting these here does not weaken it — dial polarity→0, water→0 to recover the prev sim).
             e = PolarPackEngine(cfg, s, water_frac=water_box[0], repel=0.20, attract=0.40,
-                                polarity=0.70, cohesion=0.10, skew=0.80, morph=0.70,
+                                polarity=0.70, cohesion=0.10, skew=0.00, morph=0.70,
                                 momentum=0.85, speed=1.20)
-            e.temperature = 0.30    # a little thermal softening (not frozen); base sim used 0
+            # skew 0 = no artificial gyroscopic drive (a real petri dish has none); the induced-fit
+            # morph already keeps the dish liquid, and temperature sets the Boltzmann sharpness.
+            e.temperature = 0.30
             return e
         knob_names = ("repel", "attract", "polarity", "cohesion", "temperature", "skew", "morph",
                       "momentum", "speed", "plasticity")

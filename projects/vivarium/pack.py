@@ -31,6 +31,7 @@ from rng import base_rng, rng_for
 _LN_EPS = 1e-5
 _MLP_H = 2
 _DIR_EPS = 1e-4  # softening for the unit-direction normalisation (not a force kernel)
+_THERMAL = 0.15  # Langevin kick per unit temperature (kT → Brownian displacement)
 
 
 def _ln(X):
