@@ -254,13 +254,15 @@ archTog.addEventListener('click', () => {
 let knobsBuilt = false, setTimer = null;
 const KMAX = {noise:1.5, spin:1.5, nonrecip:3, scale:1, rd:2,
               repel:0.6, attract:1, cohesion:0.8, temperature:3, skew:2, morph:1.5,
-              momentum:0.98, speed:1.5, plasticity:1.0, polarity:1.5, water:0.85, attn_sink:5};
+              momentum:0.98, speed:1.5, plasticity:1.0, polarity:1.5, water:0.85, attn_sink:5,
+              selectivity:3, temperature:1.0};
 const KDESC = {
   repel:    "PAULI EXCLUSION (soft excluded volume) — the hard-core repulsion that stops blobs overlapping. Mandatory: electrostatics alone would collapse (Earnshaw).",
   attract:  "VAN DER WAALS + shape complementarity (lock-and-key) — charge-blind adhesion between shapes that fit; also drives the induced-fit morph.",
   polarity: "ELECTROSTATICS — a blob's PRONGS are + charge, its CENTRE −; opposite faces attract via a bounded, bearing-aware attention. Emerges as blobs morph. 0 = off → previous vivarium.",
   cohesion: "SURFACE TENSION — collective inward pull toward the neighbourhood centroid; merges fragments into one droplet.",
-  temperature: "TEMPERATURE kT (softmax τ) — low → sharp discrete bonds (order, enthalpy wins); high → uniform mean-field (disorder, entropy wins).",
+  selectivity: "SELECTIVITY (softmax τ) — low → sharp DISCRETE lock-and-key bonds; high → uniform MEAN-FIELD consensus/synchrony. This is NOT thermodynamic temperature (it runs the 'wrong' way): use 'temperature' for real kT.",
+  temperature: "TEMPERATURE = real thermal noise (Langevin) — higher → more random Brownian jitter → more DISORDER, melts structure, prevents freezing (the correct kT direction).",
   skew:     "GYROSCOPIC / ACTIVE DRIVE (Lorentz–Coriolis-type, non-gradient z·J) — sustains circulation so the dish never freezes. The out-of-equilibrium ‘alive’ term.",
   morph:    "INDUCED FIT / conformational flexibility — how strongly a blob reshapes its contour to fit binding partners.",
   momentum: "INERTIA vs DRAG (damping regime) — low = overdamped/colloidal, high = ballistic; steady speed ≈ force/(1−momentum).",

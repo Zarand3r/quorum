@@ -52,16 +52,46 @@ class PolarPackEngine(PackEngine):
         self.pol_morph = pol_morph          # electrostatic induced-fit: how strongly the field reshapes C
         self._pol_field = None              # per-token field direction (set by the polarity head)
         self._pol_morph = None              # per-token contour update (electrostatic energy gradient)
+        # WATER is a rigid MICKEY-MOUSE molecule: a negative O body with two positive H lobes at the
+        # 104.5° HOH angle — a fixed body-frame charge/shape TEMPLATE that rotates (real water is polar
+        # and reorients but does not change shape). Active tokens morph freely (all harmonics).
+        self._water_tpl = self._mickey_template(water_dipole)
         r = base_rng(seed + 7)
-        self.species = (r.random(cfg.N) > water_frac).astype(int)   # 1 active (morphs), 0 water (dipole)
-        # WATER is a permanent DIPOLE (the k=1 harmonic = a lopsided/teardrop contour), random initial
-        # orientation, free to reorient — real water is polar. Active tokens morph freely (all harmonics).
-        wi = np.where(self.species == WATER)[0]
-        if wi.size:
-            ang = r.uniform(0.0, 2.0 * np.pi, wi.size)
-            self.X[wi, POS_DIM:POS_DIM + self.tK] = 0.0
-            self.X[wi, POS_DIM] = water_dipole * np.cos(ang)       # a_1
-            self.X[wi, POS_DIM + 1] = water_dipole * np.sin(ang)   # b_1
+        self.species = (r.random(cfg.N) > water_frac).astype(int)   # 1 active (morphs), 0 water
+        self._wi = np.where(self.species == WATER)[0]
+        self.water_phi = r.uniform(0.0, 2.0 * np.pi, self._wi.size)  # each water's orientation angle
+        if self._wi.size:
+            self.X[self._wi, POS_DIM:POS_DIM + self.tK] = 0.0
+            self._write_water(self.X[:, POS_DIM:])
+
+    def _mickey_template(self, scale):
+        """Body-frame contour coefficients for a water molecule: two positive H lobes at ±52.25° (the
+        104.5° HOH angle) and a negative O opposite → charge nf(θ) peaks toward the H side, negative
+        behind. Projected onto the K harmonics; net-neutral (no k=0). Axis (+ side) points +x."""
+        th = np.linspace(0.0, 2.0 * np.pi, 256, endpoint=False)
+        a = np.deg2rad(52.25)
+        kappa = 7.0                                        # sharper lobes → the two H ears resolve
+        g = np.exp(kappa * (np.cos(th - a) - 1.0)) + np.exp(kappa * (np.cos(th + a) - 1.0))
+        g = g - g.mean()                                  # net neutral (charge sums to 0)
+        tpl = np.zeros(self.tK)
+        for k in range(1, self.cfg.n_harmonics + 1):
+            tpl[2 * (k - 1)] = 2.0 * np.mean(g * np.cos(k * th))       # a_k
+            tpl[2 * (k - 1) + 1] = 2.0 * np.mean(g * np.sin(k * th))   # b_k (≈0 by symmetry)
+        recon = sum(tpl[2 * (k - 1)] * np.cos(k * th) + tpl[2 * (k - 1) + 1] * np.sin(k * th)
+                    for k in range(1, self.cfg.n_harmonics + 1))
+        return tpl * (scale / (np.max(np.abs(recon)) + 1e-9))          # scale peak |charge| to `scale`
+
+    def _write_water(self, z):
+        """Write each water's rigid template into shape channels z (a view of X[:,POS_DIM:]), rotated
+        by its orientation angle water_phi (Fourier rotation: harmonic k rotates by k·φ)."""
+        if not self._wi.size:
+            return
+        phi = self.water_phi
+        for k in range(1, self.cfg.n_harmonics + 1):
+            ak, bk = self._water_tpl[2 * (k - 1)], self._water_tpl[2 * (k - 1) + 1]
+            ck, sk = np.cos(k * phi), np.sin(k * phi)
+            z[self._wi, 2 * (k - 1)] = ak * ck - bk * sk
+            z[self._wi, 2 * (k - 1) + 1] = ak * sk + bk * ck
 
     def _near_face(self, C, ang):
         """⟨C, basis(ang)⟩ — the contour radius-deviation each token presents along bearing `ang` (N,N).
@@ -92,7 +122,7 @@ class PolarPackEngine(PackEngine):
         nf_i = self._near_face(C, ang_ij)                  # what i presents toward j
         nf_j = self._near_face(C, ang_ji).T                # what j presents toward i (transpose to (i,j))
         prod = nf_i * nf_j                                 # >0 like charges, <0 opposite
-        tau = max(1e-2, self.temperature)
+        tau = max(1e-2, self.selectivity)
         score = np.where(mask, (np.abs(prod) - cfg.dist_lambda * d2) / tau, -np.inf)
         w = self._attn(score, mask)                        # sink-aware bounded → decays with distance
         s = -np.tanh(self.pol_gain * prod)                 # opposite faces (prod<0) → +1 attract
@@ -121,19 +151,17 @@ class PolarPackEngine(PackEngine):
         # gradient. Active tokens deform to charge-fit their neighbours; water is re-constrained below.
         if self.polarity > 0.0 and self._pol_morph is not None:
             z2[:, :self.tK] = z2[:, :self.tK] + self.pol_morph * self._pol_morph
-        wi = np.where(self.species == WATER)[0]
-        if wi.size:
-            cur = z2[wi, :2]
-            cdir = cur / (np.linalg.norm(cur, axis=1, keepdims=True) + 1e-9)
-            newdir = cdir
+        if self._wi.size:
+            # WATER keeps its rigid Mickey shape but REORIENTS: turn its +H axis toward the local field
+            # (where neighbours present − charge), then rewrite the rotated template (overwrites the
+            # generic morph for water — a real water molecule rotates, it doesn't deform).
             if self.polarity > 0.0 and self._pol_field is not None:
-                fld = self._pol_field[wi]
-                fdir = fld / (np.linalg.norm(fld, axis=1, keepdims=True) + 1e-9)   # field direction
-                blend = (1.0 - self.pol_torque) * cdir + self.pol_torque * fdir    # rotate toward field
-                newdir = blend / (np.linalg.norm(blend, axis=1, keepdims=True) + 1e-9)
-            z2[wi, 0] = self.water_dipole * newdir[:, 0]
-            z2[wi, 1] = self.water_dipole * newdir[:, 1]
-            z2[wi, 2:self.tK] = 0.0
+                fld = self._pol_field[self._wi]
+                tgt = np.arctan2(fld[:, 1], fld[:, 0])                 # desired +H bearing
+                d = np.arctan2(np.sin(tgt - self.water_phi), np.cos(tgt - self.water_phi))
+                mag = np.linalg.norm(fld, axis=1)                      # no field → no torque
+                self.water_phi = self.water_phi + self.pol_torque * d * (mag > 1e-6)
+            self._write_water(z2)
         return z2
 
     # NOTE: no step() override — we inherit PackEngine.step() and only add the two hooks above, so
@@ -197,9 +225,10 @@ def _cfg(**over):
 def probe(a):
     e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, polarity=a.polarity, skew=a.skew,
                         attn_sink=a.sink)
-    e.temperature = a.temp
+    e.selectivity = a.sel
+    e.temperature = a.kt
     lip = e.species == ACTIVE
-    print(f" tick  polarity  clusters  largest  speed   (skew={a.skew} temp={a.temp} → speed>0 = still lively)")
+    print(f" tick  polarity  clusters  largest  speed   (skew={a.skew} sel={a.sel} kt={a.kt})")
     for _ in range(0, a.ticks + 1, a.every):
         m = e.measure()
         speed = float(np.mean(np.linalg.norm(e.vel[lip], axis=1))) if lip.any() else 0.0
@@ -220,6 +249,36 @@ def verify_base_case(seed=0, steps=300):
     print(f"base-case identity vs PackEngine after {steps} steps: max|ΔX| = {diff:.2e}  "
           f"→ {'IDENTICAL ✓' if ok else 'DIFFERS ✗'}")
     return 0 if ok else 1
+
+
+def water_liquid_test(a):
+    """PURE water (water_frac=1): does it form ONE cohesive hydrogen-bonded LIQUID where every water
+    locks to its neighbours? largest→1.0 (all connected), coord in a liquid range, hbond_frac high
+    (a + H face meeting a − O face), and not frozen/collapsed."""
+    from metrics_pack import measure as mpack
+    e = PolarPackEngine(_cfg(), a.seed, water_frac=1.0, polarity=a.polarity, skew=0.0,
+                        attn_sink=a.sink, water_dipole=a.wcharge, repel=a.repel, attract=0.0,
+                        cohesion=a.cohesion)
+    e.selectivity = a.sel
+    e.temperature = a.kt
+    print(f" tick  largest  nclust  coord  hbond%  speed   (pol={a.polarity} sel={a.sel} kt={a.kt} "
+          f"sink={a.sink} repel={a.repel} q={a.wcharge})")
+    for t in range(0, a.ticks + 1, a.every):
+        pos = e.X[:, :POS_DIM]
+        m = mpack(pos, e.L, radius=1.3)
+        delta, d2 = e._periodic_delta()
+        near = (d2 < 1.4 ** 2); np.fill_diagonal(near, False)
+        coord = float(near.sum(1).mean())
+        C = e._contour()
+        dij = -delta
+        nf_i = e._near_face(C, np.arctan2(dij[..., 1], dij[..., 0]))
+        nf_j = e._near_face(C, np.arctan2(delta[..., 1], delta[..., 0])).T
+        bonded = near & (nf_i * nf_j < 0)                  # + face meets − face = an H-bond contact
+        hb = 100.0 * bonded.sum() / max(1, near.sum())
+        speed = float(np.mean(np.linalg.norm(e.vel, axis=1)))
+        print(f"{t:5d}   {m['largest_frac']:.3f}   {m['n_clusters']:3d}   {coord:4.1f}   {hb:4.0f}   {speed:.4f}")
+        for _ in range(a.every):
+            e.step()
 
 
 def decay_check():
@@ -246,6 +305,10 @@ def main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("--verify", action="store_true")
     p.add_argument("--decay", action="store_true")
+    p.add_argument("--watertest", action="store_true")
+    p.add_argument("--wcharge", type=float, default=0.8)
+    p.add_argument("--repel", type=float, default=0.2)
+    p.add_argument("--cohesion", type=float, default=0.08)
     p.add_argument("--probe", action="store_true")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--ticks", type=int, default=2000)
@@ -253,16 +316,24 @@ def main(argv=None):
     p.add_argument("--water", type=float, default=0.4)
     p.add_argument("--polarity", type=float, default=0.6)
     p.add_argument("--skew", type=float, default=0.0)
-    p.add_argument("--temp", type=float, default=0.4)
+    p.add_argument("--sel", type=float, default=0.3, help="softmax selectivity τ (NOT temperature)")
+    p.add_argument("--kt", type=float, default=0.0, help="real temperature = thermal Langevin noise")
     p.add_argument("--sink", type=float, default=1.0)
     p.add_argument("--out", default=None, help="render final frame to this SVG path")
     a = p.parse_args(argv)
     if a.decay:
         return decay_check()
+    if a.watertest:
+        return water_liquid_test(a)
     if a.verify:
         return verify_base_case()
     if a.out:
-        e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, polarity=a.polarity)
+        attract = 0.0 if a.water >= 0.999 else 0.4
+        e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, polarity=a.polarity, skew=a.skew,
+                            attn_sink=a.sink, repel=a.repel, cohesion=a.cohesion, attract=attract,
+                            water_dipole=a.wcharge)
+        e.selectivity = a.sel
+        e.temperature = a.kt
         for _ in range(a.ticks):
             e.step()
         with open(a.out, "w") as f:

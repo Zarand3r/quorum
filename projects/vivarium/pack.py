@@ -62,9 +62,11 @@ class PackEngine:
         self.cohere_lambda = 0.08           # broad distance kernel (long reach → crosses gaps)
         self.edge_radius = 0.6              # render: draw an edge only between agents this close
         #                                    (small → only touching pairs, not a dense mesh)
-        self.temperature = 0.0             # softmax temperature τ (Boltzmann kT); guarded to 1e-2
-        #   in step. Default 0 = sharp (near-argmax) → strong non-reciprocity → SPLIT-AND-CHASE.
-        #   high → uniform mean-field (collapse/merge). score/τ before softmax.
+        self.selectivity = 0.0             # softmax τ (guarded to 1e-2). NOT thermodynamic temperature:
+        #   low = sharp near-argmax → discrete lock-and-key bonds; high = uniform mean-field →
+        #   consensus/synchrony/collapse. This is a selectivity dial, not kT (see self.temperature).
+        self.temperature = 0.0             # REAL temperature = thermal (Langevin) noise amplitude:
+        #   higher → more random Brownian jitter → more DISORDER (melts structure), as kT should. 0=off.
         self.vel = np.zeros((cfg.N, POS_DIM))
         self.L = 2.0 * cfg.pos_bound
         rng = base_rng(seed + 1)
@@ -137,7 +139,7 @@ class PackEngine:
         np.put_along_axis(mask, idx, True, axis=1)
         np.fill_diagonal(mask, False)
         S_comp = (C @ (C @ self.M).T) / np.sqrt(self.tK)
-        tau = max(1e-2, self.temperature)
+        tau = max(1e-2, self.selectivity)
         score = np.where(mask, (S_comp - self.cfg.dist_lambda * d2) / tau, -np.inf)
         m = np.max(score, axis=1, keepdims=True)
         m = np.where(np.isfinite(m), m, 0.0)
@@ -166,7 +168,7 @@ class PackEngine:
 
     def step(self):
         cfg = self.cfg
-        tau = max(1e-2, self.temperature)   # softmax temperature (Boltzmann kT); guard ÷0
+        tau = max(1e-2, self.selectivity)    # softmax selectivity τ (NOT kT — see self.temperature)
         C = self._contour()
         delta, d2 = self._periodic_delta()
         idx = self._neighbors(d2, cfg.n_neighbors)
@@ -222,6 +224,11 @@ class PackEngine:
         sp = np.linalg.norm(self.vel, axis=1, keepdims=True)
         self.vel = np.where(sp > self.maxvel, self.vel * self.maxvel / (sp + 1e-9), self.vel)
         p = self.X[:, :POS_DIM] + self.speed * self.vel
+        # REAL TEMPERATURE = thermal (Langevin) noise: seeded Brownian kicks ∝ temperature. Higher →
+        # more disorder, melts structure, prevents freezing — the thermodynamically-correct direction
+        # (unlike `selectivity`, the softmax τ). The one non-attention op; genuine thermal physics.
+        if self.temperature > 0.0:
+            p = p + _THERMAL * self.temperature * rng_for(self.seed, self.t).standard_normal(p.shape)
         p = ((p + cfg.pos_bound) % self.L) - cfg.pos_bound  # wrap to the torus
 
         # induced-fit morph: block updates shape/hidden, coupled through the fit attention
