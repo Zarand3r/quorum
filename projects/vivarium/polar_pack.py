@@ -41,8 +41,9 @@ class PolarPackEngine(PackEngine):
     """pack.py's morphing blobs + a FAITHFUL electrostatic polarity head (bounded, bearing-aware) + water."""
 
     def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2,
-                 water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, **kw):
+                 water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, sink_polarity=0.0, **kw):
         super().__init__(cfg, seed, **kw)
+        self.sink_polarity = sink_polarity  # electrostatics = LONGEST range → low sink (slow decay)
         self.r0 = r0                        # base radius (render only)
         self.amp = amp                      # contour amplitude (render only)
         self.polarity = polarity            # gain on the electrostatic head (0 = off → base case)
@@ -124,7 +125,7 @@ class PolarPackEngine(PackEngine):
         prod = nf_i * nf_j                                 # >0 like charges, <0 opposite
         tau = max(1e-2, self.selectivity)
         score = np.where(mask, (np.abs(prod) - cfg.dist_lambda * d2) / tau, -np.inf)
-        w = self._attn(score, mask)                        # sink-aware bounded → decays with distance
+        w = self._attn(score, mask, self.sink_polarity)    # sink-aware bounded → decays with distance
         s = -np.tanh(self.pol_gain * prod)                 # opposite faces (prod<0) → +1 attract
         unit = dij / dist[..., None]
         disp = np.einsum("ij,ij,ijc->ic", w, s, unit)      # Σ_j w·s·r̂  (|disp| ≤ 1)
@@ -224,7 +225,8 @@ def _cfg(**over):
 
 def probe(a):
     e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, polarity=a.polarity, skew=a.skew,
-                        attn_sink=a.sink)
+                        sink_polarity=a.spol)
+    e.sink_repel, e.sink_attract = a.srep, a.satt
     e.selectivity = a.sel
     e.temperature = a.kt
     lip = e.species == ACTIVE
@@ -257,12 +259,13 @@ def water_liquid_test(a):
     (a + H face meeting a − O face), and not frozen/collapsed."""
     from metrics_pack import measure as mpack
     e = PolarPackEngine(_cfg(), a.seed, water_frac=1.0, polarity=a.polarity, skew=0.0,
-                        attn_sink=a.sink, water_dipole=a.wcharge, repel=a.repel, attract=0.0,
+                        sink_polarity=a.spol, water_dipole=a.wcharge, repel=a.repel, attract=0.0,
                         cohesion=a.cohesion)
+    e.sink_repel, e.sink_attract = a.srep, a.satt
     e.selectivity = a.sel
     e.temperature = a.kt
     print(f" tick  largest  nclust  coord  hbond%  speed   (pol={a.polarity} sel={a.sel} kt={a.kt} "
-          f"sink={a.sink} repel={a.repel} q={a.wcharge})")
+          f"srep={a.srep} satt={a.satt} spol={a.spol} repel={a.repel} q={a.wcharge})")
     for t in range(0, a.ticks + 1, a.every):
         pos = e.X[:, :POS_DIM]
         m = mpack(pos, e.L, radius=1.3)
@@ -293,8 +296,7 @@ def decay_check():
         score = np.where(mask, (1.0 - lam * d2) / tau, -np.inf)
         vals = []
         for sk in (0.0, 2.0, 4.0):
-            e.attn_sink = sk
-            A = e._attn(score, mask)
+            A = e._attn(score, mask, sk)
             vals.append(A[0, 1] * d)                       # weight × separation = attract magnitude
         print(f" {d:4.1f}      {vals[0]:12.4f}   {vals[1]:6.4f}   {vals[2]:6.4f}")
     print("sink=0 GROWS with distance (spring, the bug); sink>0 rises then DECAYS to ~0 (physical).")
@@ -318,7 +320,9 @@ def main(argv=None):
     p.add_argument("--skew", type=float, default=0.0)
     p.add_argument("--sel", type=float, default=0.3, help="softmax selectivity τ (NOT temperature)")
     p.add_argument("--kt", type=float, default=0.0, help="real temperature = thermal Langevin noise")
-    p.add_argument("--sink", type=float, default=1.0)
+    p.add_argument("--srep", type=float, default=4.0, help="repel sink (short range, fast decay)")
+    p.add_argument("--satt", type=float, default=3.0, help="attract sink (short range)")
+    p.add_argument("--spol", type=float, default=0.5, help="polarity sink (long range, slow decay)")
     p.add_argument("--out", default=None, help="render final frame to this SVG path")
     a = p.parse_args(argv)
     if a.decay:
@@ -330,8 +334,9 @@ def main(argv=None):
     if a.out:
         attract = 0.0 if a.water >= 0.999 else 0.4
         e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, polarity=a.polarity, skew=a.skew,
-                            attn_sink=a.sink, repel=a.repel, cohesion=a.cohesion, attract=attract,
+                            sink_polarity=a.spol, repel=a.repel, cohesion=a.cohesion, attract=attract,
                             water_dipole=a.wcharge)
+        e.sink_repel, e.sink_attract = a.srep, a.satt
         e.selectivity = a.sel
         e.temperature = a.kt
         for _ in range(a.ticks):

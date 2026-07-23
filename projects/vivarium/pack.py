@@ -46,9 +46,13 @@ class PackEngine:
         self.cfg = cfg
         self.seed = seed
         self.ablate = ablate
-        self.attn_sink = attn_sink  # NULL "attend to nothing" weight → forces DECAY with distance
-        #   (0 = plain row-stochastic softmax = the previous engine exactly; >0 = far neighbourhoods
-        #   lose to the null option, so every force vanishes as neighbours get far — physical decay).
+        # PER-FORCE decay range (NULL attention sink; higher = faster decay = shorter range). Real
+        # forces have very different ranges, so each head gets its OWN sink: Pauli repulsion is the
+        # shortest-ranged, van der Waals short, electrostatics the longest. Default = the shared
+        # attn_sink (0 → plain softmax = the previous engine exactly, base case preserved).
+        self.sink_repel = attn_sink       # Pauli exclusion  — shortest range (decays fastest)
+        self.sink_attract = attn_sink     # van der Waals    — short range
+        self.sink_cohesion = attn_sink    # cohesion shortcut (surface-tension; being deprecated)
         self.repel = repel      # bounded repulsive-attention strength (soft excluded volume)
         self.attract = attract  # complementary-fit attraction (interlocking)
         self.cohesion = cohesion  # surface tension: broad attention → pull toward neighbourhood
@@ -103,15 +107,15 @@ class PackEngine:
     def _contour(self):
         return self.X[:, POS_DIM:POS_DIM + self.tK]  # grounded contour = shape channels
 
-    def _attn(self, score, mask):
-        """Bounded attention weights with an optional NULL sink. score is (N,N) with −inf off-mask.
-        denom = Σ_j exp(score−m) + attn_sink·exp(−m): when a row's best neighbour is far/weak (m small
-        or negative), the sink dominates and the weights → 0, so the aggregated force DECAYS to zero
-        with distance. attn_sink=0 → plain row-stochastic softmax (identical to the previous engine)."""
+    def _attn(self, score, mask, sink):
+        """Bounded attention weights with a per-force NULL sink. score is (N,N) with −inf off-mask.
+        denom = Σ_j exp(score−m) + sink·exp(−m): when a row's best neighbour is far/weak, the sink
+        dominates and the weights → 0, so the force DECAYS with distance. HIGHER sink = FASTER decay =
+        SHORTER range. sink=0 → plain row-stochastic softmax (identical to the previous engine)."""
         m = np.max(score, axis=1, keepdims=True)
         m = np.where(np.isfinite(m), m, 0.0)
         e = np.exp(score - m) * mask
-        denom = e.sum(1, keepdims=True) + self.attn_sink * np.exp(-m)
+        denom = e.sum(1, keepdims=True) + sink * np.exp(-m)
         return np.where(denom > 0, e / np.where(denom > 0, denom, 1.0), 0.0)
 
     def _periodic_delta(self):
@@ -185,14 +189,14 @@ class PackEngine:
 
         # attract head: softmax on complementary fit − distance penalty, at temperature τ
         score = np.where(mask, (S_comp - cfg.dist_lambda * d2) / tau, -np.inf)
-        A_fit = self._attn(score, mask)                   # sink-aware → decays with distance
+        A_fit = self._attn(score, mask, self.sink_attract)                   # sink-aware → decays with distance
         attract = -np.einsum("ij,ijc->ic", A_fit, delta)  # toward complementary neighbours
 
         # repel head: bounded repulsive ATTENTION (transformer-only, HARD_REQUIREMENT). Attend to
         # close, clashing neighbours (softmax over clash − λ·d²), then move AWAY from that
         # attention-weighted set. Bounded (soft excluded volume), NOT a divergent 1/d² kernel.
         rscore = np.where(mask, (S_direct - cfg.dist_lambda * d2) / tau, -np.inf)
-        A_repel = self._attn(rscore, mask)
+        A_repel = self._attn(rscore, mask, self.sink_repel)
         # aggregate the UNIT direction away (the value is the relative *direction*), so the push
         # stays finite as neighbours touch (delta→0) — otherwise soft repel vanishes at contact and
         # agents overlap. Softmax weight (bounded) sets how much; unit vector sets which way.
@@ -213,7 +217,7 @@ class PackEngine:
             if self.ablate == "identity":
                 cmask = np.zeros_like(cmask)
             cscore = np.where(cmask, (-self.cohere_lambda * d2) / tau, -np.inf)
-            A_coh = self._attn(cscore, cmask)
+            A_coh = self._attn(cscore, cmask, self.sink_cohesion)
             cohere = -np.einsum("ij,ijc->ic", A_coh, delta)   # toward the neighbourhood centroid
             force = force + self.cohesion * cohere
 

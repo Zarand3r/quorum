@@ -255,17 +255,19 @@ def main(argv: list[str] | None = None) -> int:
         def make_engine(s):
             # sensible SHOWCASE defaults (base-case identity is defined vs PackEngine's own defaults, so
             # setting these here does not weaken it — dial polarity→0, water→0 to recover the prev sim).
-            e = PolarPackEngine(cfg, s, water_frac=water_box[0], repel=0.20, attract=0.40,
-                                polarity=0.70, cohesion=0.10, skew=0.00, morph=0.70,
-                                momentum=0.85, speed=1.20, attn_sink=1.00)
-            # skew 0 = no artificial gyroscopic drive (a real petri dish has none). attn_sink 1.0 =
-            # forces DECAY with distance. selectivity = softmax τ (discrete↔mean-field); temperature =
-            # REAL thermal noise (higher → more disorder, the correct kT direction).
+            # Most-physical defaults for EMERGENCE (transformer-only): no cohesion shortcut (surface
+            # tension must EMERGE from attraction), no artificial skew, no plasticity. PER-FORCE decay
+            # ranges: repel/attract die within ~a diameter (short-ranged Pauli/vdW), polarity reaches
+            # farther (electrostatics). selectivity = softmax τ; temperature = REAL thermal noise.
+            e = PolarPackEngine(cfg, s, water_frac=water_box[0], repel=0.50, attract=0.40,
+                                polarity=0.70, cohesion=0.00, skew=0.00, morph=0.70,
+                                momentum=0.85, speed=1.20)
+            e.sink_repel, e.sink_attract, e.sink_polarity = 4.0, 3.0, 0.5
             e.selectivity = 0.30
             e.temperature = 0.10
             return e
-        knob_names = ("repel", "attract", "polarity", "attn_sink", "cohesion", "selectivity",
-                      "temperature", "skew", "morph", "momentum", "speed", "plasticity")
+        knob_names = ("repel", "attract", "polarity", "sink_repel", "sink_attract", "sink_polarity",
+                      "selectivity", "temperature", "morph", "momentum", "speed")
         label = "POLAR PACK (electrostatic polarity head from the morphing contour + water)"
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     server.sim = Sim(cfg, seed, args.hz, make_engine, knob_names)
