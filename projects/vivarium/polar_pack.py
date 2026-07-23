@@ -41,7 +41,7 @@ class PolarPackEngine(PackEngine):
     """pack.py's morphing blobs + a FAITHFUL electrostatic polarity head (bounded, bearing-aware) + water."""
 
     def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2,
-                 water_dipole=0.8, pol_torque=0.35, **kw):
+                 water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, **kw):
         super().__init__(cfg, seed, **kw)
         self.r0 = r0                        # base radius (render only)
         self.amp = amp                      # contour amplitude (render only)
@@ -49,7 +49,9 @@ class PolarPackEngine(PackEngine):
         self.pol_gain = pol_gain            # tanh sharpness of the signed attract/repel push
         self.water_dipole = water_dipole    # water's PERMANENT dipole magnitude (real water is polar)
         self.pol_torque = pol_torque        # rate water reorients its dipole toward the local field
+        self.pol_morph = pol_morph          # electrostatic induced-fit: how strongly the field reshapes C
         self._pol_field = None              # per-token field direction (set by the polarity head)
+        self._pol_morph = None              # per-token contour update (electrostatic energy gradient)
         r = base_rng(seed + 7)
         self.species = (r.random(cfg.N) > water_frac).astype(int)   # 1 active (morphs), 0 water (dipole)
         # WATER is a permanent DIPOLE (the k=1 harmonic = a lopsided/teardrop contour), random initial
@@ -92,23 +94,33 @@ class PolarPackEngine(PackEngine):
         prod = nf_i * nf_j                                 # >0 like charges, <0 opposite
         tau = max(1e-2, self.temperature)
         score = np.where(mask, (np.abs(prod) - cfg.dist_lambda * d2) / tau, -np.inf)
-        m = np.max(score, axis=1, keepdims=True)
-        m = np.where(np.isfinite(m), m, 0.0)
-        w = np.exp(score - m) * mask
-        wden = w.sum(1, keepdims=True)
-        w = np.where(wden > 0, w / np.where(wden > 0, wden, 1.0), 0.0)   # row-stochastic → bounded
+        w = self._attn(score, mask)                        # sink-aware bounded → decays with distance
         s = -np.tanh(self.pol_gain * prod)                 # opposite faces (prod<0) → +1 attract
         unit = dij / dist[..., None]
         disp = np.einsum("ij,ij,ijc->ic", w, s, unit)      # Σ_j w·s·r̂  (|disp| ≤ 1)
         # electrostatic TORQUE target: a token's + face should point where neighbours present − charge
         # (nf_j(i) < 0). Stored for _post_morph to reorient dipoles (this is how real water aligns).
         self._pol_field = np.einsum("ij,ij,ijc->ic", w, -nf_j, unit)
+        # electrostatic MORPH: steepest descent on the polarity energy E=Σ w·nf_i·nf_j w.r.t. the
+        # contour. Since nf_i(j)=⟨C_i, basis(θ_{i→j})⟩, −∂E/∂C_i = −Σ_j w_ij·nf_j(i)·basis(θ_{i→j}) — a
+        # bounded, attention-weighted sum of relative-bearing basis vectors (RoPE-family, transformer-
+        # only). It grows the contour's + charge toward neighbours' − faces → electrostatically-induced
+        # fit: the same field that moves a token also RESHAPES it. Stored for _post_morph.
+        basis = np.zeros(d2.shape + (self.tK,))
+        for k in range(1, self.cfg.n_harmonics + 1):
+            basis[:, :, 2 * (k - 1)] = np.cos(k * ang_ij)
+            basis[:, :, 2 * (k - 1) + 1] = np.sin(k * ang_ij)
+        self._pol_morph = np.einsum("ij,ijc->ic", w * (-nf_j), basis)
         return self.polarity * disp
 
     def _post_morph(self, z2):
         """WATER is a permanent dipole (k=1 harmonic, fixed magnitude, higher harmonics zeroed) that
         REORIENTS toward the local field — its + face turns to point at neighbours' − charge, exactly
         as a real polar molecule aligns. No-op without water → base case unchanged."""
+        # electrostatic induced-fit morph (all tokens): reshape the contour down the polarity-energy
+        # gradient. Active tokens deform to charge-fit their neighbours; water is re-constrained below.
+        if self.polarity > 0.0 and self._pol_morph is not None:
+            z2[:, :self.tK] = z2[:, :self.tK] + self.pol_morph * self._pol_morph
         wi = np.where(self.species == WATER)[0]
         if wi.size:
             cur = z2[wi, :2]
@@ -183,7 +195,8 @@ def _cfg(**over):
 
 
 def probe(a):
-    e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, polarity=a.polarity, skew=a.skew)
+    e = PolarPackEngine(_cfg(), a.seed, water_frac=a.water, polarity=a.polarity, skew=a.skew,
+                        attn_sink=a.sink)
     e.temperature = a.temp
     lip = e.species == ACTIVE
     print(f" tick  polarity  clusters  largest  speed   (skew={a.skew} temp={a.temp} → speed>0 = still lively)")
@@ -209,9 +222,30 @@ def verify_base_case(seed=0, steps=300):
     return 0 if ok else 1
 
 
+def decay_check():
+    """Show that the attract force now DECAYS with distance once the sink is on (and did NOT before).
+    Single neighbour at separation d, fixed complementary-fit content; force proxy = weight × d."""
+    e = PolarPackEngine(_cfg(), 0)
+    lam, tau = e.cfg.dist_lambda, 0.3
+    mask = np.array([[False, True], [True, False]])
+    print(" sep   attract force:  sink=0 (old)   sink=2   sink=4")
+    for d in (1.0, 2.0, 3.0, 4.0, 6.0, 8.0):
+        d2 = np.array([[0.0, d * d], [d * d, 0.0]])
+        score = np.where(mask, (1.0 - lam * d2) / tau, -np.inf)
+        vals = []
+        for sk in (0.0, 2.0, 4.0):
+            e.attn_sink = sk
+            A = e._attn(score, mask)
+            vals.append(A[0, 1] * d)                       # weight × separation = attract magnitude
+        print(f" {d:4.1f}      {vals[0]:12.4f}   {vals[1]:6.4f}   {vals[2]:6.4f}")
+    print("sink=0 GROWS with distance (spring, the bug); sink>0 rises then DECAYS to ~0 (physical).")
+    return 0
+
+
 def main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("--verify", action="store_true")
+    p.add_argument("--decay", action="store_true")
     p.add_argument("--probe", action="store_true")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--ticks", type=int, default=2000)
@@ -220,8 +254,11 @@ def main(argv=None):
     p.add_argument("--polarity", type=float, default=0.6)
     p.add_argument("--skew", type=float, default=0.0)
     p.add_argument("--temp", type=float, default=0.4)
+    p.add_argument("--sink", type=float, default=1.0)
     p.add_argument("--out", default=None, help="render final frame to this SVG path")
     a = p.parse_args(argv)
+    if a.decay:
+        return decay_check()
     if a.verify:
         return verify_base_case()
     if a.out:

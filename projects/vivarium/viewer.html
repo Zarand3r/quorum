@@ -254,7 +254,7 @@ archTog.addEventListener('click', () => {
 let knobsBuilt = false, setTimer = null;
 const KMAX = {noise:1.5, spin:1.5, nonrecip:3, scale:1, rd:2,
               repel:0.6, attract:1, cohesion:0.8, temperature:3, skew:2, morph:1.5,
-              momentum:0.98, speed:1.5, plasticity:1.0, polarity:1.5, water:0.85};
+              momentum:0.98, speed:1.5, plasticity:1.0, polarity:1.5, water:0.85, attn_sink:5};
 const KDESC = {
   repel:    "PAULI EXCLUSION (soft excluded volume) — the hard-core repulsion that stops blobs overlapping. Mandatory: electrostatics alone would collapse (Earnshaw).",
   attract:  "VAN DER WAALS + shape complementarity (lock-and-key) — charge-blind adhesion between shapes that fit; also drives the induced-fit morph.",
@@ -267,6 +267,7 @@ const KDESC = {
   speed:    "TIME-STEP / playback rate — NOT physics; just how fast you watch the same dynamics.",
   plasticity: "SYNAPTIC PLASTICITY / learning — Hebbian fast-weights (linear attention) adapt the interaction with activity; decay = homeostasis. 0 = fixed rule.",
   water:    "SOLVENT COMPOSITION — fraction of tokens that are polar WATER dipoles (permanent teardrop k=1 shape, free to reorient). Changing restarts the dish. 0 = no water.",
+  attn_sink: "FORCE RANGE / DECAY — a null 'attend to nothing' attention option so ALL forces decay to zero with distance (0 = old non-decaying softmax; higher = shorter range). Bounded, transformer-only.",
   noise:    "THERMAL FLUCTUATION (Langevin) — seeded random jitter / symmetry-breaking. Equilibrium-seeking (unlike skew).",
   spin:     "GYROSCOPIC drive on the embedding — rotational anti-collapse (skew on z).",
   nonrecip: "NON-RECIPROCAL ATTENTION A+β(A−Aᵀ) — the antisymmetric part breaks detailed balance → active-matter circulation (the most faithful ‘alive’ drive).",

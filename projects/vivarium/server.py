@@ -257,13 +257,14 @@ def main(argv: list[str] | None = None) -> int:
             # setting these here does not weaken it — dial polarity→0, water→0 to recover the prev sim).
             e = PolarPackEngine(cfg, s, water_frac=water_box[0], repel=0.20, attract=0.40,
                                 polarity=0.70, cohesion=0.10, skew=0.00, morph=0.70,
-                                momentum=0.85, speed=1.20)
+                                momentum=0.85, speed=1.20, attn_sink=1.00)
             # skew 0 = no artificial gyroscopic drive (a real petri dish has none); the induced-fit
-            # morph already keeps the dish liquid, and temperature sets the Boltzmann sharpness.
+            # morph already keeps the dish liquid. attn_sink 1.0 = forces DECAY with distance (a null
+            # attention option), so nothing pulls at long range; 0 = the old non-decaying softmax.
             e.temperature = 0.30
             return e
-        knob_names = ("repel", "attract", "polarity", "cohesion", "temperature", "skew", "morph",
-                      "momentum", "speed", "plasticity")
+        knob_names = ("repel", "attract", "polarity", "attn_sink", "cohesion", "temperature", "skew",
+                      "morph", "momentum", "speed", "plasticity")
         label = "POLAR PACK (electrostatic polarity head from the morphing contour + water)"
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     server.sim = Sim(cfg, seed, args.hz, make_engine, knob_names)
