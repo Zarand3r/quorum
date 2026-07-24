@@ -48,6 +48,7 @@ class Sim:
         # pseudo-knobs: name → (getter, setter). Unlike real knobs (a live setattr), these need a
         # restart (e.g. changing the water COUNT re-assigns species). Set after construction.
         self.pseudo: dict = {}
+        self.defaults: dict = {}  # canonical showcase knob values → /reset restores these (never stale)
         self.autopause = 0        # if >0, auto-pause when engine.t reaches this step (resumable)
         self.lock = threading.Lock()
         self.engine = self._make(seed)
@@ -199,6 +200,8 @@ class Handler(BaseHTTPRequestHandler):
             from urllib.parse import parse_qs, urlparse
             same = "same" in parse_qs(urlparse(self.path).query)
             sim.restart(seed=sim.seed if same else None)  # same seed → replay identical run
+        elif path.endswith("/reset"):
+            sim.set_knobs(sim.defaults)     # restore canonical showcase defaults (server-side truth)
         elif path.endswith("/set"):
             from urllib.parse import parse_qs, urlparse
             q = parse_qs(urlparse(self.path).query)
@@ -257,8 +260,8 @@ def main(argv: list[str] | None = None) -> int:
         # DENSER dish so water is the BULK MEDIUM everywhere (a viscous solvent fills its container),
         # not a drop floating in vacuum. More tokens + mostly water; lipids are the dilute solute.
         cfg = replace(cfg, N=190)   # ≈ full-box packing (dish holds ~183 at Ø=1): no free volume
-        water_box = [0.92]          #  ⇒ water can't pull away from the walls into a drop; it fills
-        lipid_box = [0.08]     # dilute amphiphile lipids in bulk water
+        water_box = [0.90]          #  ⇒ water can't pull away from the walls into a drop; it fills
+        lipid_box = [0.08]     # dilute amphiphile lipids in bulk water (0.90 = the water pseudo-cap)
 
         def make_engine(s):
             # sensible SHOWCASE defaults (base-case identity is defined vs PackEngine's own defaults, so
@@ -302,6 +305,10 @@ def main(argv: list[str] | None = None) -> int:
             "water": (lambda: water_box[0], lambda v: _restarter(water_box, v, 0.0, 0.9)),
             "lipid": (lambda: lipid_box[0], lambda v: _restarter(lipid_box, v, 0.0, 0.9)),
         }
+        # canonical showcase defaults, captured at launch — /reset restores exactly these, so playing
+        # with the sliders can never strand the sim (a stale browser tab can't override them).
+        server.sim.defaults = {**{k: float(getattr(server.sim.engine, k)) for k in knob_names},
+                               "water": water_box[0], "lipid": lipid_box[0]}
     print(f"serving: {label}")
     print(
         f"vivarium viewer on http://{args.host}:{server.server_address[1]}\n"

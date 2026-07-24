@@ -325,16 +325,21 @@ function buildKnobs(k){
   knobsBuilt = true;
 }
 function resetKnobs(){
-  if(!KDEFAULTS) return;
-  for(const inp of document.querySelectorAll('#knobs input')){
-    const name = inp.dataset.knob;
-    if(name in KDEFAULTS){
-      inp.value = KDEFAULTS[name];
-      const b = inp.parentNode.querySelector('b');
-      if(b) b.textContent = (+KDEFAULTS[name]).toFixed(2);
-    }
-  }
-  pushKnobs();                                          // push every slider back to the default at once
+  // Restore the SERVER's canonical showcase defaults (not this tab's cached KDEFAULTS, which can go
+  // stale across server relaunches). Reset server-side, then sync the sliders from the fresh /state.
+  fetch(BASE + '/reset', {method:'POST'})
+    .then(()=> fetch(BASE + '/state')).then(r=>r.json())
+    .then(s=>{
+      const k = s.knobs || {};
+      for(const inp of document.querySelectorAll('#knobs input')){
+        const name = inp.dataset.knob;
+        if(name in k){
+          inp.value = k[name];
+          const b = inp.parentNode.querySelector('b');
+          if(b) b.textContent = (+k[name]).toFixed(2);
+        }
+      }
+    });
 }
 function pushKnobs(){
   const q = [...document.querySelectorAll('#knobs input')].map(i=>i.dataset.knob+'='+i.value).join('&');

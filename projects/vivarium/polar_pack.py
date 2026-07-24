@@ -445,6 +445,10 @@ def fill_test(a):
         print(f"{t:5d}    {occ:2d}/64   {rg:.2f}   {m['largest']:.3f}")
         for _ in range(a.every):
             e.step()
+    if a.out:
+        with open(a.out, "w") as f:
+            f.write(render_svg(e))
+        print(f"wrote {a.out}")
     return 0
 
 
