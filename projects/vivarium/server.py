@@ -108,6 +108,7 @@ class Sim:
         """Build the snapshot on demand (only when the viewer polls) — off the step hot loop."""
         with self.lock:
             snap = self.engine.snapshot()
+        snap["status"] = "paused" if self.paused else "running"  # honest: reflect the real pause state
         snap["aliveness"] = self._alive
         snap["pos_bound"] = self.cfg.pos_bound
         snap["knobs"] = {k: float(getattr(self.engine, k)) for k in self.knob_names

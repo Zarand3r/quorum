@@ -8,7 +8,9 @@ regressions we care about: a raw 1/d² kernel, an energy book, token insert/dele
 from __future__ import annotations
 
 import inspect
+import io
 import re
+import tokenize
 
 import block  # noqa: F401
 import engine  # noqa: F401 (legacy force engine is intentionally NOT checked)
@@ -30,8 +32,24 @@ def _step_source(mod) -> str:
     src = []
     for _, obj in inspect.getmembers(mod, inspect.isclass):
         if hasattr(obj, "step"):
-            src.append(inspect.getsource(obj.step))
+            src.append(_strip_comments(inspect.getsource(obj.step)))
     return "\n".join(src)
+
+
+def _strip_comments(src: str) -> str:
+    """Drop `#` comments so the check tests DYNAMICS CODE, not design prose.
+
+    The forbidden patterns are *code constructs* (a 1/d² kernel, an ``energy``
+    accumulator, token insert/delete). Describing the conservative forces as
+    "gradients of a free energy" in a comment is faithful design commentary, not a
+    ledger — it must not trip the grep. A real ``energy = ...`` in code still would.
+    """
+    lines = src.split("\n")
+    for tok in tokenize.generate_tokens(io.StringIO(src).readline):
+        if tok.type == tokenize.COMMENT:
+            (sr, sc), (_, ec) = tok.start, tok.end  # comments are single-line
+            lines[sr - 1] = lines[sr - 1][:sc] + lines[sr - 1][ec:]
+    return "\n".join(lines)
 
 
 def test_pure_is_transformer_only() -> None:
