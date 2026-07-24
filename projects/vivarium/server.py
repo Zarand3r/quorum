@@ -272,8 +272,9 @@ def main(argv: list[str] | None = None) -> int:
             # (polarity, ~10 kT) ≫ van der Waals dispersion (attract, ~1 kT) ~ thermal kT (temperature).
             # Range hierarchy: Pauli (repel) < vdW (attract) < electrostatic (polarity).
             e = PolarPackEngine(cfg, s, water_frac=water_box[0], lipid_frac=lipid_box[0],
-                                repel=2.00, attract=0.40, polarity=1.00, cohesion=0.00, skew=0.00,
-                                morph=0.70, momentum=0.30, speed=1.20)   # momentum 0.3 ≈ overdamped
+                                repel=5.00, attract=0.30, polarity=0.80, cohesion=0.00, skew=0.00,
+                                morph=0.70, momentum=0.30, speed=1.20)   # strong repel = INCOMPRESSIBLE
+            #  water (fills the box, no collapse to a ball); overdamped viscous dish
             e.conservative = True      # symmetric CONSERVATIVE forces → relaxes to a free-energy min
             e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, 1.0, 0.25   # Gaussian decay rates λ
             e.repel_contact = 1.00     # σ = particle diameter; repel acts only on overlap
