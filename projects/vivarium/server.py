@@ -256,9 +256,9 @@ def main(argv: list[str] | None = None) -> int:
         from polar_pack import PolarPackEngine
         # DENSER dish so water is the BULK MEDIUM everywhere (a viscous solvent fills its container),
         # not a drop floating in vacuum. More tokens + mostly water; lipids are the dilute solute.
-        cfg = replace(cfg, N=150)
-        water_box = [0.85]
-        lipid_box = [0.15]     # dilute amphiphile lipids in bulk water
+        cfg = replace(cfg, N=190)   # ≈ full-box packing (dish holds ~183 at Ø=1): no free volume
+        water_box = [0.92]          #  ⇒ water can't pull away from the walls into a drop; it fills
+        lipid_box = [0.08]     # dilute amphiphile lipids in bulk water
 
         def make_engine(s):
             # sensible SHOWCASE defaults (base-case identity is defined vs PackEngine's own defaults, so

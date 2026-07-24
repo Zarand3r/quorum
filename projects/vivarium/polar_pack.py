@@ -417,6 +417,37 @@ def demix_test(a):
     return 0
 
 
+def fill_test(a):
+    """Does the dish stay FILLED, or condense into a drop? Mirrors the server showcase config at a
+    chosen N / water_frac and reports late-time occupancy + radius-of-gyration. Rg→4.90 (= the value
+    for a uniform fill of [−6,6]²) means space-filling; Rg well below that means a condensed clump."""
+    cfg = _cfg(N=a.n) if a.n else _cfg()
+    lip = a.lipid if a.lipid else 0.0
+    e = PolarPackEngine(cfg, a.seed, water_frac=a.water, lipid_frac=lip, repel=a.repel, attract=0.30,
+                        polarity=0.80, cohesion=0.0, skew=0.0, morph=0.70, momentum=0.30, speed=1.20)
+    e.conservative = True
+    e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, 1.0, 0.25
+    e.repel_contact, e.rigidity, e.selectivity, e.temperature = 1.0, 0.0, 0.30, 0.05
+    e.k_tail, e.k_hydro = 1.5, 1.0
+    B = e.cfg.pos_bound
+    n_uniform = round((2 * B) ** 2 / (np.pi * 0.5 ** 2))  # disks of Ø=1 that tile the box (~packing 1)
+    print(f"N={e.cfg.N}  water={a.water}  lipid={lip}  repel={a.repel}   "
+          f"(a full box ≈ {n_uniform} tokens; Rg_uniform=4.90)")
+    print(" tick  occ(/64)  Rg    largest   (occ high + Rg~4.9 = fills; low = clumped)")
+    for t in range(0, a.ticks + 1, a.every):
+        p = e.X[:, :2]
+        cx, cy = p[:, 0].mean(), p[:, 1].mean()
+        rg = float(np.sqrt(((p[:, 0] - cx) ** 2 + (p[:, 1] - cy) ** 2).mean()))
+        gx = np.floor((p[:, 0] + B) / (2 * B) * 8).clip(0, 7).astype(int)
+        gy = np.floor((p[:, 1] + B) / (2 * B) * 8).clip(0, 7).astype(int)
+        occ = len(set(zip(gx.tolist(), gy.tolist())))
+        m = e.measure()
+        print(f"{t:5d}    {occ:2d}/64   {rg:.2f}   {m['largest']:.3f}")
+        for _ in range(a.every):
+            e.step()
+    return 0
+
+
 def decay_check():
     """Show that the attract force now DECAYS with distance once the sink is on (and did NOT before).
     Single neighbour at separation d, fixed complementary-fit content; force proxy = weight × d."""
@@ -441,6 +472,8 @@ def main(argv=None):
     p.add_argument("--verify", action="store_true")
     p.add_argument("--decay", action="store_true")
     p.add_argument("--watertest", action="store_true")
+    p.add_argument("--fill", action="store_true", help="does the dish stay filled or condense?")
+    p.add_argument("--n", type=int, default=0, help="override token count N (0 = config default)")
     p.add_argument("--demix", action="store_true")
     p.add_argument("--wcharge", type=float, default=0.8)
     p.add_argument("--repel", type=float, default=0.2)
@@ -468,6 +501,8 @@ def main(argv=None):
         return decay_check()
     if a.watertest:
         return water_liquid_test(a)
+    if a.fill:
+        return fill_test(a)
     if a.demix:
         return demix_test(a)
     if a.verify:
