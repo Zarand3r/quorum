@@ -258,7 +258,7 @@ archTog.addEventListener('click', () => {
 });
 
 // live knobs — built dynamically from whatever the engine exposes
-let knobsBuilt = false, setTimer = null;
+let knobsBuilt = false;
 const KMAX = {noise:1.5, spin:1.5, nonrecip:3, scale:1, rd:2,
               repel:0.6, attract:1, cohesion:0.8, temperature:3, skew:2, morph:1.5,
               momentum:0.98, speed:1.5, plasticity:1.0, polarity:1.5, water:0.85, attn_sink:5,
@@ -303,8 +303,10 @@ function makeSlider(parent, name, val, cls){
   const inp = document.createElement('input');
   inp.type='range'; inp.min=0; inp.max=max; inp.step=max/100; inp.value=val; inp.dataset.knob=name;
   const b = document.createElement('b'); b.textContent=(+val).toFixed(2);
+  // push ONLY this slider — never re-send the whole panel, or a stale slider elsewhere (e.g. a
+  // weakened repel left over from earlier play) would be silently re-applied on every nudge.
   inp.addEventListener('input', ()=>{ b.textContent=(+inp.value).toFixed(2);
-    clearTimeout(setTimer); setTimer=setTimeout(pushKnobs, 80); });
+    clearTimeout(inp._t); inp._t=setTimeout(()=>pushKnob(name, inp.value), 80); });
   const desc = document.createElement('div'); desc.className='kdesc'; desc.textContent = KDESC[name]||'';
   wrap.append(cap, inp, b, desc); parent.appendChild(wrap); return wrap;
 }
@@ -341,9 +343,8 @@ function resetKnobs(){
       }
     });
 }
-function pushKnobs(){
-  const q = [...document.querySelectorAll('#knobs input')].map(i=>i.dataset.knob+'='+i.value).join('&');
-  fetch(BASE + '/set?' + q, {method:'POST'});
+function pushKnob(name, val){                             // one knob, one request (no cross-contamination)
+  fetch(BASE + '/set?' + encodeURIComponent(name) + '=' + encodeURIComponent(val), {method:'POST'});
 }
 
 // double-buffer snapshots and interpolate between them, so motion is smooth even when
