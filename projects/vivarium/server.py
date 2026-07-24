@@ -250,12 +250,14 @@ def main(argv: list[str] | None = None) -> int:
     elif args.polar:
         from pack import PackEngine  # noqa: F401  (keep import graph stable)
 
+        from dataclasses import replace
+
         from polar_pack import PolarPackEngine
-        # polarity is a FUNCTIONAL of the morphing contour (prongs +, centre −), realised as ONE bounded
-        # bearing-aware attention head (transformer-only) — the electrostatic complement to the steric
-        # attract/repel heads. `water` is a pseudo-knob (changing the count needs a restart).
-        water_box = [0.55]
-        lipid_box = [0.45]     # amphiphile lipids → membrane self-assembly (water + lipid demo)
+        # DENSER dish so water is the BULK MEDIUM everywhere (a viscous solvent fills its container),
+        # not a drop floating in vacuum. More tokens + mostly water; lipids are the dilute solute.
+        cfg = replace(cfg, N=150)
+        water_box = [0.85]
+        lipid_box = [0.15]     # dilute amphiphile lipids in bulk water
 
         def make_engine(s):
             # sensible SHOWCASE defaults (base-case identity is defined vs PackEngine's own defaults, so
