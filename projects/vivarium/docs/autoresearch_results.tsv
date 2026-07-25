@@ -1,0 +1,7 @@
+commit	emergence	demix	status	description
+cd848e1	0.005649	0.0609	keep	baseline
+cff597f	-0.036700	0.1006	keep	k=0 bulk channel + contact vdW; uniform radii (demix +65pct, emergence flat)
+ee3bc24	0.007871	0.0106	discard	pol_torque 0.35->0.75 (demix 10x worse)
+983cfc5	-0.024864	0.0299	discard	water template kappa 7->2 (less specific charge; demix 3x worse)
+fa0af5e	0.005886	0.0149	discard	water kappa 7->12 (demix worse; 7 is a local optimum)
+4284567	-0.036700	0.1006	keep	radius moved to dedicated channel (identical score; test suite green)
