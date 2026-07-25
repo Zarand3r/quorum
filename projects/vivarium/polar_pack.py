@@ -33,7 +33,7 @@ from config import DEFAULTS, POS_DIM, VivariumConfig
 from pack import PackEngine, _ln
 from rng import base_rng
 
-WATER, ACTIVE, OIL, LIPID = 0, 1, 2, 3
+WATER, ACTIVE, OIL, LIPID, AMPHI = 0, 1, 2, 3, 4
 _EPS = 1e-9
 
 
@@ -43,7 +43,7 @@ class PolarPackEngine(PackEngine):
     def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2,
                  water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, sink_polarity=0.0,
                  oil_frac=0.0, lipid_frac=0.0, lip_ell=0.55, k_tail=1.5, k_hydro=1.0,
-                 lip_range=0.7, lip_torque=0.15, **kw):
+                 lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=0.8, **kw):
         super().__init__(cfg, seed, **kw)
         self.lip_ell = lip_ell       # half-length head↔tail
         self.k_tail = k_tail         # tail–tail hydrophobic cohesion (drives the bilayer core)
@@ -68,9 +68,20 @@ class PolarPackEngine(PackEngine):
         r = base_rng(seed + 7)
         # WATER (polar dipole) / OIL (round, apolar — nonpolar solute) / ACTIVE (morphs freely)
         u = r.random(cfg.N)
-        self.species = np.where(u < water_frac, WATER,
-                       np.where(u < water_frac + oil_frac, OIL,
-                       np.where(u < water_frac + oil_frac + lipid_frac, LIPID, ACTIVE))).astype(int)
+        wf, of, lf = water_frac, water_frac + oil_frac, water_frac + oil_frac + lipid_frac
+        af = lf + amphi_frac
+        self.species = np.where(u < wf, WATER,
+                       np.where(u < of, OIL,
+                       np.where(u < lf, LIPID,
+                       np.where(u < af, AMPHI, ACTIVE)))).astype(int)
+        # AMPHIPHILE: an ordinary token whose FIXED contour is a localized polar HEAD (charge + presence
+        # concentrated on one side) fading to a featureless TAIL. No rod, no torque, no k_hydro — it is a
+        # normal token; head↔water affinity is the shared polarity head, tail hydrophobicity is the shared
+        # DIRECTIONAL vdW gate (the tail direction has ~0 contour → no attractive surface), and it reorients
+        # in the local field exactly as water does. Membrane behaviour must EMERGE from these shared forces.
+        self._amphi_tpl = self._amphi_template(amphi_charge)
+        self._ai = np.where(self.species == AMPHI)[0]
+        self.amphi_phi = r.uniform(0.0, 2.0 * np.pi, self._ai.size)  # head-axis orientation (like water_phi)
         self._oi = np.where(self.species == OIL)[0]
         self.X[self._oi, POS_DIM:POS_DIM + self.tK] = 0.0           # oil is round → C≈0 → apolar (nf≈0)
         self._li = np.where(self.species == LIPID)[0]
@@ -82,6 +93,38 @@ class PolarPackEngine(PackEngine):
         if self._wi.size:
             self.X[self._wi, POS_DIM:POS_DIM + self.tK] = 0.0
             self._write_water(self.X[:, POS_DIM:])
+        if self._ai.size:
+            self.X[self._ai, POS_DIM:POS_DIM + self.tK] = 0.0
+            self._write_amphi(self.X[:, POS_DIM:])
+
+    def _amphi_template(self, scale):
+        """Body-frame contour for an AMPHIPHILE: a single localized + HEAD bump toward +x, fading to a
+        featureless TAIL behind. Projected onto k≥1 harmonics (no k=0), so the tail's charge AND presence
+        →0 (the constant offset is dropped) → nf(head)>0, nf(tail)≈0. The polar head H-bonds water; the
+        featureless tail has no attractive surface under the directional vdW gate ⇒ hydrophobic."""
+        th = np.linspace(0.0, 2.0 * np.pi, 256, endpoint=False)
+        kappa = 4.0
+        g = np.exp(kappa * (np.cos(th) - 1.0))            # + bump toward +x (head)
+        g = g - g.mean()                                  # net neutral; k=0 dropped below → tail ≈ 0
+        tpl = np.zeros(self.tK)
+        for k in range(1, self.cfg.n_harmonics + 1):
+            tpl[2 * (k - 1)] = 2.0 * np.mean(g * np.cos(k * th))
+            tpl[2 * (k - 1) + 1] = 2.0 * np.mean(g * np.sin(k * th))
+        recon = sum(tpl[2 * (k - 1)] * np.cos(k * th) + tpl[2 * (k - 1) + 1] * np.sin(k * th)
+                    for k in range(1, self.cfg.n_harmonics + 1))
+        return tpl * (scale / (np.max(np.abs(recon)) + 1e-9))
+
+    def _write_amphi(self, z):
+        """Write each amphiphile's rigid head template into z, rotated by its orientation amphi_phi
+        (Fourier rotation: harmonic k rotates by k·φ) — identical mechanism to _write_water."""
+        if not self._ai.size:
+            return
+        phi = self.amphi_phi
+        for k in range(1, self.cfg.n_harmonics + 1):
+            ak, bk = self._amphi_tpl[2 * (k - 1)], self._amphi_tpl[2 * (k - 1) + 1]
+            ck, sk = np.cos(k * phi), np.sin(k * phi)
+            z[self._ai, 2 * (k - 1)] = ak * ck - bk * sk
+            z[self._ai, 2 * (k - 1) + 1] = ak * sk + bk * ck
 
     def _mickey_template(self, scale):
         """Body-frame contour coefficients for a water molecule: two positive H lobes at ±52.25° (the
@@ -245,6 +288,17 @@ class PolarPackEngine(PackEngine):
                 mag = np.linalg.norm(fld, axis=1)                      # no field → no torque
                 self.water_phi = self.water_phi + self.pol_torque * d * (mag > 1e-6)
             self._write_water(z2)
+        if self._ai.size:
+            # AMPHIPHILE is rigid like water: turn its + HEAD toward the local field, then rewrite the
+            # rotated head template (overwrites the generic morph — the head keeps its fixed shape). Same
+            # dipole-aligns-in-field physics water uses; NOT a bespoke lipid torque.
+            if self.polarity > 0.0 and self._pol_field is not None:
+                fld = self._pol_field[self._ai]
+                tgt = np.arctan2(fld[:, 1], fld[:, 0])
+                d = np.arctan2(np.sin(tgt - self.amphi_phi), np.cos(tgt - self.amphi_phi))
+                mag = np.linalg.norm(fld, axis=1)
+                self.amphi_phi = self.amphi_phi + self.pol_torque * d * (mag > 1e-6)
+            self._write_amphi(z2)
         return z2
 
     # NOTE: no step() override — we inherit PackEngine.step() and only add the two hooks above, so
@@ -396,12 +450,15 @@ def demix_test(a):
     """WATER + OIL: does the hydrophobic effect EMERGE? Water self-associates (electrostatics ≫ vdW) and
     should exclude the nonpolar oil → phase separation. like-frac = of each token's close neighbours,
     the fraction that are the SAME species (baseline = species fraction 0.5; →1 = fully demixed)."""
-    e = PolarPackEngine(_cfg(), a.seed, water_frac=0.5, oil_frac=0.5, polarity=a.polarity, skew=0.0,
+    cfg = _cfg(N=a.n) if a.n else _cfg()
+    e = PolarPackEngine(cfg, a.seed, water_frac=0.5, oil_frac=0.5, polarity=a.polarity, skew=0.0,
                         repel=a.repel, attract=0.4, cohesion=0.0, momentum=a.mom, water_dipole=a.wcharge)
+    e.sink_repel = a.srep
     e.conservative = a.cons
     e.repel_contact = a.contact
     e.sink_attract, e.sink_polarity = a.satt, a.spol
     e.selectivity, e.temperature = a.sel, a.kt
+    e.attract_gated = a.gated
     sp = e.species
     print(" tick  like-frac  water-near-water  oil-near-oil   (→1 = demixed; 0.5 = mixed)")
     for t in range(0, a.ticks + 1, a.every):
@@ -414,6 +471,67 @@ def demix_test(a):
         print(f"{t:5d}   {lf:.3f}      {ww:.3f}          {oo:.3f}")
         for _ in range(a.every):
             e.step()
+    return 0
+
+
+def _amphi_order(e):
+    """Self-assembly order parameters for the emergent amphiphiles. For each amphiphile, split its close
+    neighbours into HEAD-side and TAIL-side (by the head vector (cosφ,sinφ)) and measure:
+      head_water = fraction of HEAD-side neighbours that are water   (heads face water → high)
+      tail_dry   = fraction of TAIL-side neighbours that are amphiphile (tails bury together → high)
+    Baselines are the neighbour species fractions; a clean micelle/bilayer pushes both ABOVE baseline."""
+    ai = e._ai
+    if not ai.size:
+        return None
+    delta, d2 = e._periodic_delta()
+    near = d2 < 1.6 ** 2
+    np.fill_diagonal(near, False)
+    sp = e.species
+    h = np.stack([np.cos(e.amphi_phi), np.sin(e.amphi_phi)], axis=1)
+    hw, td = [], []
+    wat_base, amp_base = [], []
+    for idx, i in enumerate(ai):
+        nb = np.where(near[i])[0]
+        if not nb.size:
+            continue
+        u = -delta[i, nb]                                   # i → j
+        u = u / (np.linalg.norm(u, axis=1, keepdims=True) + 1e-9)
+        side = u @ h[idx]
+        hs, ts = nb[side > 0], nb[side <= 0]
+        wat_base.append((sp[nb] == WATER).mean()); amp_base.append((sp[nb] == AMPHI).mean())
+        if hs.size:
+            hw.append((sp[hs] == WATER).mean())
+        if ts.size:
+            td.append((sp[ts] == AMPHI).mean())
+    m = lambda x: float(np.mean(x)) if x else 0.0
+    return m(hw), m(td), m(wat_base), m(amp_base)
+
+
+def amphi_test(a):
+    """Can an amphiphile built from a NORMAL token (polar-head/neutral-tail contour, no rod/torque/k_hydro)
+    self-assemble under the shared forces? Reports head_water / tail_dry vs baseline over time."""
+    cfg = _cfg(N=a.n) if a.n else _cfg()
+    e = PolarPackEngine(cfg, a.seed, water_frac=a.water, amphi_frac=a.amphi, polarity=a.polarity,
+                        repel=a.repel, attract=0.30, cohesion=0.0, skew=0.0, momentum=a.mom,
+                        water_dipole=a.wcharge, amphi_charge=a.wcharge)
+    e.conservative = True
+    e.attract_gated = a.gated                               # directional vdW → tail is hydrophobic
+    e.sink_repel, e.sink_attract, e.sink_polarity = a.srep, a.satt, a.spol
+    e.repel_contact, e.selectivity, e.temperature = 1.0, a.sel, a.kt
+    print(f"N={e.cfg.N} water={a.water} amphi={a.amphi} polarity={a.polarity} gated={a.gated}  "
+          f"(head_water/tail_dry > baseline ⇒ self-assembly)")
+    print(" tick  head_water (base)   tail_dry (base)")
+    for t in range(0, a.ticks + 1, a.every):
+        o = _amphi_order(e)
+        if o:
+            hw, td, wb, ab = o
+            print(f"{t:5d}    {hw:.3f}  ({wb:.3f})     {td:.3f}  ({ab:.3f})")
+        for _ in range(a.every):
+            e.step()
+    if a.out:
+        with open(a.out, "w") as f:
+            f.write(render_svg(e))
+        print(f"wrote {a.out}")
     return 0
 
 
@@ -478,6 +596,9 @@ def main(argv=None):
     p.add_argument("--watertest", action="store_true")
     p.add_argument("--fill", action="store_true", help="does the dish stay filled or condense?")
     p.add_argument("--n", type=int, default=0, help="override token count N (0 = config default)")
+    p.add_argument("--gated", action="store_true", help="vdW attraction scales with contour presence")
+    p.add_argument("--amphitest", action="store_true", help="emergent amphiphile self-assembly test")
+    p.add_argument("--amphi", type=float, default=0.15, help="amphiphile fraction")
     p.add_argument("--demix", action="store_true")
     p.add_argument("--wcharge", type=float, default=0.8)
     p.add_argument("--repel", type=float, default=0.2)
@@ -507,6 +628,8 @@ def main(argv=None):
         return water_liquid_test(a)
     if a.fill:
         return fill_test(a)
+    if a.amphitest:
+        return amphi_test(a)
     if a.demix:
         return demix_test(a)
     if a.verify:
