@@ -67,6 +67,8 @@
     <canvas id="fw" width="196" height="196" style="margin-top:4px; border:1px solid #1e293b; image-rendering:pixelated; width:140px; height:140px"></canvas>
   </div>
   <div id="knobs"></div>
+  <div class="note" id="hint3d" style="display:none; color:#7dd3fc">
+  <b>drag the dish to rotate it in 3-D</b> — the camera only moves when you move it.</div>
   <div class="note">Each agent is one token; it moves and morphs by attention over its local
   neighbours. Blob <b>colour = spikiness</b> (<span style="color:#4da3ff">blue</span> smooth →
   <span style="color:#ff5a5a">red</span> spiky), changing live as shapes morph.
@@ -351,7 +353,26 @@ function pushKnob(name, val){                             // one knob, one reque
 // frames arrive irregularly over the network. The interp window ADAPTS to the measured poll
 // interval (EMA), so a late/early poll doesn't cause a freeze-then-jump.
 let PREV = null, CUR = null, CUR_T = 0;
-let ROT3D = 0;                 // orbit angle for the 3-D camera (motion parallax = depth cue)
+// 3-D camera orientation. NOT animated — you rotate it by DRAGGING the dish. Auto-spin makes the
+// motion of the simulation itself impossible to read, so the camera only moves when you move it.
+let ROT3D = 0.6, TILT3D = 0.25;      // yaw, pitch (radians)
+let DRAG3D = null;
+cv.style.cursor = 'grab';
+function _dragStart(x, y){ DRAG3D = {x, y}; cv.style.cursor = 'grabbing'; }
+function _dragMove(x, y){
+  if(!DRAG3D) return;
+  ROT3D  += (x - DRAG3D.x) * 0.008;
+  TILT3D += (y - DRAG3D.y) * 0.008;
+  TILT3D = Math.max(-1.45, Math.min(1.45, TILT3D));   // stop short of gimbal flip
+  DRAG3D = {x, y};
+}
+function _dragEnd(){ DRAG3D = null; cv.style.cursor = 'grab'; }
+cv.addEventListener('mousedown', e => _dragStart(e.clientX, e.clientY));
+window.addEventListener('mousemove', e => _dragMove(e.clientX, e.clientY));
+window.addEventListener('mouseup', _dragEnd);
+cv.addEventListener('touchstart', e => { const t=e.touches[0]; _dragStart(t.clientX, t.clientY); }, {passive:true});
+cv.addEventListener('touchmove', e => { const t=e.touches[0]; _dragMove(t.clientX, t.clientY); e.preventDefault(); }, {passive:false});
+cv.addEventListener('touchend', _dragEnd);
 let pollDt = 100;                       // adaptive gap between polls (ms), smoothed
 const POLL_MS = 90;
 const lerp = (a,b,t)=> a + (b-a)*t;
@@ -359,6 +380,8 @@ const lerp = (a,b,t)=> a + (b-a)*t;
 function draw(al){
   const s = CUR; if(!s) return;
   document.getElementById('tick').textContent = s.tick;
+  const h3 = document.getElementById('hint3d');
+  if(h3) h3.style.display = (s.pos_dim === 3) ? '' : 'none';
   document.getElementById('n').textContent = s.n;
   const ae = document.getElementById('alive');
   ae.textContent = (s.aliveness ?? 0).toFixed(3);
@@ -398,14 +421,18 @@ function draw(al){
     // ---- TRUE 3-D view. An orthographic scatter of circles reads as flat no matter how you
     // shade it, so: (a) the camera ORBITS the dish — motion parallax is the strongest depth cue
     // there is, (b) PERSPECTIVE (near = larger), (c) far things fade into the background.
-    ROT3D += 0.0045;
     const ca = Math.cos(ROT3D), sa = Math.sin(ROT3D);
+    const cb = Math.cos(TILT3D), sb = Math.sin(TILT3D);
     const FOC = 4.0 * B;                       // focal length in world units
+    // R = Rx(tilt)·Ry(yaw). Rows of R are the camera axes expressed in world coords:
+    //   right = (ca, 0, −sa)   up = (−sb·sa, cb, −sb·ca)
     const cam = [];                            // camera-space coords per token
     for(let i=0;i<N;i++){
       const t = s.tokens[i];
       const x = t.x, y = t.y, z = t.z || 0;
-      cam.push([x*ca - z*sa, y, x*sa + z*ca]);  // orbit about the vertical axis; cz = depth
+      cam.push([ ca*x - sa*z,
+                 -sb*sa*x + cb*y - sb*ca*z,
+                 cb*sa*x + sb*y + cb*ca*z ]);  // cz = depth into the screen
     }
     const order = [...Array(N).keys()].sort((a,b) => cam[b][2] - cam[a][2]);  // far → near
     const COL = {0:[56,189,248], 2:[148,163,184], 3:[245,158,11], 4:[52,211,153]};
@@ -443,8 +470,8 @@ function draw(al){
         for(let k=0;k<=28;k++){
           const ph = k/28 * Math.PI*2;
           const cp = Math.cos(ph), sp2 = Math.sin(ph);
-          // view-plane direction in WORLD coords (camera right = [ca,0,-sa], up = [0,1,0])
-          const nf = shDot(cc, ca*cp, sp2, -sa*cp);
+          // view-plane direction in WORLD coords = right·cos(φ) + up·sin(φ)
+          const nf = shDot(cc, ca*cp - sb*sa*sp2, cb*sp2, -sa*cp - sb*ca*sp2);
           const rr = base * (1 + 0.42*Math.tanh(nf));
           const px2 = X3 + rr*cp, py2 = Y3 - rr*sp2;
           k ? ctx.lineTo(px2, py2) : ctx.moveTo(px2, py2);
@@ -456,7 +483,9 @@ function draw(al){
         ctx.beginPath(); ctx.arc(X3, Y3, r, 0, 7); ctx.fill();
         const h = s.amphi && s.amphi[idx];
         if(h){                                            // amphiphile: mark the POLAR HEAD
-          const hx = h[0]*ca - (h[2]||0)*sa, hy = h[1];
+          const hz = h[2] || 0;
+          const hx = ca*h[0] - sa*hz;
+          const hy = -sb*sa*h[0] + cb*h[1] - sb*ca*hz;
           ctx.fillStyle = '#f8fafc';
           ctx.beginPath(); ctx.arc(X3 + hx*r*0.85, Y3 - hy*r*0.85, r*0.40, 0, 7); ctx.fill();
         }
