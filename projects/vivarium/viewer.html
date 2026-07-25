@@ -351,6 +351,7 @@ function pushKnob(name, val){                             // one knob, one reque
 // frames arrive irregularly over the network. The interp window ADAPTS to the measured poll
 // interval (EMA), so a late/early poll doesn't cause a freeze-then-jump.
 let PREV = null, CUR = null, CUR_T = 0;
+let ROT3D = 0;                 // orbit angle for the 3-D camera (motion parallax = depth cue)
 let pollDt = 100;                       // adaptive gap between polls (ms), smoothed
 const POLL_MS = 90;
 const lerp = (a,b,t)=> a + (b-a)*t;
@@ -394,31 +395,71 @@ function draw(al){
   // near = large + bright), painting back-to-front. The contour is spherical-harmonic here, so
   // tokens render as spheres rather than 2-D Fourier outlines.
   if(s.pos_dim === 3){
-    const zs = s.tokens.map(t => t.z || 0);
-    const zmin = Math.min(...zs), zmax = Math.max(...zs), zr = (zmax - zmin) || 1;
-    const order = [...Array(N).keys()].sort((a,b) => zs[a] - zs[b]);
+    // ---- TRUE 3-D view. An orthographic scatter of circles reads as flat no matter how you
+    // shade it, so: (a) the camera ORBITS the dish — motion parallax is the strongest depth cue
+    // there is, (b) PERSPECTIVE (near = larger), (c) far things fade into the background.
+    ROT3D += 0.0045;
+    const ca = Math.cos(ROT3D), sa = Math.sin(ROT3D);
+    const FOC = 4.0 * B;                       // focal length in world units
+    const cam = [];                            // camera-space coords per token
+    for(let i=0;i<N;i++){
+      const t = s.tokens[i];
+      const x = t.x, y = t.y, z = t.z || 0;
+      cam.push([x*ca - z*sa, y, x*sa + z*ca]);  // orbit about the vertical axis; cz = depth
+    }
+    const order = [...Array(N).keys()].sort((a,b) => cam[b][2] - cam[a][2]);  // far → near
     const COL = {0:[56,189,248], 2:[148,163,184], 3:[245,158,11], 4:[52,211,153]};
+    const zmin = Math.min(...cam.map(c=>c[2])), zmax = Math.max(...cam.map(c=>c[2]));
+    const zr = (zmax - zmin) || 1;
+    // real spherical harmonics l=1,2 at a unit direction — the SAME basis the engine uses, so the
+    // drawn outline IS the contour (grounded readout), not a decorative wobble.
+    const C1 = Math.sqrt(3/(4*Math.PI)), C2 = Math.sqrt(15/(4*Math.PI));
+    const C3 = Math.sqrt(5/(16*Math.PI)), C4 = Math.sqrt(15/(16*Math.PI));
+    const shDot = (c, x, y, z) => {
+      let v = c[0]*C1*y + c[1]*C1*z + c[2]*C1*x;
+      if(c.length >= 8)
+        v += c[3]*C2*x*y + c[4]*C2*y*z + c[5]*C3*(3*z*z-1) + c[6]*C2*x*z + c[7]*C4*(x*x-y*y);
+      return v;
+    };
     for(const idx of order){
-      const dep = 0.35 + 0.65*((zs[idx]-zmin)/zr);          // 0 = far, 1 = near
+      const [cx3, cy3, cz3] = cam[idx];
+      const persp = FOC / (FOC + cz3 + B);            // near → bigger
+      const dep = (zmax - cz3) / zr;                  // 1 = nearest
+      const X3 = cx + cx3*sc*persp, Y3 = cy - cy3*sc*persp;
       const sp = (s.species && s.species[idx]) ?? 1;
       let col = COL[sp] || [203,213,225];
-      if(sp === 1){            // ACTIVE = the morphing blob: colour by how DEFORMED it is right
-        const cc = s.tokens[idx].c || [];   // now (blue = smooth/round → red = spiky), so the
-        let m = 0;                          // induced-fit morphing is visible even as a sphere.
-        for(const v of cc) m += v*v;
-        const t = Math.max(0, Math.min(1, Math.sqrt(m)/1.2));
-        col = [77 + 178*t, 163 - 100*t, 255 - 165*t];
-      }
-      // radius in WORLD units (water is the small molecule, amphiphile the bulky one) scaled to
-      // screen — the 3-D dish is a smaller box, so pixel-constant sizes would read as a gas.
-      const r = (sp===0 ? 0.34 : 0.46) * sc * (0.74 + 0.40*dep);
-      ctx.globalAlpha = 0.40 + 0.60*dep;
-      ctx.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
-      ctx.beginPath(); ctx.arc(px[idx], py[idx], r, 0, 7); ctx.fill();
-      const h = s.amphi && s.amphi[idx];
-      if(h){                                                 // amphiphile: mark the POLAR HEAD
-        ctx.fillStyle = '#f8fafc';
-        ctx.beginPath(); ctx.arc(px[idx]+h[0]*r*0.9, py[idx]-h[1]*r*0.9, r*0.42, 0, 7); ctx.fill();
+      const cc = s.tokens[idx].c || [];
+      ctx.globalAlpha = 0.30 + 0.70*dep;
+      if(sp === 1){
+        // ACTIVE = the induced-fit MORPHING blob. Water and the amphiphile are RIGID molecules
+        // (they only reorient), so these are the only tokens whose SHAPE changes — draw the actual
+        // deformed silhouette, and colour it blue(smooth) → red(spiky).
+        let m = 0; for(const v of cc) m += v*v;
+        const tt = Math.max(0, Math.min(1, Math.sqrt(m)/1.2));
+        col = [77 + 178*tt, 163 - 100*tt, 255 - 165*tt];
+        const base = 0.30 * sc * persp;
+        ctx.fillStyle = `rgb(${col[0]|0},${col[1]|0},${col[2]|0})`;
+        ctx.beginPath();
+        for(let k=0;k<=28;k++){
+          const ph = k/28 * Math.PI*2;
+          const cp = Math.cos(ph), sp2 = Math.sin(ph);
+          // view-plane direction in WORLD coords (camera right = [ca,0,-sa], up = [0,1,0])
+          const nf = shDot(cc, ca*cp, sp2, -sa*cp);
+          const rr = base * (1 + 0.42*Math.tanh(nf));
+          const px2 = X3 + rr*cp, py2 = Y3 - rr*sp2;
+          k ? ctx.lineTo(px2, py2) : ctx.moveTo(px2, py2);
+        }
+        ctx.closePath(); ctx.fill();
+      } else {
+        const r = (sp===0 ? 0.20 : 0.28) * sc * persp;   // rigid molecules: plain spheres
+        ctx.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
+        ctx.beginPath(); ctx.arc(X3, Y3, r, 0, 7); ctx.fill();
+        const h = s.amphi && s.amphi[idx];
+        if(h){                                            // amphiphile: mark the POLAR HEAD
+          const hx = h[0]*ca - (h[2]||0)*sa, hy = h[1];
+          ctx.fillStyle = '#f8fafc';
+          ctx.beginPath(); ctx.arc(X3 + hx*r*0.85, Y3 - hy*r*0.85, r*0.40, 0, 7); ctx.fill();
+        }
       }
     }
     ctx.globalAlpha = 1.0;
