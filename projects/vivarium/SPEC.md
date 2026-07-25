@@ -35,10 +35,15 @@ converges** because the colony (gently perturbed by a drifting field) keeps adap
 
 ## 2. Substrate
 
-- **Petri dish:** a bounded continuous 2-D space (not a lattice).
+- **Petri dish:** a bounded continuous space, **2-D or 3-D** (per-config `pos_dim ∈ {2,3}`;
+  not a lattice). 2-D is the flat dish; `pos_dim=3` is a volumetric dish, in which the
+  contour basis becomes real spherical harmonics (see DECISIONS D12).
 - **Bacteria:** `N` free-moving agents, each an embedding `x_i ∈ ℝ^d`. Channels split
-  into **position** (where it is), **shape** (its grounded contour readout `C = x·W_c`,
-  drawn as a blob), and **hidden** (working memory for talking to neighbors).
+  into **position** (`pos_dim` channels — where it is), **shape** (its grounded contour
+  readout `C = x·W_c`, drawn as a blob — `2K` coefficients in 2-D, `K(K+2)` in 3-D),
+  a **k=0 radius** channel (its physical *size*, held disjoint from the contour so that
+  bulk and charge are independent), and **hidden** (working memory for talking to
+  neighbors). The contour carries only the `k≥1` / `l≥1` charge *deviation*.
 - **Interaction = local attention.** Each bacterium attends over its *nearby* neighbors
   (distance-penalized). Locality is load-bearing: global/all-to-all coupling
   homogenizes (the thermolife HK result; see `global_vs_local.md`).

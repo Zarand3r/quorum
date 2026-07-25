@@ -140,6 +140,50 @@ move things without collapsing. (Branch: `vivarium-pure-transformer`.)
 - If tuning plateaus low, this is exactly the case for **macro selection** (C-2): stop tuning by
   hand, select rules that clear the aliveness bar.
 
+## 2026-07-25 — auto-research: bulk-vs-charge, 3-D, and a conservative-force bug
+
+A separate auto-research run, on its own harness: **does membrane-like structure emerge from
+Pauli + van der Waals + electrostatics alone?** Primary metric `emergence_score` (amphiphile
+assembly excess), secondary `demix_excess`. Two frozen benchmarks —
+[`bench_emergence.py`](bench_emergence.py) (2-D) and [`bench_emergence3d.py`](bench_emergence3d.py)
+(3-D) — logging to `docs/autoresearch_results.tsv` and `docs/autoresearch_results_3d.tsv`. Scores
+are **not** comparable between them. Root-cause review: [`docs/BILAYER_REVIEW.md`](docs/BILAYER_REVIEW.md).
+
+**Representation fix — the k=0 radius channel + contact-area vdW** (`cff597f`, `4284567`). The
+contour had no `k=0` coefficient, so charge *was* extent: `C=0` meant neutral **and** a point,
+`C≠0` meant bulky **and** charged. The model could not express *bulky but neutral* — which is what
+a lipid tail is. Fix: a dedicated k=0 **radius** channel at `rad_idx = pos_dim + shape_dim`,
+disjoint from the contour (which keeps `shape_dim = 2K`, so `pure`/`block`/`engine` are untouched).
+van der Waals was rewritten from `sigmoid(⟨C_i,M·C_j⟩/τ)·exp(−λd²)` — complementary *fit*, i.e.
+specific lock-and-key binding, with `sigmoid(0)=0.5` making featureless tokens half-sticky to
+everything — to `tanh(rad_i·rad_j/0.25)·exp(−λd²)`: contact-area / polarizability based and
+**charge-independent**, as London dispersion actually is. `A_fit` survives but now drives only the
+induced-fit morph. `attract_gated` (an earlier partial fix) was **deleted**.
+
+**3-D** (`ac0a1eb`, `7546ba7`). Per-config `pos_dim ∈ {2,3}`. The grounded readout
+`⟨C, basis(bearing)⟩` is unchanged in form; the basis goes from circular harmonics `{cos kθ, sin kθ}`
+(`2K`) to **real spherical harmonics** `Y_lm`, `l=1..K` (`K(K+2)`; `K ≤ 2` validated). Motivation:
+2-D dipolar water forms H-bond *chains*, not a network, which structurally caps the hydrophobic
+effect. Hosted via `serve --polar --dim3` with a depth-cued projection in the viewer. Also
+introduced **AMPHI**, an *emergent* amphiphile — an ordinary token with a fixed polar-head /
+neutral-tail contour that reorients in the local field like water, with **no per-species force
+law**. The legacy explicit `LIPID` rod (`k_hydro`/`k_tail`) is retracted and is now 2-D only.
+
+**Demix progression (3-D).** `demix_excess` 0.018 (baseline) → 0.167 (radius 0.8→0.4) → 0.253
+(radius 0.22; `emergence_score` briefly positive at 0.024) → 0.468 (bulky neutral tails, 0.22/0.60)
+→ **0.512** (size contrast 0.15/0.85). Raising the amphiphile head charge 0.8→2.0 recovered
+emergence −0.062→−0.018 for free; 4.0 was worse. So the hydrophobic effect **did** emerge from the
+three forces alone — but the 0.512 state is a *bulk* demixed phase with `emergence_score` still
+negative. **Assembly has not been achieved.** In 2-D the same channel change moved demix 0.061 →
+0.101 with emergence flat.
+
+**Then: the conservative-force bug** (`3538e89`). The electrostatic near-face `nf_j` was reading
+token j's **far** face, making `prod = nf_i·nf_j` asymmetric — so the force advertised as
+"conservative" was not (net force ≠ 0). It is now `nf_j = nf_i.T`. Consequence, stated plainly:
+**every number above was measured on a subtly non-physical system and is invalid.** The tuned
+configs **collapse** under the fixed force (gates fail). Both benchmarks must be re-baselined from
+scratch; the demix progression should be read as a hypothesis about the mechanism, not as a result.
+
 ---
 
 *Sweep harness:* [`research.py`](research.py) · *substrate:* [`design/dock_and_morph.md`](design/dock_and_morph.md)

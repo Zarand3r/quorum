@@ -1,3 +1,9 @@
+> **SUPERSEDED (2026-07-25)** — by the three-fundamental-forces approach in
+> [`docs/BILAYER_REVIEW.md`](docs/BILAYER_REVIEW.md): everything must emerge from **Pauli exclusion
+> + van der Waals + electrostatics** only, with the **k=0 radius channel** (bulk separated from
+> charge) and **contact-area, charge-independent vdW**. The explicit per-species lipid force laws
+> (`k_hydro` / `k_tail`, the `LIPID` rod) are **retracted**. Kept for the record.
+
 # vivarium — experiment / implementation plan
 
 The companion to [`FOLLOWUPS.md`](FOLLOWUPS.md) (what & why). This is **how, in what order, and

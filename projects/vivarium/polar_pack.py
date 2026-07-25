@@ -698,7 +698,8 @@ def fill_test(a):
     for a uniform fill of [−6,6]²) means space-filling; Rg well below that means a condensed clump."""
     cfg = _cfgd(N=a.n) if a.n else _cfgd()
     lip = a.lipid if a.lipid else 0.0
-    e = PolarPackEngine(cfg, a.seed, water_frac=a.water, lipid_frac=lip, repel=a.repel, attract=0.30,
+    e = PolarPackEngine(cfg, a.seed, water_frac=a.water, lipid_frac=lip, amphi_frac=a.amphi,
+                        repel=a.repel, attract=0.30,
                         polarity=0.80, cohesion=0.0, skew=0.0, morph=0.70, momentum=0.30, speed=1.20)
     e.conservative = True
     e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, 1.0, 0.25

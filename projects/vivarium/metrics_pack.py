@@ -64,7 +64,11 @@ def _rg(pos: np.ndarray, members: list[int], L: float) -> float:
 
 
 def measure(pos: np.ndarray, L: float, radius: float, agent_r: float = 0.5) -> dict:
-    """All aggregation metrics for one frame of positions (N,2) on an L-periodic torus."""
+    """All aggregation metrics for one frame of positions (N,D) on an L-periodic torus.
+
+    D may be 2 or 3. The pairwise/cluster/Rg parts are already dimension-agnostic; the occupancy
+    lattice and the packing ratio are built for the actual D (a 2-D grid and disc areas, or a 3-D
+    grid and sphere volumes) — using the 2-D forms on a 3-D dish silently broadcasts wrong."""
     n = pos.shape[0]
     d2 = _pairwise_d2(pos, L)
     groups = _clusters(d2, radius)
@@ -73,17 +77,22 @@ def measure(pos: np.ndarray, L: float, radius: float, agent_r: float = 0.5) -> d
 
     rg = _rg(pos, largest, L)
     # occupancy: fraction of a grid within `radius` of any agent (Monte-Carlo on a lattice).
-    g = 40
+    dim = pos.shape[1]
+    g = 40 if dim == 2 else 20            # 20³ = 8000 probes keeps the 3-D sweep affordable
     xs = (np.arange(g) + 0.5) / g * L - box_half
-    gx, gy = np.meshgrid(xs, xs)
-    grid = np.stack([gx.ravel(), gy.ravel()], axis=1)
+    axes = np.meshgrid(*([xs] * dim), indexing="ij")
+    grid = np.stack([a.ravel() for a in axes], axis=1)
     gd = grid[:, None, :] - pos[None, :, :]
     gd = gd - L * np.round(gd / L)
     near = (np.einsum("gac,gac->ga", gd, gd) <= radius * radius).any(axis=1)
     occupancy = float(near.mean())
 
-    covered = np.pi * agent_r ** 2 * len(largest)   # sum of member areas
-    hull_area = np.pi * (2.0 * rg) ** 2             # rough area of the aggregate (disk ~2·Rg)
+    if dim == 2:
+        covered = np.pi * agent_r ** 2 * len(largest)          # sum of member areas
+        hull_area = np.pi * (2.0 * rg) ** 2                    # aggregate area (disc ~2·Rg)
+    else:
+        covered = (4.0 / 3.0) * np.pi * agent_r ** 3 * len(largest)   # member volumes
+        hull_area = (4.0 / 3.0) * np.pi * (2.0 * rg) ** 3             # aggregate volume
     conservation = covered / hull_area if hull_area > 0 else 0.0
 
     return {

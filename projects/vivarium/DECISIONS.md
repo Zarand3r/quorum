@@ -26,6 +26,8 @@ never move — this was an earlier spec draft. *Rationale:* the user wants the *
 soul** (shapes that move and interact), a "petri dish of moving bacteria," not a frozen
 grid. The Gray–Scott version made the *environment* the star; here the *interaction* is
 the star. *Status:* firm — **explicitly reverses the earlier Gray–Scott decision.**
+**Superseded in part by D12:** "continuous 2-D" is now "continuous 2-D **or** 3-D" (per-config
+`pos_dim`). Everything else in D3 stands.
 
 ### D4 — The core is agent–agent INTERACTION → emergence
 **Decision:** complexity comes from bacteria affecting each other (Conway's Game of
@@ -38,6 +40,8 @@ Life." Interaction must be *load-bearing* (invariant P6). *Status:* firm.
 **Decision:** each agent is an embedding `x_i∈ℝ^d`, rendered as its grounded contour
 blob `C=x·W_c`; channels split position / shape / hidden. *Rationale:* carries
 thermolife's grounding (the drawn shape *is* the interaction readout). *Status:* firm.
+**Superseded in part by D12:** the split is now position / shape / **k=0 radius** / hidden — the
+contour is charge only, and physical size lives in its own channel.
 
 ### D6 — Interaction is LOCAL (distance attention)
 **Decision:** each bacterium attends only to nearby neighbors. *Alternatives:* global
@@ -82,6 +86,45 @@ concrete; Route A's drift and Route B's anti-collapse term are two ways to *supp
 `J → 0` predicts death (a falsifiable claim). *Rationale + full treatment:*
 [`design/potential_flux.md`](design/potential_flux.md). *Status:* firm as framing;
 the flux experiments (E-flux1–5) are **post-core**.
+
+### D12 — Bulk is separated from charge; the dish is 2-D **or** 3-D (2026-07-25)
+**Decision:** three changes, all forced by the same root-cause review
+([`docs/BILAYER_REVIEW.md`](docs/BILAYER_REVIEW.md)), which insists everything emerge from the
+three fundamental forces the sim is allowed — **Pauli exclusion, van der Waals, electrostatics** —
+with no fourth ingredient:
+
+1. **A k=0 RADIUS channel = physical SIZE**, held at `rad_idx = pos_dim + shape_dim` (the first
+   hidden channel) and **disjoint from the contour**. The contour (`k≥1` / `l≥1`) is the charge
+   *deviation*; the radius is bulk. Previously the two were the same object, so `C=0` meant
+   "neutral **and** a point" and `C≠0` meant "extended **and** charged" — the representation
+   literally could not express *bulky but neutral*, which is what a lipid tail is.
+2. **van der Waals became contact-area / charge-independent:**
+   `tanh(radᵢ·radⱼ/0.25)·exp(−λ‖Δp‖²)`. The old `sigmoid(⟨Cᵢ,M·Cⱼ⟩/τ)·exp(−λ‖Δp‖²)` read
+   *complementary fit* — specific lock-and-key binding, not London dispersion — and `sigmoid(0)=0.5`
+   made featureless tokens half-sticky to everything, so "neutral" was sticky rather than
+   hydrophobic. The complementary-fit attention `A_fit` **survives**, but now drives only the
+   induced-fit **morph**, not the attractive force.
+3. **`pos_dim ∈ {2,3}` per config.** In 3-D the grounded contour readout `⟨C, basis(bearing)⟩` is
+   unchanged in form but the basis switches from circular harmonics `{cos kθ, sin kθ}` (`2K`
+   coefficients) to **real spherical harmonics** `Y_lm`, `l=1..K` (`K(K+2)` coefficients); currently
+   `K ≤ 2` in 3-D, validated fast-fail. Motivation: in 2-D dipolar water forms H-bond *chains*
+   rather than a network, which structurally caps the hydrophobic effect, and bilayer-vs-micelle
+   packing is a geometric 3-D argument.
+
+*Alternatives (rejected):* a per-token "hydrophobicity" scalar with like-attracts-like — a fourth
+ingredient wearing a physics costume; and explicit per-species lipid force laws (`k_hydro`/`k_tail`,
+the `LIPID` rod) — **retracted** as per-species force laws. `LIPID` remains in the tree as legacy
+and is 2-D only (its force is a no-op when `pos_dim==3`); the replacement is **AMPHI**, an ordinary
+token with a fixed polar-head / neutral-tail contour and *no* force law of its own.
+*Rationale:* the hydrophobic effect is not a fourth force — it is what you get when water's
+electrostatic self-cohesion beats its dispersion attraction to a neutral surface. Making that
+expressible is a representation fix, not a new mechanism, and it stays transformer-only (bounded,
+symmetric, decaying kernels; no `1/d²`).
+*Status:* firm on the representation. **Results are open:** demixing improved substantially, but
+assembly (`emergence_score`) has **not** been achieved, and a subsequently-fixed non-conservative
+electrostatics bug (`3538e89`; `nf_j` read token j's *far* face) invalidates every benchmark number
+recorded before it — both benchmarks need re-baselining. Supersedes D3 (2-D only) and D5 (three-way
+channel split) in part.
 
 ---
 

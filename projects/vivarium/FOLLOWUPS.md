@@ -79,7 +79,11 @@ what a human sees." The old gate product survives only as a fast *dead-regime fi
 
 ### Where we are
 `n_harmonics = 3` → `shape_dim = 6` → up to ~3 lobes; the spike count is already emergent (0–3) and
-dynamic, but **capped at 3** and identical budget for every agent.
+dynamic, but **capped at 3** and identical budget for every agent. *(Update: `shape_dim = 2K` holds
+only in the **2-D** dish. With `pos_dim = 3` the basis is real spherical harmonics `Y_lm`, `l=1..K`,
+so `shape_dim = K(K+2)` — and 3-D currently validates `K ≤ 2`, i.e. `shape_dim = 8`. Separately, a
+token's physical **size** is no longer in the contour at all: it lives in its own k=0 radius
+channel, so "shape complexity" here means charge/lobe structure only.)*
 
 ### Faithful mechanisms
 - **(a) Bigger harmonic budget** (raise `K`): blobs can express up to `K` spikes; the *effective*
@@ -361,9 +365,15 @@ largely radial/isotropic in how they drive *position*).
 - **Anisotropy is the real work.** Species-identity + affinity-matrix (level 2) is easy and gives
   demixing; the *orientational* interaction (level 3) that yields *membranes* is a genuine
   extension of the force/attention computation, and the crux.
-- **2-D membranes are lines**, not sheets — a 2-D bilayer is a double row of oppositely-oriented
+- ~~**2-D membranes are lines**, not sheets — a 2-D bilayer is a double row of oppositely-oriented
   lipids (well-precedented in 2-D lipid models); a vesicle is a closed loop. Recognisable, but not
-  the 3-D image.
+  the 3-D image.~~ **RESOLVED (2026-07-25): 3-D is implemented** — `pos_dim = 3` gives a volumetric
+  dish (a 3-torus) with the contour on real spherical harmonics `Y_lm`, a frozen 3-D benchmark
+  (`bench_emergence3d.py`), and a depth-cued viewer projection (`serve --polar --dim3`). This also
+  addressed a real physical cap, not just an aesthetic one: 2-D dipolar water forms H-bond *chains*
+  rather than a network, which limits the hydrophobic effect
+  ([`docs/BILAYER_REVIEW.md`](docs/BILAYER_REVIEW.md), Finding 3). Membranes themselves have still
+  **not** assembled in either dimensionality.
 - **Composition must be set** — species assigned at init (a fixed gene) or heritable (§6). The
   water:lipid ratio and the affinity contrasts become the self-assembly control knobs (too little
   contrast → mixed soup; too much → frozen aggregate; the bilayer lives in between — an

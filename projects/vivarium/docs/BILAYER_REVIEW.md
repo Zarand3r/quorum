@@ -1,5 +1,14 @@
 # Rigorous review: why bilayers have not emerged
 
+> **STATUS 2026-07-25 — Findings 1 and 2 are FIXED; Finding 3 is addressed by the 3-D dish.**
+> Read the "Findings" below as a diagnosis of the code *as it was*; each carries a resolution
+> note. Assembly (`emergence_score`) is still NOT achieved — only demixing improved.
+>
+> A separate, more serious bug was found afterwards while reviewing this work: the electrostatic
+> near-face read the wrong face, so the "conservative" force was not conservative. See
+> [Finding 5](#finding-5-the-electrostatic-force-was-not-actually-conservative-2026-07-25).
+> **Every benchmark number recorded before that fix measured a subtly non-physical system.**
+
 Everything must emerge from the three fundamental forces the sim is allowed to have:
 **Pauli exclusion (repel), van der Waals (attract), electrostatics (polarity)** — acting on
 shaped, rigid-or-flexible molecules. No fourth ingredient. This document reviews why that has
@@ -16,6 +25,10 @@ self-cohesion beats its van der Waals attraction to a nonpolar surface. If it do
 here, the fault is in how our three forces read the molecule — not in a missing force.
 
 ## Finding 1 (root cause) — the model cannot express "bulky but neutral"
+
+> **RESOLVED.** A k=0 RADIUS channel now holds physical size at `rad_idx = pos_dim + shape_dim`,
+> disjoint from the contour. A token can now be bulky-and-neutral (a tail) or bulky-and-charged
+> (a head). Pinned by `test_radius_channel_does_not_overlap_the_contour`.
 
 `config.py`: `shape_dim = 2·n_harmonics`, coefficients `(a_k, b_k)` for `k = 1..K`.
 **There is no `k = 0` coefficient.** The contour is a pure *deviation* from a mean radius that
@@ -39,6 +52,10 @@ That is why the emergent-amphiphile experiment produced flat order parameters �
 miss, a representational impossibility.
 
 ## Finding 2 — "attract" is not van der Waals
+
+> **RESOLVED.** The conservative attraction is now `tanh(rad_i·rad_j/0.25)·exp(−λd²)` — contact
+> area / polarizability, CHARGE-INDEPENDENT. `A_fit` (complementary fit) survives only to drive
+> the induced-fit morph. Pinned by `test_vdw_is_charge_independent`.
 
 `pack.py` conservative attract:
 
@@ -65,6 +82,10 @@ real demixing (0.50 → 0.58–0.61), confirming the diagnosis — but it made t
 than *cohesive*, because of Finding 1. Both must be fixed together.
 
 ## Finding 3 — 2D suppresses the hydrophobic effect
+
+> **ADDRESSED.** The dish can now be 3-D (`pos_dim=3`), with the contour switching from circular
+> to real spherical harmonics. 3-D reached demix 0.63 vs 0.42 for the same 2-D config — the
+> chain-vs-network cap was real. Bilayers still have not formed.
 
 In 2D a dipolar water forms **chains**, not a 3D hydrogen-bond network. The hydrophobic effect
 is driven by water's ability to satisfy its H-bonds around a solute; a chain topology has far
@@ -126,9 +147,41 @@ Simulating in 3D is *faithful* and probably necessary for a clean bilayer:
 3D is queued as a major experiment, *after* the `k=0` bulk channel, because bulk-vs-charge
 decoupling is the root cause and is cheaper to test.
 
+## Finding 5 — the electrostatic force was not actually conservative (2026-07-25)
+
+Found by a momentum-conservation test written during the review of the 3-D work, **not** by any
+result looking wrong. `nf_j` — "what token j presents toward i" — was computed as
+`_near_face(C, ang_ji).T`, which evaluates j's contour along the bearing **i→j**: that is j's
+**far** face. The face j presents toward i is its contour read along **j→i**, which is simply
+`nf_i[j, i]`, i.e. `nf_j = nf_i.T`.
+
+Consequence: `prod = nf_i · nf_j` was **asymmetric** (measured `max|P − Pᵀ| = 0.29`), so the pair
+force had `F_ij ≠ −F_ji` and the system was pushed by a phantom net force (measured
+`Σ_i F_i = 2.1`) while being documented as "CONSERVATIVE … relaxes to a free-energy minimum."
+After the fix `prod` is symmetric to `0.0` exactly and `Σ_i F_i = 0` to 1e-9.
+
+**Why this matters beyond correctness.** The spurious asymmetric term was injecting energy — it
+was effectively stirring the dish. With it removed, the previously tuned configurations
+**collapse** (3-D occupancy 63 → 19 of 64 cells; 2-D 64 → 44), so the space-filling behaviour was
+partly an artefact. `demix_excess` rose (3-D 0.512 → 0.631) but is untrustworthy while the system
+is condensing, since a dense clump inflates like-neighbour fractions. **Both benchmarks must be
+re-baselined.**
+
+Two further latent bugs were removed in the same pass:
+
+- `attract_gated` indexed the 2-D circular layout and used a 2-D `arctan2` bearing, so in 3-D it
+  silently computed nonsense rather than failing. It was superseded by the contact-area vdW and
+  was OFF in every benchmark row, so nothing logged depended on it. Deleted.
+- `config._validate` never ran for direct `VivariumConfig(...)` construction — which is how every
+  engine and benchmark builds its config — so validation was dead code on the paths that mattered.
+  It now runs in `__post_init__`.
+
 ## Verification gates (any violation disqualifies a result)
 
 1. **Base-case identity** — `--verify` must report `max|ΔX| = 0.00e+00` (new channels default off).
 2. **Transformer-only** — `//projects/vivarium:test_suite` must pass (no `1/d²`, no energy
    ledger, fixed N).
 3. **No collapse** — water must stay space-filling (occupancy ≥ 55/64).
+4. **Momentum conservation** — with the speed cap disabled, `Σ_i F_i = 0` (the pair forces are
+   genuinely conservative). The `maxvel` cap is the one deliberate exception, and it is pinned by
+   its own test.

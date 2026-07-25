@@ -45,9 +45,15 @@ The picture cannot lie about the computation. Vivarium's move is to make that gr
 
 ## 2. The substrate (dock-and-morph)
 
-Each agent is one token `xᵢ ∈ ℝ^d` (default `d=16`, `N=64`), split into **position** `pᵢ` (2
-channels), **shape** `Cᵢ` (the grounded contour, `2K=6` channels), and **hidden** (8 channels). The
-dish is a **periodic (toroidal) plane** — no walls, so nothing piles in corners.
+Each agent is one token `xᵢ ∈ ℝ^d` (default `d=16`, `N=64`), split into **position** `pᵢ`
+(`pos_dim` channels — 2 for a flat dish, 3 for a volumetric one), **shape** `Cᵢ` (the grounded
+contour: `2K` channels of circular harmonics `{cos kθ, sin kθ}` in 2-D, `K(K+2)` channels of real
+spherical harmonics `Y_lm`, `l=1..K`, in 3-D), a **k=0 radius** channel, and **hidden** (whatever
+`d` leaves). The radius is the token's physical **size** and is deliberately *disjoint* from the
+contour: the contour (`k≥1` / `l≥1`) carries only the charge *deviation*, so bulk and charge are
+independent — a token can be bulky **and** neutral (a lipid tail) or small **and** strongly dipolar
+(water). The dish is a **periodic (toroidal) domain** — a 2-torus in 2-D, a 3-torus in 3-D — so
+there are no walls and nothing piles in corners.
 
 Two grounded overlap sensors, both free from the attention math (Parseval):
 - **direct clash** `⟨Cᵢ, Cⱼ⟩` — shapes occupying the same space (steric overlap);
@@ -56,7 +62,15 @@ Two grounded overlap sensors, both free from the attention math (Parseval):
 One weight-tied block per tick, all **strictly transformer-only** (attention / MLP / LayerNorm;
 see [`design/HARD_REQUIREMENT.md`](../design/HARD_REQUIREMENT.md)):
 
-- **attract head** — `A_fit = softmax_j(⟨Cᵢ,M·Cⱼ⟩ − λ‖Δp‖²)`; move toward complementary neighbours.
+- **attract head (van der Waals)** — `g_ij = tanh(radᵢ·radⱼ/0.25)·exp(−λ‖Δp‖²)`; move toward
+  neighbours you have contact area with. This is **London dispersion**: proportional to contact
+  area / polarizability (the k=0 radius) and **charge-independent** — which is exactly why neutral
+  alkanes and oils cohere. It is symmetric, bounded, and decaying, so `F_ij = −F_ji` and the force
+  is conservative. It deliberately replaces the earlier `sigmoid(⟨Cᵢ,M·Cⱼ⟩/τ)·exp(−λ‖Δp‖²)`
+  *complementary-fit* kernel, which modelled specific lock-and-key binding rather than dispersion
+  (and, since `sigmoid(0)=0.5`, made featureless tokens sticky instead of hydrophobic).
+- **complementary fit** — `A_fit = softmax_j(⟨Cᵢ,M·Cⱼ⟩ − λ‖Δp‖²)` survives as the **induced-fit
+  morph** signal (below); it no longer supplies the attractive force.
 - **repel head** — `A_rep = softmax_j(⟨Cᵢ,Cⱼ⟩ − λ‖Δp‖²)`; move away from clashing neighbours. To
   keep the push finite as shapes touch (a bounded softmax weight of `Δp` vanishes at contact), the
   head aggregates **unit directions** — so repulsion is a genuine attention op, *soft* excluded
@@ -78,7 +92,8 @@ isolated agent cannot move). This is the property every earlier design failed (�
 There is no trained loss and no gradient descent on weights — but there **is** a physical
 objective, and it lives in the grounded attention. The dock score `⟨Cᵢ, M·Cⱼ⟩` *is* a binding
 energy (Parseval). The dynamics descend a **packing / binding free energy** `Φ` (↓ steric clash,
-↑ complementary fit), driven off-equilibrium by the non-gradient **skew flux** `J`:
+↑ dispersion contact, ↑ complementary fit *of shape*), driven off-equilibrium by the non-gradient
+**skew flux** `J`:
 
 $$\dot x = -D\,\nabla\Phi(x) \;+\; J(x)$$
 

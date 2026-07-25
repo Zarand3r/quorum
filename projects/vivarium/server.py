@@ -271,8 +271,11 @@ def main(argv: list[str] | None = None) -> int:
             # solute is the EMERGENT amphiphile (a normal token, polar head + neutral tail) — no
             # explicit lipid rod, no k_hydro: membrane behaviour must come from the three forces.
             cfg = replace(cfg, pos_dim=3, n_harmonics=2, pos_bound=3.0)
-            water_box, lipid_box = [0.85], [0.0]
+            water_box, lipid_box = [0.75], [0.0]
             amphi_box[0] = 0.15
+            # the remaining ~10% are ACTIVE tokens: the original morphing blobs. Water and the
+            # amphiphile are RIGID molecules (they only reorient), so without these nothing in the
+            # dish would actually morph — the induced-fit deformation vivarium is named for.
 
         def make_engine(s):
             # sensible SHOWCASE defaults (base-case identity is defined vs PackEngine's own defaults, so
@@ -288,8 +291,12 @@ def main(argv: list[str] | None = None) -> int:
             # Range hierarchy: Pauli (repel) < vdW (attract) < electrostatic (polarity).
             e = PolarPackEngine(cfg, s, water_frac=water_box[0], lipid_frac=lipid_box[0],
                                 amphi_frac=amphi_box[0],
-                                repel=5.00, attract=0.30, polarity=0.80, cohesion=0.00, skew=0.00,
+                                repel=(40.0 if args.dim3 else 5.00),
+                                attract=0.30, polarity=0.80, cohesion=0.00, skew=0.00,
                                 morph=0.70, momentum=0.30, speed=1.20)   # strong repel = INCOMPRESSIBLE
+            #  NOTE (2026-07-25): once the electrostatic force was made genuinely conservative, the
+            #  dish collapsed at repel=5 (occupancy 29/64). A truly conservative cohesive liquid
+            #  condenses unless excluded volume is stiff enough to hold it open: repel=40 → 56/64.
             #  water (fills the box, no collapse to a ball); overdamped viscous dish
             e.conservative = True      # symmetric CONSERVATIVE forces → relaxes to a free-energy min
             e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, 1.0, 0.25   # Gaussian decay rates λ

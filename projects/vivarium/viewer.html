@@ -401,7 +401,14 @@ function draw(al){
     for(const idx of order){
       const dep = 0.35 + 0.65*((zs[idx]-zmin)/zr);          // 0 = far, 1 = near
       const sp = (s.species && s.species[idx]) ?? 1;
-      const col = COL[sp] || [203,213,225];
+      let col = COL[sp] || [203,213,225];
+      if(sp === 1){            // ACTIVE = the morphing blob: colour by how DEFORMED it is right
+        const cc = s.tokens[idx].c || [];   // now (blue = smooth/round → red = spiky), so the
+        let m = 0;                          // induced-fit morphing is visible even as a sphere.
+        for(const v of cc) m += v*v;
+        const t = Math.max(0, Math.min(1, Math.sqrt(m)/1.2));
+        col = [77 + 178*t, 163 - 100*t, 255 - 165*t];
+      }
       // radius in WORLD units (water is the small molecule, amphiphile the bulky one) scaled to
       // screen — the 3-D dish is a smaller box, so pixel-constant sizes would read as a gas.
       const r = (sp===0 ? 0.34 : 0.46) * sc * (0.74 + 0.40*dep);
