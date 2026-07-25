@@ -175,6 +175,13 @@ class PackEngine:
                          for lam in (self.sink_repel, self.sink_attract,
                                      getattr(self, "sink_polarity", 0.0))))
 
+    def _contact_distance(self, C, delta, dist):
+        """Centre-to-centre distance at which two tokens touch. Default: ISOTROPIC — every token is
+        a sphere of diameter `repel_contact`. PolarPackEngine overrides this to read the contour at
+        the relative bearing, making molecules non-spherical (Gay-Berne-like), which is what gives an
+        amphiphile a head END and a tail END and therefore a real packing parameter."""
+        return self.repel_contact
+
     def _contour(self):
         return self.X[:, self.pd:self.pd + self.tK]  # grounded contour = shape channels
 
@@ -298,7 +305,7 @@ class PackEngine:
             # SYMMETRIC overlap over ALL pairs (NOT the asymmetric k-NN mask — that would break
             # symmetry and momentum). overlap_ij = overlap_ji since d is symmetric; contact is short-
             # ranged so this stays local anyway. Zero the diagonal (no self-overlap).
-            overlap = np.clip(self.repel_contact - dist, 0.0, None)
+            overlap = np.clip(self._contact_distance(C, delta, dist) - dist, 0.0, None)
             np.fill_diagonal(overlap, 0.0)
             repel = np.einsum("ij,ijc->ic", overlap, dirn)
         else:

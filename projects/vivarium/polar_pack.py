@@ -68,8 +68,11 @@ class PolarPackEngine(PackEngine):
     def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2,
                  water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, sink_polarity=0.0,
                  oil_frac=0.0, lipid_frac=0.0, lip_ell=0.55, k_tail=1.5, k_hydro=1.0,
-                 lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, **kw):
+                 lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.60, **kw):
         super().__init__(cfg, seed, **kw)
+        self.aniso = aniso           # how strongly the contour deforms the EXCLUDED VOLUME (0 =
+        #   perfect spheres = the old behaviour). Non-zero makes molecules shaped, which is a
+        #   precondition for any lamellar (bilayer) phase.
         self.lip_ell = lip_ell       # half-length head↔tail
         self.k_tail = k_tail         # tail–tail hydrophobic cohesion (drives the bilayer core)
         self.k_hydro = k_hydro       # hydrophobic effect: tail↔water repel + head↔water attract
@@ -126,6 +129,39 @@ class PolarPackEngine(PackEngine):
             self._write_amphi(self.X[:, self.pd:])
         self._write_radii(self.X[:, self.pd:])
         self._build_stiffness()
+
+    def _bearing_nf(self, C, delta, dist):
+        """⟨C_i, basis(bearing i→j)⟩ for every ordered pair — the contour each token presents toward
+        the other. One place, both dimensionalities: circular harmonics in 2-D, real spherical
+        harmonics in 3-D. This is the same grounded relative-direction readout the electrostatics
+        uses, so nothing new is introduced."""
+        dij = -delta
+        if self.pd == 3:
+            return np.einsum("ic,ijc->ij", C, self._sh_basis(dij / dist[..., None]))
+        return self._near_face(C, np.arctan2(dij[..., 1], dij[..., 0]))
+
+    def _contact_distance(self, C, delta, dist):
+        """ANISOTROPIC excluded volume: the distance at which i and j touch is the sum of the radius
+        each PRESENTS TOWARD the other, not a single sphere diameter.
+
+            contact_ij = σ/2·(1 + a·tanh(nf_i→j)) + σ/2·(1 + a·tanh(nf_j→i))
+
+        Symmetric by construction (the second term is the transpose of the first), so the repulsion
+        stays conservative. Bounded by tanh, and no distance appears in a denominator.
+
+        This is what makes a molecule a SHAPE rather than a sphere. A bilayer is a packing
+        phenomenon: whether amphiphiles form micelles, bilayers or inverted phases is set by the
+        packing parameter v/(a₀·l) — the ratio of tail volume to head area. With isotropic beads
+        that ratio is identically 1 and no lamellar phase can exist."""
+        if self.aniso <= 0.0:
+            return self.repel_contact
+        # Only molecules with a DEFINED conformation (stiffness > 0) have a persistent shape; a
+        # free-morphing blob (k=0) has no fixed geometry, so it stays a sphere. This also keeps the
+        # base case exact: with no species assigned, every token is free-morphing.
+        shaped = (self.stiff.max(axis=1) > 0.0)[:, None]
+        nf = np.tanh(self._bearing_nf(C, delta, dist)) * shaped
+        half = 0.5 * self.repel_contact
+        return half * (1.0 + self.aniso * nf) + half * (1.0 + self.aniso * nf.T)
 
     def _build_stiffness(self):
         """Per-token, per-channel elastic stiffness + the rest-shape buffer it pulls toward. Rigid
