@@ -49,11 +49,7 @@ class VivariumConfig:
 
     @property
     def shape_dim(self) -> int:
-        # 2K deviation coefficients (a_k, b_k for k=1..K) PLUS one k=0 coefficient: the MEAN RADIUS.
-        # k=0 is the token's physical SIZE (→ van der Waals contact area / polarizability); k≥1 is its
-        # shape DEVIATION (→ signed charge). Separating them is what lets a molecule be bulky AND
-        # neutral (a lipid tail) or bulky AND charged (a head) — see docs/BILAYER_REVIEW.md.
-        return 2 * self.n_harmonics + 1
+        return 2 * self.n_harmonics
 
     @property
     def hidden_dim(self) -> int:

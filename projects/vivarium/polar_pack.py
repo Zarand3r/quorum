@@ -136,7 +136,7 @@ class PolarPackEngine(PackEngine):
         """Stamp each fixed species' k=0 RADIUS (physical size → vdW contact area). Water/oil/amphiphile
         are rigid molecules, so their size is a constant of the species, rewritten every step exactly
         like their shape. Tokens with no fixed size (ACTIVE) keep whatever the morph produced."""
-        r = self.tK - 1
+        r = self.cfg.shape_dim          # radius channel index within the z block
         if self._wi.size:
             z[self._wi, r] = RAD_WATER
         if self._oi.size:
