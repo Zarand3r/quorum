@@ -1,0 +1,9 @@
+commit	emergence	demix	status	description
+ac0a1eb	0.007332	0.0183	keep	baseline 3D
+23c6f55	-0.038619	0.1666	keep	radius 0.8->0.4 (demix 9x: 0.018->0.167)
+38d0986	0.024110	0.2531	keep	radius 0.4->0.22 (demix 0.253; emergence POSITIVE 0.024)
+0d9dd6d	0.016255	0.2077	discard	radius 0.22->0.12 (both worse; 0.22 is the optimum)
+cd1e85a	-0.034393	0.4677	keep	BULKY neutral tails (0.22/0.60): demix 0.253->0.468
+21cb9fb	-0.061653	0.5122	keep	size contrast 0.15/0.85: demix 0.512 (but bulk phase, emergence -0.06)
+22a153c	-0.017861	0.5122	keep	head charge 0.8->2.0 (emergence -0.062->-0.018 free)
+b693ac1	-0.070251	0.5122	discard	head charge 2.0->4.0 (worse; 2.0 optimal)
