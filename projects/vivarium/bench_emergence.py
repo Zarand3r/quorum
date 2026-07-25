@@ -49,7 +49,11 @@ WATER_FRAC_DEMIX = 0.50  # hydrophobic scenario: 50/50 water/oil
 OIL_FRAC = 0.50
 
 # fixed physics knobs (the FORCE MODEL is what experiments change, not these dials)
-PHYS = dict(repel=5.0, attract=0.30, polarity=1.0, cohesion=0.0, skew=0.0,
+# repel 40 (was 5): once the electrostatic force was made genuinely conservative the dish
+# CONDENSED at repel=5 — a conservative cohesive liquid minimises its energy by collapsing unless
+# excluded volume is stiff enough to hold it open. Real liquids are nearly incompressible, so a
+# stiff excluded volume is the physical choice, not a fudge.
+PHYS = dict(repel=40.0, attract=0.30, polarity=1.0, cohesion=0.0, skew=0.0,
             morph=0.70, momentum=0.30, speed=1.20, water_dipole=0.8)
 SINKS = dict(sink_repel=6.0, sink_attract=1.0, sink_polarity=0.25)
 STATE = dict(conservative=True, repel_contact=1.0, rigidity=0.0,
@@ -148,7 +152,9 @@ def main() -> int:
     print(f"demix_excess: {np.mean(demixes):.4f}")
     print(f"gate_occupancy: {occ}  (need >= 55)")
     print(f"gate_base_identity: {delta:.2e}  (need 0)")
-    ok = (delta == 0.0) and (occ >= 55)
+    margin = _build(SEEDS[0], water_frac=WATER_FRAC_AMPHI, amphi_frac=AMPHI_FRAC).min_image_margin()
+    print(f"gate_min_image: {margin:.2e}  (need < 0.01 — periodic boundaries valid)")
+    ok = (delta == 0.0) and (occ >= 55) and (margin < 0.01)
     print(f"gates_pass: {'YES' if ok else 'NO'}")
     return 0
 

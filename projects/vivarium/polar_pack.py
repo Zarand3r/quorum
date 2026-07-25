@@ -40,6 +40,20 @@ _EPS = 1e-9
 # neutral. That ordering is the hydrophobic effect: water-water is held by electrostatics, oil-oil by
 # dispersion, and water gains little from wetting a nonpolar surface → it expels it.
 RAD_WATER, RAD_OIL, RAD_AMPHI, RAD_LIPID = 0.15, 0.85, 0.85, 0.85
+# PER-SPECIES, PER-MODE ELASTIC STIFFNESS k ∈ [0,1]. Equilibrium fluctuation of a mode is
+# √(S·kT/k) (equipartition), so k is what makes a molecule rigid or floppy — the amount of morphing
+# is a CONSEQUENCE of stiffness vs temperature, not a dial.
+#   water   — genuinely rigid. Bond stretch ~0.01 Å, HOH libration a few degrees, all fs-fast;
+#             every standard MD water model (SPC, TIP3P, TIP4P) is a rigid body. k=1.
+#   oil / legacy lipid — treated as rigid bodies.
+#   amphiphile — its l=1 head dipole is its chemical IDENTITY and stays rigid, but the higher modes
+#             (axial elongation = tail splay) are SOFT. Real lipid tails are the most flexible part
+#             of a membrane: ~13 rotatable C–C dihedrals with ~3–4 kJ/mol barriers against
+#             kT ≈ 2.5 kJ/mol at body temperature, so many conformers are populated. That tail
+#             disorder IS the fluid phase, and it is what lets the packing parameter adjust.
+#   active  — the induced-fit morphing blob: k=0, i.e. no restoring force at all, purely
+#             attention-driven (this is the pre-existing behaviour and keeps the base case exact).
+STIFF_RIGID, STIFF_AMPHI_SPLAY, STIFF_ACTIVE = 1.0, 0.10, 0.0
 
 
 def _rand_unit(r, n):
@@ -111,6 +125,21 @@ class PolarPackEngine(PackEngine):
             self.X[self._ai, self.pd:self.pd + self.tK] = 0.0
             self._write_amphi(self.X[:, self.pd:])
         self._write_radii(self.X[:, self.pd:])
+        self._build_stiffness()
+
+    def _build_stiffness(self):
+        """Per-token, per-channel elastic stiffness + the rest-shape buffer it pulls toward. Rigid
+        species get k=1 (their rest conformation is rewritten each step, so k=1 reproduces exactly
+        the old hard overwrite); the amphiphile keeps a rigid head but a floppy splay mode."""
+        order = self.mode_orders()                       # harmonic order of each shape channel
+        k = np.full((self.cfg.N, self.tK), STIFF_ACTIVE, dtype=float)
+        for idx in (self._wi, self._oi, self._li):
+            if idx.size:
+                k[idx, :] = STIFF_RIGID
+        if self._ai.size:
+            k[self._ai, :] = np.where(order == 1, STIFF_RIGID, STIFF_AMPHI_SPLAY)
+        self.stiff = k
+        self.c_rest = np.zeros((self.cfg.N, self.tK))
 
     def _sh_basis(self, u):
         """Real SPHERICAL HARMONICS Y_lm(û) for l=1..K, evaluated at unit direction(s) `u` (...,3).
@@ -372,9 +401,9 @@ class PolarPackEngine(PackEngine):
         if self.polarity > 0.0 and self._pol_morph is not None:
             z2[:, :self.tK] = z2[:, :self.tK] + self.pol_morph * self._pol_morph
         if self._oi.size:
-            z2[self._oi, :self.tK] = 0.0       # OIL stays round/apolar (nonpolar solute)
+            self.c_rest[self._oi, :] = 0.0     # OIL rest shape is round/apolar (nonpolar solute)
         if self._li.size:
-            z2[self._li, :self.tK] = 0.0       # lipid body round (the rod is handled explicitly)
+            self.c_rest[self._li, :] = 0.0     # legacy lipid body round (rod handled explicitly)
             if self._lip_torque is not None:   # reorient: head→water, tail→tails
                 dth = np.clip(self.lip_torque * self._lip_torque, -0.4, 0.4)
                 c, s = np.cos(dth), np.sin(dth)
@@ -393,7 +422,7 @@ class PolarPackEngine(PackEngine):
                 d = np.arctan2(np.sin(tgt - self.water_phi), np.cos(tgt - self.water_phi))
                 mag = np.linalg.norm(fld, axis=1)                      # no field → no torque
                 self.water_phi = self.water_phi + self.pol_torque * d * (mag > 1e-6)
-            self._write_water(z2)
+            self._write_water(self.c_rest)   # rest conformation; stiffness does the pulling
         if self._ai.size:
             # AMPHIPHILE is rigid like water: turn its + HEAD toward the local field, then rewrite the
             # rotated head template (overwrites the generic morph — the head keeps its fixed shape). Same
@@ -407,7 +436,7 @@ class PolarPackEngine(PackEngine):
                 d = np.arctan2(np.sin(tgt - self.amphi_phi), np.cos(tgt - self.amphi_phi))
                 mag = np.linalg.norm(fld, axis=1)
                 self.amphi_phi = self.amphi_phi + self.pol_torque * d * (mag > 1e-6)
-            self._write_amphi(z2)
+            self._write_amphi(self.c_rest)   # rest conformation; stiffness does the pulling
         self._write_radii(z2)
         return z2
 

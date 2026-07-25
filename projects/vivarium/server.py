@@ -299,7 +299,11 @@ def main(argv: list[str] | None = None) -> int:
             #  condenses unless excluded volume is stiff enough to hold it open: repel=40 → 56/64.
             #  water (fills the box, no collapse to a ball); overdamped viscous dish
             e.conservative = True      # symmetric CONSERVATIVE forces → relaxes to a free-energy min
-            e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, 1.0, 0.25   # Gaussian decay rates λ
+            # Gaussian decay rates λ. In 3-D the box is half as wide (to keep liquid density in a
+            # volume), so the electrostatic range must shorten too or molecules interact with their
+            # own periodic images: at λ=0.25 the kernel is still 0.105 at L/2. λ=0.55 → 7e-3.
+            e.sink_repel, e.sink_attract = 6.0, 1.0
+            e.sink_polarity = 0.55 if args.dim3 else 0.25
             e.repel_contact = 1.00     # σ = particle diameter; repel acts only on overlap
             e.rigidity = 0.00
             e.selectivity = 0.30

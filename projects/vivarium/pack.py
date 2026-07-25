@@ -32,6 +32,10 @@ _LN_EPS = 1e-5
 _MLP_H = 2
 _DIR_EPS = 1e-4  # softening for the unit-direction normalisation (not a force kernel)
 _THERMAL = 0.15  # Langevin kick per unit temperature (kT → Brownian displacement)
+_SHAPE_THERMAL = 0.02  # the same thermostat acting on CONFORMATION (kT → shape fluctuation). Real
+#   molecules deform because thermal energy pays the elastic cost, so flexibility must EMERGE from
+#   the ratio kT/k, not be dialled in. Calibrated so the equilibrium variance is exactly
+#   _SHAPE_THERMAL·kT/k per mode (equipartition) — see _apply_stiffness and tests/test_stiffness.py.
 
 
 def _ln(X):
@@ -60,6 +64,15 @@ class PackEngine:
         #                           centroid; merges fragments into ONE droplet (M1). 0 = off.
         self.skew = skew        # non-settling shape rotation
         self.morph = morph      # induced-fit FLEXIBILITY: how strongly a token reshapes to fit partners
+        # PER-MODE, PER-SPECIES ELASTIC STIFFNESS (the physical flexibility model).
+        #   stiff[i, c] ∈ [0,1] = how strongly channel c of token i is pulled back to its REST shape
+        #   c_rest[i, c] each step. This is a per-token DIAGONAL linear map on the shape channels —
+        #   a structured linear op, so it stays inside the transformer-only requirement.
+        # Real molecules are stiff in some modes and floppy in others (bond stretch ≫ angle bend ≫
+        # dihedral torsion), so stiffness is per HARMONIC ORDER, not per molecule. Both default to
+        # None ⇒ the whole mechanism is skipped ⇒ base case byte-identical.
+        self.stiff = None
+        self.c_rest = None
         self.rigidity = 0.0     # ELASTIC STIFFNESS: restoring pull of the contour toward its ROUND rest
         #   shape each step (C_rest=0). 0 = no restoring (base case); 1 = snaps rigid/round. The true
         #   rigidity ↔ flexibility (morph) tension: morph grows prongs, rigidity relaxes them back.
@@ -122,6 +135,45 @@ class PackEngine:
         X[:, self.pd:] = r.standard_normal((cfg.N, zdim)) * 0.5
         self.X = X
         self.t = 0
+
+    def mode_orders(self):
+        """Harmonic order of each shape channel — (tK,) ints. 2-D: (a_k,b_k) → k. 3-D: the
+        (2l+1)-wide l-block → l. Lets stiffness be assigned per MODE (low modes soft, high modes
+        stiff), which is how real elastic bodies and real molecules behave."""
+        if self.pd == 2:
+            return np.repeat(np.arange(1, self.cfg.n_harmonics + 1), 2)
+        return np.concatenate([np.full(2 * l + 1, l)
+                               for l in range(1, self.cfg.n_harmonics + 1)])
+
+    def _apply_stiffness(self, z2):
+        """Pull each shape channel toward its rest value with per-mode stiffness, then let the
+        thermostat excite it. Overdamped update  C ← C_rest + (1−k)·(C−C_rest) + σ·ξ  has stationary
+        variance σ²/(2k−k²); choosing σ² = S·kT·(2−k) makes that exactly **S·kT/k** — equipartition.
+        So a stiff mode barely moves and a soft mode fluctuates a lot, from ONE temperature."""
+        if self.stiff is None:
+            return z2
+        rest = 0.0 if self.c_rest is None else self.c_rest
+        C = z2[:, :self.tK]
+        C = rest + (1.0 - self.stiff) * (C - rest)
+        if self.temperature > 0.0:
+            # a mode with NO restoring force has no equilibrium to fluctuate about (the variance
+            # would diverge), so it is left purely attention-driven and gets no thermal kick.
+            sig = np.where(self.stiff > 0.0,
+                           np.sqrt(_SHAPE_THERMAL * self.temperature * (2.0 - self.stiff)), 0.0)
+            C = C + sig * rng_for(self.seed + 991, self.t).standard_normal(C.shape)
+        z2[:, :self.tK] = C
+        return z2
+
+    def min_image_margin(self):
+        """Worst force-kernel value at HALF the box length. Periodic boundaries are only valid under
+        the minimum-image convention, which assumes every interaction is negligible at L/2 —
+        otherwise a molecule interacts with its own periodic image and the wrap-around becomes a
+        physical artefact. Real MD escapes this with Ewald/PME, which is a global lattice sum and
+        therefore not available to us, so the box must simply be large enough. < 0.01 is safe."""
+        half = 0.5 * self.L
+        return float(max(np.exp(-lam * half * half)
+                         for lam in (self.sink_repel, self.sink_attract,
+                                     getattr(self, "sink_polarity", 0.0))))
 
     def _contour(self):
         return self.X[:, self.pd:self.pd + self.tK]  # grounded contour = shape channels
@@ -315,7 +367,8 @@ class PackEngine:
         # molecule relaxes its induced deformation back each step; morph is the flexibility that fights it.
         if self.rigidity > 0.0:
             z2[:, :self.tK] = z2[:, :self.tK] * (1.0 - self.rigidity)
-        z2 = self._post_morph(z2)             # subclass hook (default identity) — e.g. freeze water shape
+        z2 = self._post_morph(z2)
+        z2 = self._apply_stiffness(z2)   # elastic restoring + conformational thermostat
 
         self.X = np.concatenate([p, z2], axis=1)
         self.t += 1
