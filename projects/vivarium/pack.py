@@ -85,8 +85,8 @@ class PackEngine:
         rng = base_rng(seed + 1)
         d, twoK, h = cfg.d, cfg.shape_dim, _MLP_H * (cfg.d - POS_DIM)
         self.tK = twoK
-        signs = np.array([(-1.0) ** (k + 1) for k in range(cfg.n_harmonics) for _ in range(2)])
-        self.M = np.diag(signs)
+        signs = np.array([(-1.0) ** (k + 1) for k in range(cfg.n_harmonics) for _ in range(2)] + [1.0])
+        self.M = np.diag(signs)   # trailing +1 = the k=0 radius channel (size, not a prong sign)
         zdim = d - POS_DIM
         self.W_v = rng.standard_normal((zdim, zdim)) / np.sqrt(zdim)
         self.W1 = rng.standard_normal((zdim, h)) / np.sqrt(zdim)
@@ -208,7 +208,13 @@ class PackEngine:
             # g_ij = sigmoid(S_comp/τ)·exp(−λ_a·d²): symmetric (S_comp, d symmetric), bounded, decaying
             # (a soft vdW well). force = −Σ_j g·dirn = pull toward j; F_ij=−F_ji ⇒ conservative. All
             # pairs (NOT the asymmetric k-NN mask), diagonal zeroed.
-            g = (1.0 / (1.0 + np.exp(-S_comp / tau))) * np.exp(-self.sink_attract * d2)
+            # van der WAALS = London dispersion: proportional to CONTACT AREA / polarizability (the
+            # k=0 radius channel) and INDEPENDENT OF CHARGE — which is exactly why neutral alkanes and
+            # oils cohere. The old sigmoid(S_comp) read complementary FIT (lock-and-key): a specific
+            # binding term, not dispersion, and sigmoid(0)=0.5 made featureless tokens sticky. Bounded
+            # (tanh), symmetric, decaying ⇒ still conservative and still transformer-only.
+            rad = np.maximum(C[:, self.tK - 1], 0.0)                   # k=0 coefficient = size ≥ 0
+            g = np.tanh(rad[:, None] * rad[None, :] / 0.25) * np.exp(-self.sink_attract * d2)
             if getattr(self, "attract_gated", False):
                 # DIRECTIONAL vdW: attraction acts through the surface each token presents TOWARD the
                 # other. presence_i→j = |⟨C_i, basis(bearing_i→j)⟩| — high where the contour is

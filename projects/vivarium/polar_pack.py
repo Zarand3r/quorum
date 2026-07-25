@@ -35,6 +35,11 @@ from rng import base_rng
 
 WATER, ACTIVE, OIL, LIPID, AMPHI = 0, 1, 2, 3, 4
 _EPS = 1e-9
+# k=0 radius (physical SIZE → van der Waals contact area / polarizability), per species. Water is a
+# SMALL molecule (weak dispersion) but strongly polar; oil and the amphiphile body are BULKY and
+# neutral. That ordering is the hydrophobic effect: water-water is held by electrostatics, oil-oil by
+# dispersion, and water gains little from wetting a nonpolar surface → it expels it.
+RAD_WATER, RAD_OIL, RAD_AMPHI = 0.80, 0.80, 0.80
 
 
 class PolarPackEngine(PackEngine):
@@ -96,6 +101,7 @@ class PolarPackEngine(PackEngine):
         if self._ai.size:
             self.X[self._ai, POS_DIM:POS_DIM + self.tK] = 0.0
             self._write_amphi(self.X[:, POS_DIM:])
+        self._write_radii(self.X[:, POS_DIM:])
 
     def _amphi_template(self, scale):
         """Body-frame contour for an AMPHIPHILE: a single localized + HEAD bump toward +x, fading to a
@@ -125,6 +131,18 @@ class PolarPackEngine(PackEngine):
             ck, sk = np.cos(k * phi), np.sin(k * phi)
             z[self._ai, 2 * (k - 1)] = ak * ck - bk * sk
             z[self._ai, 2 * (k - 1) + 1] = ak * sk + bk * ck
+
+    def _write_radii(self, z):
+        """Stamp each fixed species' k=0 RADIUS (physical size → vdW contact area). Water/oil/amphiphile
+        are rigid molecules, so their size is a constant of the species, rewritten every step exactly
+        like their shape. Tokens with no fixed size (ACTIVE) keep whatever the morph produced."""
+        r = self.tK - 1
+        if self._wi.size:
+            z[self._wi, r] = RAD_WATER
+        if self._oi.size:
+            z[self._oi, r] = RAD_OIL
+        if self._ai.size:
+            z[self._ai, r] = RAD_AMPHI
 
     def _mickey_template(self, scale):
         """Body-frame contour coefficients for a water molecule: two positive H lobes at ±52.25° (the
@@ -299,6 +317,7 @@ class PolarPackEngine(PackEngine):
                 mag = np.linalg.norm(fld, axis=1)
                 self.amphi_phi = self.amphi_phi + self.pol_torque * d * (mag > 1e-6)
             self._write_amphi(z2)
+        self._write_radii(z2)
         return z2
 
     # NOTE: no step() override — we inherit PackEngine.step() and only add the two hooks above, so
