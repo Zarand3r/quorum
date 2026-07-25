@@ -321,12 +321,15 @@ class PolarPackEngine(PackEngine):
             uij = dij / dist[..., None]
             b_ij = self._sh_basis(uij)
             nf_i = np.einsum("ic,ijc->ij", C, b_ij)
-            nf_j = np.einsum("ic,ijc->ij", C, self._sh_basis(-uij)).T
+            nf_j = nf_i.T                                  # see the 2-D branch: near face = transpose
         else:
             ang_ij = np.arctan2(dij[..., 1], dij[..., 0])      # bearing i→j
-            ang_ji = np.arctan2(delta[..., 1], delta[..., 0])  # bearing j→i
             nf_i = self._near_face(C, ang_ij)                  # what i presents toward j
-            nf_j = self._near_face(C, ang_ji).T                # what j presents toward i (transpose to (i,j))
+            # What j presents toward i is simply nf_i[j, i] — j's contour read along the bearing
+            # j→i — so nf_j is the TRANSPOSE of nf_i. (Reading _near_face at the reversed bearing
+            # instead gives j's FAR face, which made prod asymmetric and the "conservative"
+            # electrostatic force non-conservative: Σ_i F_i ≠ 0. See tests/test_polar3d.py.)
+            nf_j = nf_i.T
         prod = nf_i * nf_j                                 # >0 like charges, <0 opposite
         tau = max(1e-2, self.selectivity)
         score = np.where(mask, (np.abs(prod) - cfg.dist_lambda * d2) / tau, -np.inf)
@@ -590,7 +593,6 @@ def demix_test(a):
     e.repel_contact = a.contact
     e.sink_attract, e.sink_polarity = a.satt, a.spol
     e.selectivity, e.temperature = a.sel, a.kt
-    e.attract_gated = a.gated
     sp = e.species
     print(" tick  like-frac  water-near-water  oil-near-oil   (→1 = demixed; 0.5 = mixed)")
     for t in range(0, a.ticks + 1, a.every):
@@ -671,10 +673,9 @@ def amphi_test(a):
                         repel=a.repel, attract=0.30, cohesion=0.0, skew=0.0, momentum=a.mom,
                         water_dipole=a.wcharge, amphi_charge=a.wcharge)
     e.conservative = True
-    e.attract_gated = a.gated                               # directional vdW → tail is hydrophobic
     e.sink_repel, e.sink_attract, e.sink_polarity = a.srep, a.satt, a.spol
     e.repel_contact, e.selectivity, e.temperature = 1.0, a.sel, a.kt
-    print(f"N={e.cfg.N} water={a.water} amphi={a.amphi} polarity={a.polarity} gated={a.gated}  "
+    print(f"N={e.cfg.N} water={a.water} amphi={a.amphi} polarity={a.polarity} dim={cfg.pos_dim}  "
           f"(head_water/tail_dry > baseline ⇒ self-assembly)")
     print(" tick  head_water (base)   tail_dry (base)")
     for t in range(0, a.ticks + 1, a.every):
@@ -752,7 +753,6 @@ def main(argv=None):
     p.add_argument("--watertest", action="store_true")
     p.add_argument("--fill", action="store_true", help="does the dish stay filled or condense?")
     p.add_argument("--n", type=int, default=0, help="override token count N (0 = config default)")
-    p.add_argument("--gated", action="store_true", help="vdW attraction scales with contour presence")
     p.add_argument("--amphitest", action="store_true", help="emergent amphiphile self-assembly test")
     p.add_argument("--amphi", type=float, default=0.15, help="amphiphile fraction")
     p.add_argument("--dim", type=int, default=2, choices=(2, 3), help="dish dimensionality")

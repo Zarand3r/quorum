@@ -47,6 +47,12 @@ class VivariumConfig:
     pos_bound: float    # dish half-size; positions are clipped to [−pos_bound, pos_bound] (P7)
     seed: int
 
+    def __post_init__(self) -> None:
+        # Validate on EVERY construction, not just load_config() — engines and benchmarks build
+        # VivariumConfig(**DEFAULTS, ...) directly, so validation was previously dead code for them
+        # and an impossible channel layout would surface as a shape error deep in the step loop.
+        _validate(self)
+
     @property
     def shape_dim(self) -> int:
         # 2-D: 2K coefficients (a_k, b_k) for k=1..K.
@@ -119,6 +125,13 @@ def _validate(cfg: VivariumConfig) -> None:
         raise ValueError(f"pos_dim must be 2 or 3; got {cfg.pos_dim}")
     if cfg.n_harmonics < 1:
         raise ValueError("n_harmonics must be ≥ 1")
+    if cfg.pos_dim == 3 and cfg.n_harmonics > 2:
+        # polar_pack._sh_basis implements real spherical harmonics l=1,2 only. Silently returning
+        # 8 coefficients while shape_dim claims K(K+2) would corrupt every contour readout, so this
+        # is a construction error, not a clamp.
+        raise ValueError(
+            f"pos_dim=3 supports n_harmonics ≤ 2 (spherical harmonics l=1,2); got {cfg.n_harmonics}"
+        )
     if cfg.hidden_dim < 1:
         raise ValueError(
             f"d={cfg.d} too small: pos({cfg.pos_dim}) + shape({cfg.shape_dim}) leaves "

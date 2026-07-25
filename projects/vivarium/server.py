@@ -264,6 +264,7 @@ def main(argv: list[str] | None = None) -> int:
         cfg = replace(cfg, N=190)   # ≈ full-box packing (dish holds ~183 at Ø=1): no free volume
         water_box = [0.90]          #  ⇒ water can't pull away from the walls into a drop; it fills
         lipid_box = [0.08]     # dilute amphiphile lipids in bulk water (0.90 = the water pseudo-cap)
+        amphi_box = [0.0]      # EMERGENT amphiphile (3-D showcase); 0 in the 2-D legacy showcase
         if args.dim3:
             # 3-D dish: the contour becomes real spherical harmonics (K=2 keeps pos3+shape8+hidden5
             # inside d=16) and the box shrinks so N tokens fill a VOLUME at liquid density. The
@@ -271,6 +272,7 @@ def main(argv: list[str] | None = None) -> int:
             # explicit lipid rod, no k_hydro: membrane behaviour must come from the three forces.
             cfg = replace(cfg, pos_dim=3, n_harmonics=2, pos_bound=3.0)
             water_box, lipid_box = [0.85], [0.0]
+            amphi_box[0] = 0.15
 
         def make_engine(s):
             # sensible SHOWCASE defaults (base-case identity is defined vs PackEngine's own defaults, so
@@ -284,9 +286,8 @@ def main(argv: list[str] | None = None) -> int:
             # viscous dish is). Energy hierarchy: excluded volume (repel) ≫ electrostatics / H-bond
             # (polarity, ~10 kT) ≫ van der Waals dispersion (attract, ~1 kT) ~ thermal kT (temperature).
             # Range hierarchy: Pauli (repel) < vdW (attract) < electrostatic (polarity).
-            amphi = 0.15 if args.dim3 else 0.0
             e = PolarPackEngine(cfg, s, water_frac=water_box[0], lipid_frac=lipid_box[0],
-                                amphi_frac=amphi,
+                                amphi_frac=amphi_box[0],
                                 repel=5.00, attract=0.30, polarity=0.80, cohesion=0.00, skew=0.00,
                                 morph=0.70, momentum=0.30, speed=1.20)   # strong repel = INCOMPRESSIBLE
             #  water (fills the box, no collapse to a ball); overdamped viscous dish
@@ -315,12 +316,19 @@ def main(argv: list[str] | None = None) -> int:
                 server.sim.restart(seed=server.sim.seed)
         server.sim.pseudo = {
             "water": (lambda: water_box[0], lambda v: _restarter(water_box, v, 0.0, 0.9)),
-            "lipid": (lambda: lipid_box[0], lambda v: _restarter(lipid_box, v, 0.0, 0.9)),
         }
+        if args.dim3:   # emergent amphiphile replaces the explicit lipid rod in 3-D
+            server.sim.pseudo["amphi"] = (lambda: amphi_box[0],
+                                          lambda v: _restarter(amphi_box, v, 0.0, 0.6))
+        else:
+            server.sim.pseudo["lipid"] = (lambda: lipid_box[0],
+                                          lambda v: _restarter(lipid_box, v, 0.0, 0.9))
         # canonical showcase defaults, captured at launch — /reset restores exactly these, so playing
         # with the sliders can never strand the sim (a stale browser tab can't override them).
         server.sim.defaults = {**{k: float(getattr(server.sim.engine, k)) for k in knob_names},
-                               "water": water_box[0], "lipid": lipid_box[0]}
+                               "water": water_box[0],
+                               ("amphi" if args.dim3 else "lipid"):
+                                   (amphi_box[0] if args.dim3 else lipid_box[0])}
     print(f"serving: {label}")
     print(
         f"vivarium viewer on http://{args.host}:{server.server_address[1]}\n"

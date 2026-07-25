@@ -231,21 +231,6 @@ class PackEngine:
             # (tanh), symmetric, decaying ⇒ still conservative and still transformer-only.
             rad = np.maximum(self.X[:, self.rad_idx], 0.0)             # k=0 coefficient = size ≥ 0
             g = np.tanh(rad[:, None] * rad[None, :] / 0.25) * np.exp(-self.sink_attract * d2)
-            if getattr(self, "attract_gated", False):
-                # DIRECTIONAL vdW: attraction acts through the surface each token presents TOWARD the
-                # other. presence_i→j = |⟨C_i, basis(bearing_i→j)⟩| — high where the contour is
-                # structured, ~0 where featureless. So an all-featureless token (oil) is hydrophobic in
-                # every direction, and an amphiphile's neutral TAIL direction is hydrophobic while its
-                # polar HEAD is not — the hydrophobic effect emerges from the shared contour, per
-                # direction, with no per-species k_hydro force. (bearing i→j = −delta.)
-                dij = -delta
-                bang = np.arctan2(dij[..., 1], dij[..., 0])           # (N,N) bearing i→j
-                nf = np.zeros_like(d2)
-                for k in range(1, self.cfg.n_harmonics + 1):
-                    nf += (C[:, 2 * (k - 1)][:, None] * np.cos(k * bang)
-                           + C[:, 2 * (k - 1) + 1][:, None] * np.sin(k * bang))
-                pres = np.tanh(np.abs(nf) / 0.5)                      # presence_i→j
-                g = g * pres * pres.T                                  # ·presence_j→i (the transpose)
             np.fill_diagonal(g, 0.0)
             attract = -np.einsum("ij,ijc->ic", g, dirn)
         else:
