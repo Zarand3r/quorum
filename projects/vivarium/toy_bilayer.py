@@ -32,7 +32,7 @@ LEAFLET_Z = 0.55    # half the hydrophobic core thickness
 WATER_GAP = 1.15    # water starts beyond this |z|
 
 
-def build(seed, n_side=6, aniso=0.95, temperature=0.03):
+def build(seed, n_side=6, aniso=0.95, temperature=0.03, satt=1.0):
     """A planted bilayer: two leaflets in the x-y plane, tails meeting at z=0, heads pointing out
     into water. The box is periodic in z as well, so the water slab is continuous through the
     boundary — the standard membrane-simulation setup."""
@@ -47,7 +47,7 @@ def build(seed, n_side=6, aniso=0.95, temperature=0.03):
                         repel=40.0, attract=0.30, polarity=1.0, cohesion=0.0, skew=0.0,
                         morph=0.70, momentum=0.30, speed=1.20, water_dipole=0.8, aniso=aniso)
     e.conservative = True
-    e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, 1.0, 0.55
+    e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, satt, 0.55
     e.repel_contact, e.rigidity, e.selectivity = 1.0, 0.0, 0.30
     e.temperature = temperature
 
@@ -149,11 +149,14 @@ def main(argv=None):
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--aniso", type=float, default=0.95)
     p.add_argument("--kt", type=float, default=0.03)
+    p.add_argument("--satt", type=float, default=1.0,
+                   help="vdW decay lambda; range ~ 1/sqrt(lambda). Literature says the RANGE, "
+                        "not the depth, is load-bearing: 1-2 sigma gives NO self-assembly, 3 sigma does.")
     a = p.parse_args(argv)
 
-    e = build(a.seed, aniso=a.aniso, temperature=a.kt)
+    e = build(a.seed, aniso=a.aniso, temperature=a.kt, satt=a.satt)
     print(f"planted bilayer: N={e.cfg.N} amphiphiles={len(e._ai)} water={len(e._wi)} "
-          f"aniso={a.aniso} kT={a.kt}")
+          f"aniso={a.aniso} kT={a.kt} satt={a.satt} (range~{1/a.satt**0.5:.1f} sigma)")
     print("  S = nematic order about the bilayer normal (1 = aligned)")
     print("  leaflet = fraction with the head pointing out toward water (1 = correct bilayer)")
     print("  dry_core = fraction of the hydrophobic core that is NOT water (1 = correct)")
