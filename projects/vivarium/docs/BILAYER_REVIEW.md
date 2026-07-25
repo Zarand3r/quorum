@@ -176,6 +176,27 @@ Two further latent bugs were removed in the same pass:
   engine and benchmark builds its config — so validation was dead code on the paths that mattered.
   It now runs in `__post_init__`.
 
+## Finding 6 — molecules were sterically SPHERES (2026-07-25)
+
+The contour was read only for charge. Excluded volume used a single scalar diameter and van der
+Waals only the isotropic radius, so **every molecule was a sphere no matter what shape it "drew."**
+An amphiphile therefore had no head *end* and tail *end* geometry, and its packing parameter
+`v/(a₀·l)` — the tail-volume-to-head-area ratio that decides micelle vs bilayer vs inverted phase —
+was identically 1. No lamellar phase can exist under that constraint.
+
+Fixed by making the contact distance anisotropic: `contact_ij` is the sum of the radius each token
+*presents toward* the other, read with the same grounded relative-bearing basis the electrostatics
+already uses. Symmetric by construction (the second term is the transpose of the first), so the
+repulsion stays conservative; bounded by `tanh`; no distance in a denominator.
+
+Effect: `emergence_score` −0.015 → **+0.034**, the first clearly positive assembly signal on a
+physically valid system.
+
+A follow-up that seemed obviously right was **wrong**: driving the shape from `l≥2` only (fore-aft
+symmetric ⇒ a rod, which is what packs into a sheet) *hurt* assembly (0.034 → −0.015) while helping
+demixing. The `l=1` head bulge makes the head sterically distinct, and that appears to be what gets
+heads pointing outward. Recorded because the reasoning was sound and the result still contradicted it.
+
 ## Verification gates (any violation disqualifies a result)
 
 1. **Base-case identity** — `--verify` must report `max|ΔX| = 0.00e+00` (new channels default off).
