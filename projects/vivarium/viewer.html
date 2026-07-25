@@ -390,6 +390,34 @@ function draw(al){
 
   ctx.clearRect(0,0,W,H);
 
+  // ---- 3-D dish: the sim is volumetric; draw a DEPTH-CUED projection (far = small + faded,
+  // near = large + bright), painting back-to-front. The contour is spherical-harmonic here, so
+  // tokens render as spheres rather than 2-D Fourier outlines.
+  if(s.pos_dim === 3){
+    const zs = s.tokens.map(t => t.z || 0);
+    const zmin = Math.min(...zs), zmax = Math.max(...zs), zr = (zmax - zmin) || 1;
+    const order = [...Array(N).keys()].sort((a,b) => zs[a] - zs[b]);
+    const COL = {0:[56,189,248], 2:[148,163,184], 3:[245,158,11], 4:[52,211,153]};
+    for(const idx of order){
+      const dep = 0.35 + 0.65*((zs[idx]-zmin)/zr);          // 0 = far, 1 = near
+      const sp = (s.species && s.species[idx]) ?? 1;
+      const col = COL[sp] || [203,213,225];
+      // radius in WORLD units (water is the small molecule, amphiphile the bulky one) scaled to
+      // screen — the 3-D dish is a smaller box, so pixel-constant sizes would read as a gas.
+      const r = (sp===0 ? 0.34 : 0.46) * sc * (0.74 + 0.40*dep);
+      ctx.globalAlpha = 0.40 + 0.60*dep;
+      ctx.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
+      ctx.beginPath(); ctx.arc(px[idx], py[idx], r, 0, 7); ctx.fill();
+      const h = s.amphi && s.amphi[idx];
+      if(h){                                                 // amphiphile: mark the POLAR HEAD
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath(); ctx.arc(px[idx]+h[0]*r*0.9, py[idx]-h[1]*r*0.9, r*0.42, 0, 7); ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1.0;
+    return;
+  }
+
   for(let idx=0; idx<N; idx++){
     if(s.species && s.species[idx]===3){          // LIPID → draw as a rod (blue head, orange tail)
       const o = (s.lipids && s.lipids[idx]) || [1,0], e2 = (s.lip_ell||0.55)*sc;

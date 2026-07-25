@@ -180,8 +180,14 @@ class PackEngine:
     def snapshot(self):
         pos = self.X[:, :self.pd]
         C = self._contour()
-        tokens = [{"x": float(pos[i, 0]), "y": float(pos[i, 1]), "c": C[i].tolist()}
-                  for i in range(self.cfg.N)]
+        # in 3-D also ship z so the viewer can render DEPTH (near = bigger/brighter). The dish is
+        # simulated volumetrically and drawn as a projection; z is ignored by the 2-D viewer path.
+        if self.pd == 3:
+            tokens = [{"x": float(pos[i, 0]), "y": float(pos[i, 1]), "z": float(pos[i, 2]),
+                       "c": C[i].tolist()} for i in range(self.cfg.N)]
+        else:
+            tokens = [{"x": float(pos[i, 0]), "y": float(pos[i, 1]), "c": C[i].tolist()}
+                      for i in range(self.cfg.N)]
         return {"status": "running", "tick": self.t, "n": self.cfg.N,
                 "tokens": tokens, "edges": self._binding_edges(),
                 "dims": {"d": self.cfg.d, "pos": self.pd, "shape": self.cfg.shape_dim,

@@ -39,7 +39,7 @@ _EPS = 1e-9
 # SMALL molecule (weak dispersion) but strongly polar; oil and the amphiphile body are BULKY and
 # neutral. That ordering is the hydrophobic effect: water-water is held by electrostatics, oil-oil by
 # dispersion, and water gains little from wetting a nonpolar surface → it expels it.
-RAD_WATER, RAD_OIL, RAD_AMPHI = 0.15, 0.85, 0.85
+RAD_WATER, RAD_OIL, RAD_AMPHI, RAD_LIPID = 0.15, 0.85, 0.85, 0.85
 
 
 def _rand_unit(r, n):
@@ -207,6 +207,8 @@ class PolarPackEngine(PackEngine):
             z[self._oi, r] = RAD_OIL
         if self._ai.size:
             z[self._ai, r] = RAD_AMPHI
+        if self._li.size:
+            z[self._li, r] = RAD_LIPID     # legacy explicit lipid: bulky like a tail
 
     def _mickey_template(self, scale):
         """Body-frame contour coefficients for a water molecule: two positive H lobes at ±52.25° (the
@@ -442,6 +444,11 @@ class PolarPackEngine(PackEngine):
         snap["lip_ell"] = float(self.lip_ell)
         snap["lipids"] = {int(i): [float(self.lipid_o[k, 0]), float(self.lipid_o[k, 1])]
                           for k, i in enumerate(self._li)}       # per-lipid head↔tail axis (for rods)
+        if self._ai.size:                                        # emergent amphiphiles: head direction
+            h = self.amphi_head()
+            snap["amphi"] = {int(i): [round(float(v), 3) for v in h[k]]
+                             for k, i in enumerate(self._ai)}
+        snap["pos_dim"] = self.pd
         return snap
 
 

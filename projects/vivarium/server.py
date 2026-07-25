@@ -223,6 +223,8 @@ def main(argv: list[str] | None = None) -> int:
                    help="serve the PURE-TRANSFORMER engine (transformer moves + morphs everything)")
     p.add_argument("--pack", action="store_true",
                    help="serve the PACKING engine (boundaries + induced-fit, periodic domain)")
+    p.add_argument("--dim3", action="store_true",
+                   help="run the polar showcase in a 3-D dish (spherical-harmonic contour)")
     p.add_argument("--polar", action="store_true",
                    help="serve the POLAR PACK engine (electrostatic polarity head from the contour + water)")
     args = p.parse_args(argv)
@@ -262,6 +264,13 @@ def main(argv: list[str] | None = None) -> int:
         cfg = replace(cfg, N=190)   # ≈ full-box packing (dish holds ~183 at Ø=1): no free volume
         water_box = [0.90]          #  ⇒ water can't pull away from the walls into a drop; it fills
         lipid_box = [0.08]     # dilute amphiphile lipids in bulk water (0.90 = the water pseudo-cap)
+        if args.dim3:
+            # 3-D dish: the contour becomes real spherical harmonics (K=2 keeps pos3+shape8+hidden5
+            # inside d=16) and the box shrinks so N tokens fill a VOLUME at liquid density. The
+            # solute is the EMERGENT amphiphile (a normal token, polar head + neutral tail) — no
+            # explicit lipid rod, no k_hydro: membrane behaviour must come from the three forces.
+            cfg = replace(cfg, pos_dim=3, n_harmonics=2, pos_bound=3.0)
+            water_box, lipid_box = [0.85], [0.0]
 
         def make_engine(s):
             # sensible SHOWCASE defaults (base-case identity is defined vs PackEngine's own defaults, so
@@ -275,7 +284,9 @@ def main(argv: list[str] | None = None) -> int:
             # viscous dish is). Energy hierarchy: excluded volume (repel) ≫ electrostatics / H-bond
             # (polarity, ~10 kT) ≫ van der Waals dispersion (attract, ~1 kT) ~ thermal kT (temperature).
             # Range hierarchy: Pauli (repel) < vdW (attract) < electrostatic (polarity).
+            amphi = 0.15 if args.dim3 else 0.0
             e = PolarPackEngine(cfg, s, water_frac=water_box[0], lipid_frac=lipid_box[0],
+                                amphi_frac=amphi,
                                 repel=5.00, attract=0.30, polarity=0.80, cohesion=0.00, skew=0.00,
                                 morph=0.70, momentum=0.30, speed=1.20)   # strong repel = INCOMPRESSIBLE
             #  water (fills the box, no collapse to a ball); overdamped viscous dish
@@ -290,7 +301,8 @@ def main(argv: list[str] | None = None) -> int:
         knob_names = ("repel", "sink_repel", "repel_contact", "attract", "sink_attract",
                       "polarity", "sink_polarity", "k_tail", "k_hydro", "morph", "rigidity",
                       "selectivity", "temperature", "momentum", "speed")
-        label = "POLAR PACK (water + amphiphile lipids → membrane self-assembly)"
+        label = ("POLAR PACK 3-D (spherical-harmonic contour · emergent amphiphiles)" if args.dim3
+                 else "POLAR PACK (water + amphiphile lipids → membrane self-assembly)")
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     server.sim = Sim(cfg, seed, args.hz, make_engine, knob_names)
     if args.polar:
