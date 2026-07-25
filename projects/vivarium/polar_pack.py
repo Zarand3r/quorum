@@ -304,6 +304,14 @@ class PolarPackEngine(PackEngine):
     # NOTE: no step() override — we inherit PackEngine.step() and only add the two hooks above, so
     # with polarity=0 and water_frac=0 the trajectory is byte-identical to the previous vivarium.
 
+    def amphi_head(self):
+        """Unit vector along each amphiphile's HEAD direction, shape (n_amphi, POS_DIM). STABLE
+        CONTRACT for the frozen benchmark harness: the harness must never need to know how the head
+        orientation is stored (an angle in 2D, a vector in 3D, …), only which way each head points."""
+        if not self._ai.size:
+            return np.zeros((0, POS_DIM))
+        return np.stack([np.cos(self.amphi_phi), np.sin(self.amphi_phi)], axis=1)
+
     def token_polarity(self):
         """Per-token spikiness Σ_k k·(a_k²+b_k²) — the emergent polarity the viewer already colours by."""
         C = self._contour()
