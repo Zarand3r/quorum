@@ -632,6 +632,40 @@ def smoke_test(a):
     return 0
 
 
+def pbc_check(a):
+    """Is the box big enough for the minimum-image convention? PBC is only valid if every force is
+    negligible at half the box length — otherwise a molecule interacts with its OWN periodic image
+    and the wrap-around becomes a physical artefact. Reports the kernel value at L/2 and the share
+    of total pair-interaction weight coming from pairs beyond L/2."""
+    cfg = _cfgd(N=a.n) if a.n else _cfgd()
+    e = PolarPackEngine(cfg, a.seed, water_frac=a.water, amphi_frac=a.amphi, polarity=a.polarity,
+                        repel=a.repel, attract=0.30, cohesion=0.0, skew=0.0, momentum=a.mom,
+                        water_dipole=a.wcharge, amphi_charge=a.wcharge)
+    e.conservative = True
+    e.sink_repel, e.sink_attract, e.sink_polarity = a.srep, a.satt, a.spol
+    e.repel_contact, e.selectivity, e.temperature = 1.0, a.sel, a.kt
+    for _ in range(a.ticks):
+        e.step()
+    L = e.L
+    half = L / 2.0
+    print(f"dim={cfg.pos_dim}  box L={L:.2f}  L/2={half:.2f}  (minimum image cutoff)")
+    print(" force        lambda   kernel@L/2   verdict (<0.01 = safe)")
+    for name, lam in (("repel (Pauli)", e.sink_repel), ("attract (vdW)", e.sink_attract),
+                      ("polarity (elec)", e.sink_polarity)):
+        k = float(np.exp(-lam * half * half))
+        print(f" {name:15s} {lam:5.2f}   {k:10.2e}   {'OK' if k < 0.01 else 'TOO LONG-RANGED'}")
+    _, d2 = e._periodic_delta()
+    d = np.sqrt(d2)
+    np.fill_diagonal(d, 0.0)
+    off = ~np.eye(cfg.N, dtype=bool)
+    for name, lam in (("attract", e.sink_attract), ("polarity", e.sink_polarity)):
+        w = np.exp(-lam * d2)[off]
+        beyond = w[d[off] > half].sum() / max(w.sum(), 1e-12)
+        print(f" share of {name:9s} interaction weight beyond L/2: {beyond * 100:5.2f}%")
+    print(f" min pair distance {d[off].min():.2f}   max (minimum-image) {d[off].max():.2f}")
+    return 0
+
+
 def _amphi_order(e):
     """Self-assembly order parameters for the emergent amphiphiles. For each amphiphile, split its close
     neighbours into HEAD-side and TAIL-side (by the head vector (cosφ,sinφ)) and measure:
@@ -758,6 +792,7 @@ def main(argv=None):
     p.add_argument("--amphi", type=float, default=0.15, help="amphiphile fraction")
     p.add_argument("--dim", type=int, default=2, choices=(2, 3), help="dish dimensionality")
     p.add_argument("--smoke", action="store_true", help="smoke-test the engine and print geometry")
+    p.add_argument("--pbc", action="store_true", help="is the box big enough for minimum image?")
     p.add_argument("--demix", action="store_true")
     p.add_argument("--wcharge", type=float, default=0.8)
     p.add_argument("--repel", type=float, default=0.2)
@@ -787,6 +822,8 @@ def main(argv=None):
         _DIM_OVERRIDE.update(pos_dim=3, n_harmonics=2, pos_bound=3.0)
     if a.smoke:
         return smoke_test(a)
+    if a.pbc:
+        return pbc_check(a)
     if a.decay:
         return decay_check()
     if a.watertest:
