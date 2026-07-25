@@ -39,7 +39,7 @@ _EPS = 1e-9
 # SMALL molecule (weak dispersion) but strongly polar; oil and the amphiphile body are BULKY and
 # neutral. That ordering is the hydrophobic effect: water-water is held by electrostatics, oil-oil by
 # dispersion, and water gains little from wetting a nonpolar surface → it expels it.
-RAD_WATER, RAD_OIL, RAD_AMPHI = 0.40, 0.40, 0.40
+RAD_WATER, RAD_OIL, RAD_AMPHI = 0.22, 0.22, 0.22
 
 
 def _rand_unit(r, n):
