@@ -130,6 +130,15 @@ py_binary(
 )
 
 py_binary(
+    name = "bench_emergence3d",
+    srcs = ["bench_emergence3d.py"],
+    main = "bench_emergence3d.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
+py_binary(
     name = "charged",
     srcs = ["charged.py"],
     main = "charged.py",

@@ -23,7 +23,8 @@ from pathlib import Path
 
 import yaml
 
-POS_DIM = 2  # the dish is 2-D; position always occupies the first two channels
+POS_DIM = 2  # DEFAULT dish dimensionality (legacy engines import this). Per-config `pos_dim` wins:
+#   set pos_dim=3 for a 3-D dish. Only pack.py / polar_pack.py honour it; block/pure stay 2-D.
 
 
 @dataclass(frozen=True)
@@ -38,18 +39,21 @@ class VivariumConfig:
     force_chase: float    # γ_c — NON-RECIPROCAL transport (A−Aᵀ): i chases j but not vice versa
     force_typed: float    # γ_t — Particle-Life typed force: persistent non-reciprocal K[type_i,type_j]
     n_types: int          # number of agent types for the typed force (Dale's-principle / E–I)
+    pos_dim: int        # 2 = flat dish, 3 = volumetric dish. In 3-D the contour switches from
+    #   circular harmonics {cos kθ, sin kθ} to REAL SPHERICAL HARMONICS Y_lm — the same grounded
+    #   readout ⟨C, basis(bearing)⟩, one dimension up (see docs/BILAYER_REVIEW.md).
     momentum: float     # velocity inertia in [0,1): smooths jittery force into coherent motion
     morph_spin: float   # skew/rotational gain on the morph z (non-settling; keeps shape morphing)
     pos_bound: float    # dish half-size; positions are clipped to [−pos_bound, pos_bound] (P7)
     seed: int
 
     @property
-    def pos_dim(self) -> int:
-        return POS_DIM
-
-    @property
     def shape_dim(self) -> int:
-        return 2 * self.n_harmonics
+        # 2-D: 2K coefficients (a_k, b_k) for k=1..K.
+        # 3-D: real spherical harmonics l=1..K → Σ(2l+1) = K(K+2) coefficients.
+        # l=0 / k=0 is deliberately absent from BOTH: the contour is the charge DEVIATION (net
+        # neutral). Physical size lives in its own radius channel (pack.py: rad_idx).
+        return 2 * self.n_harmonics if self.pos_dim == 2 else self.n_harmonics * (self.n_harmonics + 2)
 
     @property
     def hidden_dim(self) -> int:
@@ -72,6 +76,7 @@ DEFAULTS: dict = {
     "force_chase": 0.0,
     "force_typed": 0.0,
     "n_types": 4,
+    "pos_dim": 2,
     "momentum": 0.0,
     "morph_spin": 0.1,
     "pos_bound": 6.0,
@@ -87,6 +92,7 @@ def load_config(path: str | Path) -> VivariumConfig:
         d=int(merged["d"]),
         n_harmonics=int(merged["n_harmonics"]),
         n_neighbors=int(merged["n_neighbors"]),
+        pos_dim=int(merged["pos_dim"]),
         dist_lambda=float(merged["dist_lambda"]),
         force_attract=float(merged["force_attract"]),
         force_repel=float(merged["force_repel"]),
@@ -109,6 +115,8 @@ def save_config(cfg: VivariumConfig, path: str | Path) -> None:
 def _validate(cfg: VivariumConfig) -> None:
     if cfg.N < 2:
         raise ValueError("N must be ≥ 2 (a population needs at least two agents)")
+    if cfg.pos_dim not in (2, 3):
+        raise ValueError(f"pos_dim must be 2 or 3; got {cfg.pos_dim}")
     if cfg.n_harmonics < 1:
         raise ValueError("n_harmonics must be ≥ 1")
     if cfg.hidden_dim < 1:

@@ -42,6 +42,12 @@ _EPS = 1e-9
 RAD_WATER, RAD_OIL, RAD_AMPHI = 0.80, 0.80, 0.80
 
 
+def _rand_unit(r, n):
+    """n uniformly-distributed unit vectors on the 3-sphere (normalised Gaussians)."""
+    v = r.standard_normal((n, 3))
+    return v / (np.linalg.norm(v, axis=1, keepdims=True) + _EPS)
+
+
 class PolarPackEngine(PackEngine):
     """pack.py's morphing blobs + a FAITHFUL electrostatic polarity head (bounded, bearing-aware) + water."""
 
@@ -84,24 +90,78 @@ class PolarPackEngine(PackEngine):
         # normal token; head↔water affinity is the shared polarity head, tail hydrophobicity is the shared
         # DIRECTIONAL vdW gate (the tail direction has ~0 contour → no attractive surface), and it reorients
         # in the local field exactly as water does. Membrane behaviour must EMERGE from these shared forces.
+        self._amphi_q = amphi_charge
         self._amphi_tpl = self._amphi_template(amphi_charge)
         self._ai = np.where(self.species == AMPHI)[0]
         self.amphi_phi = r.uniform(0.0, 2.0 * np.pi, self._ai.size)  # head-axis orientation (like water_phi)
+        self.amphi_u = _rand_unit(r, self._ai.size) if self.pd == 3 else None   # 3-D head axis
         self._oi = np.where(self.species == OIL)[0]
-        self.X[self._oi, POS_DIM:POS_DIM + self.tK] = 0.0           # oil is round → C≈0 → apolar (nf≈0)
+        self.X[self._oi, self.pd:self.pd + self.tK] = 0.0           # oil is round → C≈0 → apolar (nf≈0)
         self._li = np.where(self.species == LIPID)[0]
-        self.X[self._li, POS_DIM:POS_DIM + self.tK] = 0.0           # lipid body is round (rod handled explicitly)
+        self.X[self._li, self.pd:self.pd + self.tK] = 0.0           # lipid body is round (rod handled explicitly)
         ao = r.uniform(0.0, 2.0 * np.pi, self._li.size)
         self.lipid_o = np.stack([np.cos(ao), np.sin(ao)], axis=1)   # each lipid's head↔tail unit axis
         self._wi = np.where(self.species == WATER)[0]
         self.water_phi = r.uniform(0.0, 2.0 * np.pi, self._wi.size)  # each water's orientation angle
+        self.water_u = _rand_unit(r, self._wi.size) if self.pd == 3 else None   # 3-D dipole axis
         if self._wi.size:
-            self.X[self._wi, POS_DIM:POS_DIM + self.tK] = 0.0
-            self._write_water(self.X[:, POS_DIM:])
+            self.X[self._wi, self.pd:self.pd + self.tK] = 0.0
+            self._write_water(self.X[:, self.pd:])
         if self._ai.size:
-            self.X[self._ai, POS_DIM:POS_DIM + self.tK] = 0.0
-            self._write_amphi(self.X[:, POS_DIM:])
-        self._write_radii(self.X[:, POS_DIM:])
+            self.X[self._ai, self.pd:self.pd + self.tK] = 0.0
+            self._write_amphi(self.X[:, self.pd:])
+        self._write_radii(self.X[:, self.pd:])
+
+    def _sh_basis(self, u):
+        """Real SPHERICAL HARMONICS Y_lm(û) for l=1..K, evaluated at unit direction(s) `u` (...,3).
+        Returns (..., shape_dim). This is the exact 3-D counterpart of the 2-D circular basis
+        {cos kθ, sin kθ}: the grounded readout stays ⟨C, basis(bearing)⟩ — a RoPE-family relative-
+        direction inner product — so Parseval (overlap = contour overlap) still holds."""
+        x, y, z = u[..., 0], u[..., 1], u[..., 2]
+        c1 = np.sqrt(3.0 / (4.0 * np.pi))
+        out = [c1 * y, c1 * z, c1 * x]                                     # l=1  (3)
+        if self.cfg.n_harmonics >= 2:
+            c2 = np.sqrt(15.0 / (4.0 * np.pi))
+            c3 = np.sqrt(5.0 / (16.0 * np.pi))
+            c4 = np.sqrt(15.0 / (16.0 * np.pi))
+            out += [c2 * x * y, c2 * y * z, c3 * (3.0 * z * z - 1.0),
+                    c2 * x * z, c4 * (x * x - y * y)]                      # l=2  (5)
+        return np.stack(out, axis=-1)
+
+    def _axial_coeffs(self, u, amps):
+        """Contour coefficients for an AXIALLY SYMMETRIC charge pattern around unit axis u (n,3):
+
+            nf(v̂) = Σ_l amps[l] · P_l(u·v̂)          (P_l = Legendre polynomial)
+
+        By the spherical-harmonic addition theorem, P_l(u·v̂) = (4π/(2l+1))·Σ_m Y_lm(u)·Y_lm(v̂), so the
+        coefficients are just the SAME basis evaluated at the molecule's own axis, scaled per l. That
+        makes an arbitrary axial molecule exact and cheap, with no Wigner rotation matrices:
+
+            pure dipole  (amps = [q, 0])      → water: + toward u, − behind
+            head-localised (amps = [q/2, q/2]) → amphiphile: +q at the head, ~0 at the TAIL
+              (P_1 + P_2 cancel at θ=π: −q/2 + q/2 = 0), i.e. polar head, NEUTRAL tail — the
+              molecule the 2-D contour could not express.
+        """
+        b = self._sh_basis(u)                       # (n, shape_dim) — basis at the molecule's own axis
+        c = np.zeros((u.shape[0], self.tK))
+        i = 0
+        for l in range(1, self.cfg.n_harmonics + 1):
+            n = 2 * l + 1
+            if l - 1 < len(amps) and amps[l - 1] != 0.0:
+                c[:, i:i + n] = amps[l - 1] * (4.0 * np.pi / n) * b[:, i:i + n]
+            i += n
+        return c
+
+    @staticmethod
+    def _rotate_toward(u, f, rate):
+        """Turn unit axes u (n,3) toward field directions f (n,3) by `rate` — the 3-D torque. Moves
+        along the TANGENTIAL component only, then renormalises, so |u| stays 1."""
+        fn = np.linalg.norm(f, axis=1, keepdims=True)
+        fhat = np.where(fn > 1e-9, f / np.where(fn > 1e-9, fn, 1.0), 0.0)
+        tang = fhat - (np.sum(fhat * u, axis=1, keepdims=True)) * u
+        v = u + rate * tang * (fn > 1e-9)
+        n = np.linalg.norm(v, axis=1, keepdims=True)
+        return np.where(n > 1e-9, v / np.where(n > 1e-9, n, 1.0), u)
 
     def _amphi_template(self, scale):
         """Body-frame contour for an AMPHIPHILE: a single localized + HEAD bump toward +x, fading to a
@@ -124,6 +184,10 @@ class PolarPackEngine(PackEngine):
         """Write each amphiphile's rigid head template into z, rotated by its orientation amphi_phi
         (Fourier rotation: harmonic k rotates by k·φ) — identical mechanism to _write_water."""
         if not self._ai.size:
+            return
+        if self.pd == 3:                       # 3-D: polar HEAD along the amphiphile's axis
+            z[self._ai, :self.tK] = self._axial_coeffs(
+                self.amphi_u, [0.5 * self._amphi_q, 0.5 * self._amphi_q])
             return
         phi = self.amphi_phi
         for k in range(1, self.cfg.n_harmonics + 1):
@@ -166,6 +230,9 @@ class PolarPackEngine(PackEngine):
         by its orientation angle water_phi (Fourier rotation: harmonic k rotates by k·φ)."""
         if not self._wi.size:
             return
+        if self.pd == 3:                       # 3-D: a point dipole along the molecule's axis
+            z[self._wi, :self.tK] = self._axial_coeffs(self.water_u, [self.water_dipole, 0.0])
+            return
         phi = self.water_phi
         for k in range(1, self.cfg.n_harmonics + 1):
             ak, bk = self._water_tpl[2 * (k - 1)], self._water_tpl[2 * (k - 1) + 1]
@@ -174,6 +241,8 @@ class PolarPackEngine(PackEngine):
             z[self._wi, 2 * (k - 1) + 1] = ak * sk + bk * ck
 
     def _lipid_force(self):
+        if not self._li.size or self.pd != 2:
+            return 0.0
         """Explicit amphiphile physics (Cooke–Deserno style). Each LIPID is a rod: head at −ℓ·ô, tail at
         +ℓ·ô. Conservative site forces: tail↔tail ATTRACT (hydrophobic core), tail↔water REPEL and
         head↔water ATTRACT (the hydrophobic effect). Returns the per-token centre force; stores the
@@ -185,7 +254,7 @@ class PolarPackEngine(PackEngine):
             self._lip_torque = None
             return F
         L, lam = self.L, self.lip_range
-        pos = self.X[:, :POS_DIM]
+        pos = self.X[:, :self.pd]
         o = self.lipid_o
         head = pos[li] - self.lip_ell * o
         tail = pos[li] + self.lip_ell * o
@@ -244,10 +313,18 @@ class PolarPackEngine(PackEngine):
         np.fill_diagonal(mask, False)
         dij = -delta                                       # i → j
         dist = np.sqrt(d2 + 1e-4)
-        ang_ij = np.arctan2(dij[..., 1], dij[..., 0])      # bearing i→j
-        ang_ji = np.arctan2(delta[..., 1], delta[..., 0])  # bearing j→i
-        nf_i = self._near_face(C, ang_ij)                  # what i presents toward j
-        nf_j = self._near_face(C, ang_ji).T                # what j presents toward i (transpose to (i,j))
+        if self.pd == 3:
+            # 3-D: the bearing is a DIRECTION on the sphere, read with real spherical harmonics.
+            # Identical structure to the 2-D branch — ⟨C, basis(bearing)⟩ — one dimension up.
+            uij = dij / dist[..., None]
+            b_ij = self._sh_basis(uij)
+            nf_i = np.einsum("ic,ijc->ij", C, b_ij)
+            nf_j = np.einsum("ic,ijc->ij", C, self._sh_basis(-uij)).T
+        else:
+            ang_ij = np.arctan2(dij[..., 1], dij[..., 0])      # bearing i→j
+            ang_ji = np.arctan2(delta[..., 1], delta[..., 0])  # bearing j→i
+            nf_i = self._near_face(C, ang_ij)                  # what i presents toward j
+            nf_j = self._near_face(C, ang_ji).T                # what j presents toward i (transpose to (i,j))
         prod = nf_i * nf_j                                 # >0 like charges, <0 opposite
         tau = max(1e-2, self.selectivity)
         score = np.where(mask, (np.abs(prod) - cfg.dist_lambda * d2) / tau, -np.inf)
@@ -271,10 +348,13 @@ class PolarPackEngine(PackEngine):
         # bounded, attention-weighted sum of relative-bearing basis vectors (RoPE-family, transformer-
         # only). It grows the contour's + charge toward neighbours' − faces → electrostatically-induced
         # fit: the same field that moves a token also RESHAPES it. Stored for _post_morph.
-        basis = np.zeros(d2.shape + (self.tK,))
-        for k in range(1, self.cfg.n_harmonics + 1):
-            basis[:, :, 2 * (k - 1)] = np.cos(k * ang_ij)
-            basis[:, :, 2 * (k - 1) + 1] = np.sin(k * ang_ij)
+        if self.pd == 3:
+            basis = b_ij
+        else:
+            basis = np.zeros(d2.shape + (self.tK,))
+            for k in range(1, self.cfg.n_harmonics + 1):
+                basis[:, :, 2 * (k - 1)] = np.cos(k * ang_ij)
+                basis[:, :, 2 * (k - 1) + 1] = np.sin(k * ang_ij)
         self._pol_morph = np.einsum("ij,ijc->ic", w * (-nf_j), basis)
         return lipf + self.polarity * disp
 
@@ -299,7 +379,10 @@ class PolarPackEngine(PackEngine):
             # WATER keeps its rigid Mickey shape but REORIENTS: turn its +H axis toward the local field
             # (where neighbours present − charge), then rewrite the rotated template (overwrites the
             # generic morph for water — a real water molecule rotates, it doesn't deform).
-            if self.polarity > 0.0 and self._pol_field is not None:
+            if self.polarity > 0.0 and self._pol_field is not None and self.pd == 3:
+                self.water_u = self._rotate_toward(self.water_u, self._pol_field[self._wi],
+                                                   self.pol_torque)
+            elif self.polarity > 0.0 and self._pol_field is not None:
                 fld = self._pol_field[self._wi]
                 tgt = np.arctan2(fld[:, 1], fld[:, 0])                 # desired +H bearing
                 d = np.arctan2(np.sin(tgt - self.water_phi), np.cos(tgt - self.water_phi))
@@ -310,7 +393,10 @@ class PolarPackEngine(PackEngine):
             # AMPHIPHILE is rigid like water: turn its + HEAD toward the local field, then rewrite the
             # rotated head template (overwrites the generic morph — the head keeps its fixed shape). Same
             # dipole-aligns-in-field physics water uses; NOT a bespoke lipid torque.
-            if self.polarity > 0.0 and self._pol_field is not None:
+            if self.polarity > 0.0 and self._pol_field is not None and self.pd == 3:
+                self.amphi_u = self._rotate_toward(self.amphi_u, self._pol_field[self._ai],
+                                                   self.pol_torque)
+            elif self.polarity > 0.0 and self._pol_field is not None:
                 fld = self._pol_field[self._ai]
                 tgt = np.arctan2(fld[:, 1], fld[:, 0])
                 d = np.arctan2(np.sin(tgt - self.amphi_phi), np.cos(tgt - self.amphi_phi))
@@ -328,7 +414,9 @@ class PolarPackEngine(PackEngine):
         CONTRACT for the frozen benchmark harness: the harness must never need to know how the head
         orientation is stored (an angle in 2D, a vector in 3D, …), only which way each head points."""
         if not self._ai.size:
-            return np.zeros((0, POS_DIM))
+            return np.zeros((0, self.pd))
+        if self.pd == 3:
+            return self.amphi_u
         return np.stack([np.cos(self.amphi_phi), np.sin(self.amphi_phi)], axis=1)
 
     def token_polarity(self):
@@ -342,7 +430,7 @@ class PolarPackEngine(PackEngine):
 
     def measure(self):
         from metrics_pack import measure as mpack
-        m = mpack(self.X[:, :POS_DIM], self.L, radius=1.0)
+        m = mpack(self.X[:, :self.pd], self.L, radius=1.0)
         pol = self.token_polarity()
         act = self.species == ACTIVE
         return {"clusters": m["n_clusters"], "largest": round(m["largest_frac"], 3),
@@ -363,7 +451,7 @@ def render_svg(e, W=720):
     L, B, sc = e.L, e.cfg.pos_bound, W / (2.0 * e.cfg.pos_bound)
     X = lambda x: (x + B) * sc
     C = e._contour()
-    pos = e.X[:, :POS_DIM]
+    pos = e.X[:, :e.pd]
     pol = e.token_polarity()
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{W}" viewBox="0 0 {W} {W}">',
              f'<rect width="{W}" height="{W}" fill="#0e131b"/>']
@@ -406,6 +494,16 @@ def render_svg(e, W=720):
 
 def _cfg(**over):
     return VivariumConfig(**{**DEFAULTS, **over})
+
+
+_DIM_OVERRIDE = {}
+
+
+def _cfgd(**over):
+    """Config honouring the CLI --dim flag. In 3-D the contour uses spherical harmonics l=1..K, so
+    K=2 (shape_dim 8) keeps pos3+shape8+hidden5 inside d=16, and the box shrinks to hold the same
+    LIQUID density in a volume rather than an area."""
+    return _cfg(**{**_DIM_OVERRIDE, **over})
 
 
 def probe(a):
@@ -456,7 +554,7 @@ def water_liquid_test(a):
     print(f" tick  largest  nclust  coord  hbond%  speed   (pol={a.polarity} sel={a.sel} kt={a.kt} "
           f"srep={a.srep} satt={a.satt} spol={a.spol} repel={a.repel} q={a.wcharge})")
     for t in range(0, a.ticks + 1, a.every):
-        pos = e.X[:, :POS_DIM]
+        pos = e.X[:, :e.pd]
         m = mpack(pos, e.L, radius=1.3)
         delta, d2 = e._periodic_delta()
         near = (d2 < 1.4 ** 2); np.fill_diagonal(near, False)
@@ -477,7 +575,7 @@ def demix_test(a):
     """WATER + OIL: does the hydrophobic effect EMERGE? Water self-associates (electrostatics ≫ vdW) and
     should exclude the nonpolar oil → phase separation. like-frac = of each token's close neighbours,
     the fraction that are the SAME species (baseline = species fraction 0.5; →1 = fully demixed)."""
-    cfg = _cfg(N=a.n) if a.n else _cfg()
+    cfg = _cfgd(N=a.n) if a.n else _cfgd()
     e = PolarPackEngine(cfg, a.seed, water_frac=0.5, oil_frac=0.5, polarity=a.polarity, skew=0.0,
                         repel=a.repel, attract=0.4, cohesion=0.0, momentum=a.mom, water_dipole=a.wcharge)
     e.sink_repel = a.srep
@@ -501,6 +599,30 @@ def demix_test(a):
     return 0
 
 
+def smoke_test(a):
+    """Construct the engine, step it, and print geometry — catches dimension bugs immediately."""
+    cfg = _cfgd(N=a.n) if a.n else _cfgd()
+    e = PolarPackEngine(cfg, a.seed, water_frac=a.water, amphi_frac=a.amphi, polarity=a.polarity,
+                        repel=a.repel, attract=0.30, cohesion=0.0, skew=0.0, momentum=a.mom,
+                        water_dipole=a.wcharge, amphi_charge=a.wcharge)
+    e.conservative = True
+    e.sink_repel, e.sink_attract, e.sink_polarity = a.srep, a.satt, a.spol
+    e.repel_contact, e.selectivity, e.temperature = 1.0, a.sel, a.kt
+    print(f"pos_dim={cfg.pos_dim} shape_dim={cfg.shape_dim} hidden={cfg.hidden_dim} "
+          f"pos_bound={cfg.pos_bound} N={cfg.N}")
+    print(f"X={e.X.shape} pos={e.X[:, :e.pd].shape} head={e.amphi_head().shape}")
+    for _ in range(a.ticks):
+        e.step()
+    p = e.X[:, :e.pd]
+    rng = "  ".join(f"{c}[{p[:, i].min():.1f},{p[:, i].max():.1f}]"
+                    for i, c in enumerate("xyz"[:e.pd]))
+    print(f"t={e.t} finite={bool(np.isfinite(e.X).all())}  {rng}")
+    if e.pd == 3:
+        print("water axes unit:", bool(np.allclose(np.linalg.norm(e.water_u, axis=1), 1.0, atol=1e-6)))
+        print("amphi axes unit:", bool(np.allclose(np.linalg.norm(e.amphi_u, axis=1), 1.0, atol=1e-6)))
+    return 0
+
+
 def _amphi_order(e):
     """Self-assembly order parameters for the emergent amphiphiles. For each amphiphile, split its close
     neighbours into HEAD-side and TAIL-side (by the head vector (cosφ,sinφ)) and measure:
@@ -514,7 +636,7 @@ def _amphi_order(e):
     near = d2 < 1.6 ** 2
     np.fill_diagonal(near, False)
     sp = e.species
-    h = np.stack([np.cos(e.amphi_phi), np.sin(e.amphi_phi)], axis=1)
+    h = e.amphi_head()          # stable contract: works in 2-D (angle) and 3-D (vector)
     hw, td = [], []
     wat_base, amp_base = [], []
     for idx, i in enumerate(ai):
@@ -537,7 +659,7 @@ def _amphi_order(e):
 def amphi_test(a):
     """Can an amphiphile built from a NORMAL token (polar-head/neutral-tail contour, no rod/torque/k_hydro)
     self-assemble under the shared forces? Reports head_water / tail_dry vs baseline over time."""
-    cfg = _cfg(N=a.n) if a.n else _cfg()
+    cfg = _cfgd(N=a.n) if a.n else _cfgd()
     e = PolarPackEngine(cfg, a.seed, water_frac=a.water, amphi_frac=a.amphi, polarity=a.polarity,
                         repel=a.repel, attract=0.30, cohesion=0.0, skew=0.0, momentum=a.mom,
                         water_dipole=a.wcharge, amphi_charge=a.wcharge)
@@ -566,7 +688,7 @@ def fill_test(a):
     """Does the dish stay FILLED, or condense into a drop? Mirrors the server showcase config at a
     chosen N / water_frac and reports late-time occupancy + radius-of-gyration. Rg→4.90 (= the value
     for a uniform fill of [−6,6]²) means space-filling; Rg well below that means a condensed clump."""
-    cfg = _cfg(N=a.n) if a.n else _cfg()
+    cfg = _cfgd(N=a.n) if a.n else _cfgd()
     lip = a.lipid if a.lipid else 0.0
     e = PolarPackEngine(cfg, a.seed, water_frac=a.water, lipid_frac=lip, repel=a.repel, attract=0.30,
                         polarity=0.80, cohesion=0.0, skew=0.0, morph=0.70, momentum=0.30, speed=1.20)
@@ -626,6 +748,8 @@ def main(argv=None):
     p.add_argument("--gated", action="store_true", help="vdW attraction scales with contour presence")
     p.add_argument("--amphitest", action="store_true", help="emergent amphiphile self-assembly test")
     p.add_argument("--amphi", type=float, default=0.15, help="amphiphile fraction")
+    p.add_argument("--dim", type=int, default=2, choices=(2, 3), help="dish dimensionality")
+    p.add_argument("--smoke", action="store_true", help="smoke-test the engine and print geometry")
     p.add_argument("--demix", action="store_true")
     p.add_argument("--wcharge", type=float, default=0.8)
     p.add_argument("--repel", type=float, default=0.2)
@@ -649,6 +773,12 @@ def main(argv=None):
     p.add_argument("--spol", type=float, default=0.5, help="polarity sink (long range, slow decay)")
     p.add_argument("--out", default=None, help="render final frame to this SVG path")
     a = p.parse_args(argv)
+    if a.dim == 3:
+        # 3-D: K=2 spherical harmonics, and pos_bound shrunk so N tokens fill a VOLUME at the same
+        # number density the 2-D benchmark had in its area (else the dish is a dilute gas).
+        _DIM_OVERRIDE.update(pos_dim=3, n_harmonics=2, pos_bound=3.0)
+    if a.smoke:
+        return smoke_test(a)
     if a.decay:
         return decay_check()
     if a.watertest:

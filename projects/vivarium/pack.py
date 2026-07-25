@@ -46,6 +46,7 @@ class PackEngine:
         self.cfg = cfg
         self.seed = seed
         self.ablate = ablate
+        self.pd = cfg.pos_dim   # 2 = flat dish, 3 = volumetric dish (all geometry below is N-D)
         # PER-FORCE decay range (NULL attention sink; higher = faster decay = shorter range). Real
         # forces have very different ranges, so each head gets its OWN sink: Pauli repulsion is the
         # shortest-ranged, van der Waals short, electrostatics the longest. Default = the shared
@@ -80,18 +81,23 @@ class PackEngine:
         #   consensus/synchrony/collapse. This is a selectivity dial, not kT (see self.temperature).
         self.temperature = 0.0             # REAL temperature = thermal (Langevin) noise amplitude:
         #   higher → more random Brownian jitter → more DISORDER (melts structure), as kT should. 0=off.
-        self.vel = np.zeros((cfg.N, POS_DIM))
+        self.vel = np.zeros((cfg.N, self.pd))
         self.L = 2.0 * cfg.pos_bound
         rng = base_rng(seed + 1)
-        d, twoK, h = cfg.d, cfg.shape_dim, _MLP_H * (cfg.d - POS_DIM)
+        d, twoK, h = cfg.d, cfg.shape_dim, _MLP_H * (cfg.d - self.pd)
         self.tK = twoK
-        signs = np.array([(-1.0) ** (k + 1) for k in range(cfg.n_harmonics) for _ in range(2)])
-        self.M = np.diag(signs)
+        # complementarity mirror: alternate the sign per harmonic order (bump ↔ pocket). 2-D has 2
+        # coefficients per order k; 3-D has (2l+1) per order l — same rule, one dimension up.
+        if self.pd == 2:
+            signs = [(-1.0) ** (k + 1) for k in range(cfg.n_harmonics) for _ in range(2)]
+        else:
+            signs = [(-1.0) ** l for l in range(1, cfg.n_harmonics + 1) for _ in range(2 * l + 1)]
+        self.M = np.diag(np.array(signs))
         # k=0 RADIUS channel: the token's physical SIZE (→ vdW contact area / polarizability), held in
         # the first hidden channel rather than inside the contour vector so the other engines, which
         # assume shape_dim = 2K, are untouched. k≥1 (the contour) stays the shape DEVIATION → charge.
-        self.rad_idx = POS_DIM + cfg.shape_dim
-        zdim = d - POS_DIM
+        self.rad_idx = self.pd + cfg.shape_dim
+        zdim = d - self.pd
         self.W_v = rng.standard_normal((zdim, zdim)) / np.sqrt(zdim)
         self.W1 = rng.standard_normal((zdim, h)) / np.sqrt(zdim)
         self.b1 = np.zeros(h)
@@ -112,13 +118,13 @@ class PackEngine:
         self.plast_lr = 0.05     # η: Hebbian write rate
         r = base_rng(seed)
         X = np.zeros((cfg.N, d))
-        X[:, :POS_DIM] = r.uniform(-cfg.pos_bound, cfg.pos_bound, (cfg.N, POS_DIM))
-        X[:, POS_DIM:] = r.standard_normal((cfg.N, zdim)) * 0.5
+        X[:, :self.pd] = r.uniform(-cfg.pos_bound, cfg.pos_bound, (cfg.N, self.pd))
+        X[:, self.pd:] = r.standard_normal((cfg.N, zdim)) * 0.5
         self.X = X
         self.t = 0
 
     def _contour(self):
-        return self.X[:, POS_DIM:POS_DIM + self.tK]  # grounded contour = shape channels
+        return self.X[:, self.pd:self.pd + self.tK]  # grounded contour = shape channels
 
     def _attn(self, score, mask, sink):
         """Bounded attention weights with a per-force NULL sink. score is (N,N) with −inf off-mask.
@@ -132,7 +138,7 @@ class PackEngine:
         return np.where(denom > 0, e / np.where(denom > 0, denom, 1.0), 0.0)
 
     def _periodic_delta(self):
-        p = self.X[:, :POS_DIM]
+        p = self.X[:, :self.pd]
         delta = p[:, None, :] - p[None, :, :]          # (N, N, 2) minimum-image on the torus
         delta = delta - self.L * np.round(delta / self.L)
         d2 = np.einsum("ijc,ijc->ij", delta, delta)
@@ -172,13 +178,13 @@ class PackEngine:
         return edges
 
     def snapshot(self):
-        pos = self.X[:, :POS_DIM]
+        pos = self.X[:, :self.pd]
         C = self._contour()
         tokens = [{"x": float(pos[i, 0]), "y": float(pos[i, 1]), "c": C[i].tolist()}
                   for i in range(self.cfg.N)]
         return {"status": "running", "tick": self.t, "n": self.cfg.N,
                 "tokens": tokens, "edges": self._binding_edges(),
-                "dims": {"d": self.cfg.d, "pos": POS_DIM, "shape": self.cfg.shape_dim,
+                "dims": {"d": self.cfg.d, "pos": self.pd, "shape": self.cfg.shape_dim,
                          "hidden": self.cfg.hidden_dim, "z": self.cfg.z_dim,
                          "h": _MLP_H * self.cfg.z_dim, "N": self.cfg.N,
                          "k": self.cfg.n_neighbors}}
@@ -287,7 +293,7 @@ class PackEngine:
         # cap per-step displacement so nothing zips across the dish (overshoot control)
         sp = np.linalg.norm(self.vel, axis=1, keepdims=True)
         self.vel = np.where(sp > self.maxvel, self.vel * self.maxvel / (sp + 1e-9), self.vel)
-        p = self.X[:, :POS_DIM] + self.speed * self.vel
+        p = self.X[:, :self.pd] + self.speed * self.vel
         # REAL TEMPERATURE = thermal (Langevin) noise: seeded Brownian kicks ∝ temperature. Higher →
         # more disorder, melts structure, prevents freezing — the thermodynamically-correct direction
         # (unlike `selectivity`, the softmax τ). The one non-attention op; genuine thermal physics.
@@ -296,7 +302,7 @@ class PackEngine:
         p = ((p + cfg.pos_bound) % self.L) - cfg.pos_bound  # wrap to the torus
 
         # induced-fit morph: block updates shape/hidden, coupled through the fit attention
-        z = self.X[:, POS_DIM:]
+        z = self.X[:, self.pd:]
         msg = A_fit @ (z @ self.W_v)
 
         # PLASTICITY (weights that learn while alive) — a gated Hebbian fast-weight memory, i.e. the
@@ -361,7 +367,7 @@ def measure_gas_or_droplet(seed, cohesion=0.0):
         e = PackEngine(cfg, seed, cohesion=cohesion)
         for _ in range(600):
             e.step()
-        m = measure(e.X[:, :POS_DIM], e.L, radius=1.0)
+        m = measure(e.X[:, :e.pd], e.L, radius=1.0)
         print(f"{lab:8s} occupancy={m['occupancy']:.2f}  largest_cluster={m['largest_frac']:.2f}  "
               f"n_clusters={m['n_clusters']:2d}  Rg={m['rg']:.2f}  Rg/box={m['rg_over_box']:.2f}")
     print("ONE droplet: largest_cluster→1, n_clusters→1, occupancy<1, Rg box-independent.")
