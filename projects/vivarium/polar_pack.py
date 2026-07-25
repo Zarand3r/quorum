@@ -68,7 +68,7 @@ class PolarPackEngine(PackEngine):
     def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2,
                  water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, sink_polarity=0.0,
                  oil_frac=0.0, lipid_frac=0.0, lip_ell=0.55, k_tail=1.5, k_hydro=1.0,
-                 lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.60, **kw):
+                 lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.95, **kw):
         super().__init__(cfg, seed, **kw)
         self.aniso = aniso           # how strongly the contour deforms the EXCLUDED VOLUME (0 =
         #   perfect spheres = the old behaviour). Non-zero makes molecules shaped, which is a
