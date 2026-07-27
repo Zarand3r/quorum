@@ -286,7 +286,7 @@ def main(argv: list[str] | None = None) -> int:
             # 3-D showcase = the VALIDATED chain-lipid physics (docs/BILAYER_REVIEW.md F10/F11):
             # 3-bead bonded lipids, FDT Langevin with no velocity cap, soft bonds and soft excluded
             # volume so a physically stable timestep is affordable, attraction range ~1.6 sigma.
-            cfg = replace(cfg, pos_dim=3, n_harmonics=2, pos_bound=2.6)
+            cfg = replace(cfg, N=380, pos_dim=3, n_harmonics=2, pos_bound=3.0)
             #  pos_bound 3.2 -> ~38% packing: a proper dense liquid. At 4.5 it was 14%, which is
             #  BELOW liquid density, so the water had no choice but to phase-separate into droplets
             #  and vapour — that was the clustering, not a defect in the water model.
@@ -337,7 +337,11 @@ def main(argv: list[str] | None = None) -> int:
             # fine: bulk-water electrostatics is Debye-screened.
             e.sink_polarity = 0.90 if args.dim3 else 0.25
             if args.dim3:
-                e.sink_attract = 0.39      # attraction range ~1.6 sigma (Cooke's working point)
+                # 0.55 (range ~1.35 sigma), not 0.39 (1.6): van der Waals is now the LONGEST-ranged
+                # force, so IT sets the smallest legal box. 1.6 sigma would demand pos_bound >= 3.44
+                # and ~507 particles (7x the pair work) to stay a liquid; 1.35 sigma needs 3.0 and
+                # 380 (4x), and is still well inside Cooke's fluid-membrane window (> ~0.7 sigma).
+                e.sink_attract = 0.55
                 e.langevin = True          # FDT thermostat, no velocity cap
             e.repel_contact = 1.00     # σ = particle diameter; repel acts only on overlap
             e.rigidity = 0.00
@@ -369,7 +373,7 @@ def main(argv: list[str] | None = None) -> int:
             "water": (lambda: water_box[0], lambda v: _restarter(water_box, v, 0.0, 1.0)),   # up to 100% for a pure-water control
         }
         if args.dim3:   # bonded chain lipids replace both the rod and the single-bead amphiphile
-            server.sim.substeps = 4        # smaller physical timestep → substep to keep motion
+            server.sim.substeps = 2        # smaller physical timestep → substep to keep motion
             #   legible. Kept modest on purpose: every substep runs holding the state lock, so a
             #   large count starves /state and makes pause/resume feel delayed.
             server.sim.pseudo["lipid_frac"] = (lambda: chain_box[0],
