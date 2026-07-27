@@ -205,16 +205,10 @@ class PackEngine:
         return np.where(denom > 0, e / np.where(denom > 0, denom, 1.0), 0.0)
 
     def _periodic_delta(self):
-        # Cached per tick. This builds an (N,N,pos_dim) tensor and was being rebuilt from scratch by
-        # both step() and _extra_force() every step — the single largest redundant cost in the loop.
-        c = getattr(self, "_pair_cache", None)
-        if c is not None and c[0] == self.t and c[1] is self.X:
-            return c[2], c[3]
-        delta, d2 = self._periodic_delta_raw()
-        self._pair_cache = (self.t, self.X, delta, d2)
-        return delta, d2
-
-    def _periodic_delta_raw(self):
+        # Deliberately NOT cached. A cache keyed on (t, id(X)) goes stale whenever positions are
+        # written in place at an unchanged t — which callers do — and a stale pair tensor silently
+        # yields forces computed from the wrong geometry. step() computes this once and passes it
+        # down instead; that gets the same saving with no invalidation hazard.
         p = self.X[:, :self.pd]
         delta = p[:, None, :] - p[None, :, :]          # (N, N, 2) minimum-image on the torus
         delta = delta - self.L * np.round(delta / self.L)
@@ -362,7 +356,7 @@ class PackEngine:
             cohere = -np.einsum("ij,ijc->ic", A_coh, delta)   # toward the neighbourhood centroid
             force = force + self.cohesion * cohere
 
-        force = force + self._extra_force()   # subclass hook (default 0.0) — e.g. contour-charge force
+        force = force + self._extra_force(delta, d2)   # subclass hook (default 0.0) — e.g. contour-charge force
 
         # OVERDAMPED (Brownian / DPD) integration: a molecule in a viscous solvent has negligible
         # inertia — velocity tracks force (v ≈ μ·F), drag dominates. `momentum` is the small inertial
@@ -423,7 +417,7 @@ class PackEngine:
 
     # --- extension hooks: default to NO-OP so PackEngine behaviour is unchanged (base case). A
     #     subclass adds contour-charge forces / a frozen water species purely additively. ---
-    def _extra_force(self):
+    def _extra_force(self, delta=None, d2=None):
         return 0.0
 
     def _post_morph(self, z2):

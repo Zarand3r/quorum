@@ -312,10 +312,13 @@ def main(argv: list[str] | None = None) -> int:
             e = PolarPackEngine(cfg, s, water_frac=water_box[0], lipid_frac=lipid_box[0],
                                 amphi_frac=amphi_box[0], chain_frac=chain_box[0],
                                 k_bond=8.0,
-                                repel=(4.0 if args.dim3 else 5.00),
+                                repel=(12.0 if args.dim3 else 5.00),
                                 attract=0.30, polarity=0.80, cohesion=0.00, skew=0.00,
                                 morph=0.70, momentum=0.30,
-                                speed=(0.10 if args.dim3 else 1.20))
+                                speed=(0.02 if args.dim3 else 1.20))
+            #  speed 0.02, not 0.10: with langevin the velocity CAP is gone, and the cap was the
+            #  only thing bounding the step on the capped path. At 0.10 the measured displacement is
+            #  ~0.51 sigma/step and the lipid bonds stretch to ~2x their rest length.
             #  NOTE (2026-07-25): once the electrostatic force was made genuinely conservative, the
             #  dish collapsed at repel=5 (occupancy 29/64). A truly conservative cohesive liquid
             #  condenses unless excluded volume is stiff enough to hold it open: repel=40 → 56/64.
@@ -329,11 +332,12 @@ def main(argv: list[str] | None = None) -> int:
             if args.dim3:
                 e.sink_attract = 0.39      # attraction range ~1.6 sigma (Cooke's working point)
                 e.langevin = True          # FDT thermostat, no velocity cap
-                e.temperature = 0.02
             e.repel_contact = 1.00     # σ = particle diameter; repel acts only on overlap
             e.rigidity = 0.00
             e.selectivity = 0.30
-            e.temperature = 0.05       # low kT → let the membrane settle
+            # NB: set LAST, and per-mode — an earlier `if args.dim3: e.temperature = 0.02` was
+            # silently clobbered by this line, so the 3-D dish ran at 2.5x its intended kT.
+            e.temperature = 0.02 if args.dim3 else 0.05
             e.k_tail, e.k_hydro = 1.5, 1.0   # amphiphile: tail cohesion + hydrophobic effect
             return e
         knob_names = ("repel", "sink_repel", "repel_contact", "attract", "sink_attract",
@@ -355,7 +359,7 @@ def main(argv: list[str] | None = None) -> int:
                 box[0] = v
                 server.sim.restart(seed=server.sim.seed)
         server.sim.pseudo = {
-            "water": (lambda: water_box[0], lambda v: _restarter(water_box, v, 0.0, 0.9)),
+            "water": (lambda: water_box[0], lambda v: _restarter(water_box, v, 0.0, 1.0)),   # up to 100% for a pure-water control
         }
         if args.dim3:   # bonded chain lipids replace both the rod and the single-bead amphiphile
             server.sim.substeps = 4        # smaller physical timestep → substep to keep motion

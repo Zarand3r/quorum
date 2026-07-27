@@ -190,11 +190,16 @@ def core_dryness(e):
 def emergence_score(e):
     """The BENCHMARK's metric, recomputed here so the toy can audit it: head-side water excess plus
     tail-side amphiphile excess, each against the local composition baseline."""
-    ai = e._ai
+    # Chain lipids are MOL_HEAD/MOL_TAIL, not AMPHI, so keying on e._ai returned 0.0 unconditionally
+    # on the --chain path and the tool then reported its own blindness as a metric failure.
+    chains = getattr(e, "_mol", np.zeros((0, 3), dtype=int))
+    ai = e._mol[:, 0] if chains.size else e._ai
     delta, d2 = e._periodic_delta()
     near = d2 < NEAR ** 2
     np.fill_diagonal(near, False)
-    sp, head = e.species, e.amphi_head()
+    sp = e.species
+    head = e.chain_axis() if chains.size else e.amphi_head()
+    lipid = {MOL_HEAD, MOL_TAIL} if chains.size else {AMPHI}
     out = []
     for k, i in enumerate(ai):
         nb = np.where(near[i])[0]
@@ -204,9 +209,10 @@ def emergence_score(e):
         v = v / (np.linalg.norm(v, axis=1, keepdims=True) + 1e-9)
         side = v @ head[k]
         hs, ts = nb[side > 0], nb[side <= 0]
-        bw, ba = (sp[nb] == WATER).mean(), (sp[nb] == AMPHI).mean()
+        is_lip = np.isin(sp, list(lipid))
+        bw, ba = (sp[nb] == WATER).mean(), is_lip[nb].mean()
         hw = (sp[hs] == WATER).mean() - bw if hs.size else 0.0
-        td = (sp[ts] == AMPHI).mean() - ba if ts.size else 0.0
+        td = is_lip[ts].mean() - ba if ts.size else 0.0
         out.append(hw + td)
     return float(np.mean(out)) if out else 0.0
 

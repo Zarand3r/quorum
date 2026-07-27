@@ -116,12 +116,19 @@ def metrics(e):
         opposed = float(np.mean(dot[aligned] < 0)) if aligned.any() else 0.0
     else:
         nem, opposed = 0.0, 0.0
-    return burial, hydration, nem, opposed
+    # occupancy of an 8x8 grid: distinguishes genuine amphiphilic assembly (system still fills the
+    # box, lipids segregate WITHIN it) from global COLLAPSE (everything crushed into one blob, which
+    # also scores high burial and is the classic false positive).
+    B = e.cfg.pos_bound
+    g = np.floor((e.X[:, :2] + B) / (2 * B) * 8).clip(0, 7).astype(int)
+    occ = len(set(map(tuple, g.tolist())))
+    return burial, hydration, nem, opposed, occ
 
 
 def report(e, tag):
-    b, h, n, o = metrics(e)
-    print(f"{tag:>8s}  burial={b:.3f}  hydration={h:.3f}  nematic={n:+.3f}  opposed={o:.3f}")
+    b, h, n, o, occ = metrics(e)
+    print(f"{tag:>8s}  burial={b:.3f}  hydration={h:.3f}  nematic={n:+.3f}  opposed={o:.3f}"
+          f"  cells={occ}/64")
 
 
 def main(argv=None):

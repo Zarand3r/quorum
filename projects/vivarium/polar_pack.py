@@ -197,7 +197,12 @@ class PolarPackEngine(PackEngine):
         self.head_u = _rand_unit(rng, len(h)) if self.pd == 3 else np.zeros((len(h), 3))
         self.head_phi = rng.uniform(0.0, 2.0 * np.pi, len(h))      # 2-D head dipole bearing
         # lay each molecule out along a random axis so it starts extended, not coincident
-        ax = _rand_unit(rng, n_mol) if self.pd == 3 else np.zeros((n_mol, 3))
+        if self.pd == 3:
+            ax = _rand_unit(rng, n_mol)
+        else:                                   # 2-D needs a real random direction too; zeros here
+            th = rng.uniform(0.0, 2.0 * np.pi, n_mol)   # left every bead coincident, so the bond
+            ax = np.stack([np.cos(th), np.sin(th),      # force and excluded volume were both
+                           np.zeros(n_mol)], axis=1)    # exactly 0 (delta = 0) at construction.
         for k, b in enumerate((t1, t2)):
             self.X[b, :self.pd] = self.X[h, :self.pd] + (k + 1) * BOND_REST * ax[:, :self.pd]
 
@@ -283,14 +288,8 @@ class PolarPackEngine(PackEngine):
         return b
 
     def _pair_basis(self, delta, dist):
-        """Spherical-harmonic basis at every i→j direction, cached per tick. Both the electrostatic
-        head and the anisotropic excluded volume need exactly this array."""
-        c = getattr(self, "_pb_cache", None)
-        if c is not None and c[0] == self.t and c[1] is self.X:
-            return c[2]
-        b = self._sh_basis(-delta / dist[..., None])
-        self._pb_cache = (self.t, self.X, b)
-        return b
+        """Spherical-harmonic basis at every i→j direction. NOT cached — see _periodic_delta."""
+        return self._sh_basis(-delta / dist[..., None])
 
     def _axial_coeffs(self, u, amps):
         """Contour coefficients for an AXIALLY SYMMETRIC charge pattern around unit axis u (n,3):
@@ -468,7 +467,7 @@ class PolarPackEngine(PackEngine):
                     + C[:, 2 * (k - 1) + 1][:, None] * np.sin(k * ang)
         return nf
 
-    def _extra_force(self):
+    def _extra_force(self, delta=None, d2=None):
         """The electrostatic polarity head + the explicit amphiphile (lipid) forces, added to pack.py's
         step. Bounded, bearing-resolved — NO /d² kernel. Reduces to 0 when polarity=0 & no lipids."""
         lipf = self._lipid_force()          # explicit amphiphile forces (0 if no lipids)
@@ -477,7 +476,8 @@ class PolarPackEngine(PackEngine):
             return lipf
         cfg = self.cfg
         C = self._contour()
-        delta, d2 = self._periodic_delta()                 # delta = p_i − p_j
+        if delta is None:                                  # delta = p_i − p_j
+            delta, d2 = self._periodic_delta()
         idx = self._neighbors(d2, cfg.n_neighbors)
         mask = np.zeros_like(d2, dtype=bool)
         np.put_along_axis(mask, idx, True, axis=1)

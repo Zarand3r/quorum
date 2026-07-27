@@ -180,19 +180,60 @@ def test_species_radii_are_rewritten_every_step():
 
 # ---------------------------------------------------------------- transformer-only, polar hooks
 
-def test_polar_hooks_are_transformer_only():
-    """The forbidden-pattern grep previously covered only pure/pack .step — the electrostatic head
-    and the 3-D contour code were never checked. They are the newest and least-audited code."""
-    src = "\n".join(_strip_comments(inspect.getsource(fn)) for fn in (
-        polar_pack.PolarPackEngine._extra_force,
-        polar_pack.PolarPackEngine._post_morph,
-        polar_pack.PolarPackEngine._sh_basis,
-        polar_pack.PolarPackEngine._axial_coeffs,
-        polar_pack.PolarPackEngine._rotate_toward,
-        polar_pack.PolarPackEngine._near_face,
-    ))
-    for pat in _FORBIDDEN:
-        assert not re.search(pat, src), f"polar hooks contain forbidden pattern: {pat}"
+# Anything that is NOT part of the dynamics — rendering, measurement, diagnostics, construction.
+# Everything else is audited. This list is the ONLY escape hatch, so a newly added dynamical method
+# is covered by default rather than silently skipped (which is exactly what happened to the bond
+# force, the stiffness step and the anisotropic contact distance).
+_NON_DYNAMICAL = {
+    "render_svg", "snapshot", "measure", "token_polarity", "fork", "mode_orders",
+    "min_image_margin", "amphi_head", "chain_axis", "_binding_edges", "_neighbors",
+    "_contour", "_periodic_delta", "_mickey_template", "_amphi_template", "_build_stiffness",
+    "_build_chains", "_write_water", "_write_amphi", "_write_radii", "_write_chain",
+    "_attn", "_lipid_force",
+}
+
+
+def _dynamical_methods(cls):
+    """Every method of `cls` that participates in the dynamics, by exclusion rather than by an
+    allowlist — fail-closed, so nothing new can slip through unaudited."""
+    for name, fn in inspect.getmembers(cls, inspect.isfunction):
+        if name.startswith("__") or name in _NON_DYNAMICAL:
+            continue
+        if fn.__module__ not in ("pack", "polar_pack"):
+            continue
+        yield name, _strip_comments(inspect.getsource(fn))
+
+
+def test_every_dynamical_method_is_transformer_only():
+    """Audit the FULL dynamical surface of both engines, not a hand-maintained list."""
+    seen = []
+    for cls in (PackEngine, PolarPackEngine):
+        for name, src in _dynamical_methods(cls):
+            seen.append(name)
+            for pat in _FORBIDDEN:
+                assert not re.search(pat, src), f"{cls.__name__}.{name} matches forbidden {pat}"
+    for required in ("_bond_force", "_contact_distance", "_apply_stiffness", "_extra_force",
+                     "_post_morph", "_sh_basis", "step"):
+        assert required in seen, f"{required} escaped the transformer-only audit"
+
+
+def test_bond_force_is_masked_attention_not_a_spring():
+    """A bond must be a FIXED PAIR MASK carrying a BOUNDED symmetric kernel — masked/local attention,
+    which the requirement allows — and emphatically not an unbounded harmonic spring."""
+    e = PolarPackEngine(_cfg3(N=30), 0, water_frac=0.4, chain_frac=0.6, polarity=1.0)
+    assert e._bond_i.size, "no bonds were built"
+    src = _strip_comments(inspect.getsource(PolarPackEngine._bond_force))
+    assert "np.tanh" in src, "bond kernel must be bounded"
+    # bounded: stretch a bond absurdly far and the force must not grow without limit
+    e.X[e._bond_j[0], :e.pd] = e.X[e._bond_i[0], :e.pd] + 500.0
+    f = e._bond_force()
+    # each bond contributes at most k_bond (|tanh| <= 1 times a unit vector), and a bead takes part
+    # in at most TWO bonds (the head bonds to both tail beads), so 2*k_bond is the true ceiling.
+    per_bead = np.bincount(np.concatenate([e._bond_i, e._bond_j]), minlength=e.cfg.N).max()
+    assert np.isfinite(f).all(), "bond force produced a non-finite value"
+    assert np.abs(f).max() <= e.k_bond * per_bead * 1.001, "bond force is unbounded"
+    # symmetric ⇒ conservative
+    assert np.abs(f.sum(axis=0)).max() < 1e-9, "bond force does not conserve momentum"
 
 
 def test_no_divergent_distance_kernel_in_polar_forces():
