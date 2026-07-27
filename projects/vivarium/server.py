@@ -92,6 +92,8 @@ class Sim:
             if not self.paused:
                 with self.lock:
                     for _ in range(max(1, self.substeps)):
+                        if self.paused:        # honour pause between substeps, not just per frame
+                            break
                         self.engine.step()
                     self._buf.append(self.engine.X[:, :2].copy())  # positions only (cheap)
                 if (self.autopause and not self._autopaused
@@ -284,7 +286,10 @@ def main(argv: list[str] | None = None) -> int:
             # 3-D showcase = the VALIDATED chain-lipid physics (docs/BILAYER_REVIEW.md F10/F11):
             # 3-bead bonded lipids, FDT Langevin with no velocity cap, soft bonds and soft excluded
             # volume so a physically stable timestep is affordable, attraction range ~1.6 sigma.
-            cfg = replace(cfg, pos_dim=3, n_harmonics=2, pos_bound=4.5)
+            cfg = replace(cfg, pos_dim=3, n_harmonics=2, pos_bound=3.2)
+            #  pos_bound 3.2 -> ~38% packing: a proper dense liquid. At 4.5 it was 14%, which is
+            #  BELOW liquid density, so the water had no choice but to phase-separate into droplets
+            #  and vapour — that was the clustering, not a defect in the water model.
             water_box, lipid_box = [0.55], [0.0]
             amphi_box[0] = 0.0
             chain_box[0] = 0.36
@@ -353,8 +358,9 @@ def main(argv: list[str] | None = None) -> int:
             "water": (lambda: water_box[0], lambda v: _restarter(water_box, v, 0.0, 0.9)),
         }
         if args.dim3:   # bonded chain lipids replace both the rod and the single-bead amphiphile
-            server.sim.substeps = 10       # smaller physical timestep → substep to keep motion legible
-            #   (the 2.2x step-loop speedup doubled the affordable substep count)
+            server.sim.substeps = 4        # smaller physical timestep → substep to keep motion
+            #   legible. Kept modest on purpose: every substep runs holding the state lock, so a
+            #   large count starves /state and makes pause/resume feel delayed.
             server.sim.pseudo["lipid_frac"] = (lambda: chain_box[0],
                                                lambda v: _restarter(chain_box, v, 0.0, 0.6))
         else:
