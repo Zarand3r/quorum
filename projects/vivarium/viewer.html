@@ -452,6 +452,28 @@ function draw(al){
         v += c[3]*C2*x*y + c[4]*C2*y*z + c[5]*C3*(3*z*z-1) + c[6]*C2*x*z + c[7]*C4*(x*x-y*y);
       return v;
     };
+    // ---- bonds first, so beads paint over their ends. A lipid is ONE molecule; without these it
+    // reads as three unrelated spheres. Bonds that wrap the periodic box are skipped rather than
+    // streaked across the screen.
+    if(s.bonds){
+      const proj = i => {
+        const [x,y,z] = cam[i];
+        const pp = FOC/(FOC + z + B);
+        return [cx + x*sc*pp, cy - y*sc*pp, (zmax - z)/zr];
+      };
+      ctx.lineCap = 'round';
+      for(const [i,j] of s.bonds){
+        const a = s.tokens[i], b = s.tokens[j];
+        if(Math.abs(a.x-b.x) > B || Math.abs(a.y-b.y) > B || Math.abs((a.z||0)-(b.z||0)) > B) continue;
+        const P = proj(i), Q = proj(j), dep = 0.5*(P[2]+Q[2]);
+        ctx.globalAlpha = 0.45 + 0.45*dep;
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = Math.max(1, 0.045 * sc * (0.74 + 0.40*dep));
+        ctx.beginPath(); ctx.moveTo(P[0],P[1]); ctx.lineTo(Q[0],Q[1]); ctx.stroke();
+      }
+      ctx.globalAlpha = 1.0;
+    }
+
     for(const idx of order){
       const [cx3, cy3, cz3] = cam[idx];
       const persp = FOC / (FOC + cz3 + B);            // near → bigger
@@ -461,14 +483,17 @@ function draw(al){
       let col = COL[sp] || [203,213,225];
       const cc = s.tokens[idx].c || [];
       ctx.globalAlpha = 0.30 + 0.70*dep;
-      if(sp === 1){
-        // ACTIVE = the induced-fit MORPHING blob. Water and the amphiphile are RIGID molecules
-        // (they only reorient), so these are the only tokens whose SHAPE changes — draw the actual
-        // deformed silhouette, and colour it blue(smooth) → red(spiky).
-        let m = 0; for(const v of cc) m += v*v;
-        const tt = Math.max(0, Math.min(1, Math.sqrt(m)/1.2));
-        col = [77 + 178*tt, 163 - 100*tt, 255 - 165*tt];
-        const base = 0.30 * sc * persp;
+      // Draw the REAL contour silhouette for anything POLAR, not only the morphing blobs. Water
+      // and the lipid HEAD carry a genuine charge shape (|C| ~1.6 and ~2.5) but were drawn as plain
+      // circles, so their polarity was invisible and they looked like the neutral tail. The tail
+      // really IS a circle (|C| ~0.08 — apolar by construction), and that contrast is the point.
+      let mag = 0; for(const v of cc) mag += v*v; mag = Math.sqrt(mag);
+      if(sp === 1 || mag > 0.5){
+        if(sp === 1){                    // morphing blob: blue(smooth) → red(spiky)
+          const tt = Math.max(0, Math.min(1, mag/1.2));
+          col = [77 + 178*tt, 163 - 100*tt, 255 - 165*tt];
+        }
+        const base = (sp===0 ? 0.20 : sp===5 ? 0.26 : 0.30) * sc * persp;
         ctx.fillStyle = `rgb(${col[0]|0},${col[1]|0},${col[2]|0})`;
         ctx.beginPath();
         for(let k=0;k<=28;k++){

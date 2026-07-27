@@ -640,6 +640,13 @@ class PolarPackEngine(PackEngine):
             h = self.amphi_head()
             snap["amphi"] = {int(i): [round(float(v), 3) for v in h[k]]
                              for k, i in enumerate(self._ai)}
+        if getattr(self, "_mol", np.zeros((0, 3))).size:
+            # BACKBONE bonds only (head–tail1, tail1–tail2). The third bond is the 1–3 straightener,
+            # which is a geometric constraint rather than a chemical link, so drawing it would just
+            # clutter the molecule.
+            n = len(self._mol)
+            snap["bonds"] = [[int(a), int(b)] for a, b in
+                             zip(self._bond_i[:2 * n], self._bond_j[:2 * n])]
         snap["pos_dim"] = self.pd
         return snap
 
