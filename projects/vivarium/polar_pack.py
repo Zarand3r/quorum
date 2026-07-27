@@ -44,6 +44,11 @@ BOND_REST = 1.00      # bonded neighbours sit at contact
 BOND_SPAN = 2.00      # head <-> far tail: rest length = the sum, so the chain is held STRAIGHT
 BOND_W = 0.30         # width of the bounded bond well
 RAD_HEAD, RAD_TAIL = 0.30, 0.95
+# STERIC radii (sigma), distinct from the dispersion well depths above. In MARTINI every bead shares
+# one sigma because a water BEAD is four real waters; ours is a SINGLE dipolar water (~2.8 A) against
+# a lipid bead (~4.7 A), so water should be ~0.6x. Giving every species the same diameter was the
+# inaccuracy — bonded beads then sat at exactly one water-diameter apart.
+SIG_WATER, SIG_BEAD = 0.30, 0.50
 _EPS = 1e-9
 # k=0 radius (physical SIZE → van der Waals contact area / polarizability), per species. Water is a
 # SMALL molecule (weak dispersion) but strongly polar; oil and the amphiphile body are BULKY and
@@ -143,6 +148,7 @@ class PolarPackEngine(PackEngine):
             self.X[np.concatenate([self._hi, self._ti]), self.pd:self.pd + self.tK] = 0.0
             self._write_chain(self.X[:, self.pd:])
         self._write_radii(self.X[:, self.pd:])
+        self._build_sigma()
         self._build_stiffness()
 
     def _write_chain(self, z):
@@ -245,8 +251,10 @@ class PolarPackEngine(PackEngine):
         phenomenon: whether amphiphiles form micelles, bilayers or inverted phases is set by the
         packing parameter v/(a₀·l) — the ratio of tail volume to head area. With isotropic beads
         that ratio is identically 1 and no lamellar phase can exist."""
+        base = (self.repel_contact if self.sigma is None
+                else self.sigma[:, None] + self.sigma[None, :])
         if self.aniso <= 0.0:
-            return self.repel_contact
+            return base
         # Only molecules with a DEFINED conformation (stiffness > 0) have a persistent shape; a
         # free-morphing blob (k=0) has no fixed geometry, so it stays a sphere. This also keeps the
         # base case exact: with no species assigned, every token is free-morphing.
@@ -254,6 +262,14 @@ class PolarPackEngine(PackEngine):
         nf = np.tanh(self._bearing_nf(C, delta, dist)) * shaped
         half = 0.5 * self.repel_contact
         return half * (1.0 + self.aniso * nf) + half * (1.0 + self.aniso * nf.T)
+
+    def _build_sigma(self):
+        """Per-species steric radius. Water is a single small molecule; every coarse-grained bead
+        (lipid head/tail, oil, the morphing blobs) is larger."""
+        sig = np.full(self.cfg.N, SIG_BEAD)
+        if self._wi.size:
+            sig[self._wi] = SIG_WATER
+        self.sigma = sig
 
     def _build_stiffness(self):
         """Per-token, per-channel elastic stiffness + the rest-shape buffer it pulls toward. Rigid

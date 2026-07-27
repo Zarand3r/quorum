@@ -78,6 +78,8 @@ class PackEngine:
         #   that demonstrably NUCLEATES uses an FDT-satisfying thermostat with no velocity cap;
         #   velocity-capped overdamped relaxation has no precedent in that literature. Default False
         #   keeps the base case byte-identical.
+        self.sigma = None       # per-token STERIC radius (N,). None → every token is
+        #   repel_contact/2. Distinct from the `rad` channel, which is a dispersion well depth.
         self.vdw_scale = 0.25   # saturation scale of the per-token dispersion well depth
         self.stiff = None
         self.c_rest = None
@@ -184,8 +186,9 @@ class PackEngine:
                                      getattr(self, "sink_polarity", 0.0))))
 
     def _contact_distance(self, C, delta, dist):
-        """Centre-to-centre distance at which two tokens touch. Default: ISOTROPIC — every token is
-        a sphere of diameter `repel_contact`. PolarPackEngine overrides this to read the contour at
+        """Centre-to-centre distance at which two tokens touch: sigma_i + sigma_j, so species can
+        differ in SIZE. Default: every token has sigma = repel_contact/2, i.e. the old single
+        diameter, so nothing changes unless a subclass assigns per-species radii. PolarPackEngine overrides this to read the contour at
         the relative bearing, making molecules non-spherical (Gay-Berne-like), which is what gives an
         amphiphile a head END and a tail END and therefore a real packing parameter."""
         return self.repel_contact

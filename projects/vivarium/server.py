@@ -286,7 +286,7 @@ def main(argv: list[str] | None = None) -> int:
             # 3-D showcase = the VALIDATED chain-lipid physics (docs/BILAYER_REVIEW.md F10/F11):
             # 3-bead bonded lipids, FDT Langevin with no velocity cap, soft bonds and soft excluded
             # volume so a physically stable timestep is affordable, attraction range ~1.6 sigma.
-            cfg = replace(cfg, pos_dim=3, n_harmonics=2, pos_bound=3.2)
+            cfg = replace(cfg, pos_dim=3, n_harmonics=2, pos_bound=2.6)
             #  pos_bound 3.2 -> ~38% packing: a proper dense liquid. At 4.5 it was 14%, which is
             #  BELOW liquid density, so the water had no choice but to phase-separate into droplets
             #  and vapour — that was the clustering, not a defect in the water model.
@@ -328,7 +328,11 @@ def main(argv: list[str] | None = None) -> int:
             # volume), so the electrostatic range must shorten too or molecules interact with their
             # own periodic images: at λ=0.25 the kernel is still 0.105 at L/2. λ=0.55 → 7e-3.
             e.sink_repel, e.sink_attract = 6.0, 1.0
-            e.sink_polarity = 0.55 if args.dim3 else 0.25
+            # 0.90 in 3-D, not 0.55: correcting water's steric radius downward lowered the
+            # packing, so the box had to shrink to stay a liquid — and a smaller box needs a shorter
+            # electrostatic range or molecules interact with their own periodic images. Physically
+            # fine: bulk-water electrostatics is Debye-screened.
+            e.sink_polarity = 0.90 if args.dim3 else 0.25
             if args.dim3:
                 e.sink_attract = 0.39      # attraction range ~1.6 sigma (Cooke's working point)
                 e.langevin = True          # FDT thermostat, no velocity cap

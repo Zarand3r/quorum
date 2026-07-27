@@ -493,7 +493,9 @@ function draw(al){
           const tt = Math.max(0, Math.min(1, mag/1.2));
           col = [77 + 178*tt, 163 - 100*tt, 255 - 165*tt];
         }
-        const base = (sp===0 ? 0.20 : sp===5 ? 0.26 : 0.30) * sc * persp;
+        // TRUE steric radius (water 0.30, every other bead 0.50). Drawing beads at ~half
+        // their real size made touching particles look separated — the 'gaps' were an artefact.
+        const base = (sp===0 ? 0.30 : 0.50) * sc * persp;
         ctx.fillStyle = `rgb(${col[0]|0},${col[1]|0},${col[2]|0})`;
         ctx.beginPath();
         for(let k=0;k<=28;k++){
