@@ -1,0 +1,244 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage[margin=0.75in]{geometry}
+\usepackage{amsmath,amssymb,booktabs,graphicx,xcolor,balance}
+\usepackage[hidelinks]{hyperref}
+\title{\vspace{-2em}Vivarium: Attention as a Force Law\\
+{\large Molecular self-assembly in a transformer whose tokens are the molecules}}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Molecular simulation requires a force field before it can simulate anything. Classical potentials are
+written by hand; learned potentials regress a target computed by an independent theory. Both treat
+physics as a specification the network consumes. We ask a different question: are the operations a
+transformer already performs sufficient to express interaction physics, with the tokens
+\emph{being} the molecules? We build vivarium, a molecular simulator in which every force is an
+attention operation, every molecule is one token, and every timestep is one forward pass. A token's
+channels are read as physical quantities, so charge and shape come from a single grounded contour
+evaluated at the relative bearing to a neighbour. Under this restriction the hydrophobic effect
+emerges from excluded volume, dispersion and electrostatics alone, with no per-species interaction
+term. Water demixes from oil (order parameter $0.02 \to 0.51$), and three-bead amphiphiles bury
+their tails from a disordered start (burial $0.64 \to 0.88$). A lipid bilayer does not form. We show the
+failure is structural rather than kinetic: a hand-planted bilayer decays at every temperature tested
+including zero. We report the representational fact that explains four falsified repairs, namely that
+a contour encoding both size and charge cannot express a bulky neutral tail.
+\end{abstract}
+
+\section{Every simulator consumes a force field it did not derive}
+
+Every molecular dynamics package begins with a potential. Lennard-Jones supplies dispersion, Coulomb
+supplies charge, harmonic springs supply bonds, and a human chooses each functional form. Coarse-grained
+models such as MARTINI go further and tune a per-species interaction matrix against experiment. The
+physics arrives as a specification, and the simulator executes it.
+
+Machine-learned interatomic potentials replaced the fitting with regression. SchNet, NequIP, MACE and
+Allegro learn a potential energy surface from density-functional labels, and they reach chemical
+accuracy on systems that classical force fields handle poorly. They inherit the original premise. The
+network is a regressor for a potential that exists independently of it, and the network's own
+operations are never asked to be the physics.
+
+This leaves a question unasked. Are attention, position-wise feedforward layers and normalization
+\emph{sufficient} to express interaction physics directly, with the tokens serving as the physical
+entities rather than as an encoding of them? The question concerns expressiveness rather than
+accuracy, and fitting cannot answer it. A model that regresses a potential says nothing about whether
+attention can be one.
+
+Forbidding hand-written potentials removes three standard tools at once. Divergent radial kernels
+such as the $1/r^{12}$ hard core become unavailable, because a bounded attention weight cannot
+diverge. Energy ledgers become unavailable, because bookkeeping a Hamiltonian is not an attention
+operation. Global lattice sums become unavailable, so Ewald and particle-mesh Ewald cannot supply
+long-range electrostatics. Every remaining force must decay smoothly and act locally.
+
+We adopt that restriction and ask what physics survives it. Our target is lipid bilayer
+self-assembly, chosen because it is the canonical emergent structure of soft matter, it has a sharp
+success criterion, and coarse-grained models reproduce it with less machinery than we already have.
+
+\smallskip
+\noindent\textbf{Contributions.}
+\begin{enumerate}\itemsep2pt
+\item \textbf{Transformer-only molecular dynamics}, enforced mechanically. A fail-closed audit scans
+every dynamical method for forbidden patterns, so it covers code added later by default and does not
+rely on anyone remembering to register it.
+\item \textbf{Grounded contour tokens.} A token's channels are read as position, charge distribution
+and size. We evaluate the contour at the relative bearing to a neighbour, which turns electrostatics into a
+relative-position attention head.
+\item \textbf{Emergence without per-species force laws.} The hydrophobic effect and micelle assembly
+appear from excluded volume, dispersion and electrostatics alone.
+\item \textbf{A characterised negative result.} The lamellar phase is unstable under this force
+field, and we identify the representational constraint that explains why four physics-derived
+repairs failed.
+\end{enumerate}
+
+\section{A token is a molecule}
+
+\subsection{Channels carry physical meaning}
+
+A token is a vector whose channels we read as physical quantities:
+\[
+[\;\underbrace{\mathbf{p}}_{\text{position}}\;|\;\underbrace{C}_{\text{contour}}\;|\;\underbrace{r}_{\text{radius}}\;|\;\text{hidden}\;]
+\]
+The grounding matters. In a learned potential the latent is opaque and only the output is
+interpretable. Here each force reads the channel it physically depends on, so a claim about the
+physics is a claim about the representation and is falsifiable as such.
+
+\subsection{The contour makes electrostatics an attention head}
+
+The contour $C_i$ expands a molecule's charge distribution in real spherical harmonics. We read it at
+the \emph{relative bearing} to a neighbour:
+\[
+\mathrm{nf}_i(j) \;=\; \langle C_i,\; Y(\hat{u}_{ij}) \rangle ,
+\qquad \hat{u}_{ij} = \frac{\mathbf{p}_j-\mathbf{p}_i}{\lVert \mathbf{p}_j-\mathbf{p}_i \rVert}
+\]
+This is a RoPE-family relative-position term. It reports what face molecule $i$ turns toward $j$: a
+contour with one positive lobe reads as a dipole, a uniform contour reads as apolar. The pair term
+$\mathrm{prod}_{ij} = \mathrm{nf}_i(j)\,\mathrm{nf}_j(i)$ is positive for like faces and negative for
+opposite faces, and it is symmetric under $i \leftrightarrow j$, which makes the resulting force
+conservative.
+
+Symmetry is not free. Row-stochastic softmax normalizes each row independently, so $A_{ij} \neq
+A_{ji}$ and momentum is not conserved. Our conservative heads therefore drop the softmax denominator
+and use a bounded kernel with a Gaussian radial factor,
+\[
+g_{ij} \;=\; \mathrm{gate}\!\left(\text{content}_i,\text{content}_j\right)\,e^{-\lambda d_{ij}^{2}},
+\]
+which places them in the linear/kernel-attention family. Section~\ref{sec:limits} states the cost of
+that choice.
+
+\subsection{Separating size from charge is what makes a tail expressible}
+\label{sec:sep}
+
+Our first contour encoded charge as a radial deviation, so a molecule's shape and its charge were the
+same numbers. That representation forbids exactly one molecule: a lipid tail, which must be bulky and
+neutral. A zero contour gave a neutral point with no surface to attract with, and a nonzero contour
+gave extent together with charge. No parameter choice escapes this, and four separate repairs failed
+before we located it.
+
+Splitting size into its own channel resolves it. The radius channel carries dispersion strength and
+the contour carries charge, so a molecule can now be bulky and neutral (a tail), bulky and charged (a
+head), or small and strongly dipolar (water). We combine per-token well depths by the geometric rule
+$\varepsilon_{ij} = \sqrt{\varepsilon_i \varepsilon_j}$, which guarantees a positive mixing energy
+$\Delta E \propto (\sqrt{\varepsilon_{ii}}-\sqrt{\varepsilon_{jj}})^2$ and therefore supplies the
+hydrophobic driving force by construction.
+
+\subsection{Bonds are a fixed attention mask}
+
+A three-bead lipid needs its beads held together. We implement a bond as a fixed pair mask carrying a
+bounded symmetric kernel $\tanh\!\big((d-r_0)/w\big)$, which is masked attention rather than a
+harmonic spring, and a third mask between the head and the far tail holds the chain extended. Token
+count never changes; beads are existing tokens relabelled into molecules.
+
+\subsection{Two invariants gate every number}
+
+\textbf{Base-case identity.} With the polar features disabled the engine reproduces the original
+engine bit for bit. Every feature added since remains auditable because this identity holds.
+
+\textbf{Minimum image.} Periodic boundaries are valid only when every force is negligible at half the
+box, otherwise a molecule interacts with its own periodic image. We report the worst kernel value at
+$L/2$ and gate on it. The check caught a live violation in which the dispersion range exceeded the
+box.
+
+\section{The hydrophobic effect emerges; the bilayer does not}
+
+\subsection{Water demixes from oil with no per-species term}
+
+Water and a neutral solute separate under the three forces alone, with the order parameter rising
+from $0.02$ to $0.51$. Nothing in the model names the pair. The separation follows from water's
+electrostatic self-cohesion exceeding its dispersion attraction to a neutral surface, which is the
+textbook energetic account of hydrophobicity.
+
+\subsection{Amphiphiles bury their tails from a disordered start}
+
+Three-bead lipids released from a disordered mixture aggregate with their tails inward. Tail burial
+rises from $0.64$ to $0.88$, matching a hand-planted reference on every composition metric. Two tail
+beads double the tail-tail contact area, so the aggregation drive scales with tail length, and head
+repulsion acts at a different point from tail attraction. A single-bead amphiphile applies both at
+the same point and never assembles.
+
+\textbf{Takeaway.} Aggregation requires no per-species interaction matrix. Excluded volume,
+dispersion and electrostatics on grounded tokens suffice for the first stage of the assembly pathway.
+
+\subsection{The aggregates are micellar, and the lamellar phase is unstable}
+
+Assembly stops at the micelle. We measure order with orientation-agnostic parameters so that a
+vesicle, a tilted sheet and a disc all register. Local nematic alignment separates lamellar order
+from disorder. The fraction of antiparallel neighbours then separates a bilayer, whose two leaflets
+meet tail to tail, from a micelle, whose lipids all point outward.
+
+A hand-planted bilayer supplies the reference. It starts at nematic $+0.98$ and decays within a few
+thousand steps under every condition we tested, including kT$=0$ and including three stiffness
+regimes spanning a factor of ten. Zero temperature removes thermal melting and the timestep margin
+removes numerical instability, so the lamellar phase is simply not stable under this force field.
+The failure is structural rather than kinetic, which rules out longer runs and better initial
+conditions as remedies.
+
+\textbf{Takeaway.} Reporting only the assembly result would misdescribe the system. The planted
+bilayer is the experiment that distinguishes "has not nucleated yet" from "cannot persist," and it
+returns the second answer.
+
+\subsection{Four physics-derived repairs, all falsified}
+
+We derived each repair from the literature's parameter windows rather than by search, and each
+failed. Widening the dispersion range to the value coarse-grained models require did not stabilise
+the planted bilayer. Lowering the head charge to flip lateral cohesion positive did not either, even
+though it reproduced the head-head to lateral ratio that single-site models prescribe. Correcting the
+dispersion kernel to a valid mixing rule tripled the hydrophobic driving force and still left the
+bilayer unstable. Making dispersion orientation-dependent routed charge back into van der Waals, and our own
+faithfulness test rejected it, which is the outcome we want from that test.
+
+\subsection{One bug invalidated an earlier benchmark history}
+
+An electrostatic near-face read a token's far face rather than the face it presents, which made the
+pair term asymmetric and the "conservative" force non-conservative by a measurable margin. Every
+number recorded before the fix described a subtly non-physical system. We report this because the
+system passed its tests throughout: the momentum-conservation test that caught it did not exist
+until we wrote it.
+
+\section{Related work}
+
+\textbf{Learned interatomic potentials.} SchNet, NequIP, MACE and Allegro regress a potential energy
+surface from first-principles labels, and equivariant message passing with spherical-harmonic features
+is now standard. They target accuracy against a reference theory. We share their geometric machinery
+and reject the framing: our question is whether attention can constitute a force law, which a
+regression target cannot settle.
+
+\textbf{Coarse-grained membrane models.} Cooke-Deserno lipids, MARTINI and single-site models such as
+SiMPLISTIC assemble bilayers with less machinery than we have, which is what makes our negative result
+informative rather than merely disappointing. Their parameter windows supply our reference values.
+They also write their potentials down, including the engineered angular gates that make a single-site
+amphiphile lamellar.
+
+\textbf{Networks as physics.} Neural cellular automata and learned simulators share the instinct that
+a network can be a dynamical law. They lack a grounded physical readout and a conservation
+constraint, so their dynamics are not falsifiable as physics.
+
+\section{Limitations}
+\label{sec:limits}
+
+\textbf{No bilayer.} Aggregation holds; lamellar order does not.
+
+\textbf{The thermostat is not attention.} We keep one exception, and it is load-bearing, since
+nucleation is thermally activated and removing it makes the target unreachable in principle.
+
+\textbf{The conservative heads are not canonical softmax attention.} They drop the normalizer to
+achieve $F_{ij} = -F_{ji}$, which places them in the kernel-attention family. Calling them attention
+heads is defensible and not free.
+
+\textbf{System size.} A solvated spanning bilayer requires roughly a thousand tokens, and pair work
+scales quadratically.
+
+\section{Conclusion}
+
+Attention over grounded tokens reaches further into soft-matter physics than we expected and stops
+short of the target. The hydrophobic effect and amphiphile aggregation emerge from three forces with
+no per-species term, which shows that a transformer's native operations express real interaction
+physics rather than merely approximating a fitted surface. The lamellar phase does not follow, and
+the planted-bilayer experiment locates the failure in the force field rather than in kinetics. The
+representational constraint we identify, that a contour encoding both size and charge cannot express
+a bulky neutral tail, generalises beyond this system: when a network's latent is read as physics, what
+the representation can express bounds what can emerge.
+
+\balance
+\end{document}
