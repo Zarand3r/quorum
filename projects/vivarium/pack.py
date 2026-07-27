@@ -25,7 +25,7 @@ import argparse
 import numpy as np
 
 from aliveness import evaluate
-from config import DEFAULTS, POS_DIM, VivariumConfig
+from config import DEFAULTS, VivariumConfig
 from rng import base_rng, rng_for
 
 _LN_EPS = 1e-5
@@ -464,7 +464,6 @@ def measure_gas_or_droplet(seed, cohesion=0.0):
 
 def main(argv=None):
     p = argparse.ArgumentParser()
-    p.add_argument("--probe", action="store_true")
     p.add_argument("--measure", action="store_true")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--ablate", choices=["none", "identity", "freeze_plasticity"], default="none")

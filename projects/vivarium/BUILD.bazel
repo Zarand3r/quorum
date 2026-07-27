@@ -28,63 +28,9 @@ py_library(
 )
 
 py_binary(
-    name = "probe",
-    srcs = ["probe.py"],
-    main = "probe.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-
-py_binary(
-    name = "research",
-    srcs = ["research.py"],
-    main = "research.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-
-py_binary(
-    name = "grid",
-    srcs = ["grid.py"],
-    main = "grid.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-
-py_binary(
-    name = "membrane",
-    srcs = ["membrane.py"],
-    main = "membrane.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-
-py_binary(
-    name = "render_membrane",
-    srcs = ["render_membrane.py"],
-    main = "render_membrane.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-
-py_binary(
     name = "pure",
     srcs = ["pure.py"],
     main = "pure.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-
-py_binary(
-    name = "render_frame",
-    srcs = ["render_frame.py"],
-    main = "render_frame.py",
     data = [":configs"],
     imports = ["."],
     deps = [":vivarium"],
@@ -166,27 +112,9 @@ py_binary(
 )
 
 py_binary(
-    name = "charged",
-    srcs = ["charged.py"],
-    main = "charged.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-
-py_binary(
-    name = "lipid_rod",
-    srcs = ["lipid_rod.py"],
-    main = "lipid_rod.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-
-py_binary(
-    name = "serve_membrane",
-    srcs = ["membrane_server.py"],
-    main = "membrane_server.py",
+    name = "make_figures",
+    srcs = ["make_figures.py"],
+    main = "make_figures.py",
     data = [":configs"],
     imports = ["."],
     deps = [":vivarium"],

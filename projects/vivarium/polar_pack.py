@@ -30,7 +30,7 @@ import argparse
 import numpy as np
 
 from config import DEFAULTS, POS_DIM, VivariumConfig
-from pack import PackEngine, _ln
+from pack import PackEngine
 from rng import base_rng
 
 WATER, ACTIVE, OIL, LIPID, AMPHI, MOL_HEAD, MOL_TAIL = 0, 1, 2, 3, 4, 5, 6
@@ -1010,7 +1010,6 @@ def main(argv=None):
     p.add_argument("--contact", type=float, default=0.0, help="repel_contact (overlap distance)")
     p.add_argument("--mom", type=float, default=0.3, help="momentum (overdamped ~0.3)")
     p.add_argument("--cohesion", type=float, default=0.08)
-    p.add_argument("--probe", action="store_true")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--ticks", type=int, default=2000)
     p.add_argument("--every", type=int, default=400)

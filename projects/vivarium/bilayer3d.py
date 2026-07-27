@@ -31,7 +31,7 @@ import math
 import numpy as np
 
 from config import DEFAULTS, VivariumConfig
-from polar_pack import MOL_HEAD, MOL_TAIL, WATER, PolarPackEngine
+from polar_pack import WATER, PolarPackEngine
 
 APL = math.sqrt(3) / 2.0     # area a lipid occupies in a packed leaflet (hex, diameter 1)
 LIP_LEN = 2.0                # head -> far tail

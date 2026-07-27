@@ -36,7 +36,7 @@ import numpy as np
 
 from config import DEFAULTS, POS_DIM, VivariumConfig
 from pack import PackEngine
-from polar_pack import AMPHI, OIL, WATER, PolarPackEngine
+from polar_pack import AMPHI, WATER, PolarPackEngine
 
 # ---- the fixed scenario. These numbers define the benchmark; they never change. ----
 N = 190                 # ≈ full-box packing for pos_bound 6 → dense liquid, no free volume

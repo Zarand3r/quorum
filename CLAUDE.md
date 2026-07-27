@@ -6,6 +6,7 @@ This is a Bazel workspace at the repo root (`MODULE.bazel` + `BUILD.bazel` + `.b
 
 | Project | Build system | Brief |
 |---|---|---|
+| [`projects/vivarium/`](projects/vivarium/) | Bazel (`rules_python`) | **Transformer-only molecular dynamics** — every molecule is a token, every force an attention operation, every step a forward pass. Goal: make a **lipid bilayer self-assemble** from excluded volume + van der Waals + electrostatics alone. Hydrophobic demixing and micelle formation emerge; the bilayer does not. Read `projects/vivarium/docs/BILAYER_REVIEW.md` (the research narrative) and `projects/vivarium/design/HARD_REQUIREMENT.md` (the rule). |
 | [`projects/quorum/`](projects/quorum/) | Bazel | Single-pass LLM population simulator for emergent behavior. Goal: **computed** (irreducible) emergence, validated by Boids / Schelling baselines and an irreducibility test. See `projects/quorum/PLAN.md`. Design only; no implementation yet. |
 | [`projects/thermolife/`](projects/thermolife/) | Bazel (`rules_python`) | Embedding folding as ligand–receptor docking — a toy transformer whose token embeddings fold through iterated attention, each rendered as a **grounded** 2D contour blob (the drawn shape *is* the attention query/key, so `Q·K` = contour overlap by Parseval) that docks with complementary blobs. Goal: **earned** meaningful folding (trained + objective-driven), not "pretty blobs." See `projects/thermolife/PLAN.md`. S0 (numpy mechanism) implemented; training is M2. |
 

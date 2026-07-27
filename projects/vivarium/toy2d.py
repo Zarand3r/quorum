@@ -30,7 +30,7 @@ import argparse
 import numpy as np
 
 from config import DEFAULTS, VivariumConfig
-from polar_pack import MOL_HEAD, MOL_TAIL, WATER, PolarPackEngine
+from polar_pack import WATER, PolarPackEngine
 
 NEAR = 1.5
 BOND_R = 1.0
