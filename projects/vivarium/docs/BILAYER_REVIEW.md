@@ -321,6 +321,28 @@ Note also that the pre-existing settings were two compounding workarounds — `r
 to stop collapse *under the capped dynamics*, and the cap was then needed to contain the stiffness
 that created. Fixing the dynamics dissolves the reason for both.
 
+## Finding 11 — FIRST SPONTANEOUS AGGREGATION (2026-07-27)
+
+With the corrected dynamics (FDT Langevin, no velocity cap, `k_bond=8`, `repel=4`, stable
+`speed=0.1`, attraction range ~1.6 sigma), 240k steps from a DISORDERED start:
+
+                                  burial  hydration  nematic  opposed
+        disordered start (t=0)     0.638      0.405   +0.388    0.500
+        assembled (t=240000)       0.882      0.158   -0.123    0.500
+        PLANTED reference          0.860      0.134   +0.098    0.511
+
+Tail burial rose 0.64 → 0.92 (peak), finishing at 0.88 — **matching and exceeding the planted
+bilayer on every composition metric**. Under the old capped dynamics burial never rose above ~0.6
+from disorder. This is the first step of the documented pathway (monomers → rapid hydrophobic
+collapse into clusters), the step the research said should be FAST and which we were failing
+outright.
+
+**Honest limit:** the aggregate is NOT lamellar — nematic order sits near zero. But so does the
+PLANTED bilayer at these same soft settings, so the assembled state has simply reached the same
+structure the planted one relaxes to. We have hydrophobic aggregation; the ordering steps
+(disc → sheet) are still missing. Softer bonds bought cheap dynamics at the cost of chain rigidity,
+and rigidity is what makes a lamellar phase — that trade is the next thing to tune.
+
 ## Verification gates (any violation disqualifies a result)
 
 1. **Base-case identity** — `--verify` must report `max|ΔX| = 0.00e+00` (new channels default off).

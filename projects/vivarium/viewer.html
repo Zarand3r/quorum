@@ -435,7 +435,10 @@ function draw(al){
                  cb*sa*x + sb*y + cb*ca*z ]);  // cz = depth into the screen
     }
     const order = [...Array(N).keys()].sort((a,b) => cam[b][2] - cam[a][2]);  // far → near
-    const COL = {0:[56,189,248], 2:[148,163,184], 3:[245,158,11], 4:[52,211,153]};
+    // 0 water · 2 oil · 3 legacy lipid rod · 4 single-bead amphiphile ·
+    // 5 lipid HEAD (hydrophilic, blue) · 6 lipid TAIL (hydrophobic, orange)
+    const COL = {0:[56,189,248], 2:[148,163,184], 3:[245,158,11], 4:[52,211,153],
+                 5:[96,165,250], 6:[249,146,58]};
     const zmin = Math.min(...cam.map(c=>c[2])), zmax = Math.max(...cam.map(c=>c[2]));
     const zr = (zmax - zmin) || 1;
     // real spherical harmonics l=1,2 at a unit direction — the SAME basis the engine uses, so the
@@ -478,7 +481,8 @@ function draw(al){
         }
         ctx.closePath(); ctx.fill();
       } else {
-        const r = (sp===0 ? 0.20 : 0.28) * sc * persp;   // rigid molecules: plain spheres
+        // water small; lipid head/tail sized by their dispersion radii so the tails read as bulky
+      const r = (sp===0 ? 0.20 : sp===5 ? 0.24 : 0.30) * sc * persp;
         ctx.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
         ctx.beginPath(); ctx.arc(X3, Y3, r, 0, 7); ctx.fill();
         const h = s.amphi && s.amphi[idx];

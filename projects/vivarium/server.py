@@ -49,6 +49,9 @@ class Sim:
         # restart (e.g. changing the water COUNT re-assigns species). Set after construction.
         self.pseudo: dict = {}
         self.defaults: dict = {}  # canonical showcase knob values → /reset restores these (never stale)
+        self.substeps = 1         # engine steps per displayed frame. A physically-correct timestep
+        #   is much smaller than the old capped one, so without substepping the dish would appear to
+        #   crawl; this restores the apparent rate of motion at proportional CPU cost.
         self.autopause = 0        # if >0, auto-pause when engine.t reaches this step (resumable)
         self.lock = threading.Lock()
         self.engine = self._make(seed)
@@ -85,7 +88,8 @@ class Sim:
             t0 = time.perf_counter()
             if not self.paused:
                 with self.lock:
-                    self.engine.step()
+                    for _ in range(max(1, self.substeps)):
+                        self.engine.step()
                     self._buf.append(self.engine.X[:, :2].copy())  # positions only (cheap)
                 if self.autopause and self.engine.t >= self.autopause:
                     self.paused = True                            # auto-pause at the given step (resumable)
@@ -264,15 +268,20 @@ def main(argv: list[str] | None = None) -> int:
         cfg = replace(cfg, N=190)   # ≈ full-box packing (dish holds ~183 at Ø=1): no free volume
         water_box = [0.90]          #  ⇒ water can't pull away from the walls into a drop; it fills
         lipid_box = [0.08]     # dilute amphiphile lipids in bulk water (0.90 = the water pseudo-cap)
-        amphi_box = [0.0]      # EMERGENT amphiphile (3-D showcase); 0 in the 2-D legacy showcase
+        amphi_box = [0.0]      # EMERGENT single-bead amphiphile (superseded by the chain lipid)
+        chain_box = [0.0]      # 3-BEAD BONDED LIPID — the configuration that actually aggregates
         if args.dim3:
             # 3-D dish: the contour becomes real spherical harmonics (K=2 keeps pos3+shape8+hidden5
             # inside d=16) and the box shrinks so N tokens fill a VOLUME at liquid density. The
             # solute is the EMERGENT amphiphile (a normal token, polar head + neutral tail) — no
             # explicit lipid rod, no k_hydro: membrane behaviour must come from the three forces.
-            cfg = replace(cfg, pos_dim=3, n_harmonics=2, pos_bound=3.0)
-            water_box, lipid_box = [0.75], [0.0]
-            amphi_box[0] = 0.15
+            # 3-D showcase = the VALIDATED chain-lipid physics (docs/BILAYER_REVIEW.md F10/F11):
+            # 3-bead bonded lipids, FDT Langevin with no velocity cap, soft bonds and soft excluded
+            # volume so a physically stable timestep is affordable, attraction range ~1.6 sigma.
+            cfg = replace(cfg, pos_dim=3, n_harmonics=2, pos_bound=4.5)
+            water_box, lipid_box = [0.55], [0.0]
+            amphi_box[0] = 0.0
+            chain_box[0] = 0.36
             # the remaining ~10% are ACTIVE tokens: the original morphing blobs. Water and the
             # amphiphile are RIGID molecules (they only reorient), so without these nothing in the
             # dish would actually morph — the induced-fit deformation vivarium is named for.
@@ -290,10 +299,12 @@ def main(argv: list[str] | None = None) -> int:
             # (polarity, ~10 kT) ≫ van der Waals dispersion (attract, ~1 kT) ~ thermal kT (temperature).
             # Range hierarchy: Pauli (repel) < vdW (attract) < electrostatic (polarity).
             e = PolarPackEngine(cfg, s, water_frac=water_box[0], lipid_frac=lipid_box[0],
-                                amphi_frac=amphi_box[0],
-                                repel=(40.0 if args.dim3 else 5.00),
+                                amphi_frac=amphi_box[0], chain_frac=chain_box[0],
+                                k_bond=8.0,
+                                repel=(4.0 if args.dim3 else 5.00),
                                 attract=0.30, polarity=0.80, cohesion=0.00, skew=0.00,
-                                morph=0.70, momentum=0.30, speed=1.20)   # strong repel = INCOMPRESSIBLE
+                                morph=0.70, momentum=0.30,
+                                speed=(0.10 if args.dim3 else 1.20))
             #  NOTE (2026-07-25): once the electrostatic force was made genuinely conservative, the
             #  dish collapsed at repel=5 (occupancy 29/64). A truly conservative cohesive liquid
             #  condenses unless excluded volume is stiff enough to hold it open: repel=40 → 56/64.
@@ -304,6 +315,10 @@ def main(argv: list[str] | None = None) -> int:
             # own periodic images: at λ=0.25 the kernel is still 0.105 at L/2. λ=0.55 → 7e-3.
             e.sink_repel, e.sink_attract = 6.0, 1.0
             e.sink_polarity = 0.55 if args.dim3 else 0.25
+            if args.dim3:
+                e.sink_attract = 0.39      # attraction range ~1.6 sigma (Cooke's working point)
+                e.langevin = True          # FDT thermostat, no velocity cap
+                e.temperature = 0.02
             e.repel_contact = 1.00     # σ = particle diameter; repel acts only on overlap
             e.rigidity = 0.00
             e.selectivity = 0.30
@@ -328,9 +343,10 @@ def main(argv: list[str] | None = None) -> int:
         server.sim.pseudo = {
             "water": (lambda: water_box[0], lambda v: _restarter(water_box, v, 0.0, 0.9)),
         }
-        if args.dim3:   # emergent amphiphile replaces the explicit lipid rod in 3-D
-            server.sim.pseudo["amphi"] = (lambda: amphi_box[0],
-                                          lambda v: _restarter(amphi_box, v, 0.0, 0.6))
+        if args.dim3:   # bonded chain lipids replace both the rod and the single-bead amphiphile
+            server.sim.substeps = 5        # smaller physical timestep → substep to keep motion legible
+            server.sim.pseudo["lipid_frac"] = (lambda: chain_box[0],
+                                               lambda v: _restarter(chain_box, v, 0.0, 0.6))
         else:
             server.sim.pseudo["lipid"] = (lambda: lipid_box[0],
                                           lambda v: _restarter(lipid_box, v, 0.0, 0.9))
@@ -338,8 +354,8 @@ def main(argv: list[str] | None = None) -> int:
         # with the sliders can never strand the sim (a stale browser tab can't override them).
         server.sim.defaults = {**{k: float(getattr(server.sim.engine, k)) for k in knob_names},
                                "water": water_box[0],
-                               ("amphi" if args.dim3 else "lipid"):
-                                   (amphi_box[0] if args.dim3 else lipid_box[0])}
+                               ("lipid_frac" if args.dim3 else "lipid"):
+                                   (chain_box[0] if args.dim3 else lipid_box[0])}
     print(f"serving: {label}")
     print(
         f"vivarium viewer on http://{args.host}:{server.server_address[1]}\n"
