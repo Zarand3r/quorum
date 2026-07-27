@@ -197,6 +197,50 @@ symmetric ⇒ a rod, which is what packs into a sheet) *hurt* assembly (0.034 �
 demixing. The `l=1` head bulge makes the head sterically distinct, and that appears to be what gets
 heads pointing outward. Recorded because the reasoning was sound and the result still contradicted it.
 
+## Finding 7 — one bead cannot separate head repulsion from tail attraction (2026-07-26)
+
+Four physics-derived attempts to reproduce the required lipid sign pattern from Pauli + vdW +
+electrostatics with a SINGLE interaction site all failed (widen the vdW range; lower the head charge
+to flip lateral cohesion positive; un-saturate the dispersion kernel; make dispersion
+orientation-dependent). The last one was rejected by our own test suite because it routed the charge
+contour back into van der Waals — the shape/charge conflation of Finding 1.
+
+The reason is geometric: a single bead applies head repulsion and tail attraction **at the same
+point**, so no parameter choice can separate them. A real lipid separates them along a ~16-carbon
+tail; SiMPLISTIC separates them by engineering the angular dependence directly.
+
+**Resolution: 3-bead bonded lipids** (head + two tails). A bond is a FIXED PAIR MASK carrying a
+bounded symmetric kernel `tanh((d − r0)/w)` — masked/local attention, which the requirement allows —
+not a harmonic spring. A third bond (head ↔ far tail, rest length = the sum) holds the chain
+straight. Token count is unchanged; beads are existing tokens relabelled into molecules.
+
+Result on the planted-bilayer toy, at bond stiffness 80:
+
+    single bead   leaflet 0.99 -> 0.48 (random)   dry_core 1.00 -> 0.40
+    3-bead chain  leaflet 1.00 -> 1.00            dry_core 1.00 -> 0.98
+
+**The force field now supports a bilayer.** Two tail beads double the tail–tail contact area, so the
+aggregation drive scales with tail length, and water is genuinely excluded from the core. The
+failure mode has therefore moved from "a bilayer is not even a local minimum" to a nucleation
+problem — the good kind.
+
+Self-assembly from a disordered start does NOT yet produce a bilayer. Caveat: the toy's order
+parameters assume the bilayer normal is z, so they would not register a vesicle or an
+arbitrarily-oriented sheet; a normal-agnostic detector is needed before that null is trusted.
+
+## Finding 8 — the dispersion kernel was not a valid mixing rule (2026-07-26)
+
+`tanh(r_i·r_j / S)` applied to the PRODUCT violates `eps_ij² = eps_ii·eps_jj`, and that identity is
+exactly what guarantees a positive mixing energy `ΔE ∝ (√eps_ii − √eps_jj)²` — the hydrophobic
+driving force itself. Measured violation: `eps_ww·eps_tt = 0.089` against `eps_wt² = 0.221`.
+
+Fixed by bounding each token's well depth first and then combining by the exact geometric
+(Lorentz–Berthelot) rule: `eps_i = tanh(r_i²/S)`, `g = √(eps_i·eps_j)`. Like-like interactions are
+unchanged by construction; only the cross term is corrected, and it moves in the hydrophobic
+direction (water–tail 0.470 → 0.299). The hydrophobic driving force triples, +0.144 → +0.486, and
+measured demixing rose 0.330 → 0.435. Single-bead assembly score fell in the same change, but that
+configuration is superseded by the chain lipid.
+
 ## Verification gates (any violation disqualifies a result)
 
 1. **Base-case identity** — `--verify` must report `max|ΔX| = 0.00e+00` (new channels default off).

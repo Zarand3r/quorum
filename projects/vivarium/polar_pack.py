@@ -33,7 +33,17 @@ from config import DEFAULTS, POS_DIM, VivariumConfig
 from pack import PackEngine, _ln
 from rng import base_rng
 
-WATER, ACTIVE, OIL, LIPID, AMPHI = 0, 1, 2, 3, 4
+WATER, ACTIVE, OIL, LIPID, AMPHI, MOL_HEAD, MOL_TAIL = 0, 1, 2, 3, 4, 5, 6
+# A 3-BEAD LIPID: one polar head + two neutral cohesive tail beads, held by BONDS.
+# Why bonds are needed at all: a single bead applies head repulsion and tail attraction AT THE SAME
+# POINT, so the two can never be separated and the required lipid sign pattern is unreachable (four
+# falsified attempts, see docs/BILAYER_REVIEW.md Finding 7). A real lipid separates them along a
+# ~16-carbon tail. Two tail beads also DOUBLE the tail-tail contact area, so the aggregation drive
+# scales with tail length — the mechanism the planted-bilayer toy showed was missing.
+BOND_REST = 1.00      # bonded neighbours sit at contact
+BOND_SPAN = 2.00      # head <-> far tail: rest length = the sum, so the chain is held STRAIGHT
+BOND_W = 0.30         # width of the bounded bond well
+RAD_HEAD, RAD_TAIL = 0.30, 0.95
 _EPS = 1e-9
 # k=0 radius (physical SIZE → van der Waals contact area / polarizability), per species. Water is a
 # SMALL molecule (weak dispersion) but strongly polar; oil and the amphiphile body are BULKY and
@@ -68,8 +78,9 @@ class PolarPackEngine(PackEngine):
     def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2,
                  water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, sink_polarity=0.0,
                  oil_frac=0.0, lipid_frac=0.0, lip_ell=0.55, k_tail=1.5, k_hydro=1.0,
-                 lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.95, **kw):
+                 lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.95, chain_frac=0.0, k_bond=1.5, **kw):
         super().__init__(cfg, seed, **kw)
+        self.k_bond = k_bond         # strength of the bounded bond kernel
         self.aniso = aniso           # how strongly the contour deforms the EXCLUDED VOLUME (0 =
         #   perfect spheres = the old behaviour). Non-zero makes molecules shaped, which is a
         #   precondition for any lamellar (bilayer) phase.
@@ -121,14 +132,81 @@ class PolarPackEngine(PackEngine):
         self._wi = np.where(self.species == WATER)[0]
         self.water_phi = r.uniform(0.0, 2.0 * np.pi, self._wi.size)  # each water's orientation angle
         self.water_u = _rand_unit(r, self._wi.size) if self.pd == 3 else None   # 3-D dipole axis
+        self._build_chains(chain_frac, r)   # relabels part of the ACTIVE pool into 3-bead lipids
         if self._wi.size:
             self.X[self._wi, self.pd:self.pd + self.tK] = 0.0
             self._write_water(self.X[:, self.pd:])
         if self._ai.size:
             self.X[self._ai, self.pd:self.pd + self.tK] = 0.0
             self._write_amphi(self.X[:, self.pd:])
+        if self._hi.size or self._ti.size:
+            self.X[np.concatenate([self._hi, self._ti]), self.pd:self.pd + self.tK] = 0.0
+            self._write_chain(self.X[:, self.pd:])
         self._write_radii(self.X[:, self.pd:])
         self._build_stiffness()
+
+    def _write_chain(self, z):
+        """Lipid head = a rigid point dipole (so water solvates it, by the same electrostatics water
+        uses on itself). Lipid tails = contour 0, i.e. genuinely NEUTRAL — their cohesion is pure
+        dispersion, which is what makes them hydrophobic."""
+        if self._hi.size and self.pd == 3:
+            z[self._hi, :self.tK] = self._axial_coeffs(self.head_u, [self.water_dipole * 1.5, 0.0])
+        if self._ti.size:
+            z[self._ti, :self.tK] = 0.0
+
+    def _build_chains(self, chain_frac, rng):
+        """Carve a whole number of 3-bead lipids out of the ACTIVE pool and wire their bonds.
+
+        Bonds are a FIXED PAIR MASK with a bounded symmetric kernel — i.e. masked/local attention,
+        which the transformer-only requirement explicitly allows. They are NOT harmonic springs:
+        the weight is tanh((d − r0)/w), bounded in both directions, and symmetric so F_ij = −F_ji.
+        Token count is untouched; beads are existing tokens relabelled into molecules."""
+        self._bond_i = np.zeros(0, dtype=int)
+        self._bond_j = np.zeros(0, dtype=int)
+        self._bond_r0 = np.zeros(0)
+        self._hi = np.zeros(0, dtype=int)
+        self._ti = np.zeros(0, dtype=int)
+        self._mol = np.zeros((0, 3), dtype=int)
+        self.head_u = np.zeros((0, 3))
+        n_mol = int(self.cfg.N * chain_frac) // 3
+        if n_mol <= 0:
+            return
+        pool = np.where(self.species == ACTIVE)[0][:3 * n_mol]
+        n_mol = len(pool) // 3
+        if n_mol <= 0:
+            return
+        tri = pool[:3 * n_mol].reshape(n_mol, 3)          # [head, tail1, tail2] per molecule
+        h, t1, t2 = tri[:, 0], tri[:, 1], tri[:, 2]
+        self.species[h] = MOL_HEAD
+        self.species[t1] = MOL_TAIL
+        self.species[t2] = MOL_TAIL
+        self._hi, self._ti = h, np.concatenate([t1, t2])
+        self._mol = tri                                   # (n_mol, 3) = [head, tail1, tail2]
+        self._bond_i = np.concatenate([h, t1, h])
+        self._bond_j = np.concatenate([t1, t2, t2])
+        self._bond_r0 = np.concatenate([np.full(n_mol, BOND_REST), np.full(n_mol, BOND_REST),
+                                        np.full(n_mol, BOND_SPAN)])   # third bond = straightener
+        self.head_u = _rand_unit(rng, len(h)) if self.pd == 3 else np.zeros((len(h), 3))
+        # lay each molecule out along a random axis so it starts extended, not coincident
+        ax = _rand_unit(rng, n_mol) if self.pd == 3 else np.zeros((n_mol, 3))
+        for k, b in enumerate((t1, t2)):
+            self.X[b, :self.pd] = self.X[h, :self.pd] + (k + 1) * BOND_REST * ax[:, :self.pd]
+
+    def _bond_force(self):
+        """Bounded bond kernel over the fixed mask: g = tanh((d − r0)/w), attractive beyond the rest
+        length and repulsive inside it. Symmetric ⇒ conservative. No distance in a denominator."""
+        if not self._bond_i.size:
+            return 0.0
+        p = self.X[:, :self.pd]
+        d = p[self._bond_j] - p[self._bond_i]
+        d = d - self.L * np.round(d / self.L)                 # minimum image
+        dist = np.sqrt((d * d).sum(1) + 1e-4)
+        g = np.tanh((dist - self._bond_r0) / BOND_W)
+        f = (self.k_bond * g / dist)[:, None] * d             # toward the partner when stretched
+        out = np.zeros_like(p)
+        np.add.at(out, self._bond_i, f)
+        np.add.at(out, self._bond_j, -f)
+        return out
 
     def _bearing_nf(self, C, delta, dist):
         """⟨C_i, basis(bearing i→j)⟩ for every ordered pair — the contour each token presents toward
@@ -169,7 +247,7 @@ class PolarPackEngine(PackEngine):
         the old hard overwrite); the amphiphile keeps a rigid head but a floppy splay mode."""
         order = self.mode_orders()                       # harmonic order of each shape channel
         k = np.full((self.cfg.N, self.tK), STIFF_ACTIVE, dtype=float)
-        for idx in (self._wi, self._oi, self._li):
+        for idx in (self._wi, self._oi, self._li, self._hi, self._ti):
             if idx.size:
                 k[idx, :] = STIFF_RIGID
         if self._ai.size:
@@ -274,6 +352,10 @@ class PolarPackEngine(PackEngine):
             z[self._ai, r] = RAD_AMPHI
         if self._li.size:
             z[self._li, r] = RAD_LIPID     # legacy explicit lipid: bulky like a tail
+        if self._hi.size:
+            z[self._hi, r] = RAD_HEAD      # lipid head: small dispersion, cohesion is electrostatic
+        if self._ti.size:
+            z[self._ti, r] = RAD_TAIL      # lipid tail: the cohesive, apolar bead
 
     def _mickey_template(self, scale):
         """Body-frame contour coefficients for a water molecule: two positive H lobes at ±52.25° (the
@@ -369,6 +451,7 @@ class PolarPackEngine(PackEngine):
         """The electrostatic polarity head + the explicit amphiphile (lipid) forces, added to pack.py's
         step. Bounded, bearing-resolved — NO /d² kernel. Reduces to 0 when polarity=0 & no lipids."""
         lipf = self._lipid_force()          # explicit amphiphile forces (0 if no lipids)
+        lipf = lipf + self._bond_force()    # 3-bead lipid bonds (fixed mask, bounded kernel)
         if self.polarity <= 0.0:
             return lipf
         cfg = self.cfg
@@ -473,6 +556,11 @@ class PolarPackEngine(PackEngine):
                 mag = np.linalg.norm(fld, axis=1)
                 self.amphi_phi = self.amphi_phi + self.pol_torque * d * (mag > 1e-6)
             self._write_amphi(self.c_rest)   # rest conformation; stiffness does the pulling
+        if self._hi.size and self.pd == 3 and self.polarity > 0.0 and self._pol_field is not None:
+            self.head_u = self._rotate_toward(self.head_u, self._pol_field[self._hi],
+                                              self.pol_torque)
+        if self._hi.size or self._ti.size:
+            self._write_chain(self.c_rest)
         self._write_radii(z2)
         return z2
 

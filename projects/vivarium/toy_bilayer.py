@@ -25,11 +25,74 @@ import argparse
 import numpy as np
 
 from config import DEFAULTS, VivariumConfig
-from polar_pack import AMPHI, WATER, PolarPackEngine
+from polar_pack import AMPHI, MOL_HEAD, MOL_TAIL, WATER, PolarPackEngine
 
 NEAR = 1.6          # neighbour cutoff, same as the benchmark
 LEAFLET_Z = 0.55    # half the hydrophobic core thickness
 WATER_GAP = 1.15    # water starts beyond this |z|
+
+
+BOND_R = 1.0
+
+
+def build_chain(seed, n_side=4, temperature=0.03, k_bond=1.5, scramble=False):
+    """A planted bilayer of THREE-BEAD lipids: head outermost, then two tail beads reaching into the
+    midplane. This is the geometry a single bead cannot express — head repulsion and tail attraction
+    now act at DIFFERENT points, and tail-tail contact area is doubled."""
+    n_mol = 2 * n_side * n_side
+    n_chain_tok = 3 * n_mol
+    n_water = 2 * n_side * n_side + 6 * n_side
+    N = n_chain_tok + n_water
+    cfg = VivariumConfig(**{**DEFAULTS, "N": N, "pos_dim": 3, "n_harmonics": 2, "pos_bound": 3.0})
+    e = PolarPackEngine(cfg, seed, water_frac=n_water / N, chain_frac=n_chain_tok / N,
+                        repel=40.0, attract=0.30, polarity=1.0, cohesion=0.0, skew=0.0,
+                        morph=0.70, momentum=0.30, speed=1.20, water_dipole=0.8,
+                        aniso=0.0, k_bond=k_bond)
+    e.conservative = True
+    e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, 1.0, 0.55
+    e.repel_contact, e.rigidity, e.selectivity = 1.0, 0.0, 0.30
+    e.temperature = temperature
+    B = cfg.pos_bound
+    mol = e._mol
+    per = len(mol) // 2
+    side = int(np.ceil(np.sqrt(per)))
+    xs = (np.arange(side) + 0.5) / side * (2 * B) - B
+    gx, gy = np.meshgrid(xs, xs, indexing="ij")
+    flat = np.stack([gx.ravel(), gy.ravel()], axis=1)
+    hu = np.zeros((len(e._hi), 3))
+    for leaf, sign in ((0, +1.0), (1, -1.0)):
+        idx = mol[leaf * per:(leaf + 1) * per]
+        pts = flat[:len(idx)]
+        for bead, zoff in enumerate((1.45, 0.90, 0.35)):   # head outermost -> tails at the midplane
+            b = idx[:, bead]
+            e.X[b, 0], e.X[b, 1] = pts[:, 0], pts[:, 1]
+            e.X[b, 2] = sign * zoff
+        hu[leaf * per:(leaf + 1) * per, 2] = sign          # head dipole points out into water
+    e.head_u = hu
+    r = np.random.default_rng(seed + 17)
+    wi = e._wi
+    e.X[wi, 0] = r.uniform(-B, B, len(wi))
+    e.X[wi, 1] = r.uniform(-B, B, len(wi))
+    e.X[wi, 2] = r.uniform(1.75, B, len(wi)) * r.choice([-1.0, 1.0], len(wi))
+    if scramble:
+        # SELF-ASSEMBLY test: throw the same molecules in at random and see whether a bilayer forms
+        # on its own. Each lipid is still laid out extended along a random axis (its bonds fix that),
+        # but molecular positions and orientations are disordered and water is mixed throughout.
+        rr = np.random.default_rng(seed + 91)
+        cen = rr.uniform(-B, B, (len(mol), 3))
+        ax = rr.standard_normal((len(mol), 3))
+        ax /= np.linalg.norm(ax, axis=1, keepdims=True)
+        for bead, off in enumerate((1.0, 0.0, -1.0)):
+            e.X[mol[:, bead], :3] = cen + off * BOND_R * ax
+        e.head_u = ax.copy()
+        e.X[e._wi, :3] = rr.uniform(-B, B, (len(e._wi), 3))
+    e.vel[:] = 0.0
+    e.X[:, e.pd:e.pd + e.tK] = 0.0
+    e._write_water(e.X[:, e.pd:])
+    e._write_chain(e.X[:, e.pd:])
+    e._write_chain(e.c_rest)
+    e._write_radii(e.X[:, e.pd:])
+    return e
 
 
 def build(seed, n_side=6, aniso=0.95, temperature=0.03, satt=1.0, q=2.0):
@@ -88,27 +151,37 @@ def build(seed, n_side=6, aniso=0.95, temperature=0.03, satt=1.0, q=2.0):
 
 # ---------------------------------------------------------------- bilayer order parameters
 
+def _axes(e):
+    """Per-molecule head->tail axis. For a chain that is the real molecular axis; for a single-bead
+    amphiphile it is the stored head vector."""
+    if getattr(e, "_mol", np.zeros((0, 3))).size:
+        h, t = e.X[e._mol[:, 0], :3], e.X[e._mol[:, 2], :3]
+        v = h - t
+        v = v - e.L * np.round(v / e.L)
+        return v / (np.linalg.norm(v, axis=1, keepdims=True) + 1e-9), e.X[e._mol[:, 1], 2]
+    return e.amphi_head(), e.X[e._ai, 2]
+
+
 def nematic_S(e):
     """S = <(3cos²θ − 1)/2> of the head axes about the bilayer normal (z). 1 = perfectly aligned
     along the normal, 0 = isotropic. A bilayer is orientationally ordered ALONG its normal even
     though the two leaflets point opposite ways, so this uses cos² and ignores the sign."""
-    c = e.amphi_head()[:, 2]
+    c = _axes(e)[0][:, 2]
     return float(np.mean(1.5 * c * c - 0.5))
 
 
 def leaflet_correctness(e):
     """Fraction of amphiphiles whose head points AWAY from the midplane — i.e. toward water. This
     is the defining property of a bilayer as opposed to any other dense lipid aggregate."""
-    z = e.X[e._ai, 2]
-    h = e.amphi_head()[:, 2]
-    return float(np.mean(np.sign(z) * h > 0))
+    u, z = _axes(e)
+    return float(np.mean(np.sign(z) * u[:, 2] > 0))
 
 
 def core_dryness(e):
     """Fraction of particles inside the hydrophobic core (|z| < LEAFLET_Z) that are NOT water. A
     real bilayer core excludes water almost completely."""
     z = e.X[:, 2]
-    core = np.abs(z) < LEAFLET_Z
+    core = np.abs(z) < 0.75
     if not core.any():
         return 0.0
     return float(np.mean(e.species[core] != WATER))
@@ -150,6 +223,10 @@ def main(argv=None):
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--aniso", type=float, default=0.95)
     p.add_argument("--kt", type=float, default=0.03)
+    p.add_argument("--chain", action="store_true", help="use 3-BEAD bonded lipids")
+    p.add_argument("--scramble", action="store_true",
+                   help="start DISORDERED — tests self-assembly rather than stability")
+    p.add_argument("--kbond", type=float, default=1.5)
     p.add_argument("--q", type=float, default=2.0,
                    help="amphiphile head charge. The belt carries -q/4 (an unavoidable artefact of "
                         "truncating at l=2), so lateral repulsion scales as q^2 while vdW is fixed.")
@@ -158,8 +235,10 @@ def main(argv=None):
                         "not the depth, is load-bearing: 1-2 sigma gives NO self-assembly, 3 sigma does.")
     a = p.parse_args(argv)
 
-    e = build(a.seed, aniso=a.aniso, temperature=a.kt, satt=a.satt, q=a.q)
-    print(f"planted bilayer: N={e.cfg.N} amphiphiles={len(e._ai)} water={len(e._wi)} "
+    e = (build_chain(a.seed, temperature=a.kt, k_bond=a.kbond, scramble=a.scramble) if a.chain
+         else build(a.seed, aniso=a.aniso, temperature=a.kt, satt=a.satt, q=a.q))
+    n_units = len(e._mol) if a.chain else len(e._ai)
+    print(f"planted bilayer: N={e.cfg.N} lipids={n_units} water={len(e._wi)} chain={a.chain} "
           f"aniso={a.aniso} kT={a.kt} q={a.q} satt={a.satt} (range~{1/a.satt**0.5:.1f} sigma)")
     print("  S = nematic order about the bilayer normal (1 = aligned)")
     print("  leaflet = fraction with the head pointing out toward water (1 = correct bilayer)")

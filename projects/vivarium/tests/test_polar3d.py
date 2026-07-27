@@ -106,9 +106,9 @@ def test_vdw_is_charge_independent():
     """Dispersion must depend on SIZE only. Two tokens with identical radii but wildly different
     charge patterns must feel the same attraction — that is what lets a neutral tail cohere."""
     src = _strip_comments(inspect.getsource(PackEngine.step))
-    line = [ln for ln in src.split("\n") if "np.tanh(rad" in ln]
+    line = [ln for ln in src.split("\n") if "np.tanh(rad" in ln or "np.sqrt(eps" in ln]
     assert line, "contact-area vdW kernel not found in step()"
-    assert "S_comp" not in line[0], "vdW must not read the charge/complementarity term"
+    assert all("S_comp" not in ln for ln in line), "vdW must not read the charge term"
 
 
 def test_conservative_forces_conserve_momentum():

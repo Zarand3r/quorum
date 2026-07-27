@@ -71,6 +71,7 @@ class PackEngine:
         # Real molecules are stiff in some modes and floppy in others (bond stretch ≫ angle bend ≫
         # dihedral torsion), so stiffness is per HARMONIC ORDER, not per molecule. Both default to
         # None ⇒ the whole mechanism is skipped ⇒ base case byte-identical.
+        self.vdw_scale = 0.25   # saturation scale of the per-token dispersion well depth
         self.stiff = None
         self.c_rest = None
         self.rigidity = 0.0     # ELASTIC STIFFNESS: restoring pull of the contour toward its ROUND rest
@@ -289,7 +290,15 @@ class PackEngine:
             # binding term, not dispersion, and sigmoid(0)=0.5 made featureless tokens sticky. Bounded
             # (tanh), symmetric, decaying ⇒ still conservative and still transformer-only.
             rad = np.maximum(self.X[:, self.rad_idx], 0.0)             # k=0 coefficient = size ≥ 0
-            g = np.tanh(rad[:, None] * rad[None, :] / 0.25) * np.exp(-self.sink_attract * d2)
+            # Bound each token's well depth FIRST, then combine by the exact geometric
+            # (Lorentz–Berthelot) rule. tanh(r_i·r_j/S) applied to the product is not a mixing rule:
+            # it violated eps_ij² = eps_ii·eps_jj, which is what guarantees a positive mixing energy
+            # ΔE ∝ (√eps_ii − √eps_jj)² — i.e. the hydrophobic driving force itself. Bounding
+            # per-token keeps the kernel finite while making the mixing rule exact by construction;
+            # like-like interactions are unchanged, only the cross term is corrected (and it moves
+            # in the hydrophobic direction).
+            eps = np.tanh(rad * rad / self.vdw_scale)
+            g = np.sqrt(eps[:, None] * eps[None, :]) * np.exp(-self.sink_attract * d2)
             np.fill_diagonal(g, 0.0)
             attract = -np.einsum("ij,ijc->ic", g, dirn)
         else:
