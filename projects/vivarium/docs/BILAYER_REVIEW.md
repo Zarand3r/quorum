@@ -292,6 +292,35 @@ was refuted), and there is NO verified evidence on 2-D amphiphile self-assembly 
   per step, so it needs roughly a 100x smaller timestep — i.e. ~100x more steps per run. That is a
   cost-structure change, not a tuning knob, and is the next thing to do properly.
 
+## Finding 10 — the timestep is set by the BONDS, and correct dynamics is affordable (2026-07-27)
+
+The FDT Langevin thermostat (Finding 9) looked prohibitively expensive. It is not — the cost was
+misattributed.
+
+**Why stiffness costs compute.** An explicit integrator that overshoots a steep force lands deeper
+in it, gets a larger force, and overshoots more — exponential blow-up. Measured on our own
+integrator, the maximum stable timestep obeys `k × speed = 2.599`, exactly constant across
+stiffnesses. So steps-per-unit-simulated-time scales linearly with the stiffest force in the system.
+The velocity cap never fixed this instability; it clamped the symptom, which is why removing the cap
+exposed it.
+
+**The stiffest term was not the one we blamed.** `repel = 40` was the obvious suspect, but
+`k_bond = 80` is 20× stiffer still, and the bonds — not the excluded volume — were dictating the
+timestep. Softening them is nearly free:
+
+    k_bond=80  speed 0.010   burial 0.914     (1x)
+    k_bond=20  speed 0.040   burial 0.915     (4x cheaper, IDENTICAL quality)
+    k_bond=8   speed 0.100   burial 0.860     (10x cheaper)
+
+**Langevin works once the timestep is honest.** At `repel=4, k_bond=8, speed=0.1` the thermostatted,
+uncapped dynamics holds a planted bilayer at burial 0.86–0.91 — BETTER than the velocity-capped
+control at the same settings (0.779). The earlier conclusion that "Langevin destabilises the
+bilayer" was wrong: it was an unstable timestep, not the thermostat.
+
+Note also that the pre-existing settings were two compounding workarounds — `repel` was raised 5→40
+to stop collapse *under the capped dynamics*, and the cap was then needed to contain the stiffness
+that created. Fixing the dynamics dissolves the reason for both.
+
 ## Verification gates (any violation disqualifies a result)
 
 1. **Base-case identity** — `--verify` must report `max|ΔX| = 0.00e+00` (new channels default off).
