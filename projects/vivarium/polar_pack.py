@@ -87,9 +87,13 @@ class PolarPackEngine(PackEngine):
     def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2,
                  water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, sink_polarity=0.0,
                  oil_frac=0.0, lipid_frac=0.0, lip_ell=0.55, k_tail=1.5, k_hydro=1.0,
-                 lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.95, chain_frac=0.0, k_bond=1.5, **kw):
+                 lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.95, chain_frac=0.0, k_bond=1.5, head_q=1.2, **kw):
         super().__init__(cfg, seed, **kw)
         self.k_bond = k_bond         # strength of the bounded bond kernel
+        self.head_q = head_q         # lipid HEAD dipole magnitude. This sets how strongly water
+        #   solvates the head, and therefore whether heads are FORCED to the aggregate surface.
+        #   Measured balance at head_q=1.2: leaflet cohesion +0.405 vs head solvation +0.343, a
+        #   margin of only +0.062 — thin enough that a dense disordered blob competes with a sheet.
         self.aniso = aniso           # how strongly the contour deforms the EXCLUDED VOLUME (0 =
         #   perfect spheres = the old behaviour). Non-zero makes molecules shaped, which is a
         #   precondition for any lamellar (bilayer) phase.
@@ -160,7 +164,7 @@ class PolarPackEngine(PackEngine):
         uses on itself). Lipid tails = contour 0, i.e. genuinely NEUTRAL — their cohesion is pure
         dispersion, which is what makes them hydrophobic."""
         if self._hi.size:
-            q = self.water_dipole * 1.5
+            q = self.head_q
             if self.pd == 3:
                 z[self._hi, :self.tK] = self._axial_coeffs(self.head_u, [q, 0.0])
             else:

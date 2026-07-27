@@ -374,6 +374,37 @@ slab AND a comparable water slab, and both scale with L³:
 So the honest position is that the ordering step remains unsolved, and testing it properly costs
 hours per run rather than minutes.
 
+## Finding 13 — two measurement bugs, and the balance that actually decides the phase (2026-07-27)
+
+**The planted bilayer was strained.** The reference structure placed beads at z-offsets
+(2.0, 1.2, 0.4), i.e. 0.8 apart, against a bond rest length of 1.0. Every bond therefore started
+**20% compressed**, and the bond force expanded each molecule the instant the run began. The
+"reference bilayer" was never at mechanical equilibrium, so it disrupted itself before the pair
+forces could be judged. Corrected to (2.4, 1.4, 0.4), which matches both `BOND_REST` and `BOND_SPAN`.
+The bilayer still melts, so this was not the cause, but every earlier planted-bilayer number was
+measured on a strained lattice.
+
+**The nematic baseline is −1/3, not 0.** For random unit vectors in 3-D,
+`<2(u·u')² − 1> = 2/3 − 1 = −0.333` (verified numerically at −0.331 over 200k samples). Post-relaxation
+values near −0.20 are therefore WEAKLY ORDERED rather than disordered, and reading 0 as the
+disordered baseline overstated every decay.
+
+**The force balance that decides sheet vs blob.** Measured at contact for the 3-bead lipid:
+
+    leaflet cohesion (1 head + 2 tail lateral contacts)   +0.405
+    head solvation  (pulls a lipid out into water)        +0.343
+    margin favouring an ordered sheet                     +0.062
+    hydrophobic drive (tail-tail 0.173 - tail-water 0.052) +0.121
+
+The margin is thin, which is why a dense disordered blob competes with a sheet and wins: a blob
+maximises tail-tail contacts, and the observed signature matches exactly (burial rises to 0.93 while
+nematic falls). Raising head solvation by increasing the head dipole to 2.0, 3.0 and 4.0 does not
+rescue it, so the deficit is not simply a head-charge deficit.
+
+**Ruled out so far** as the cause of the melt: temperature (including kT=0), stiffness across a
+factor of ten, lipid count, box size, bond strain, and head charge. The steric packing parameter is
+already 0.67, inside the bilayer window, so the drawn geometry is not the blocker either.
+
 ## Verification gates (any violation disqualifies a result)
 
 1. **Base-case identity** — `--verify` must report `max|ΔX| = 0.00e+00` (new channels default off).

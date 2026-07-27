@@ -10,8 +10,9 @@ sheet or a disc all register:
 
     burial     of a TAIL bead's close neighbours, the fraction that are not water.
     hydration  of a HEAD bead's close neighbours, the fraction that ARE water.
-    nematic    <2(u_i·u_j)² − 1> over neighbouring lipid pairs — lamellar order, ~0 for a
-               disordered blob, high for any locally flat sheet.
+    nematic    <2(u_i·u_j)² − 1> over neighbouring lipid pairs. In 3-D the ISOTROPIC baseline is
+               −1/3, not 0 (verified numerically), so the scale runs −0.33 (random) → +1 (aligned).
+               Reading 0 as "disordered" understates how much residual order a value near −0.2 has.
     opposed    of neighbouring lipid pairs, the fraction pointing OPPOSITE ways. THIS is what
                separates a bilayer from a micelle: a bilayer has two leaflets meeting tail-to-tail,
                so close neighbours are frequently antiparallel. In a micelle every lipid points
@@ -38,7 +39,7 @@ LIP_LEN = 2.0                # head -> far tail
 NEAR = 1.6
 
 
-def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False):
+def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False, head_q=1.2):
     side = 2.0 * bound
     # water fills whatever the lipids do not, at roughly liquid packing
     lip_vol = 3 * n_lip * (4 / 3) * math.pi * 0.5 ** 3
@@ -47,7 +48,8 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False)
     cfg = VivariumConfig(**{**DEFAULTS, "N": N, "pos_dim": 3, "n_harmonics": 2, "pos_bound": bound})
     e = PolarPackEngine(cfg, seed, water_frac=n_wat / N, chain_frac=3 * n_lip / N,
                         repel=repel, attract=0.30, polarity=0.80, cohesion=0.0, skew=0.0,
-                        morph=0.70, momentum=0.30, speed=speed, water_dipole=0.8, k_bond=k_bond)
+                        morph=0.70, momentum=0.30, speed=speed, water_dipole=0.8, k_bond=k_bond,
+                        head_q=head_q)
     e.conservative = True
     e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, satt, spol
     e.repel_contact, e.rigidity, e.selectivity, e.temperature = 1.0, 0.0, 0.30, kt
@@ -65,13 +67,17 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False)
         for leaf, sgn in ((0, +1.0), (1, -1.0)):
             idx = mol[leaf * per:(leaf + 1) * per]
             pts = flat[:len(idx)]
-            for bead, off in enumerate((2.0, 1.2, 0.4)):
+            # 1.0 spacing to match BOND_REST, and 2.0 head-to-far-tail to match BOND_SPAN. The
+            # previous offsets (2.0, 1.2, 0.4) gave 0.8 spacing, so every bond started 20%
+            # compressed and the bond force tore the planted lattice apart before the pair forces
+            # could be judged at all.
+            for bead, off in enumerate((2.4, 1.4, 0.4)):
                 e.X[idx[:, bead], 0] = pts[:, 0]
                 e.X[idx[:, bead], 1] = pts[:, 1]
                 e.X[idx[:, bead], 2] = sgn * off
             hu[leaf * per:(leaf + 1) * per, 2] = sgn
         e.head_u = hu
-        z = rng.uniform(2.4, B, len(e._wi)) * rng.choice([-1.0, 1.0], len(e._wi))
+        z = rng.uniform(3.0, B, len(e._wi)) * rng.choice([-1.0, 1.0], len(e._wi))
         e.X[e._wi, 0] = rng.uniform(-B, B, len(e._wi))
         e.X[e._wi, 1] = rng.uniform(-B, B, len(e._wi))
         e.X[e._wi, 2] = z
@@ -136,17 +142,19 @@ def main(argv=None):
     p.add_argument("--kbond", type=float, default=8.0)
     p.add_argument("--satt", type=float, default=0.55)
     p.add_argument("--spol", type=float, default=0.90)
+    p.add_argument("--headq", type=float, default=1.2)
     p.add_argument("--plant", action="store_true")
     a = p.parse_args(argv)
 
-    e = build(a.seed, a.lipids, a.bound, a.kt, a.speed, a.repel, a.kbond, a.satt, a.spol, a.plant)
+    e = build(a.seed, a.lipids, a.bound, a.kt, a.speed, a.repel, a.kbond, a.satt, a.spol,
+              a.plant, a.headq)
     side = 2 * a.bound
     need = 2 * side * side / APL
     print(f"N={e.cfg.N}  lipids={len(e._mol)}  water={len(e._wi)}  box={side:.1f}  "
           f"{'PLANTED' if a.plant else 'DISORDERED'}")
     print(f"  a spanning bilayer needs ~{need:.0f} lipids; solvent slab {(side - 2*LIP_LEN)/2:.1f} per side")
     print(f"  min-image margin {e.min_image_margin():.4f} (gate < 0.01)")
-    print("   step   burial  hydration  nematic  opposed  cells")
+    print("   step   burial  hydration  nematic  opposed  cells   [nematic: -0.33 random, +1 aligned]")
     for t in range(0, a.steps + 1, a.every):
         b, h, n, o, c = metrics(e)
         print(f"  {t:6d}   {b:.3f}     {h:.3f}   {n:+.3f}   {o:.3f}   {c}/64", flush=True)
