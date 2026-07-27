@@ -149,8 +149,15 @@ class PolarPackEngine(PackEngine):
         """Lipid head = a rigid point dipole (so water solvates it, by the same electrostatics water
         uses on itself). Lipid tails = contour 0, i.e. genuinely NEUTRAL — their cohesion is pure
         dispersion, which is what makes them hydrophobic."""
-        if self._hi.size and self.pd == 3:
-            z[self._hi, :self.tK] = self._axial_coeffs(self.head_u, [self.water_dipole * 1.5, 0.0])
+        if self._hi.size:
+            q = self.water_dipole * 1.5
+            if self.pd == 3:
+                z[self._hi, :self.tK] = self._axial_coeffs(self.head_u, [q, 0.0])
+            else:
+                # 2-D: the k=1 circular harmonic IS a dipole — nf(θ) = q·cos(θ − φ)
+                z[self._hi, :self.tK] = 0.0
+                z[self._hi, 0] = q * np.cos(self.head_phi)
+                z[self._hi, 1] = q * np.sin(self.head_phi)
         if self._ti.size:
             z[self._ti, :self.tK] = 0.0
 
@@ -168,6 +175,7 @@ class PolarPackEngine(PackEngine):
         self._ti = np.zeros(0, dtype=int)
         self._mol = np.zeros((0, 3), dtype=int)
         self.head_u = np.zeros((0, 3))
+        self.head_phi = np.zeros(0)
         n_mol = int(self.cfg.N * chain_frac) // 3
         if n_mol <= 0:
             return
@@ -187,6 +195,7 @@ class PolarPackEngine(PackEngine):
         self._bond_r0 = np.concatenate([np.full(n_mol, BOND_REST), np.full(n_mol, BOND_REST),
                                         np.full(n_mol, BOND_SPAN)])   # third bond = straightener
         self.head_u = _rand_unit(rng, len(h)) if self.pd == 3 else np.zeros((len(h), 3))
+        self.head_phi = rng.uniform(0.0, 2.0 * np.pi, len(h))      # 2-D head dipole bearing
         # lay each molecule out along a random axis so it starts extended, not coincident
         ax = _rand_unit(rng, n_mol) if self.pd == 3 else np.zeros((n_mol, 3))
         for k, b in enumerate((t1, t2)):
@@ -556,9 +565,15 @@ class PolarPackEngine(PackEngine):
                 mag = np.linalg.norm(fld, axis=1)
                 self.amphi_phi = self.amphi_phi + self.pol_torque * d * (mag > 1e-6)
             self._write_amphi(self.c_rest)   # rest conformation; stiffness does the pulling
-        if self._hi.size and self.pd == 3 and self.polarity > 0.0 and self._pol_field is not None:
-            self.head_u = self._rotate_toward(self.head_u, self._pol_field[self._hi],
-                                              self.pol_torque)
+        if self._hi.size and self.polarity > 0.0 and self._pol_field is not None:
+            fld = self._pol_field[self._hi]
+            if self.pd == 3:
+                self.head_u = self._rotate_toward(self.head_u, fld, self.pol_torque)
+            else:
+                tgt = np.arctan2(fld[:, 1], fld[:, 0])
+                dphi = np.arctan2(np.sin(tgt - self.head_phi), np.cos(tgt - self.head_phi))
+                mag = np.linalg.norm(fld, axis=1)
+                self.head_phi = self.head_phi + self.pol_torque * dphi * (mag > 1e-6)
         if self._hi.size or self._ti.size:
             self._write_chain(self.c_rest)
         self._write_radii(z2)
@@ -566,6 +581,16 @@ class PolarPackEngine(PackEngine):
 
     # NOTE: no step() override — we inherit PackEngine.step() and only add the two hooks above, so
     # with polarity=0 and water_frac=0 the trajectory is byte-identical to the previous vivarium.
+
+    def chain_axis(self):
+        """Per-molecule head→tail unit axis, (n_mol, pos_dim). The real molecular axis of a chain."""
+        if not getattr(self, "_mol", np.zeros((0, 3))).size:
+            return np.zeros((0, self.pd))
+        h = self.X[self._mol[:, 0], :self.pd]
+        t = self.X[self._mol[:, 2], :self.pd]
+        v = h - t
+        v = v - self.L * np.round(v / self.L)
+        return v / (np.linalg.norm(v, axis=1, keepdims=True) + _EPS)
 
     def amphi_head(self):
         """Unit vector along each amphiphile's HEAD direction, shape (n_amphi, POS_DIM). STABLE

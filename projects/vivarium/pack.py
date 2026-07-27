@@ -32,6 +32,7 @@ _LN_EPS = 1e-5
 _MLP_H = 2
 _DIR_EPS = 1e-4  # softening for the unit-direction normalisation (not a force kernel)
 _THERMAL = 0.15  # Langevin kick per unit temperature (kT → Brownian displacement)
+_LANGEVIN_KT = 0.08   # velocity-noise scale for the FDT thermostat (see step())
 _SHAPE_THERMAL = 0.02  # the same thermostat acting on CONFORMATION (kT → shape fluctuation). Real
 #   molecules deform because thermal energy pays the elastic cost, so flexibility must EMERGE from
 #   the ratio kT/k, not be dialled in. Calibrated so the equilibrium variance is exactly
@@ -71,6 +72,12 @@ class PackEngine:
         # Real molecules are stiff in some modes and floppy in others (bond stretch ≫ angle bend ≫
         # dihedral torsion), so stiffness is per HARMONIC ORDER, not per molecule. Both default to
         # None ⇒ the whole mechanism is skipped ⇒ base case byte-identical.
+        self.langevin = False   # True → proper inertial LANGEVIN dynamics: the thermal kick goes on
+        #   VELOCITY with the amplitude the fluctuation–dissipation theorem requires for the given
+        #   damping, and the per-particle speed cap is disabled. Every coarse-grained lipid model
+        #   that demonstrably NUCLEATES uses an FDT-satisfying thermostat with no velocity cap;
+        #   velocity-capped overdamped relaxation has no precedent in that literature. Default False
+        #   keeps the base case byte-identical.
         self.vdw_scale = 0.25   # saturation scale of the per-token dispersion well depth
         self.stiff = None
         self.c_rest = None
@@ -349,14 +356,24 @@ class PackEngine:
         # force + this inertia (and in the true overdamped limit the solvent absorbs momentum anyway).
         self.vel = self.momentum * self.vel + force
 
-        # cap per-step displacement so nothing zips across the dish (overshoot control)
-        sp = np.linalg.norm(self.vel, axis=1, keepdims=True)
-        self.vel = np.where(sp > self.maxvel, self.vel * self.maxvel / (sp + 1e-9), self.vel)
+        if self.langevin:
+            # Discrete Ornstein–Uhlenbeck velocity update: v ← γv + F + σξ with σ² = (1−γ²)·kT.
+            # That choice is exactly what makes the stationary variance ⟨v²⟩ = kT — i.e. it
+            # SATISFIES fluctuation–dissipation, so the same γ that damps also sets the noise. The
+            # speed cap is skipped: capping is an external, non-thermal intervention that removes
+            # precisely the rare large excursions a nucleation event needs.
+            sig = np.sqrt(max(0.0, 1.0 - self.momentum ** 2) * _LANGEVIN_KT * self.temperature)
+            if sig > 0.0:
+                self.vel = self.vel + sig * rng_for(self.seed + 4241, self.t).standard_normal(self.vel.shape)
+        else:
+            # cap per-step displacement so nothing zips across the dish (overshoot control)
+            sp = np.linalg.norm(self.vel, axis=1, keepdims=True)
+            self.vel = np.where(sp > self.maxvel, self.vel * self.maxvel / (sp + 1e-9), self.vel)
         p = self.X[:, :self.pd] + self.speed * self.vel
         # REAL TEMPERATURE = thermal (Langevin) noise: seeded Brownian kicks ∝ temperature. Higher →
         # more disorder, melts structure, prevents freezing — the thermodynamically-correct direction
         # (unlike `selectivity`, the softmax τ). The one non-attention op; genuine thermal physics.
-        if self.temperature > 0.0:
+        if self.temperature > 0.0 and not self.langevin:
             p = p + _THERMAL * self.temperature * rng_for(self.seed, self.t).standard_normal(p.shape)
         p = ((p + cfg.pos_bound) % self.L) - cfg.pos_bound  # wrap to the torus
 

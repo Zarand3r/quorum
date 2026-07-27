@@ -148,6 +148,15 @@ py_binary(
 )
 
 py_binary(
+    name = "toy2d",
+    srcs = ["toy2d.py"],
+    main = "toy2d.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
+py_binary(
     name = "charged",
     srcs = ["charged.py"],
     main = "charged.py",

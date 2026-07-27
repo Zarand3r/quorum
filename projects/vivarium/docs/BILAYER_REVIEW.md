@@ -241,6 +241,57 @@ direction (water–tail 0.470 → 0.299). The hydrophobic driving force triples,
 measured demixing rose 0.330 → 0.435. Single-bead assembly score fell in the same change, but that
 configuration is superseded by the chain lipid.
 
+## Finding 9 — nothing is categorically missing; it is parameters and dynamics (2026-07-27)
+
+A verified literature sweep (adversarially checked, 3-0 votes unless noted) settles what we are and
+are not missing:
+
+- **Nothing is blocked in principle.** Spontaneous nucleation is demonstrated repeatedly with
+  STRICTLY LESS physics than we have — Noguchi & Takasu 2001 (rigid rods, solvent-free, no
+  electrostatics), Cooke-Deserno 2005, Marrink & Mark 2003. The failure is parameterisation or
+  dynamics, not a missing force.
+- **Long-range electrostatics is NOT the blocker** — directly falsified by a PME control run, and
+  overdetermined by models with zero electrostatics assembling fine. Our lack of Ewald is fine.
+- **Water entropy is NOT required.** An energetic surrogate for hydrophobicity suffices.
+- **Chain conformational entropy is NOT required** — rigid rods nucleate vesicles. So "too few tail
+  beads / too stiff bonds" is a low-priority suspect.
+- **Multibody density terms are an improvement, not a requirement** (they lower the CMC).
+
+The two live suspects, and one exact diagnosis:
+
+1. **Attraction range.** Cooke-Deserno call the decay range `w_c` "the key tuning parameter": the
+   fluid-membrane region "disappears completely" below ~0.7 sigma, plain Lennard-Jones corresponds
+   to ~0.7 sigma, and their working bilayers use ~1.6 sigma. Our ~1 sigma sits at the bottom edge of
+   the viable window.
+2. **Dynamics.** Every CG model that demonstrably nucleates uses an FDT-satisfying inertial
+   Langevin, Brownian or DPD thermostat with NO velocity cap. Velocity-capped overdamped relaxation
+   has no precedent (argument from silence — no source tests it directly).
+3. **Sahrmann & Voth 2024 describe our exact symptom**: bottom-up CG lipid models validated only
+   near the assembled-bilayer minimum are stable-when-planted yet incapable of self-assembly.
+   **"A planted bilayer is stable" is a confirmed-INSUFFICIENT test of a potential.**
+
+Documented pathway: monomers → rapid hydrophobic collapse into clusters/micelles → threadlike →
+disc → closure. The slow step is LATE topological closure, not initial aggregation — so our failure
+at the *first* (supposedly rapid) step points at the driving force or the dynamics, not patience.
+
+Unanswered by the sweep: no verified minimum lipid count / CMC / box size (every lower-bound claim
+was refuted), and there is NO verified evidence on 2-D amphiphile self-assembly at all.
+
+### What we did with it
+
+- Built `toy2d.py`: a fast 2-D testbed with ORIENTATION-AGNOSTIC order parameters (burial,
+  hydration, local nematic, two-leaflet "opposed"), fixing the 3-D toy's flaw of measuring order
+  only about z — which would score a vesicle or tilted sheet as zero.
+- **Found a setup bug: the first 2-D box was at 127% areal coverage — jammed.** Nothing could
+  rearrange. Unjammed to ~50%, local nematic order reaches +0.875 and burial rises 0.48 → 0.61
+  (planted reference 0.86). Lipids now align but do not fully segregate.
+- Implemented FDT-satisfying inertial Langevin (`engine.langevin`, default OFF so the base case is
+  byte-identical): the kick goes on VELOCITY with sigma^2 = (1-gamma^2)*kT, so the same damping that
+  dissipates also sets the noise, and the speed cap is skipped.
+  **It is not yet usable**: without the cap our stiff excluded volume (repel=40) produces ~5 sigma
+  per step, so it needs roughly a 100x smaller timestep — i.e. ~100x more steps per run. That is a
+  cost-structure change, not a tuning knob, and is the next thing to do properly.
+
 ## Verification gates (any violation disqualifies a result)
 
 1. **Base-case identity** — `--verify` must report `max|ΔX| = 0.00e+00` (new channels default off).
