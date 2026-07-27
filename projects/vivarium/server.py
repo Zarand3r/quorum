@@ -333,7 +333,10 @@ def main(argv: list[str] | None = None) -> int:
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     server.sim = Sim(cfg, seed, args.hz, make_engine, knob_names)
     if args.polar:
-        server.sim.autopause = 5000       # auto-pause at 5000 steps (resumable / restart resumes)
+        # auto-pause well past the assembly transient. With substepping the 3-D showcase covers
+        # 5000 steps in seconds, and once t exceeds the limit it re-pauses every tick, so a low
+        # value made the dish look permanently frozen.
+        server.sim.autopause = 0 if args.dim3 else 5000
 
         def _restarter(box, v, lo, hi):
             v = max(lo, min(hi, v))
