@@ -157,6 +157,15 @@ py_binary(
 )
 
 py_binary(
+    name = "bilayer3d",
+    srcs = ["bilayer3d.py"],
+    main = "bilayer3d.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
+py_binary(
     name = "charged",
     srcs = ["charged.py"],
     main = "charged.py",

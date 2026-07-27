@@ -343,6 +343,37 @@ structure the planted one relaxes to. We have hydrophobic aggregation; the order
 (disc → sheet) are still missing. Softer bonds bought cheap dynamics at the cost of chain rigidity,
 and rigidity is what makes a lamellar phase — that trade is the next thing to tune.
 
+## Finding 12 — a planted bilayer does not survive at ANY tested setting in 3-D (2026-07-27)
+
+`bilayer3d.py` sizes the system from geometry rather than guesswork and measures with
+orientation-agnostic order parameters. Two metric bugs were fixed first: the `opposed` pair cutoff
+(2.0) was SMALLER than the ~2.4 spacing between leaflets, so it read 0.000 on a perfect planted
+bilayer; and water sized as a single molecule (r=0.30) made filling a box cost ~4.6x more beads, so
+water is now a MARTINI-style bead (~4 molecules, r=0.50, the standard convention and the reason CG
+force fields coarse-grain solvent this way).
+
+A hand-planted bilayer at side 8 starts at nematic +0.978 / opposed 0.322 and decays within 4000
+steps in every regime tested:
+
+    kT   0.020 / 0.006 / 0.002 / 0.000   -> nematic -0.29 / -0.20 / -0.25 / -0.21
+    soft  (repel 12, k_bond 8,  speed 0.08)  -> -0.197
+    stiff (repel 40, k_bond 80, speed 0.01)  -> -0.301
+    mid   (repel 25, k_bond 30, speed 0.02)  -> -0.183
+
+**Zero temperature melts it just as fast**, so this is not thermal and not a timestep artefact — the
+lamellar phase is simply not stable under this force field. Raising the lipid count helps burial but
+not order: 148 lipids reach burial 0.930 while hydration COLLAPSES to 0.076, i.e. a dense lipid blob
+with the water squeezed out, which is the opposite of a bilayer.
+
+**The system-size squeeze, quantified.** A solvated spanning bilayer needs both a full hydrophobic
+slab AND a comparable water slab, and both scale with L³:
+
+    side  8:  98 lipids + 220 water = N  513   7.3x pair work  (~45 steps/s)
+    side 10: 153 lipids + 516 water = N  974  26.3x pair work  (~13 steps/s)
+
+So the honest position is that the ordering step remains unsolved, and testing it properly costs
+hours per run rather than minutes.
+
 ## Verification gates (any violation disqualifies a result)
 
 1. **Base-case identity** — `--verify` must report `max|ΔX| = 0.00e+00` (new channels default off).

@@ -48,7 +48,11 @@ RAD_HEAD, RAD_TAIL = 0.30, 0.95
 # one sigma because a water BEAD is four real waters; ours is a SINGLE dipolar water (~2.8 A) against
 # a lipid bead (~4.7 A), so water should be ~0.6x. Giving every species the same diameter was the
 # inaccuracy — bonded beads then sat at exactly one water-diameter apart.
-SIG_WATER, SIG_BEAD = 0.30, 0.50
+# One coarse-grained water bead stands for ~4 real molecules (the MARTINI convention), so it is
+# the same size as every other bead. A literal single-molecule radius (0.30) is more faithful to one
+# H2O, but then filling a box costs ~4.6x as many beads and the solvent dominates the O(N^2) work —
+# which is exactly why the standard force fields coarse-grain water this way.
+SIG_WATER, SIG_BEAD = 0.50, 0.50
 _EPS = 1e-9
 # k=0 radius (physical SIZE → van der Waals contact area / polarizability), per species. Water is a
 # SMALL molecule (weak dispersion) but strongly polar; oil and the amphiphile body are BULKY and
