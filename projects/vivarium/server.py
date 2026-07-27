@@ -290,9 +290,11 @@ def main(argv: list[str] | None = None) -> int:
             #  pos_bound 3.2 -> ~38% packing: a proper dense liquid. At 4.5 it was 14%, which is
             #  BELOW liquid density, so the water had no choice but to phase-separate into droplets
             #  and vapour — that was the clustering, not a defect in the water model.
-            water_box, lipid_box = [0.55], [0.0]
+            #  water + lipids ONLY — no generic morphing tokens, so nothing confounds the bilayer
+            #  experiment. The fractions sum to 1 and any remainder is converted to solvent.
+            water_box, lipid_box = [0.60], [0.0]
             amphi_box[0] = 0.0
-            chain_box[0] = 0.36
+            chain_box[0] = 0.40
             # the remaining ~10% are ACTIVE tokens: the original morphing blobs. Water and the
             # amphiphile are RIGID molecules (they only reorient), so without these nothing in the
             # dish would actually morph — the induced-fit deformation vivarium is named for.
@@ -311,7 +313,7 @@ def main(argv: list[str] | None = None) -> int:
             # Range hierarchy: Pauli (repel) < vdW (attract) < electrostatic (polarity).
             e = PolarPackEngine(cfg, s, water_frac=water_box[0], lipid_frac=lipid_box[0],
                                 amphi_frac=amphi_box[0], chain_frac=chain_box[0],
-                                k_bond=8.0,
+                                k_bond=8.0, no_active=args.dim3,
                                 repel=(12.0 if args.dim3 else 5.00),
                                 attract=0.30, polarity=0.80, cohesion=0.00, skew=0.00,
                                 morph=0.70, momentum=0.30,

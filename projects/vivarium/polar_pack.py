@@ -83,7 +83,7 @@ class PolarPackEngine(PackEngine):
     def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2,
                  water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, sink_polarity=0.0,
                  oil_frac=0.0, lipid_frac=0.0, lip_ell=0.55, k_tail=1.5, k_hydro=1.0,
-                 lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.95, chain_frac=0.0, k_bond=1.5, **kw):
+                 lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.95, chain_frac=0.0, k_bond=1.5, no_active=False, **kw):
         super().__init__(cfg, seed, **kw)
         self.k_bond = k_bond         # strength of the bounded bond kernel
         self.aniso = aniso           # how strongly the contour deforms the EXCLUDED VOLUME (0 =
@@ -137,7 +137,7 @@ class PolarPackEngine(PackEngine):
         self._wi = np.where(self.species == WATER)[0]
         self.water_phi = r.uniform(0.0, 2.0 * np.pi, self._wi.size)  # each water's orientation angle
         self.water_u = _rand_unit(r, self._wi.size) if self.pd == 3 else None   # 3-D dipole axis
-        self._build_chains(chain_frac, r)   # relabels part of the ACTIVE pool into 3-bead lipids
+        self._build_chains(chain_frac, r, no_active)   # ACTIVE pool → 3-bead lipids
         if self._wi.size:
             self.X[self._wi, self.pd:self.pd + self.tK] = 0.0
             self._write_water(self.X[:, self.pd:])
@@ -167,7 +167,7 @@ class PolarPackEngine(PackEngine):
         if self._ti.size:
             z[self._ti, :self.tK] = 0.0
 
-    def _build_chains(self, chain_frac, rng):
+    def _build_chains(self, chain_frac, rng, no_active=False):
         """Carve a whole number of 3-bead lipids out of the ACTIVE pool and wire their bonds.
 
         Bonds are a FIXED PAIR MASK with a bounded symmetric kernel — i.e. masked/local attention,
@@ -202,6 +202,16 @@ class PolarPackEngine(PackEngine):
                                         np.full(n_mol, BOND_SPAN)])   # third bond = straightener
         self.head_u = _rand_unit(rng, len(h)) if self.pd == 3 else np.zeros((len(h), 3))
         self.head_phi = rng.uniform(0.0, 2.0 * np.pi, len(h))      # 2-D head dipole bearing
+        if no_active:
+            # Species are drawn at random, so the ACTIVE pool is almost never an exact multiple of
+            # three and a few tokens are always left over. Turn them into solvent so the dish holds
+            # ONLY water and lipids — no third species to confound a bilayer experiment.
+            left = np.where(self.species == ACTIVE)[0]
+            if left.size:
+                self.species[left] = WATER
+                self._wi = np.where(self.species == WATER)[0]
+                self.water_phi = rng.uniform(0.0, 2.0 * np.pi, self._wi.size)
+                self.water_u = _rand_unit(rng, self._wi.size) if self.pd == 3 else None
         # lay each molecule out along a random axis so it starts extended, not coincident
         if self.pd == 3:
             ax = _rand_unit(rng, n_mol)
