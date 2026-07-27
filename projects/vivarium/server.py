@@ -52,7 +52,10 @@ class Sim:
         self.substeps = 1         # engine steps per displayed frame. A physically-correct timestep
         #   is much smaller than the old capped one, so without substepping the dish would appear to
         #   crawl; this restores the apparent rate of motion at proportional CPU cost.
-        self.autopause = 0        # if >0, auto-pause when engine.t reaches this step (resumable)
+        self.autopause = 0        # if >0, auto-pause ONCE when engine.t reaches this step. It must
+        #   latch: without the flag it re-pauses on every subsequent tick, so pressing resume looks
+        #   like it does nothing (which is exactly what happened once substepping sped the sim up).
+        self._autopaused = False
         self.lock = threading.Lock()
         self.engine = self._make(seed)
         self.paused = False
@@ -91,8 +94,10 @@ class Sim:
                     for _ in range(max(1, self.substeps)):
                         self.engine.step()
                     self._buf.append(self.engine.X[:, :2].copy())  # positions only (cheap)
-                if self.autopause and self.engine.t >= self.autopause:
-                    self.paused = True                            # auto-pause at the given step (resumable)
+                if (self.autopause and not self._autopaused
+                        and self.engine.t >= self.autopause):
+                    self._autopaused = True
+                    self.paused = True                # fires once; resume then works normally
             # sleep the *remaining* time so the cadence is stable regardless of step cost
             time.sleep(max(0.0, dt - (time.perf_counter() - t0)))
 
@@ -146,6 +151,7 @@ class Sim:
             self.vel_reset()
             self._alive = 0.0
             self._buf.clear()
+        self._autopaused = False   # a fresh run may auto-pause again
         self.paused = False        # a restart resumes (past any auto-pause)
 
     def vel_reset(self) -> None:
@@ -336,7 +342,7 @@ def main(argv: list[str] | None = None) -> int:
         # auto-pause well past the assembly transient. With substepping the 3-D showcase covers
         # 5000 steps in seconds, and once t exceeds the limit it re-pauses every tick, so a low
         # value made the dish look permanently frozen.
-        server.sim.autopause = 0 if args.dim3 else 5000
+        server.sim.autopause = 5000
 
         def _restarter(box, v, lo, hi):
             v = max(lo, min(hi, v))
@@ -347,7 +353,8 @@ def main(argv: list[str] | None = None) -> int:
             "water": (lambda: water_box[0], lambda v: _restarter(water_box, v, 0.0, 0.9)),
         }
         if args.dim3:   # bonded chain lipids replace both the rod and the single-bead amphiphile
-            server.sim.substeps = 5        # smaller physical timestep → substep to keep motion legible
+            server.sim.substeps = 10       # smaller physical timestep → substep to keep motion legible
+            #   (the 2.2x step-loop speedup doubled the affordable substep count)
             server.sim.pseudo["lipid_frac"] = (lambda: chain_box[0],
                                                lambda v: _restarter(chain_box, v, 0.0, 0.6))
         else:

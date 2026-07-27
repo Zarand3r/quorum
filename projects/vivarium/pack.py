@@ -205,6 +205,16 @@ class PackEngine:
         return np.where(denom > 0, e / np.where(denom > 0, denom, 1.0), 0.0)
 
     def _periodic_delta(self):
+        # Cached per tick. This builds an (N,N,pos_dim) tensor and was being rebuilt from scratch by
+        # both step() and _extra_force() every step — the single largest redundant cost in the loop.
+        c = getattr(self, "_pair_cache", None)
+        if c is not None and c[0] == self.t and c[1] is self.X:
+            return c[2], c[3]
+        delta, d2 = self._periodic_delta_raw()
+        self._pair_cache = (self.t, self.X, delta, d2)
+        return delta, d2
+
+    def _periodic_delta_raw(self):
         p = self.X[:, :self.pd]
         delta = p[:, None, :] - p[None, :, :]          # (N, N, 2) minimum-image on the torus
         delta = delta - self.L * np.round(delta / self.L)
@@ -212,7 +222,12 @@ class PackEngine:
         return delta, d2
 
     def _neighbors(self, d2, k):
-        return np.argsort(d2, axis=1, kind="stable")[:, :k]
+        # Only the SET of k nearest matters — the result is used to build a boolean mask, never
+        # in order — so a full O(N log N) sort is wasted work. argpartition is O(N) per row and was
+        # the single largest cost in the step loop.
+        if k >= d2.shape[1]:
+            return np.argsort(d2, axis=1, kind="stable")[:, :k]
+        return np.argpartition(d2, k - 1, axis=1)[:, :k]
 
     def fork(self):
         import copy

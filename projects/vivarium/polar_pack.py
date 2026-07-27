@@ -222,9 +222,9 @@ class PolarPackEngine(PackEngine):
         the other. One place, both dimensionalities: circular harmonics in 2-D, real spherical
         harmonics in 3-D. This is the same grounded relative-direction readout the electrostatics
         uses, so nothing new is introduced."""
-        dij = -delta
         if self.pd == 3:
-            return np.einsum("ic,ijc->ij", C, self._sh_basis(dij / dist[..., None]))
+            return np.einsum("ic,ijc->ij", C, self._pair_basis(delta, dist))
+        dij = -delta
         return self._near_face(C, np.arctan2(dij[..., 1], dij[..., 0]))
 
     def _contact_distance(self, C, delta, dist):
@@ -271,14 +271,26 @@ class PolarPackEngine(PackEngine):
         direction inner product — so Parseval (overlap = contour overlap) still holds."""
         x, y, z = u[..., 0], u[..., 1], u[..., 2]
         c1 = np.sqrt(3.0 / (4.0 * np.pi))
-        out = [c1 * y, c1 * z, c1 * x]                                     # l=1  (3)
+        b = np.empty(u.shape[:-1] + (self.tK,))     # fill in place; np.stack would copy every term
+        b[..., 0], b[..., 1], b[..., 2] = c1 * y, c1 * z, c1 * x           # l=1  (3)
         if self.cfg.n_harmonics >= 2:
             c2 = np.sqrt(15.0 / (4.0 * np.pi))
             c3 = np.sqrt(5.0 / (16.0 * np.pi))
             c4 = np.sqrt(15.0 / (16.0 * np.pi))
-            out += [c2 * x * y, c2 * y * z, c3 * (3.0 * z * z - 1.0),
-                    c2 * x * z, c4 * (x * x - y * y)]                      # l=2  (5)
-        return np.stack(out, axis=-1)
+            b[..., 3], b[..., 4] = c2 * x * y, c2 * y * z
+            b[..., 5] = c3 * (3.0 * z * z - 1.0)
+            b[..., 6], b[..., 7] = c2 * x * z, c4 * (x * x - y * y)        # l=2  (5)
+        return b
+
+    def _pair_basis(self, delta, dist):
+        """Spherical-harmonic basis at every i→j direction, cached per tick. Both the electrostatic
+        head and the anisotropic excluded volume need exactly this array."""
+        c = getattr(self, "_pb_cache", None)
+        if c is not None and c[0] == self.t and c[1] is self.X:
+            return c[2]
+        b = self._sh_basis(-delta / dist[..., None])
+        self._pb_cache = (self.t, self.X, b)
+        return b
 
     def _axial_coeffs(self, u, amps):
         """Contour coefficients for an AXIALLY SYMMETRIC charge pattern around unit axis u (n,3):
@@ -475,8 +487,7 @@ class PolarPackEngine(PackEngine):
         if self.pd == 3:
             # 3-D: the bearing is a DIRECTION on the sphere, read with real spherical harmonics.
             # Identical structure to the 2-D branch — ⟨C, basis(bearing)⟩ — one dimension up.
-            uij = dij / dist[..., None]
-            b_ij = self._sh_basis(uij)
+            b_ij = self._pair_basis(delta, dist)
             nf_i = np.einsum("ic,ijc->ij", C, b_ij)
             nf_j = nf_i.T                                  # see the 2-D branch: near face = transpose
         else:
@@ -970,6 +981,7 @@ def main(argv=None):
     p.add_argument("--amphi", type=float, default=0.15, help="amphiphile fraction")
     p.add_argument("--dim", type=int, default=2, choices=(2, 3), help="dish dimensionality")
     p.add_argument("--smoke", action="store_true", help="smoke-test the engine and print geometry")
+    p.add_argument("--profile", action="store_true", help="cProfile the step loop")
     p.add_argument("--pbc", action="store_true", help="is the box big enough for minimum image?")
     p.add_argument("--demix", action="store_true")
     p.add_argument("--wcharge", type=float, default=0.8)
@@ -998,6 +1010,27 @@ def main(argv=None):
         # 3-D: K=2 spherical harmonics, and pos_bound shrunk so N tokens fill a VOLUME at the same
         # number density the 2-D benchmark had in its area (else the dish is a dilute gas).
         _DIM_OVERRIDE.update(pos_dim=3, n_harmonics=2, pos_bound=3.0)
+    if a.profile:
+        import cProfile, pstats, io as _io
+        cfg = _cfgd(N=a.n) if a.n else _cfgd()
+        e = PolarPackEngine(cfg, a.seed, water_frac=a.water, chain_frac=0.36, polarity=1.0,
+                            repel=4.0, attract=0.30, cohesion=0.0, skew=0.0, k_bond=8.0)
+        e.conservative = True
+        e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, 0.39, 0.55
+        e.repel_contact, e.selectivity, e.temperature = 1.0, 0.30, 0.02
+        e.langevin = True
+        for _ in range(20):
+            e.step()
+        pr = cProfile.Profile(); pr.enable()
+        for _ in range(400):
+            e.step()
+        pr.disable()
+        st = pstats.Stats(pr, stream=_io.StringIO()); st.sort_stats("tottime")
+        print(f"top costs over 400 steps, N={cfg.N}, pos_dim={cfg.pos_dim}")
+        for fn, (cc, nc, tt, ct, cs) in sorted(st.stats.items(), key=lambda kv: -kv[1][2])[:12]:
+            name = f"{fn[0].split('/')[-1]}:{fn[1]}({fn[2]})"
+            print(f"  {tt*1000/400:7.3f} ms/step  {nc//400:4d} calls/step  {name}")
+        return 0
     if a.smoke:
         return smoke_test(a)
     if a.pbc:
