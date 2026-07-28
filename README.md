@@ -5,7 +5,7 @@ behaviour is genuinely computed rather than merely described.
 
 | project | one line | status |
 |---|---|---|
-| [**`projects/vivarium/`**](projects/vivarium/) | A molecular simulator in which **every force is a transformer operation** — each molecule is a token, each step a forward pass. Can a lipid bilayer assemble itself out of nothing but attention? | active; hydrophobic effect and micelle formation emerge, bilayer does not |
+| [**`projects/vivarium/`**](projects/vivarium/) | A molecular simulator in which **every force is a transformer operation** — each molecule is a token, each step a forward pass. Can a lipid bilayer assemble itself out of nothing but attention? | active; hydrophobic effect and aggregation emerge, radial order does not |
 | [`projects/thermolife/`](projects/thermolife/) | **Embedding folding as ligand–receptor docking.** Token embeddings fold through iterated attention and are drawn as *grounded* contour blobs — the drawn shape **is** the query/key, so `Q·K` is literally contour overlap (Parseval). | S0 mechanism built; training is M2 |
 | [`projects/quorum/`](projects/quorum/) | Single-pass LLM population simulator, aiming at **computed** (irreducible) emergence, validated against Boids/Schelling baselines. | design only |
 
