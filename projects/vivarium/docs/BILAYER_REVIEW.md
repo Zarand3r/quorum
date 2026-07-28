@@ -641,9 +641,23 @@ cluster, which is exactly our regime. `cyl` inherits it. `shell` never had it, b
 two positions and never touches u, which is why it read 0.5 throughout.
 
 The fix is to take rhat at the molecular CENTRE, which is independent of u under the null. That gives
-`outward_c`, with a null of +0.002 +/- 0.142 at every cluster radius and a usable p95 of +0.235. It
-is now the metric that gets read, and a regression test asserts both that it is unbiased and that the
-old one's bias is still detectable.
+`outward_c`, null +0.002 +/- 0.142 at every cluster radius. But unbiased is not enough: `outward_c`
+reads only **+0.32 on a PERFECT planted cylinder**, because a cylinder puts its heads out in the
+perpendicular plane and averaging over the axial direction dilutes the signal. A threshold of 0.45
+was therefore above what the target structure can even score.
+
+The metric that survives both controls is `cyl_c`: the perpendicular component, with rhat still taken
+at the molecular centre.
+
+    metric       null (random)        planted cylinder    passes both controls
+    outward      +0.669 +/- 0.077     +0.734              NO  (null is enormous)
+    cyl          +0.662 +/- 0.117     +0.999              NO  (null is enormous)
+    outward_c    +0.002 +/- 0.142     +0.320              no  (unbiased but insensitive)
+    shell         0.500                1.00               YES
+    cyl_c         0.000 +/- 0.178     +0.961              YES
+
+`cyl_c` and `shell` are the two metrics that get read. A regression test asserts the corrected metrics
+are unbiased and that the old ones' bias is still detectable.
 
 **There is no micelle.** Re-measuring the same system with the corrected metric, 19 clustered frames
 over 3 seeds:

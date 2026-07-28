@@ -22,6 +22,12 @@ These three are better because each averages over molecules rather than differen
                   sphere  L1/L3 high            a spherical micelle
                   disc    L2/L3 high, L1/L3 low a BICELLE, the target
                   rod     L2/L3 low             a cylindrical micelle
+    cyl_c     THE ONE TO READ. `outward_c` is unbiased but insensitive: on a PERFECT planted
+              cylinder it reads only +0.32, because a cylinder puts its heads out in the
+              perpendicular plane and averaging in the axial direction dilutes that. cyl_c takes the
+              perpendicular component while keeping rhat at the molecular CENTRE, so it is unbiased
+              (null 0.000 +/- 0.178, p95 +0.296, independent of cluster radius) AND reaches ~1 on the
+              structure we are looking for. A threshold can be read against it honestly.
     cyl       <u_perp . rhat_perp>, the same alignment measured in the plane PERPENDICULAR to the
               cluster's long axis. `outward` is measured from the centroid, so on an elongated
               aggregate the molecules near the two ends are radial along the LONG axis and their
@@ -92,13 +98,18 @@ def probe(e, min_size=8):
         rp /= np.maximum(np.linalg.norm(rp, axis=1, keepdims=True), 1e-9)
         up /= np.maximum(np.linalg.norm(up, axis=1, keepdims=True), 1e-9)
         cyl = float((up * rp).sum(1).mean())
+        rcp = rc - np.outer(rc @ ax, ax)               # unbiased AND cylinder-sensitive
+        ucp = u - np.outer(u @ ax, ax)
+        rcp /= np.maximum(np.linalg.norm(rcp, axis=1, keepdims=True), 1e-9)
+        ucp /= np.maximum(np.linalg.norm(ucp, axis=1, keepdims=True), 1e-9)
+        cyl_c = float((ucp * rcp).sum(1).mean())
         if a1 > 0.55:
             shape = "sphere"
         elif a2 > 0.55:
             shape = "DISC"                              # two long axes, one short => a bicelle
         else:
             shape = "rod"
-        res.append((len(comp), outward_c, shell, cyl, a1, a2, shape, outward))
+        res.append((len(comp), cyl_c, shell, cyl, a1, a2, shape, outward, outward_c))
     return res
 
 
@@ -107,14 +118,13 @@ def report(e, tag):
     if not rs:
         print(f"  {tag:>8s}  no cluster of 8+ molecules", flush=True)
         return
-    for n, o, sh, cy, a1, a2, shape, o_raw in rs[:2]:
-        # thresholds are set against the measured null: outward_c is 0.00 +/- 0.14, p95 = +0.235
-        if o > 0.45 and sh > 0.70:
+    for n, o, sh, cy, a1, a2, shape, o_raw, o_c in rs[:2]:
+        # threshold against the measured null: cyl_c is 0.000 +/- 0.178, p95 = +0.296
+        if o > 0.50 and sh > 0.70:
             v = {"DISC": "BICELLE", "sphere": "MICELLE"}.get(shape, "CYLINDRICAL MICELLE")
-        elif o > 0.235:
+        elif o > 0.296:
             v = "partial"
         else:
             v = "no radial order"
-        print(f"  {tag:>8s}  n={n:3d}  outward_c={o:+.3f}  shell={sh:.2f}  "
-              f"L1/L3={a1:.2f} L2/L3={a2:.2f} {shape:6s}  {v}   (biased outward={o_raw:+.3f})",
-              flush=True)
+        print(f"  {tag:>8s}  n={n:3d}  cyl_c={o:+.3f}  shell={sh:.2f}  outward_c={o_c:+.3f}  "
+              f"{shape:6s}  {v}   (biased outward={o_raw:+.3f})", flush=True)

@@ -15,7 +15,7 @@ BOND = 0.9
 def null(n_mol=16, n_bead=5, radius=2.5, trials=4000, seed=0):
     rng = np.random.default_rng(seed)
     out = np.empty(trials); cyl = np.empty(trials); shl = np.empty(trials)
-    fix = np.empty(trials)
+    fix = np.empty(trials); fxp = np.empty(trials)
     for t in range(trials):
         v = rng.standard_normal((n_mol, 3))
         v /= np.linalg.norm(v, axis=1, keepdims=True)
@@ -26,12 +26,19 @@ def null(n_mol=16, n_bead=5, radius=2.5, trials=4000, seed=0):
         beads = np.concatenate([cen + (half - b) * BOND * u for b in range(n_bead)])
         heads, tails = cen + half * BOND * u, cen - half * BOND * u
         com = beads.mean(0)
+        c0 = beads - com
+        ax0 = np.linalg.eigh(c0.T @ c0 / len(c0))[1][:, 2]
         r = heads - com
         rhat = r / np.maximum(np.linalg.norm(r, axis=1, keepdims=True), 1e-9)
         out[t] = (u * rhat).sum(1).mean()
         rc = cen - com                                             # rhat from the molecular CENTRE
         rc /= np.maximum(np.linalg.norm(rc, axis=1, keepdims=True), 1e-9)
         fix[t] = (u * rc).sum(1).mean()
+        rcp = rc - np.outer(rc @ ax0, ax0)             # perpendicular to the cluster's long axis,
+        ucp = u - np.outer(u @ ax0, ax0)               # with rhat still taken at the CENTRE
+        rcp /= np.maximum(np.linalg.norm(rcp, axis=1, keepdims=True), 1e-9)
+        ucp /= np.maximum(np.linalg.norm(ucp, axis=1, keepdims=True), 1e-9)
+        fxp[t] = (ucp * rcp).sum(1).mean()
         c = beads - com
         ev, evec = np.linalg.eigh(c.T @ c / len(c))
         ax = evec[:, 2]
@@ -40,18 +47,22 @@ def null(n_mol=16, n_bead=5, radius=2.5, trials=4000, seed=0):
         up /= np.maximum(np.linalg.norm(up, axis=1, keepdims=True), 1e-9)
         cyl[t] = (up * rp).sum(1).mean()
         shl[t] = (np.linalg.norm(heads - com, axis=1) > np.linalg.norm(tails - com, axis=1)).mean()
-    return out, cyl, shl, fix
+    return out, cyl, shl, fix, fxp
 
 
 if __name__ == "__main__":
     print("NULL MODEL: random centres, INDEPENDENT random orientations. True radial order is ZERO.\n")
-    print("  %-8s %-14s %-14s %-8s %s" % ("radius", "outward", "cyl", "shell", "outward_c (FIXED)"))
+    print("  %-8s %-14s %-14s %-8s %-16s %s"
+          % ("radius", "outward", "cyl", "shell", "outward_c", "cyl_c (FIXED)"))
     for radius in (1.5, 2.5, 4.0, 8.0):
-        o, c, s, f = null(radius=radius)
-        print("  %-8.1f %+.3f+/-%.3f  %+.3f+/-%.3f  %.3f    %+.3f +/- %.3f (p95 %+.3f)"
+        o, c, s, f, fp = null(radius=radius)
+        print("  %-8.1f %+.3f+/-%.3f  %+.3f+/-%.3f  %.3f    %+.3f+/-%.3f      %+.3f +/- %.3f (p95 %+.3f)"
               % (radius, o.mean(), o.std(), c.mean(), c.std(), s.mean(),
-                 f.mean(), f.std(), np.percentile(f, 95)))
+                 f.mean(), f.std(), fp.mean(), fp.std(), np.percentile(fp, 95)))
     print("\n  outward and cyl build rhat from the HEAD, whose position is cen + (L/2)u, so u sits on")
     print("  both sides of the dot product and the statistic is biased positive. outward_c builds")
     print("  rhat from the molecular CENTRE, which is independent of u under the null, so its")
-    print("  baseline is zero and a threshold can actually be read against it.")
+    print("  baseline is zero. But outward_c reads only +0.32 on a PERFECT planted cylinder, because")
+    print("  a cylinder puts its heads out in the perpendicular plane only and the axial direction")
+    print("  dilutes the average. cyl_c restores that sensitivity while keeping rhat at the centre,")
+    print("  so it is both unbiased AND able to reach ~1 on the structure we are looking for.")

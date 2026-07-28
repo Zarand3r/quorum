@@ -17,7 +17,7 @@ def shdot(c,x,y,z):
     if len(c)>=8: v+=c[3]*C2*x*y+c[4]*C2*y*z+c[5]*C3*(3*z*z-1)+c[6]*C2*x*z+c[7]*C4*(x*x-y*y)
     return v
 
-def frame(e, title):
+def frame(e, title, hide_water=False):
     B=e.cfg.pos_bound; sc=(W*0.44)/B; cx=cy=W/2
     ROT,TILT=0.7,0.30
     ca,sa=math.cos(ROT),math.sin(ROT); cb,sb=math.cos(TILT),math.sin(TILT); FOC=4.0*B
@@ -37,7 +37,9 @@ def frame(e, title):
         X1,Y1,d1,_=proj(a); X2,Y2,d2,_=proj(b); dep=(d1+d2)/2
         out.append(f'<line x1="{X1:.1f}" y1="{Y1:.1f}" x2="{X2:.1f}" y2="{Y2:.1f}" stroke="#cbd5e1" stroke-width="{max(1,0.05*sc*(0.7+0.4*dep)):.1f}" stroke-linecap="round" opacity="{0.35+0.45*dep:.2f}"/>')
     for i in sorted(range(len(cam)), key=lambda i:-cam[i][2]):
-        s2=int(sp[i]); X,Y,dep,pp=proj(i); col=COL.get(s2,(203,213,225))
+        s2=int(sp[i])
+        if hide_water and s2==0: continue
+        X,Y,dep,pp=proj(i); col=COL.get(s2,(203,213,225))
         cc=C[i]; mag=float(np.linalg.norm(cc)); op=0.32+0.68*dep
         base=(0.42 if s2==0 else 0.50)*sc*pp
         if mag>0.5:
@@ -53,19 +55,20 @@ def frame(e, title):
     out.append(f'<text x="10" y="{W-9}" fill="#e2e8f0" font-family="monospace" font-size="13">{title}</text></svg>')
     return "".join(out)
 
-e = build(seed=1, n_lip=48, bound=3.4, kt=0.02, speed=0.08, repel=12.0,
-          k_bond=8.0, satt=0.55, spol=0.90, plant=False)
-shots=[(0,"t=0  disordered"),(30000,"t=30k  tails burying"),(90000,"t=90k  aggregate")]
-prev=0
-for t,label in shots:
-    for _ in range(t-prev): e.step()
-    prev=t
-    b,h,n,o,c = metrics(e)
-    svg = frame(e, f"{label}   burial {b:.2f}")
-    fn=f"{OUT}/assembly_{t}"
-    open(fn+".svg","w").write(svg)
-    subprocess.run(["google-chrome","--headless","--disable-gpu","--no-sandbox",
-                    f"--user-data-dir=/tmp/cr_fig_{t}", f"--screenshot={fn}.png",
-                    f"--window-size={W+16},{W+16}", f"file://{fn}.svg"],
-                   capture_output=True)
-    print(f"{label}: burial {b:.3f} hydration {h:.3f} nematic {n:+.3f} -> {fn}.png", flush=True)
+if __name__ == "__main__":
+    e = build(seed=1, n_lip=48, bound=3.4, kt=0.02, speed=0.08, repel=12.0,
+              k_bond=8.0, satt=0.55, spol=0.90, plant=False)
+    shots=[(0,"t=0  disordered"),(30000,"t=30k  tails burying"),(90000,"t=90k  aggregate")]
+    prev=0
+    for t,label in shots:
+        for _ in range(t-prev): e.step()
+        prev=t
+        b,h,n,o,c = metrics(e)
+        svg = frame(e, f"{label}   burial {b:.2f}")
+        fn=f"{OUT}/assembly_{t}"
+        open(fn+".svg","w").write(svg)
+        subprocess.run(["google-chrome","--headless","--disable-gpu","--no-sandbox",
+                        f"--user-data-dir=/tmp/cr_fig_{t}", f"--screenshot={fn}.png",
+                        f"--window-size={W+16},{W+16}", f"file://{fn}.svg"],
+                       capture_output=True)
+        print(f"{label}: burial {b:.3f} hydration {h:.3f} nematic {n:+.3f} -> {fn}.png", flush=True)

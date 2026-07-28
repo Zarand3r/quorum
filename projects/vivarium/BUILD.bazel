@@ -190,6 +190,14 @@ py_binary(
 )
 
 py_binary(
+    name = "fig_micelle",
+    srcs = ["fig_micelle.py"],
+    main = "fig_micelle.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "make_figures",
     srcs = ["make_figures.py"],
     main = "make_figures.py",

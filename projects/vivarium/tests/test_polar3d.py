@@ -295,7 +295,31 @@ def test_micelle_metric_null_is_zero():
     import numpy as np
     from null_control import null
 
-    biased, cyl, shell, fixed = null(radius=2.5, trials=400, seed=3)
+    biased, cyl, shell, fixed, cyl_c = null(radius=2.5, trials=400, seed=3)
     assert biased.mean() > 0.5, "regression guard: the old metric's bias should still be visible"
+    assert cyl.mean() > 0.5, "regression guard: cyl inherited the same bias"
     assert abs(fixed.mean()) < 0.05, f"outward_c must be unbiased under the null, got {fixed.mean()}"
     assert abs(shell.mean() - 0.5) < 0.02, f"shell must be unbiased, got {shell.mean()}"
+    assert abs(cyl_c.mean()) < 0.05, f"cyl_c must be unbiased under the null, got {cyl_c.mean()}"
+
+
+def test_micelle_metric_detects_a_planted_micelle():
+    """The other half of the calibration: unbiased is worthless if it cannot see the real structure.
+
+    `outward_c` is unbiased but reads only +0.32 on a perfect planted cylinder, because a cylinder
+    puts its heads out in the perpendicular plane and the axial direction dilutes the average. Only
+    `cyl_c` passes BOTH controls, which is what makes it the metric worth reading.
+    """
+    from bilayer3d import build
+    from micelle_probe import probe
+    from rung1c import plant_cylinder
+
+    e = build(seed=1, n_lip=24, bound=4.0, kt=0.0, speed=0.08, repel=12.0, k_bond=8.0,
+              satt=0.55, spol=0.90, plant=False, n_tail=4)
+    plant_cylinder(e)
+    rs = probe(e)
+    assert rs, "the planted cylinder must register as a cluster"
+    n, cyl_c, shell, _, _, _, _, _, outward_c = rs[0]
+    assert cyl_c > 0.85, f"cyl_c must detect a planted micelle, got {cyl_c}"
+    assert shell > 0.95, f"shell must detect a planted micelle, got {shell}"
+    assert outward_c < 0.5, "documents why outward_c alone is too insensitive to threshold on"
