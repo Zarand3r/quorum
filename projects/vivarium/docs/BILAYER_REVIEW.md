@@ -507,6 +507,43 @@ changes the packing unless the box is resized with it, and nothing previously ch
 The rung experiments were not affected; `bilayer3d.build` computes its water count from the box
 volume and so stays at ~45% by construction.
 
+## Finding 18 — the micelle retraction was itself wrong: the METRIC was bad (2026-07-28)
+
+Finding 14 retracted the micelle claim on the basis of `<r_head> - <r_tail>`. That estimator is
+weak in three separate ways: it differences two large mean radii so it is dominated by noise, it
+presumes the aggregate is spherical and centred, and when the cluster cutoff merges two aggregates
+their shared centre of mass falls between them and every radial quantity is scrambled. It also once
+returned "MICELLE" on a six-molecule cluster and the opposite extreme later in the same run.
+
+Replaced with three per-molecule tests (`micelle_probe.py`), each averaging over molecules rather
+than differencing averages:
+
+    outward     <u_i . r_hat_i>, alignment of each head->tail axis with the outward radial direction
+    shell       fraction of molecules whose head lies farther from the centre than its own tails
+    sphericity  smallest/largest principal moment, which says whether a radial measure means anything
+
+**The instrument was validated first**, which the old one never was. A hand-built micelle scores
+outward +0.997, shell 1.00. A metric that cannot recognise a real micelle is not evidence about
+anything.
+
+Measured on self-assembly from disorder (24 lipids, four-bead tails):
+
+    cluster n=21   outward +0.435   shell 0.19   sphericity 0.52
+    cluster n= 8   outward +0.799   shell 0.75   sphericity 0.22
+
+There IS head-out radial ordering; 0 is the random baseline and +0.435 on 21 molecules is well
+clear of it. **The Finding 14 retraction was over-corrected and is itself now partly retracted.**
+
+What we have is PARTIAL micellar order on ELONGATED aggregates (sphericity 0.22-0.52 is a rod or
+disc, not a ball), rather than either "no order" or a clean spherical micelle. An elongated
+aggregate with heads out is a cylindrical micelle, which sits on the pathway between the spherical
+micelle and the bilayer.
+
+**Methodological rule, learned the expensive way.** Validate an instrument against a known-positive
+control BEFORE using it to make or retract a claim. Three claims in this project have now turned on
+metric defects rather than physics: emergence_score reading 0 on a perfect bilayer, burial mistaken
+for micellar order, and this radius difference. The positive control costs one run.
+
 ## How experimentation is now structured
 
 1. **Statics before dynamics.** For any target structure, first ask whether it is a mechanical
