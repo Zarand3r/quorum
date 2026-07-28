@@ -103,6 +103,24 @@ py_binary(
 )
 
 py_binary(
+    name = "structures",
+    srcs = ["structures.py"],
+    main = "structures.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
+py_binary(
+    name = "rung0",
+    srcs = ["rung0.py"],
+    main = "rung0.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
+py_binary(
     name = "toy2d",
     srcs = ["toy2d.py"],
     main = "toy2d.py",

@@ -433,6 +433,55 @@ confirmed it.
 **Revised pathway position:** step 1 (hydrophobic collapse) is done; step 2 (micelle) has NOT been
 reached; steps 3-4 (bicelle, vesicle) are untouched.
 
+## Finding 15 — ROOT CAUSE: the lipid-lipid interaction is orientation-independent (2026-07-27)
+
+We never tested the cheapest necessary condition, and it fails. Two lipids in water, held at fixed
+relative orientations at kT=0, pulled together along the separation axis:
+
+    orientation        sep 1.1   sep 1.4   sep 1.8   sep 2.2
+    tail-to-tail        22.525     9.095    -4.978     9.072
+    head-to-head        22.906     9.605    -2.580    10.435
+    head-to-tail        -4.251    -3.954    -3.676    -3.530
+
+Head-to-head is marginally MORE attractive than tail-to-tail at every separation, so the necessary
+condition for amphiphilic ordering fails. The decisive number is not the sign but the MAGNITUDE of
+the difference: 22.52 against 22.91 is under 2%. **Orientation changes the pair force by less than
+two percent, so the interaction is effectively isotropic.**
+
+This is the root cause of every failure recorded above. An isotropic attraction is minimised by a
+compact blob, which is exactly what we measure: burial rises to 0.93 while nematic falls and the
+radial head-tail ordering stays at zero (Finding 14). No micelle, bicelle or bilayer can form from an
+interaction that cannot tell a head from a tail.
+
+It also explains why every parameter sweep failed. Temperature, stiffness, box size, lipid count,
+head charge and packing geometry all leave the orientation-dependence untouched, so none of them
+could have worked.
+
+**Why the interaction is isotropic.** A three-bead lipid is 2.0 long and the dispersion range is
+~1.35 sigma, so a neighbouring molecule at contact integrates over most of the chain and sees a
+nearly spherical field. Real coarse-grained lipids use 3-4 tail beads per chain, sometimes two
+chains, which is what makes the molecule long enough for orientation to matter.
+
+**Method failure, not just physics failure.** We ran dozens of dynamic experiments, each costing
+minutes to hours, before running a two-molecule static test that costs seconds and answers the
+prerequisite. See the restructured protocol below.
+
+## How experimentation is now structured
+
+1. **Statics before dynamics.** For any target structure, first ask whether it is a mechanical
+   equilibrium (`structures.py`: build the candidate, read the RMS force and the drift). Dynamics
+   only runs once a target passes. This is 100-1000x cheaper and it is a necessary condition.
+2. **Climb the ladder.** Rung 0: two molecules prefer tail-to-tail (`rung0.py`). Rung 1: ~10
+   molecules form a head-out cluster. Rung 2: ~40 form a flat patch with a rim. Rung 3: a spanning
+   bilayer or a closed vesicle. Never test a rung before the one below it passes.
+3. **Pre-register the falsifier.** Before running, write the measurement that would show the claim is
+   FALSE and the number that counts as success. Both false positives in this project came from
+   metrics that could only confirm.
+4. **One variable at a time**, with the min-image gate satisfied by choosing the box from the
+   interaction range rather than the reverse.
+5. **Report the region, not the point.** Map which part of (chain length x cohesion x head charge)
+   makes the target an equilibrium, rather than whether one setting worked.
+
 ## Verification gates (any violation disqualifies a result)
 
 1. **Base-case identity** — `--verify` must report `max|ΔX| = 0.00e+00` (new channels default off).
