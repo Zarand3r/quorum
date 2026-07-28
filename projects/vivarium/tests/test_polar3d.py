@@ -270,3 +270,15 @@ def test_speed_cap_is_the_only_momentum_breaking_op():
     before = e.vel.sum(axis=0).copy()
     e.step()
     assert np.abs(e.vel.sum(axis=0) - e.momentum * before).max() > 1e-9
+
+
+def test_packing_fraction_is_physically_possible():
+    """A configuration above random close packing (~0.64 in 3-D, ~0.82 in 2-D) cannot exist: the
+    dish is jammed and nothing can rearrange. This is easy to create by accident, because changing a
+    bead RADIUS silently changes the packing unless the box is resized too. That is exactly what
+    happened when water was resized from 0.30 to 0.50 for the MARTINI convention and the showcase
+    box was left alone, leaving the live dish at 92%."""
+    for cfg, limit in ((_cfg3(N=40, pos_bound=4.0), 0.64), (_cfg2(N=40, pos_bound=6.0), 0.82)):
+        e = PolarPackEngine(cfg, 0, water_frac=0.6, chain_frac=0.4, polarity=1.0)
+        pf = e.packing_fraction()
+        assert 0.0 < pf < limit, f"pos_dim={cfg.pos_dim} packing {pf:.2f} exceeds {limit}"

@@ -286,10 +286,11 @@ def main(argv: list[str] | None = None) -> int:
             # 3-D showcase = the VALIDATED chain-lipid physics (docs/BILAYER_REVIEW.md F10/F11):
             # 3-bead bonded lipids, FDT Langevin with no velocity cap, soft bonds and soft excluded
             # volume so a physically stable timestep is affordable, attraction range ~1.6 sigma.
-            cfg = replace(cfg, N=380, pos_dim=3, n_harmonics=2, pos_bound=3.0)
-            #  pos_bound 3.2 -> ~38% packing: a proper dense liquid. At 4.5 it was 14%, which is
-            #  BELOW liquid density, so the water had no choice but to phase-separate into droplets
-            #  and vapour — that was the clustering, not a defect in the water model.
+            cfg = replace(cfg, N=380, pos_dim=3, n_harmonics=2, pos_bound=4.0)
+            #  pos_bound 4.0 -> ~39% packing, a proper dense liquid. This MUST be recomputed
+            #  whenever a bead radius changes: sizing water as a MARTINI bead (0.30 -> 0.50) without
+            #  re-sizing the box left the dish at 92% packing, above the 64% random-close-packing
+            #  limit, so it was jammed solid and could not rearrange at all.
             #  DEFAULT composition: water + lipids only. ACTIVE (the generic morphing tokens) are
             #  simply the remainder, so water + lipid_frac summing to 1 leaves none — dial either
             #  slider DOWN to bring them back. No species is removed in code.

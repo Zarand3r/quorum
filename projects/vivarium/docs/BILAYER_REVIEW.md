@@ -492,6 +492,21 @@ straighteners generated for any number of beads.
 **Method note.** A static two-molecule test costing seconds found and fixed what dozens of dynamic
 runs costing minutes to hours each could not. That is the case for the protocol below.
 
+## Finding 17 — the hosted dish was jammed above the packing limit (2026-07-27)
+
+Changing water from a single-molecule radius (0.30) to a MARTINI-style bead (0.50) multiplies the
+volume it occupies by 4.6, and I did not resize the showcase box. The live dish ran at **92% packing**
+against a random-close-packing limit of **64%**, so the configuration was not merely dense but
+physically impossible: jammed solid, unable to rearrange. That explains the aggregation regression
+from 0.821 to 0.659 that had been sitting unexplained.
+
+Fixed by resizing the box (`pos_bound` 3.0 → 4.0, 39% packing). Guarded by `packing_fraction()` plus a
+regression test in both 2-D and 3-D, because the failure mode is silent: changing any bead RADIUS
+changes the packing unless the box is resized with it, and nothing previously checked that.
+
+The rung experiments were not affected; `bilayer3d.build` computes its water count from the box
+volume and so stays at ~45% by construction.
+
 ## How experimentation is now structured
 
 1. **Statics before dynamics.** For any target structure, first ask whether it is a mechanical

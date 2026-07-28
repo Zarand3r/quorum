@@ -174,6 +174,17 @@ class PackEngine:
         z2[:, :self.tK] = C
         return z2
 
+    def packing_fraction(self):
+        """Volume fraction occupied by the tokens. Random close packing is ~0.64 in 3-D and ~0.82 in
+        2-D; above that a configuration cannot physically exist and the dish is jammed, so nothing
+        can rearrange. Worth checking after ANY change to a bead radius or the box size."""
+        r = self.sigma if self.sigma is not None else np.full(self.cfg.N, 0.5 * max(self.repel_contact, 1e-9))
+        if self.pd == 3:
+            occ = float((4.0 / 3.0 * np.pi * r ** 3).sum())
+        else:
+            occ = float((np.pi * r ** 2).sum())
+        return occ / (self.L ** self.pd)
+
     def min_image_margin(self):
         """Worst force-kernel value at HALF the box length. Periodic boundaries are only valid under
         the minimum-image convention, which assumes every interaction is negligible at L/2 —
