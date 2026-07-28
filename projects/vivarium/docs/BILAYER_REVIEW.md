@@ -597,16 +597,65 @@ From a disordered start, three independent metrics then agree:
 
     t=40000   n=21   outward=+0.435  cyl=+0.560  shell=0.19   partial
     t=60000   n= 8   outward=+0.799  cyl=+0.729  shell=0.75   CYLINDRICAL MICELLE
+    t=80000   n=10   outward=+0.368  cyl=+0.442  shell=0.20   partial
 
-**Rung 1 clears at t=60000.** The disagreement at t=40000 is informative rather than noise: a large
-21-molecule aggregate scores moderate radial alignment but only 0.19 on the per-molecule shell test,
-so most of its molecules lie tangentially with head and tail at nearly equal radius. That is a molten
-aggregate, not a micelle, and the three metrics correctly refuse to call it one. When it later breaks
-into smaller clusters, the 8-molecule one is ordered on all three at once.
+**Rung 1 does NOT clear.** One timepoint of four scores micellar on all three metrics, and it is the
+smallest cluster measured, where per-molecule noise is largest. The next timepoint falls back to
+partial. A single ordered frame in a fluctuating small cluster is a fluctuation until it replicates,
+and calling it a pass would repeat the error of Findings 16-18 exactly.
 
-So the size ceiling from Finding 19 shows up directly in the dynamics: ordered micellar structure
-appears at the small aggregate sizes this chain length supports, and degrades at the larger ones that
-would need to be much larger still to close properly.
+What the sequence does show is that the metrics behave sensibly and disagree in the right places. At
+t=40000 a 21-molecule aggregate scores moderate radial alignment but only 0.19 on the per-molecule
+shell test, so most of its molecules lie tangentially with head and tail at nearly equal radius. That
+is a molten aggregate, and the three metrics correctly refuse to call it a micelle.
+
+The open question is whether the ordered state at t=60000 is reproducible across seeds or is
+small-number noise. Finding 21 answers it, and also retracts the metric.
+
+## Finding 21 — the radial-order metric was measuring itself, and there is no micelle
+(2026-07-28)
+
+Four seeds, 35 clustered frames, scored on all three metrics:
+
+    outward   mean +0.602    30/35 frames above the 0.45 threshold
+    cyl       mean +0.578    28/35 frames above 0.45
+    shell     mean  0.482     2/35 frames above 0.70        (random = 0.500)
+
+Two metrics said strong order and the third said exactly random. That disagreement is not noise, it
+is a defect in the first two, and the null model finds it. Random molecules with random centres and
+INDEPENDENT random orientations, so true radial order is zero by construction, score:
+
+    cluster radius    outward          cyl              shell    outward_c (fixed)
+    1.5               +0.870 +/- 0.026  +0.799 +/- 0.091  0.500    +0.002 +/- 0.142
+    2.5               +0.669 +/- 0.077  +0.662 +/- 0.117  0.500    +0.002 +/- 0.142
+    4.0               +0.454 +/- 0.114  +0.482 +/- 0.145  0.500    +0.002 +/- 0.142
+    8.0               +0.236 +/- 0.134  +0.262 +/- 0.168  0.500    +0.002 +/- 0.142
+
+At our cluster radius the null for `outward` is **+0.669**. We measured **+0.602**. The aggregates
+score BELOW random on the metric that was supposed to demonstrate micellar order.
+
+The cause is a self-correlation. `outward` is <u . rhat> with rhat taken at the HEAD bead, and the
+head sits at cen + (L/2)u, so the molecular axis u appears on both sides of the dot product. The
+statistic partly measures itself, and the bias grows as the molecule gets long relative to the
+cluster, which is exactly our regime. `cyl` inherits it. `shell` never had it, because it compares
+two positions and never touches u, which is why it read 0.5 throughout.
+
+The fix is to take rhat at the molecular CENTRE, which is independent of u under the null. That gives
+`outward_c`, with a null of +0.002 +/- 0.142 at every cluster radius and a usable p95 of +0.235. It
+is now the metric that gets read, and a regression test asserts both that it is unbiased and that the
+old one's bias is still detectable.
+
+**There is no micelle.** Both unbiased metrics agree: `shell` reads 0.482 against a null of 0.500,
+and the aggregates are indistinguishable from randomly oriented molecules in a blob. Rungs 1 and 2
+are both open, and Findings 16-18 are retracted along with them.
+
+**The methodological point, which is the durable one.** Finding 16 established "validate the
+instrument against a known-positive control before making a claim," and we did exactly that: the
+planted cylinder scored +0.999 and the metric looked proven. A positive control cannot catch this
+class of defect. A metric that partly measures itself still scores a real structure highly, so it
+passes every positive control while being unable to distinguish the real thing from noise. **Both
+controls are needed: a planted structure must score high AND a random configuration must score zero.**
+Three micelle claims in this project rested on a statistic whose null had never been measured.
 
 ## How experimentation is now structured
 

@@ -130,6 +130,22 @@ py_binary(
 )
 
 py_binary(
+    name = "null_control",
+    srcs = ["null_control.py", "micelle_probe.py"],
+    main = "null_control.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "rung1d",
+    srcs = ["rung1d.py", "micelle_probe.py"],
+    main = "rung1d.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "rung1c",
     srcs = ["rung1c.py", "micelle_probe.py"],
     main = "rung1c.py",

@@ -7,9 +7,13 @@ sits BETWEEN them and every radial quantity is scrambled.
 
 These three are better because each averages over molecules rather than differencing averages:
 
-    outward   <u_i . r_hat_i>, the per-molecule alignment of the head->tail axis with the outward
-              radial direction. +1 = every head points out, 0 = no radial order. Bounded, and the
-              mean of N molecule-level terms rather than a difference of two means.
+    outward_c <u_i . rhat_i> with rhat taken at the molecule's CENTRE. This is the one to read.
+              The earlier `outward` took rhat at the HEAD, whose position is cen + (L/2)u, so u
+              appeared on both sides of the dot product and the statistic was biased positive: on
+              random molecules with independent random orientations it reads +0.67 at our cluster
+              radius (see null_control.py), which is ABOVE what our aggregates actually score. Taking
+              rhat at the centre removes the self-correlation, giving a null of +0.00 +/- 0.14
+              independent of cluster size. `outward` and `cyl` are kept only to show the bias.
     shell     fraction of molecules whose HEAD bead is farther from the cluster centre than its own
               TAIL beads. A per-molecule yes/no, so it is robust to cluster shape.
     shape     full classification from all three principal moments L1<=L2<=L3, because the
@@ -73,6 +77,10 @@ def probe(e, min_size=8):
         u = heads - tails
         u /= np.maximum(np.linalg.norm(u, axis=1, keepdims=True), 1e-9)
         outward = float((u * rhat).sum(1).mean())
+        cen_m = 0.5 * (heads + tails)                  # molecular centre, independent of u
+        rc = cen_m - com
+        rc /= np.maximum(np.linalg.norm(rc, axis=1, keepdims=True), 1e-9)
+        outward_c = float((u * rc).sum(1).mean())
         shell = float((np.linalg.norm(heads - com, axis=1)
                        > np.linalg.norm(tails - com, axis=1)).mean())
         c = allb - com
@@ -90,7 +98,7 @@ def probe(e, min_size=8):
             shape = "DISC"                              # two long axes, one short => a bicelle
         else:
             shape = "rod"
-        res.append((len(comp), outward, shell, cyl, a1, a2, shape))
+        res.append((len(comp), outward_c, shell, cyl, a1, a2, shape, outward))
     return res
 
 
@@ -99,12 +107,14 @@ def report(e, tag):
     if not rs:
         print(f"  {tag:>8s}  no cluster of 8+ molecules", flush=True)
         return
-    for n, o, sh, cy, a1, a2, shape in rs[:2]:
-        # on an elongated cluster the honest radial reading is the perpendicular one
-        best = cy if shape == "rod" else o
-        if best > 0.45 and sh > 0.70:
+    for n, o, sh, cy, a1, a2, shape, o_raw in rs[:2]:
+        # thresholds are set against the measured null: outward_c is 0.00 +/- 0.14, p95 = +0.235
+        if o > 0.45 and sh > 0.70:
             v = {"DISC": "BICELLE", "sphere": "MICELLE"}.get(shape, "CYLINDRICAL MICELLE")
+        elif o > 0.235:
+            v = "partial"
         else:
-            v = "partial" if best > 0.2 else "no radial order"
-        print(f"  {tag:>8s}  n={n:3d}  outward={o:+.3f}  cyl={cy:+.3f}  shell={sh:.2f}  "
-              f"L1/L3={a1:.2f} L2/L3={a2:.2f} {shape:6s}  {v}", flush=True)
+            v = "no radial order"
+        print(f"  {tag:>8s}  n={n:3d}  outward_c={o:+.3f}  shell={sh:.2f}  "
+              f"L1/L3={a1:.2f} L2/L3={a2:.2f} {shape:6s}  {v}   (biased outward={o_raw:+.3f})",
+              flush=True)

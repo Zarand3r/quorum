@@ -282,3 +282,20 @@ def test_packing_fraction_is_physically_possible():
         e = PolarPackEngine(cfg, 0, water_frac=0.6, chain_frac=0.4, polarity=1.0)
         pf = e.packing_fraction()
         assert 0.0 < pf < limit, f"pos_dim={cfg.pos_dim} packing {pf:.2f} exceeds {limit}"
+
+
+def test_micelle_metric_null_is_zero():
+    """The radial-order metric must read ~0 on random molecules, or its threshold is meaningless.
+
+    `outward` took rhat at the HEAD, whose position depends on the molecular axis u, so u sat on both
+    sides of the dot product and the statistic read +0.67 on pure noise. Three micelle claims in this
+    project rested on it. A positive control (a planted micelle scores high) does NOT catch this; only
+    a null control does.
+    """
+    import numpy as np
+    from null_control import null
+
+    biased, cyl, shell, fixed = null(radius=2.5, trials=400, seed=3)
+    assert biased.mean() > 0.5, "regression guard: the old metric's bias should still be visible"
+    assert abs(fixed.mean()) < 0.05, f"outward_c must be unbiased under the null, got {fixed.mean()}"
+    assert abs(shell.mean() - 0.5) < 0.02, f"shell must be unbiased, got {shell.mean()}"
