@@ -466,6 +466,32 @@ chains, which is what makes the molecule long enough for orientation to matter.
 minutes to hours, before running a two-molecule static test that costs seconds and answers the
 prerequisite. See the restructured protocol below.
 
+## Finding 16 — RUNG 0 PASSES with a four-bead tail (2026-07-27)
+
+The Finding 15 diagnosis predicted that the interaction was isotropic because the molecule is short
+relative to the dispersion range. Lengthening the tail confirms it and fixes it. Two lipids, kT=0,
+force along the separation axis, chain length swept:
+
+    tail beads   orientation signal   tail-to-tail preferred?
+        2               23.5%                 no
+        3               94.5%                 no
+        4               72.6%                 YES  (at every separation tested)
+
+At four tail beads tail-to-tail beats head-to-head at 1.1, 1.4 and 1.8 sigma (28.92 vs 21.80,
+-2.68 vs -9.78, -47.49 vs -49.47). **The necessary condition for amphiphilic ordering holds for the
+first time in this project.**
+
+Two caveats. Rung 0 is NECESSARY, not sufficient; rungs 1-3 (micelle, bicelle, bilayer) are untested
+at this chain length. And the earlier "under 2%" figure in Finding 15 came from a test whose bead
+placement let the molecules interpenetrate; the corrected placement gives 23.5% at two tail beads,
+still in the wrong direction. The conclusion of Finding 15 stands, the number does not.
+
+The engine now supports an arbitrary chain length (`n_tail`), with backbone bonds plus 1-3
+straighteners generated for any number of beads.
+
+**Method note.** A static two-molecule test costing seconds found and fixed what dozens of dynamic
+runs costing minutes to hours each could not. That is the case for the protocol below.
+
 ## How experimentation is now structured
 
 1. **Statics before dynamics.** For any target structure, first ask whether it is a mechanical

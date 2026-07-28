@@ -87,7 +87,7 @@ class PolarPackEngine(PackEngine):
     def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2,
                  water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, sink_polarity=0.0,
                  oil_frac=0.0, lipid_frac=0.0, lip_ell=0.55, k_tail=1.5, k_hydro=1.0,
-                 lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.95, chain_frac=0.0, k_bond=1.5, head_q=1.2, **kw):
+                 lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.95, chain_frac=0.0, k_bond=1.5, head_q=1.2, n_tail=2, **kw):
         super().__init__(cfg, seed, **kw)
         self.k_bond = k_bond         # strength of the bounded bond kernel
         self.head_q = head_q         # lipid HEAD dipole magnitude. This sets how strongly water
@@ -145,7 +145,7 @@ class PolarPackEngine(PackEngine):
         self._wi = np.where(self.species == WATER)[0]
         self.water_phi = r.uniform(0.0, 2.0 * np.pi, self._wi.size)  # each water's orientation angle
         self.water_u = _rand_unit(r, self._wi.size) if self.pd == 3 else None   # 3-D dipole axis
-        self._build_chains(chain_frac, r)   # relabels part of the ACTIVE pool into 3-bead lipids
+        self._build_chains(chain_frac, r, n_tail)   # ACTIVE pool -> bonded lipid chains
         if self._wi.size:
             self.X[self._wi, self.pd:self.pd + self.tK] = 0.0
             self._write_water(self.X[:, self.pd:])
@@ -175,7 +175,7 @@ class PolarPackEngine(PackEngine):
         if self._ti.size:
             z[self._ti, :self.tK] = 0.0
 
-    def _build_chains(self, chain_frac, rng):
+    def _build_chains(self, chain_frac, rng, n_tail=2):
         """Carve a whole number of 3-bead lipids out of the ACTIVE pool and wire their bonds.
 
         Bonds are a FIXED PAIR MASK with a bounded symmetric kernel — i.e. masked/local attention,
@@ -190,24 +190,30 @@ class PolarPackEngine(PackEngine):
         self._mol = np.zeros((0, 3), dtype=int)
         self.head_u = np.zeros((0, 3))
         self.head_phi = np.zeros(0)
-        n_mol = int(self.cfg.N * chain_frac) // 3
+        nb = 1 + n_tail                       # beads per molecule: one head plus n_tail tails
+        self.n_bead = nb
+        n_mol = int(self.cfg.N * chain_frac) // nb
         if n_mol <= 0:
             return
-        pool = np.where(self.species == ACTIVE)[0][:3 * n_mol]
-        n_mol = len(pool) // 3
+        pool = np.where(self.species == ACTIVE)[0][:nb * n_mol]
+        n_mol = len(pool) // nb
         if n_mol <= 0:
             return
-        tri = pool[:3 * n_mol].reshape(n_mol, 3)          # [head, tail1, tail2] per molecule
-        h, t1, t2 = tri[:, 0], tri[:, 1], tri[:, 2]
+        tri = pool[:nb * n_mol].reshape(n_mol, nb)     # [head, tail1, ... tail_n] per molecule
+        h = tri[:, 0]
         self.species[h] = MOL_HEAD
-        self.species[t1] = MOL_TAIL
-        self.species[t2] = MOL_TAIL
-        self._hi, self._ti = h, np.concatenate([t1, t2])
-        self._mol = tri                                   # (n_mol, 3) = [head, tail1, tail2]
-        self._bond_i = np.concatenate([h, t1, h])
-        self._bond_j = np.concatenate([t1, t2, t2])
-        self._bond_r0 = np.concatenate([np.full(n_mol, BOND_REST), np.full(n_mol, BOND_REST),
-                                        np.full(n_mol, BOND_SPAN)])   # third bond = straightener
+        self.species[tri[:, 1:].ravel()] = MOL_TAIL
+        self._hi, self._ti = h, tri[:, 1:].ravel().copy()
+        self._mol = tri
+        # backbone bonds along the chain, then 1-3 straighteners to keep it extended
+        bi, bj, br = [], [], []
+        for k in range(nb - 1):
+            bi.append(tri[:, k]); bj.append(tri[:, k + 1]); br.append(np.full(n_mol, BOND_REST))
+        for k in range(nb - 2):
+            bi.append(tri[:, k]); bj.append(tri[:, k + 2]); br.append(np.full(n_mol, BOND_SPAN))
+        self._bond_i = np.concatenate(bi)
+        self._bond_j = np.concatenate(bj)
+        self._bond_r0 = np.concatenate(br)
         self.head_u = _rand_unit(rng, len(h)) if self.pd == 3 else np.zeros((len(h), 3))
         self.head_phi = rng.uniform(0.0, 2.0 * np.pi, len(h))      # 2-D head dipole bearing
 
