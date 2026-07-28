@@ -14,7 +14,7 @@ from config import DEFAULTS, VivariumConfig
 from polar_pack import PolarPackEngine
 
 
-def pair(orientation, sep=1.1, n_wat=60, bound=3.0, head_q=1.2, n_tail=2):
+def pair(orientation, sep=1.1, n_wat=60, bound=3.0, head_q=1.2, n_tail=2, satt=0.55):
     # species are drawn at random, so ask for more chain tokens than the two molecules we need and
     # use the first two; requesting exactly 6 sometimes yields only one molecule.
     nb = 1 + n_tail
@@ -25,7 +25,7 @@ def pair(orientation, sep=1.1, n_wat=60, bound=3.0, head_q=1.2, n_tail=2):
                         morph=0.70, momentum=0.30, speed=0.02, water_dipole=0.8, k_bond=8.0,
                         head_q=head_q, n_tail=n_tail)
     e.conservative = True
-    e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, 0.55, 0.90
+    e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, satt, 0.90
     e.repel_contact, e.rigidity, e.selectivity, e.temperature = 1.0, 0.0, 0.30, 0.0
     e.langevin = True
     mol = e._mol
@@ -73,16 +73,18 @@ if __name__ == "__main__":
     print("RUNG 0 — do two lipids prefer tail-to-tail? (kT=0, force along the separation axis)")
     print("  positive = the pair is PULLED TOGETHER in that orientation\n")
     seps = (1.1, 1.4, 1.8)
+    import math
+    print("  A SHORTER interaction range should make a SHORT molecule look anisotropic, which would")
+    print("  avoid needing 4-bead tails (and therefore a ~231-lipid micelle).\n")
+    print("  %-6s %-8s %-9s %-12s %s" % ("tails", "satt", "range", "signal", "tail-to-tail preferred"))
     for nt in (2, 3, 4):
-        print("\n  tail beads = %d   (molecule length %.1f)" % (nt, float(nt)))
-        print("  %-18s" % "orientation" + "".join("%10s" % ("sep %.1f" % s) for s in seps))
-        res = {}
-        for o in ("tail-to-tail", "head-to-head"):
-            row = [pair(o, sep=s, n_tail=nt) for s in seps]
-            res[o] = row
-            print("  %-18s" % o + "".join("%10.3f" % v for v in row))
-        tt, hh = res["tail-to-tail"], res["head-to-head"]
-        sig = max(abs(a - b) / max(abs(a), abs(b), 1e-9) for a, b in zip(tt, hh))
-        ok = all(a > b for a, b in zip(tt, hh))
-        print("  orientation signal = %.1f%%   tail-to-tail preferred: %s"
-              % (100 * sig, "YES" if ok else "no"))
+        for satt in (0.55, 1.0, 2.0):
+            res = {}
+            for o in ("tail-to-tail", "head-to-head"):
+                res[o] = [pair(o, sep=s, n_tail=nt, satt=satt) for s in seps]
+            tt, hh = res["tail-to-tail"], res["head-to-head"]
+            sig = max(abs(a - b) / max(abs(a), abs(b), 1e-9) for a, b in zip(tt, hh))
+            ok = all(a > b for a, b in zip(tt, hh))
+            print("  %-6d %-8.2f %-9.2f %-12s %s"
+                  % (nt, satt, 1 / math.sqrt(satt), "%.0f%%" % (100 * sig),
+                     "YES" if ok else "no"))

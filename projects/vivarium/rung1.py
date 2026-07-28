@@ -56,7 +56,7 @@ if __name__ == "__main__":
     import sys
     n_tail = int(sys.argv[1]) if len(sys.argv) > 1 else 4
     n_lip = int(sys.argv[2]) if len(sys.argv) > 2 else 16
-    e = build(seed=3, n_lip=n_lip, bound=3.4, kt=0.02, speed=0.08, repel=12.0,
+    e = build(seed=3, n_lip=n_lip, bound=4.35, kt=0.02, speed=0.08, repel=12.0,
               k_bond=8.0, satt=0.55, spol=0.90, plant=False, n_tail=n_tail)
     print(f"  tail beads = {n_tail}, lipids = {n_lip}, N = {e.cfg.N}")
     print("  falsifier: <r_head> - <r_tail> must exceed +0.35 to count as a micelle")
