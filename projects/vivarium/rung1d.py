@@ -16,12 +16,18 @@ from micelle_probe import probe
 def main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("--seed", type=int, default=1)
+    p.add_argument("--lipids", type=int, default=24)
+    p.add_argument("--tails", type=int, default=4)
+    p.add_argument("--headq", type=float, default=1.2)
+    p.add_argument("--bound", type=float, default=4.0)
     p.add_argument("--steps", type=int, default=120000)
     p.add_argument("--every", type=int, default=10000)
     a = p.parse_args(argv)
 
-    e = build(seed=a.seed, n_lip=24, bound=4.0, kt=0.02, speed=0.08, repel=12.0,
-              k_bond=8.0, satt=0.55, spol=0.90, plant=False, n_tail=4)
+    e = build(seed=a.seed, n_lip=a.lipids, bound=a.bound, kt=0.02, speed=0.08, repel=12.0,
+              k_bond=8.0, satt=0.55, spol=0.90, plant=False, n_tail=a.tails, head_q=a.headq)
+    print(f"  N={e.cfg.N} lipids={len(e._mol)} tails={a.tails} head_q={a.headq} "
+          f"box={2*a.bound:.1f} margin={e.min_image_margin():.4f}", flush=True)
     hits = frames = 0
     for t in range(0, a.steps + 1, a.every):
         rs = probe(e)

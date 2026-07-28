@@ -86,6 +86,13 @@ class PackEngine:
         self.rigidity = 0.0     # ELASTIC STIFFNESS: restoring pull of the contour toward its ROUND rest
         #   shape each step (C_rest=0). 0 = no restoring (base case); 1 = snaps rigid/round. The true
         #   rigidity ↔ flexibility (morph) tension: morph grows prongs, rigidity relaxes them back.
+        self.repel_sharp = 0.0    # if >0, the overlap force saturates as tanh(sharp*overlap) instead
+        #   of rising linearly with depth. BOUNDED either way (tanh is an activation, and the linear
+        #   ramp is itself bounded by the contact distance), but the linear ramp is the SOFTEST
+        #   possible core: beads interpenetrate freely, so a short chain of them is nearly isotropic
+        #   and rung 0 needs four tail beads to see any orientation preference. A saturating core is
+        #   sharp near contact while its PEAK force is still 1, so it does not tighten the timestep
+        #   the way simply raising `repel` would. Symmetric in i,j, so momentum is still conserved.
         self.repel_contact = 0.0  # if >0, repel is a SYMMETRIC overlap force: it acts ONLY when two
         #   agents interpenetrate (d < repel_contact), ∝ overlap depth, zero otherwise (real excluded
         #   volume). Being symmetric (F_ij=−F_ji), it also CONSERVES momentum. 0 → old softmax repel.
@@ -346,7 +353,8 @@ class PackEngine:
             # ranged so this stays local anyway. Zero the diagonal (no self-overlap).
             overlap = np.clip(self._contact_distance(C, delta, dist) - dist, 0.0, None)
             np.fill_diagonal(overlap, 0.0)
-            repel = np.einsum("ij,ijc->ic", overlap, dirn)
+            drive = np.tanh(self.repel_sharp * overlap) if self.repel_sharp > 0.0 else overlap
+            repel = np.einsum("ij,ijc->ic", drive, dirn)
         else:
             rscore = np.where(mask, (S_direct - cfg.dist_lambda * d2) / tau, -np.inf)
             A_repel = self._attn(rscore, mask, self.sink_repel)

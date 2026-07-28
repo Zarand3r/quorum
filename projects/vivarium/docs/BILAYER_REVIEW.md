@@ -677,6 +677,49 @@ passes every positive control while being unable to distinguish the real thing f
 controls are needed: a planted structure must score high AND a random configuration must score zero.**
 Three micelle claims in this project rested on a statistic whose null had never been measured.
 
+## Finding 22 — the head charge was the blocker, and lowering it removes the size wall
+(2026-07-28)
+
+Finding 19 said four tail beads were required and the requirement was robust. It was robust to the
+two knobs tested, and both were the wrong knob.
+
+First hypothesis, refuted: the excluded-volume core is relu(sigma-d), a LINEAR ramp and the softest
+possible repulsion, so short chains interpenetrate into near-isotropy. A saturating tanh(k*overlap)
+core is equally bounded (tanh is an activation, and it saturates so PEAK force is unchanged) but
+sharp near contact. It does not work:
+
+    tails   sharp=0   sharp=4   sharp=12   sharp=40
+      2       no        no         no         no      (signal rises 24% -> 50%, never flips)
+      4      YES       YES         no         no      (a sharper core DESTROYS the preference)
+
+That refutation is the useful part. If sharpening the core breaks the four-bead preference, the
+preference was never shape-driven. It comes from cumulative dispersion attraction along the tail, and
+a sharper core stops tails reaching contact at all. So what tail-tail attraction must BEAT is
+head-head attraction, and the head coheres ELECTROSTATICALLY through head_q. The earlier rad_head
+sweep changed only the head's DISPERSION, which is why it did nothing.
+
+Sweeping head_q, the lever Cooke-Deserno use to tune the packing parameter:
+
+    tails   q=1.2   q=0.8   q=0.4   q=0.2   q=0.0
+      2      no      YES     YES     YES     YES
+      3      no       no      no      no      no
+      4     YES      YES     YES     YES      no
+
+**Two-bead tails pass rung 0 once the head charge drops below ~0.8.** Our default was 1.2, so
+head-head electrostatic attraction had been beating tail-tail dispersion the whole time, and the
+four-bead requirement was an artifact of one over-strong parameter rather than a property of bounded
+kernels.
+
+The size wall of Finding 19 comes down with it, because R/T depends on bead COUNT:
+
+    structure           at 4-bead tails     at 2-bead tails
+    spherical micelle     231 lipids          58 lipids
+    bicelle              1608 lipids         402 lipids
+
+58 lipids is N=440 tokens, the same cost as every run in this document. A bicelle at 402 lipids is
+~1650 tokens, which is expensive but no longer absurd. (3-bead tails never pass at any head_q, which
+is odd and unexplained; 2 is the target anyway.)
+
 ## How experimentation is now structured
 
 1. **Statics before dynamics.** For any target structure, first ask whether it is a mechanical
