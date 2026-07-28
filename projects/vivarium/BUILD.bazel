@@ -94,6 +94,15 @@ py_binary(
 )
 
 py_binary(
+    name = "_micelle",
+    srcs = ["_micelle.py"],
+    main = "_micelle.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
+py_binary(
     name = "toy2d",
     srcs = ["toy2d.py"],
     main = "toy2d.py",

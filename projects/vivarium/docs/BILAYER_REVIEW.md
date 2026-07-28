@@ -405,6 +405,34 @@ rescue it, so the deficit is not simply a head-charge deficit.
 factor of ten, lipid count, box size, bond strain, and head charge. The steric packing parameter is
 already 0.67, inside the bilayer window, so the drawn geometry is not the blocker either.
 
+## Finding 14 — RETRACTION: the aggregate is not a micelle (2026-07-27)
+
+I claimed micelle-like aggregates on the strength of tail burial rising 0.64 → 0.88. **Burial cannot
+support that claim.** It rises for any aggregate whatsoever, including an amorphous blob, so it
+distinguishes "clustered" from "dispersed" and nothing more.
+
+The distinguishing measurement is radial organisation: a micelle places its heads on the outside and
+its tails in the core, so `<r_head>` must exceed `<r_tail>` from the aggregate's own centre of mass.
+Measured over a self-assembly run on the largest connected lipid cluster (35 molecules):
+
+        step        <r_head>   <r_tail>   head - tail
+           0          3.061      3.174       -0.113
+       20000          3.120      3.160       -0.040
+       40000          3.192      2.977       +0.215
+       60000          3.256      3.385       -0.130
+
+Heads and tails occupy the same shell. **There is no head-out ordering**, and the one positive
+excursion is transient. The correct description is hydrophobic aggregation, not micelle formation.
+
+The claim has been retracted from the README and from the paper draft. This is the second time an
+under-specified metric produced a false positive here (the first was `emergence_score` reading 0 on a
+perfect planted bilayer because its pair cutoff was smaller than the inter-leaflet spacing), and both
+were caught by building the measurement that could falsify the claim rather than the one that
+confirmed it.
+
+**Revised pathway position:** step 1 (hydrophobic collapse) is done; step 2 (micelle) has NOT been
+reached; steps 3-4 (bicelle, vesicle) are untouched.
+
 ## Verification gates (any violation disqualifies a result)
 
 1. **Base-case identity** — `--verify` must report `max|ΔX| = 0.00e+00` (new channels default off).
