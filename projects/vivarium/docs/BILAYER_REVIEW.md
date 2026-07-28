@@ -544,6 +544,38 @@ control BEFORE using it to make or retract a claim. Three claims in this project
 metric defects rather than physics: emergence_score reading 0 on a perfect bilayer, burial mistaken
 for micellar order, and this radius difference. The positive control costs one run.
 
+## Finding 19 — the chain-length requirement is robust, and it prices lamellar structures out
+(2026-07-28)
+
+Rung 0 needs four tail beads. Two independent attempts to relax that failed:
+
+    interaction range   1.35 / 1.00 / 0.71 sigma   ->  only 4 tails passes, at every range
+    head dispersion     0.30 / 0.20 / 0.12 / 0.06  ->  only 4 tails passes, at every strength
+
+So the requirement is genuinely chain length, not range and not head strength. That has a direct
+geometric consequence, because a lamellar structure must be wider than it is thick. Bilayer
+thickness is twice the molecule length, and a convincing disc needs a radius of about twice that:
+
+    tails   length   thickness   disc radius   lipids for a BICELLE
+      2        2          4           8              402
+      3        3          6          12              905
+      4        4          8          16             1608
+
+    for comparison, a SPHERICAL MICELLE (radius = length):  58 lipids at 2 tails, 231 at 4
+
+Rung 0 forces four tails, and four tails make a bicelle a ~1600-lipid object, roughly 8000 tokens
+and ~70x our current pair work. Shrinking every length uniformly does not help: the aspect ratio
+R/T is set by bead COUNT, so it is scale-invariant.
+
+**This is the boundary the project has actually found.** The transformer-only restriction is not what
+blocks a bilayer directly. It forces bounded, smoothly-decaying kernels, those make short molecules
+effectively isotropic, escaping that needs a four-bead tail, and a four-bead tail makes every lamellar
+structure large. The constraint propagates into a system-size cost rather than into the physics.
+
+Current honest position: partial micellar order (outward +0.435 on 21 molecules, validated against a
+hand-built control at +0.997) on ELONGATED aggregates, which is a cylindrical micelle. A clean
+spherical micelle needs ~230 lipids (~2000 tokens, hours per run); a bicelle needs ~1600.
+
 ## How experimentation is now structured
 
 1. **Statics before dynamics.** For any target structure, first ask whether it is a mechanical

@@ -14,7 +14,8 @@ from config import DEFAULTS, VivariumConfig
 from polar_pack import PolarPackEngine
 
 
-def pair(orientation, sep=1.1, n_wat=60, bound=3.0, head_q=1.2, n_tail=2, satt=0.55):
+def pair(orientation, sep=1.1, n_wat=60, bound=3.0, head_q=1.2, n_tail=2, satt=0.55,
+         rad_head=0.30):
     # species are drawn at random, so ask for more chain tokens than the two molecules we need and
     # use the first two; requesting exactly 6 sometimes yields only one molecule.
     nb = 1 + n_tail
@@ -23,7 +24,7 @@ def pair(orientation, sep=1.1, n_wat=60, bound=3.0, head_q=1.2, n_tail=2, satt=0
     e = PolarPackEngine(cfg, 0, water_frac=n_wat / N, chain_frac=(6 * nb) / N,
                         repel=12.0, attract=0.30, polarity=0.80, cohesion=0.0, skew=0.0,
                         morph=0.70, momentum=0.30, speed=0.02, water_dipole=0.8, k_bond=8.0,
-                        head_q=head_q, n_tail=n_tail)
+                        head_q=head_q, n_tail=n_tail, rad_head=rad_head)
     e.conservative = True
     e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, satt, 0.90
     e.repel_contact, e.rigidity, e.selectivity, e.temperature = 1.0, 0.0, 0.30, 0.0
@@ -74,17 +75,16 @@ if __name__ == "__main__":
     print("  positive = the pair is PULLED TOGETHER in that orientation\n")
     seps = (1.1, 1.4, 1.8)
     import math
-    print("  A SHORTER interaction range should make a SHORT molecule look anisotropic, which would")
-    print("  avoid needing 4-bead tails (and therefore a ~231-lipid micelle).\n")
-    print("  %-6s %-8s %-9s %-12s %s" % ("tails", "satt", "range", "signal", "tail-to-tail preferred"))
+    print("  Rung 0 tracked TAIL FRACTION, which a WEAKER HEAD raises just as a longer tail does.")
+    print("  If a 2-bead tail can pass with a weaker head, every lamellar structure shrinks by ~8x.\n")
+    print("  %-6s %-10s %-12s %s" % ("tails", "rad_head", "signal", "tail-to-tail preferred"))
     for nt in (2, 3, 4):
-        for satt in (0.55, 1.0, 2.0):
+        for rh in (0.30, 0.20, 0.12, 0.06):
             res = {}
             for o in ("tail-to-tail", "head-to-head"):
-                res[o] = [pair(o, sep=s, n_tail=nt, satt=satt) for s in seps]
+                res[o] = [pair(o, sep=s, n_tail=nt, rad_head=rh) for s in seps]
             tt, hh = res["tail-to-tail"], res["head-to-head"]
             sig = max(abs(a - b) / max(abs(a), abs(b), 1e-9) for a, b in zip(tt, hh))
             ok = all(a > b for a, b in zip(tt, hh))
-            print("  %-6d %-8.2f %-9.2f %-12s %s"
-                  % (nt, satt, 1 / math.sqrt(satt), "%.0f%%" % (100 * sig),
-                     "YES" if ok else "no"))
+            print("  %-6d %-10.2f %-12s %s"
+                  % (nt, rh, "%.0f%%" % (100 * sig), "YES" if ok else "no"))

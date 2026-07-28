@@ -12,8 +12,12 @@ These three are better because each averages over molecules rather than differen
               mean of N molecule-level terms rather than a difference of two means.
     shell     fraction of molecules whose HEAD bead is farther from the cluster centre than its own
               TAIL beads. A per-molecule yes/no, so it is robust to cluster shape.
-    sphericity  ratio of the smallest to largest principal moment of the cluster. Near 1 = ball
-              (micelle), near 0 = sheet or rod. Tells you whether a RADIAL measure means anything.
+    shape     full classification from all three principal moments L1<=L2<=L3, because the
+              smallest/largest ratio alone CANNOT tell a rod from a disc (both give a small ratio)
+              and a bicelle is a disc:
+                  sphere  L1/L3 high            a spherical micelle
+                  disc    L2/L3 high, L1/L3 low a BICELLE, the target
+                  rod     L2/L3 low             a cylindrical micelle
 """
 import numpy as np
 
@@ -66,17 +70,27 @@ def probe(e, min_size=8):
         shell = float((np.linalg.norm(heads - com, axis=1)
                        > np.linalg.norm(tails - com, axis=1)).mean())
         c = allb - com
-        ev = np.linalg.eigvalsh(c.T @ c / len(c))
-        spher = float(ev[0] / max(ev[-1], 1e-9))
-        res.append((len(comp), outward, shell, spher))
+        ev = np.linalg.eigvalsh(c.T @ c / len(c))      # ascending: L1 <= L2 <= L3
+        a1, a2 = float(ev[0] / max(ev[2], 1e-9)), float(ev[1] / max(ev[2], 1e-9))
+        if a1 > 0.55:
+            shape = "sphere"
+        elif a2 > 0.55:
+            shape = "DISC"                              # two long axes, one short => a bicelle
+        else:
+            shape = "rod"
+        res.append((len(comp), outward, shell, a1, a2, shape))
     return res
 
 
 def report(e, tag):
     rs = probe(e)
     if not rs:
-        print(f"  {tag:>8s}  no cluster of 8+ molecules")
+        print(f"  {tag:>8s}  no cluster of 8+ molecules", flush=True)
         return
-    for n, o, sh, sp in rs[:3]:
-        verdict = "MICELLE" if (o > 0.45 and sh > 0.75) else ("partial" if o > 0.2 else "no radial order")
-        print(f"  {tag:>8s}  n={n:3d}  outward={o:+.3f}  shell={sh:.2f}  sphericity={sp:.2f}   {verdict}")
+    for n, o, sh, a1, a2, shape in rs[:2]:
+        if o > 0.45 and sh > 0.70:
+            v = "BICELLE" if shape == "DISC" else ("MICELLE" if shape == "sphere" else "rod micelle")
+        else:
+            v = "partial" if o > 0.2 else "no radial order"
+        print(f"  {tag:>8s}  n={n:3d}  outward={o:+.3f}  shell={sh:.2f}  "
+              f"L1/L3={a1:.2f} L2/L3={a2:.2f} {shape:6s}  {v}", flush=True)

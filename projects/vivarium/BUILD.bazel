@@ -121,6 +121,15 @@ py_binary(
 )
 
 py_binary(
+    name = "rung2",
+    srcs = ["rung2.py", "micelle_probe.py"],
+    main = "rung2.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
+py_binary(
     name = "rung1b",
     srcs = ["rung1b.py", "micelle_probe.py"],
     main = "rung1b.py",
