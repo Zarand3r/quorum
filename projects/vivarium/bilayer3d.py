@@ -39,17 +39,19 @@ LIP_LEN = 2.0                # head -> far tail
 NEAR = 1.6
 
 
-def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False, head_q=1.2):
+def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False,
+          head_q=1.2, n_tail=2):
     side = 2.0 * bound
     # water fills whatever the lipids do not, at roughly liquid packing
-    lip_vol = 3 * n_lip * (4 / 3) * math.pi * 0.5 ** 3
+    nb = 1 + n_tail
+    lip_vol = nb * n_lip * (4 / 3) * math.pi * 0.5 ** 3
     n_wat = int(max(40.0, (0.45 * side ** 3 - lip_vol) / ((4 / 3) * math.pi * 0.5 ** 3)))
-    N = 3 * n_lip + n_wat
+    N = nb * n_lip + n_wat
     cfg = VivariumConfig(**{**DEFAULTS, "N": N, "pos_dim": 3, "n_harmonics": 2, "pos_bound": bound})
-    e = PolarPackEngine(cfg, seed, water_frac=n_wat / N, chain_frac=3 * n_lip / N,
+    e = PolarPackEngine(cfg, seed, water_frac=n_wat / N, chain_frac=nb * n_lip / N,
                         repel=repel, attract=0.30, polarity=0.80, cohesion=0.0, skew=0.0,
                         morph=0.70, momentum=0.30, speed=speed, water_dipole=0.8, k_bond=k_bond,
-                        head_q=head_q)
+                        head_q=head_q, n_tail=n_tail)
     e.conservative = True
     e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, satt, spol
     e.repel_contact, e.rigidity, e.selectivity, e.temperature = 1.0, 0.0, 0.30, kt
@@ -85,8 +87,9 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False,
         cen = rng.uniform(-B, B, (len(mol), 3))
         ax = rng.standard_normal((len(mol), 3))
         ax /= np.linalg.norm(ax, axis=1, keepdims=True)
-        for bead, off in enumerate((1.0, 0.0, -1.0)):
-            e.X[mol[:, bead], :3] = cen + off * ax
+        half = (mol.shape[1] - 1) / 2.0
+        for bead in range(mol.shape[1]):
+            e.X[mol[:, bead], :3] = cen + (half - bead) * ax
         e.head_u = ax.copy()
         e.X[e._wi, :3] = rng.uniform(-B, B, (len(e._wi), 3))
     e.vel[:] = 0.0
