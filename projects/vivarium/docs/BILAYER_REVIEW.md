@@ -720,6 +720,44 @@ The size wall of Finding 19 comes down with it, because R/T depends on bead COUN
 ~1650 tokens, which is expensive but no longer absurd. (3-bead tails never pass at any head_q, which
 is odd and unexplained; 2 is the target anyway.)
 
+## Finding 23 — a planted bilayer is not a mechanical equilibrium, and one dipole cannot serve two masters
+(2026-07-28)
+
+The decisive test, and it had never actually been run under working physics: every earlier
+planted-bilayer result used head_q=1.2 and 3-bead lipids, parameters where rung 0 provably does NOT
+prefer tail-to-tail, and they predate the nf_j conservativity fix. Re-run at kT=0, where there is no
+thermal energy to melt anything:
+
+    step     nematic (q=0.4)   nematic (q=1.2)   hydration   burial
+       0        +1.000            +1.000           0.284      1.000
+   10000        -0.294            -0.299           0.150      0.856
+   30000        -0.350            -0.277           0.144      0.858
+
+-1/3 is the isotropic baseline in 3D. The planted bilayer loses ALL orientational order within 10k
+steps at ZERO temperature, so it is not even a local mechanical equilibrium: the forces themselves
+drive it apart. **No amount of system size, run time, or nucleation can produce a lamellar phase
+under this force field.** Finding 22 unlocks rung 1; it does nothing for the bilayer.
+
+The diagnosis is in the third column. `hydration` falls from 0.284 to 0.144 while `burial` holds at
+0.86, so the structure stays condensed and the HEADS BURY THEMSELVES. In a real bilayer, headgroup
+hydration is what pins the interface flat and stops the aggregate rounding up into a blob.
+
+**The structural problem: one parameter controls two things that need opposite settings.** head_q is a
+single dipole magnitude, and it sets both head-water attraction (which must be STRONG, or heads bury
+and the interface collapses) and head-head attraction (which must be WEAK, or it beats tail-tail
+dispersion and rung 0 fails). Finding 22 lowered it to win rung 0 and thereby made solvation worse.
+There is no value of one scalar that satisfies both constraints.
+
+Real coarse-grained lipid models resolve this by making headgroups mutually REPULSIVE rather than
+merely weakly attractive. That is the missing physics, and it is expressible here: the electrostatic
+head already reads <C_i, Y(u_ij)>, so adding a k=0 monopole channel carrying the SAME sign on every
+head yields bounded head-head repulsion under the existing Gaussian envelope, with no 1/r and no
+energy ledger. Dipole-dipole is orientation-dependent and attracts head-to-tail, which is exactly the
+wrong sign structure for keeping an interface flat.
+
+**Next experiment:** add the like-sign head monopole, then re-run this same kT=0 planted-bilayer test.
+It is cheap and it is a direct yes/no on whether head-head repulsion is the missing term.
+
 ## How experimentation is now structured
 
 1. **Statics before dynamics.** For any target structure, first ask whether it is a mechanical

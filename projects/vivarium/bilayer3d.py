@@ -119,9 +119,11 @@ def metrics(e):
     cen = e.X[e._mol[:, 1], :e.pd]
     dc = cen[:, None, :] - cen[None, :, :]
     dc = dc - e.L * np.round(dc / e.L)
-    # 2.8, not 2.0: the two leaflets of a bilayer sit ~2.4 apart centre-to-centre, so a smaller
-    # cutoff cannot see them and `opposed` reads 0 even on a perfect planted bilayer.
-    pair = np.einsum("ijc,ijc->ij", dc, dc) < 2.8 ** 2
+    # 3.2, not 2.8: the planted leaflets sit EXACTLY 2.8 apart centre-to-centre, so a strict `< 2.8`
+    # excludes every cross-leaflet pair by one epsilon and `opposed` reads 0.000 on a PERFECT planted
+    # bilayer. That is the same class of defect as Finding 21: a metric that fails its own positive
+    # control. 3.2 clears the leaflet spacing with margin while staying well inside the box.
+    pair = np.einsum("ijc,ijc->ij", dc, dc) < 3.2 ** 2
     np.fill_diagonal(pair, False)
     dot = u @ u.T
     nem = float(np.mean(2.0 * dot[pair] ** 2 - 1.0)) if pair.any() else 0.0
