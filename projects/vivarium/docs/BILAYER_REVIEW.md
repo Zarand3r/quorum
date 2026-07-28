@@ -576,6 +576,38 @@ Current honest position: partial micellar order (outward +0.435 on 21 molecules,
 hand-built control at +0.997) on ELONGATED aggregates, which is a cylindrical micelle. A clean
 spherical micelle needs ~230 lipids (~2000 tokens, hours per run); a bicelle needs ~1600.
 
+## Finding 20 — rung 1 clears, as a CYLINDRICAL micelle, once the metric matches the shape
+(2026-07-28)
+
+Finding 19 says a spherical micelle needs ~231 four-bead lipids. We run 24. So the only micellar
+phase with enough material at this size is the CYLINDRICAL one, which is a real lyotropic phase
+sitting at packing parameter 1/3 to 1/2, and we had been scoring it with a metric built for a sphere.
+
+`outward` measures head-out alignment from the cluster CENTROID. On an elongated aggregate the
+molecules near the two end caps point radially along the LONG axis, so their order does not register.
+The fix is `cyl`, the same alignment measured in the plane perpendicular to the cluster's long axis.
+Validated against a hand-built cylinder before being trusted, per the rule from Findings 16-18:
+
+    planted cylinder   outward=+0.734   cyl=+0.999   shell=1.00   rod    CYLINDRICAL MICELLE
+
+The control confirms the bias it was written for: the centroid metric under-reads a known-perfect
+cylinder by 0.27, while the perpendicular metric reads it at ceiling.
+
+From a disordered start, three independent metrics then agree:
+
+    t=40000   n=21   outward=+0.435  cyl=+0.560  shell=0.19   partial
+    t=60000   n= 8   outward=+0.799  cyl=+0.729  shell=0.75   CYLINDRICAL MICELLE
+
+**Rung 1 clears at t=60000.** The disagreement at t=40000 is informative rather than noise: a large
+21-molecule aggregate scores moderate radial alignment but only 0.19 on the per-molecule shell test,
+so most of its molecules lie tangentially with head and tail at nearly equal radius. That is a molten
+aggregate, not a micelle, and the three metrics correctly refuse to call it one. When it later breaks
+into smaller clusters, the 8-molecule one is ordered on all three at once.
+
+So the size ceiling from Finding 19 shows up directly in the dynamics: ordered micellar structure
+appears at the small aggregate sizes this chain length supports, and degrades at the larger ones that
+would need to be much larger still to close properly.
+
 ## How experimentation is now structured
 
 1. **Statics before dynamics.** For any target structure, first ask whether it is a mechanical

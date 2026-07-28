@@ -18,6 +18,12 @@ These three are better because each averages over molecules rather than differen
                   sphere  L1/L3 high            a spherical micelle
                   disc    L2/L3 high, L1/L3 low a BICELLE, the target
                   rod     L2/L3 low             a cylindrical micelle
+    cyl       <u_perp . rhat_perp>, the same alignment measured in the plane PERPENDICULAR to the
+              cluster's long axis. `outward` is measured from the centroid, so on an elongated
+              aggregate the molecules near the two ends are radial along the LONG axis and their
+              head-out order is invisible to it. A cylindrical micelle has heads out in the
+              perpendicular plane only, which is exactly what this isolates. On a sphere it agrees
+              with `outward`; on a rod it is the honest reading.
 """
 import numpy as np
 
@@ -70,15 +76,21 @@ def probe(e, min_size=8):
         shell = float((np.linalg.norm(heads - com, axis=1)
                        > np.linalg.norm(tails - com, axis=1)).mean())
         c = allb - com
-        ev = np.linalg.eigvalsh(c.T @ c / len(c))      # ascending: L1 <= L2 <= L3
+        ev, evec = np.linalg.eigh(c.T @ c / len(c))    # ascending: L1 <= L2 <= L3
         a1, a2 = float(ev[0] / max(ev[2], 1e-9)), float(ev[1] / max(ev[2], 1e-9))
+        ax = evec[:, 2]                                 # the cluster's long axis
+        rp = r - np.outer(r @ ax, ax)
+        up = u - np.outer(u @ ax, ax)
+        rp /= np.maximum(np.linalg.norm(rp, axis=1, keepdims=True), 1e-9)
+        up /= np.maximum(np.linalg.norm(up, axis=1, keepdims=True), 1e-9)
+        cyl = float((up * rp).sum(1).mean())
         if a1 > 0.55:
             shape = "sphere"
         elif a2 > 0.55:
             shape = "DISC"                              # two long axes, one short => a bicelle
         else:
             shape = "rod"
-        res.append((len(comp), outward, shell, a1, a2, shape))
+        res.append((len(comp), outward, shell, cyl, a1, a2, shape))
     return res
 
 
@@ -87,10 +99,12 @@ def report(e, tag):
     if not rs:
         print(f"  {tag:>8s}  no cluster of 8+ molecules", flush=True)
         return
-    for n, o, sh, a1, a2, shape in rs[:2]:
-        if o > 0.45 and sh > 0.70:
-            v = "BICELLE" if shape == "DISC" else ("MICELLE" if shape == "sphere" else "rod micelle")
+    for n, o, sh, cy, a1, a2, shape in rs[:2]:
+        # on an elongated cluster the honest radial reading is the perpendicular one
+        best = cy if shape == "rod" else o
+        if best > 0.45 and sh > 0.70:
+            v = {"DISC": "BICELLE", "sphere": "MICELLE"}.get(shape, "CYLINDRICAL MICELLE")
         else:
-            v = "partial" if o > 0.2 else "no radial order"
-        print(f"  {tag:>8s}  n={n:3d}  outward={o:+.3f}  shell={sh:.2f}  "
+            v = "partial" if best > 0.2 else "no radial order"
+        print(f"  {tag:>8s}  n={n:3d}  outward={o:+.3f}  cyl={cy:+.3f}  shell={sh:.2f}  "
               f"L1/L3={a1:.2f} L2/L3={a2:.2f} {shape:6s}  {v}", flush=True)
