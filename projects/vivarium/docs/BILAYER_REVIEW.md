@@ -645,8 +645,14 @@ The fix is to take rhat at the molecular CENTRE, which is independent of u under
 is now the metric that gets read, and a regression test asserts both that it is unbiased and that the
 old one's bias is still detectable.
 
-**There is no micelle.** Both unbiased metrics agree: `shell` reads 0.482 against a null of 0.500,
-and the aggregates are indistinguishable from randomly oriented molecules in a blob. Rungs 1 and 2
+**There is no micelle.** Re-measuring the same system with the corrected metric, 19 clustered frames
+over 3 seeds:
+
+    outward_c   mean +0.015     null +0.002 +/- 0.142      2/19 frames above the p95 of +0.235
+    shell       mean  0.495     null  0.500
+
+Both unbiased metrics land on their nulls, and 2 of 19 frames above p95 is the false-positive rate
+noise predicts. The aggregates are indistinguishable from randomly oriented molecules in a blob. Rungs 1 and 2
 are both open, and Findings 16-18 are retracted along with them.
 
 **The methodological point, which is the durable one.** Finding 16 established "validate the

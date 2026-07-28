@@ -28,9 +28,11 @@ def main(argv=None):
         if rs:
             n, o, sh, cy, a1, a2, shape, o_raw = rs[0]
             ok = o > 0.45 and sh > 0.70
+            # thresholds against the measured null (null_control.py): outward_c p95 = +0.235
+            verdict = "MICELLE" if ok else ("partial" if o > 0.235 else "no radial order")
             hits += ok; frames += 1
             print(f"  seed{a.seed} t={t:6d} n={n:3d} outward_c={o:+.3f} shell={sh:.2f} "
-                  f"{shape:6s} {'MICELLE' if ok else 'partial'}", flush=True)
+                  f"{shape:6s} {verdict}", flush=True)
         else:
             print(f"  seed{a.seed} t={t:6d} no cluster", flush=True)
         if t < a.steps:
