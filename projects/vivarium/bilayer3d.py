@@ -34,24 +34,25 @@ import numpy as np
 from config import DEFAULTS, VivariumConfig
 from polar_pack import WATER, PolarPackEngine
 
+BOND_REST_Z = 1.0        # matches polar_pack.BOND_REST
 APL = math.sqrt(3) / 2.0     # area a lipid occupies in a packed leaflet (hex, diameter 1)
 LIP_LEN = 2.0                # head -> far tail
 NEAR = 1.6
 
 
 def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False,
-          head_q=1.2, n_tail=2):
+          head_q=1.2, n_tail=2, rad_head=None, no_water=False):
     side = 2.0 * bound
     # water fills whatever the lipids do not, at roughly liquid packing
     nb = 1 + n_tail
     lip_vol = nb * n_lip * (4 / 3) * math.pi * 0.5 ** 3
-    n_wat = int(max(40.0, (0.45 * side ** 3 - lip_vol) / ((4 / 3) * math.pi * 0.5 ** 3)))
+    n_wat = 0 if no_water else int(max(40.0, (0.45 * side ** 3 - lip_vol) / ((4 / 3) * math.pi * 0.5 ** 3)))
     N = nb * n_lip + n_wat
     cfg = VivariumConfig(**{**DEFAULTS, "N": N, "pos_dim": 3, "n_harmonics": 2, "pos_bound": bound})
     e = PolarPackEngine(cfg, seed, water_frac=n_wat / N, chain_frac=nb * n_lip / N,
                         repel=repel, attract=0.30, polarity=0.80, cohesion=0.0, skew=0.0,
                         morph=0.70, momentum=0.30, speed=speed, water_dipole=0.8, k_bond=k_bond,
-                        head_q=head_q, n_tail=n_tail)
+                        head_q=head_q, n_tail=n_tail, rad_head=rad_head)
     e.conservative = True
     e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, satt, spol
     e.repel_contact, e.rigidity, e.selectivity, e.temperature = 1.0, 0.0, 0.30, kt
@@ -73,7 +74,16 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False,
             # previous offsets (2.0, 1.2, 0.4) gave 0.8 spacing, so every bond started 20%
             # compressed and the bond force tore the planted lattice apart before the pair forces
             # could be judged at all.
-            for bead, off in enumerate((2.4, 1.4, 0.4)):
+            # (2.5, 1.5, 0.5), NOT (2.4, 1.4, 0.4). The chain spacing is 1.0 either way, matching
+            # BOND_REST, but the INNERMOST tails of the two leaflets sit at +off and -off, so their
+            # separation is 2*off. At off=0.4 that is 0.8 against a contact distance of
+            # sigma_i+sigma_j = 1.0, i.e. the planted bilayer starts with a 20% steric CLASH at the
+            # midplane. The repulsion tears the leaflets apart at ANY temperature, which is what
+            # every previous "the planted bilayer melts even at kT=0" result was actually measuring.
+            # At off=0.5 the opposing tails start exactly at contact.
+            nb = mol.shape[1]
+            for bead in range(nb):
+                off = 0.5 + (nb - 1 - bead) * BOND_REST_Z
                 e.X[idx[:, bead], 0] = pts[:, 0]
                 e.X[idx[:, bead], 1] = pts[:, 1]
                 e.X[idx[:, bead], 2] = sgn * off
@@ -148,11 +158,18 @@ def main(argv=None):
     p.add_argument("--satt", type=float, default=0.55)
     p.add_argument("--spol", type=float, default=0.90)
     p.add_argument("--headq", type=float, default=1.2)
+    p.add_argument("--radhead", type=float, default=None,
+                   help="head DISPERSION radius. eps=tanh(rad^2/0.25), so ~0.05 gives a head that "
+                        "has excluded volume but does NOT attract, which is the Cooke-Deserno "
+                        "structure: cohesion is tail-tail ONLY.")
+    p.add_argument("--nowater", action="store_true",
+                   help="solvent-free, as Cooke-Deserno. Tail-tail cohesion replaces water.")
+    p.add_argument("--tails", type=int, default=2)
     p.add_argument("--plant", action="store_true")
     a = p.parse_args(argv)
 
     e = build(a.seed, a.lipids, a.bound, a.kt, a.speed, a.repel, a.kbond, a.satt, a.spol,
-              a.plant, a.headq)
+              a.plant, a.headq, n_tail=a.tails, rad_head=a.radhead, no_water=a.nowater)
     side = 2 * a.bound
     need = 2 * side * side / APL
     print(f"N={e.cfg.N}  lipids={len(e._mol)}  water={len(e._wi)}  box={side:.1f}  "
