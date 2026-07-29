@@ -36,7 +36,7 @@ from polar_pack import BOND_REST, PolarPackEngine
 
 
 def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, plant=False, n_tail=2,
-          head_sigma=1.0, attract=0.30, bond_span=6.0, aniso=0.0, walls=False, span_frac=1.0):
+          head_sigma=1.0, attract=0.30, bond_span=6.0, aniso=0.0, walls=False, span_frac=1.0, sharp=0.0):
     nb = 1 + n_tail
     n_tok = nb * n_lip
     cfg = VivariumConfig(**{**DEFAULTS, "N": n_tok, "pos_dim": 2, "n_harmonics": 3,
@@ -49,6 +49,7 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, plant=False, n_tai
                         speed=speed, k_bond=k_bond, head_q=0.0, n_tail=n_tail, rad_head=0.0,
                         aniso=aniso, bond_span=bond_span, head_sigma=head_sigma)
     e.conservative = True
+    e.repel_sharp = sharp   # >0 = saturating tanh core: bounded, but HARD near contact
     # sink_polarity must stay non-zero even though polarity=0 disables the head, because
     # min_image_margin() takes the max over ALL sink ranges and exp(-0*d^2)=1 would report a bogus
     # margin of 1.0 (the gate is <0.01) for a head that is not even active.
@@ -84,6 +85,23 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, plant=False, n_tai
         rhat = np.stack([np.cos(th), np.sin(th)], axis=1)
         for bead in range(nb):
             e.X[mol[:, bead], :2] = rhat * (0.5 + (nb - 1 - bead) * BOND_REST)
+        e.head_phi[:] = th
+    elif plant == "clump":
+        # A COMPACT but fully disordered clump in the middle of a large box. This separates two
+        # different questions that a dilute random start conflates: whether dispersed molecules can
+        # FIND each other (ordinary diffusion, and hopeless at the density a finite ribbon needs -- at
+        # box 44 the density is 0.056 and nothing ever aggregates), versus whether molecules that are
+        # already together can ORDER into a ribbon. The second is the physics under test.
+        n = len(mol)
+        rad = math.sqrt(n * nb * 0.9 / math.pi)     # just dense enough to be in contact
+        ang = rng.uniform(0, 2 * np.pi, n)
+        rr = rad * np.sqrt(rng.random(n))
+        cen = np.stack([rr * np.cos(ang), rr * np.sin(ang)], axis=1)
+        th = rng.uniform(0, 2 * np.pi, n)
+        ax = np.stack([np.cos(th), np.sin(th)], axis=1)
+        half = (nb - 1) / 2.0
+        for bead in range(nb):
+            e.X[mol[:, bead], :2] = cen + (half - bead) * BOND_REST * ax
         e.head_phi[:] = th
     else:
         cen = rng.uniform(-B, B, (len(mol), 2))
@@ -138,13 +156,25 @@ def main(argv=None):
     p.add_argument("--headsigma", type=float, default=1.0)
     p.add_argument("--span", type=float, default=6.0)
     p.add_argument("--attract", type=float, default=0.30)
+    p.add_argument("--anneal", type=float, default=0.0,
+                   help="starting kT for a cooling schedule, linearly ramped down to --kt over the run. "
+                        "Every run so far has been at FIXED kT, and the droplet is a kinetic trap: the "
+                        "planted ribbon is stable but never nucleates. Cooling is the standard way out of "
+                        "a trap -- hot enough to stay mobile, then slow enough for the ordered phase to "
+                        "form. 0 disables it.")
+    p.add_argument("--sharp", type=float, default=0.0,
+                   help="saturating tanh excluded-volume core. The linear ramp lets beads "
+                        "interpenetrate, so a molecule is not a well-defined rod and an aggregate can be a "
+                        "round blob with heads and tails mixed. Cooke-Deserno uses a 1/r^12 hard core and "
+                        "DOES elongate from a clump; this is the bounded equivalent. Rung 0 said a sharp "
+                        "core hurts, but that was a TWO-molecule test where shape is not the mechanism.")
     p.add_argument("--spanfrac", type=float, default=1.0,
                    help="fraction of the box the planted row occupies. 1.0 = spanning (a bilayer); "
                         "less than 1 leaves empty box around it, so the ribbon is FINITE and has two "
                         "exposed ends -- that is the bicelle, and whether it stays flat or curls up is "
                         "the whole question.")
     p.add_argument("--walls", action="store_true", help="confine y only (a 2-D slit)")
-    p.add_argument("--plant", default="", choices=["", "ribbon", "micelle"],
+    p.add_argument("--plant", default="", choices=["", "ribbon", "micelle", "clump"],
                    help="plant a candidate phase instead of starting disordered. Relaxing a PLANTED "
                         "structure at low kT answers 'is this phase stable' for a tiny fraction of the "
                         "cost of waiting for it to nucleate -- and nucleation, not stability, is what "
@@ -153,7 +183,8 @@ def main(argv=None):
 
     kw = dict(n_lip=a.lipids, bound=a.bound, kt=a.kt, speed=a.speed, repel=a.repel,
               k_bond=a.kbond, satt=a.satt, n_tail=a.tails, head_sigma=a.headsigma,
-              attract=a.attract, bond_span=a.span, walls=a.walls, span_frac=a.spanfrac)
+              attract=a.attract, bond_span=a.span, walls=a.walls, span_frac=a.spanfrac,
+              sharp=a.sharp)
     pl = build(a.seed, plant="ribbon", **kw)
     rn = build(a.seed + 99, plant=False, **kw)
     lp, ap, tp = metrics(pl)
@@ -163,6 +194,8 @@ def main(argv=None):
     e = build(a.seed, plant=(a.plant or False), **kw)
     print(f"  N={e.cfg.N} lipids={len(e._mol)} tails={a.tails} box={2*a.bound:.0f} "
           f"{'PLANTED' if a.plant else 'DISORDERED'}  margin={e.min_image_margin():.4f}")
+    if a.anneal > 0.0:
+        print(f"  annealing: kT {a.anneal} -> {a.kt} linearly over {a.steps} steps")
     print("   step  lamellar  aspect  thick   verdict")
     for t in range(0, a.steps + 1, a.every):
         lam, asp, th = metrics(e)
@@ -170,7 +203,10 @@ def main(argv=None):
             "partial" if lam > 0.7 else "no lamellar order")
         print(f"  {t:6d}   {lam:.3f}   {asp:.3f}  {th:5.2f}   {v}", flush=True)
         if t < a.steps:
-            for _ in range(a.every):
+            for k in range(a.every):
+                if a.anneal > 0.0:                      # linear cool from --anneal down to --kt
+                    frac = (t + k) / max(a.steps, 1)
+                    e.temperature = a.anneal + (a.kt - a.anneal) * frac
                 e.step()
     return 0
 

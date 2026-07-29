@@ -18,6 +18,12 @@ executed, in what order, and which conclusions are currently live.
 
 ## Live methodological rules
 
+0. CHECK THE MOLECULE FIRST. Every order parameter is computed from head/tail POSITIONS, so if the
+   lipid itself is deformed the metric describes nothing. `bond_span=6.0` stretched bonds to 2.4x
+   their rest length and was used in EVERY 4-bead-tail run, so those geometries were wrong. Print
+   bond length and 1-3 span alongside any structural claim. span=2.0 keeps them intact
+   (bond 1.01 +/- 0.01, r13 2.00).
+
 1. A metric is wrong until BOTH controls agree: a planted structure scores high AND a random
    configuration scores at the null. A positive control alone cannot catch a self-correlated
    statistic (F21). Three metrics have failed this in three separate places.
@@ -28,6 +34,47 @@ executed, in what order, and which conclusions are currently live.
    head dispersion were both wrong knobs; head electrostatics was the lever).
 
 ---
+
+## 2026-07-29f — the droplet is the PHASE, not a trap; and bond_span=6.0 was stretching every lipid
+
+**Ran, in 2-D from a compact disordered clump** (which separates "can dispersed molecules find each
+other", ordinary diffusion, from "can molecules already together ORDER"): lipid count past the
+droplet head-packing limit, a hard excluded-volume core, per-cluster shape, annealing, and finally the
+molecular geometry itself.
+
+**Everything says droplet.**
+
+    lipid count   N=60/100/150, all past the limit where heads no longer fit
+                  on a droplet perimeter (12*pi ~ 38)          aspect 0.76-0.82  round
+    hard core     repel_sharp 0 / 4 / 12 / 40                  aspect 0.76-0.93  round
+    per-cluster   ONE cluster, per-cluster aspect == global     the metric was sound
+    annealing     kT 0.10 / 0.25 / 0.60 -> 0.005               aspect 0.77-0.86  round
+
+Annealing failing is the informative one: annealing escapes KINETIC traps, so the droplet is not a
+trap, it is the preferred phase. The planted ribbon (aspect 0.33, lamellar 0.92, holds 20k steps) is
+therefore metastable, and nothing reaches it from a disordered clump.
+
+**Then the bug that matters most.** Checking the molecule, which nothing above had done:
+
+    bond_span   bond (rest 1.0)   r13 (straight 2.0)   verdict
+      2.0       1.01 +/- 0.01     2.00                 INTACT, perfectly straight
+      2.2       1.07 +/- 0.01     2.14                 intact
+      2.5       1.17 +/- 0.01     2.34                 intact
+      3.0       1.34 +/- 0.02     2.67                 STRETCHED
+      6.0       2.37 +/- 0.42     4.46                 STRETCHED 2.4x
+
+`bond_span=6.0` was used in EVERY 4-bead-tail experiment, in 2-D and 3-D. Those lipids were 2.4x
+longer and far floppier than intended, so the 3-D results that looked best -- lamellar 0.965,
+L2/L3 0.87, "SLAB" -- were measured on the wrong molecule. The mechanism is the one from 2026-07-28f:
+the straightener wants 6.0, the chain can only reach 2.0, and both tanh kernels saturate at the same
+amplitude so they cancel and the chain extends with no restoring force.
+
+**Important:** fixing it does NOT change the phase. At span=2.0 with a perfectly rigid rod the
+aggregate is still a round droplet (aspect 0.762). So the stretch was a real bug but not the cause.
+
+**Next:** re-run the 4-bead-tail 3-D experiments at span=2.0. Longer tails were the one lever that
+demonstrably helped (L2/L3 0.87 vs 0.44-0.58), and that measurement has to be repeated on an intact
+molecule before it can be believed.
 
 ## 2026-07-29e — the box was the limit, not the physics (2-D bicelle is stable)
 
