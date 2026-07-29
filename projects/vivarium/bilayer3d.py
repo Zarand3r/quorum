@@ -112,6 +112,24 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False,
     return e
 
 
+def lamellar(e):
+    """Fraction of lipids whose HEAD sits farther from the membrane midplane than its own TAILS.
+
+    This is the bilayer's defining architecture: a hydrophobic tail core with heads on the outside.
+    `nematic` measures something different, axis ALIGNMENT, and a FLUID membrane splays its lipids,
+    so nematic decays to ~0 while the lamellar organisation is untouched. Reading nematic alone
+    reports a stable bilayer as a failure, which is exactly what happened here for most of a day.
+
+    Per-molecule yes/no, so it is robust to tilt and to a diffuse membrane. Calibrated against BOTH
+    controls: a planted bilayer scores 0.996 and a disordered start scores 0.463 (null = 0.5).
+    """
+    mol = e._mol
+    mid = e.X[mol.ravel(), 2].mean()
+    hz = np.abs(e.X[mol[:, 0], 2] - mid)
+    tz = np.abs(e.X[mol[:, 1:], 2] - mid).mean(axis=1)
+    return float((hz > tz).mean())
+
+
 def metrics(e):
     _, d2 = e._periodic_delta()
     near = d2 < NEAR ** 2
@@ -196,10 +214,11 @@ def main(argv=None):
           f"{'PLANTED' if a.plant else 'DISORDERED'}")
     print(f"  a spanning bilayer needs ~{need:.0f} lipids; solvent slab {(side - 2*LIP_LEN)/2:.1f} per side")
     print(f"  min-image margin {e.min_image_margin():.4f} (gate < 0.01)")
-    print("   step   burial  hydration  nematic  opposed  cells   [nematic: -0.33 random, +1 aligned]")
+    print("   step  lamellar  burial  hydration  nematic  opposed  cells")
+    print("         [lamellar: 0.5 random, 1.0 = every head outside its own tails -- THE bilayer test]")
     for t in range(0, a.steps + 1, a.every):
         b, h, n, o, c = metrics(e)
-        print(f"  {t:6d}   {b:.3f}     {h:.3f}   {n:+.3f}   {o:.3f}   {c}/64", flush=True)
+        print(f"  {t:6d}   {lamellar(e):.3f}   {b:.3f}     {h:.3f}   {n:+.3f}   {o:.3f}   {c}/64", flush=True)
         if t < a.steps:
             for _ in range(a.every):
                 e.step()

@@ -14,7 +14,7 @@ executed, in what order, and which conclusions are currently live.
 | 0 | two lipids prefer tail-to-tail | PASSES, at 2-bead tails once head_q < 0.8 (F22) |
 | 1 | micelle (radial head-out order) | FAILS, no radial order once the metric is unbiased (F21) |
 | 2 | bicelle | not attempted |
-| 3 | bilayer | OPEN. Every prior "melts at kT=0" result is VOID (see 2026-07-28c) |
+| 3 | bilayer | PLANTED BILAYER IS STABLE. lamellar 1.000 held 16k steps at kT=0, null 0.463. Self-assembly from disorder under test (2026-07-29b) |
 
 ## Live methodological rules
 
@@ -28,6 +28,43 @@ executed, in what order, and which conclusions are currently live.
    head dispersion were both wrong knobs; head electrostatics was the lever).
 
 ---
+
+## 2026-07-29b — the bilayer was stable the whole time; `nematic` was the wrong observable
+
+**Ran.** Stopped adding scalars and plotted the DENSITY PROFILE along the membrane normal.
+
+**Got.** After 8000 steps at kT=0 the tails form a single core centred at z=0 and the heads are
+DEPLETED from the middle and pushed outside it, out to +/-4.8. Tails inside, heads outside, which is
+the defining architecture of a bilayer. The membrane is thicker and more diffuse than planted, but
+it is unmistakably lamellar. `nematic` read +0.020 for this.
+
+**Why nematic was wrong.** It measures AXIS ALIGNMENT between neighbouring lipids. A FLUID membrane
+splays and tilts its lipids while keeping heads out and tails in, so nematic decays toward 0 while
+the organisation is untouched. Reading nematic alone reports a healthy fluid bilayer as a failure.
+That is what it had been doing for most of a day.
+
+**New metric, calibrated against both controls before use.** `lamellar` = fraction of lipids whose
+HEAD is farther from the midplane than its OWN tails. Per-molecule, so tilt and diffuseness do not
+touch it.
+
+    planted bilayer   lamellar 0.996     nematic +0.984
+    disordered start  lamellar 0.463     nematic -0.338      (null is 0.5)
+
+    relaxation at kT=0:
+    t=0      lamellar 0.996   nematic +0.984
+    t=2000   lamellar 1.000   nematic +0.064
+    t=8000   lamellar 1.000   nematic +0.020
+    t=16000  lamellar 1.000   nematic +0.000
+
+**THE PLANTED BILAYER IS STABLE.** Every lipid keeps its head outside its own tails for 16000 steps
+at zero temperature. Finding 23 was wrong twice: the integrator was exploding, AND the observable was
+measuring the wrong thing.
+
+**Still open:** whether a bilayer EMERGES from a disordered start. Running.
+
+**Negative results from this round, so they are not retried:** raising bond stiffness does not help
+(k_bond 40/100/250 all plateau); raising cohesion actively hurts (attract 1..30 all drive nematic to
+the isotropic -0.33); weakening the straightener collapses the membrane.
 
 ## 2026-07-29a — bond stiffness is not the fix; `opposed` characterised; cohesion never swept
 
