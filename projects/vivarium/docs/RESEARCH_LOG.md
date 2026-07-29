@@ -13,7 +13,7 @@ executed, in what order, and which conclusions are currently live.
 |---|---|---|
 | 0 | two lipids prefer tail-to-tail | PASSES, at 2-bead tails once head_q < 0.8 (F22) |
 | 1 | micelle (radial head-out order) | FAILS, no radial order once the metric is unbiased (F21) |
-| 2 | bicelle | not attempted |
+| 2 | bicelle | BLOCKED BY PHYSICS, not by vivarium: a single-species lipid cannot form a stable flat disc. The Cooke-Deserno control fails it too (2026-07-29c). Needs a second, rim-capping species |
 | 3 | bilayer | PLANTED BILAYER IS STABLE. lamellar 1.000 held 16k steps at kT=0, null 0.463. Self-assembly from disorder under test (2026-07-29b) |
 
 ## Live methodological rules
@@ -28,6 +28,41 @@ executed, in what order, and which conclusions are currently live.
    head dispersion were both wrong knobs; head electrostatics was the lever).
 
 ---
+
+## 2026-07-29c — a bicelle needs TWO species; the control fails it as well
+
+**Ran.** Two tracks in parallel. (a) vivarium, 2-bead tails, lipid count walked past the micelle cap
+(a micelle's radius is capped at one molecule length, so ~58 lipids at 2 tails; beyond that the
+excess MUST take another phase). (b) `cooke_deserno.py`, the control that demonstrably makes
+bilayers, given a finite lipid count in a box far larger than they can span, which is the condition
+under which a free-floating disc or vesicle would appear.
+
+**Got.**
+
+    vivarium (2-bead tails, box 14)        lamellar  L1/L3  L2/L3  shape
+      60 lipids  (1x micelle cap)            0.250   0.12   0.64
+     150 lipids  (2.6x)                      0.833   0.38   0.58
+     250 lipids  (4.3x)                      0.816   0.15   0.44   rod
+     350 lipids  (6.0x)                      0.700   0.12   0.48
+
+    Cooke-Deserno control, 200 lipids, big box
+     t=50000    L1/L3 0.41  L2/L3 0.69
+     t=100000   L1/L3 0.36  L2/L3 0.60
+     t=150000   L1/L3 0.09  L2/L3 0.12    <- a ROD, not a disc
+
+**The control fails the same way vivarium does.** Cooke-Deserno makes bilayers reliably, and given a
+finite lipid count it still relaxes to a cylinder rather than a flat disc. So this is not a vivarium
+defect, it is the physics of a SINGLE-SPECIES lipid: a finite flat disc has a high-energy rim where
+tails are exposed to solvent, and the aggregate escapes that rim either by elongating into a cylinder
+or by closing into a vesicle. Real bicelles are two-component for exactly this reason -- a long-chain
+lipid forms the flat face and a short-chain detergent caps the rim (DMPC/DHPC is the standard pair).
+
+**Consequence.** Rung 2 as written is unreachable with one species, in vivarium or in any faithful
+model. It needs a SECOND species with a shorter tail that preferentially sits at the rim. Vivarium
+already carries multiple species, so this is a configuration change rather than new physics.
+
+**Also worth noting:** running the control alongside is what made this diagnosable at all. Without
+it, a rod in vivarium reads as another vivarium failure rather than as correct physics.
 
 ## 2026-07-29b — the bilayer was stable the whole time; `nematic` was the wrong observable
 

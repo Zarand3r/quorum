@@ -273,6 +273,23 @@ def bilayer_signature(sim):
     return thickness
 
 
+def shape_of(sim):
+    """(L1/L3, L2/L3) over all beads. A DISC (bicelle) is thin in one axis and wide in two; a VESICLE
+    is isotropic; a spanning SHEET is thin in one axis and fills the box in the others."""
+    X = sim.X - sim.X.mean(0)
+    ev = np.linalg.eigvalsh(X.T @ X / len(X))
+    return float(ev[0] / max(ev[2], 1e-9)), float(ev[1] / max(ev[2], 1e-9))
+
+
+def hollow(sim):
+    """Fraction of TAIL beads nearer the aggregate centre than the median head. A vesicle is HOLLOW,
+    so its centre is empty and this collapses; a disc or a sheet keeps a solid core."""
+    c = sim.X.mean(0)
+    r = np.linalg.norm(sim.X - c, axis=1)
+    rh = np.median(r[sim.mol[:, 0]])
+    return float((r[sim.mol[:, 1:].ravel()] < rh).mean())
+
+
 def main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("--lipids", type=int, default=200)
@@ -283,10 +300,14 @@ def main(argv=None):
     p.add_argument("--dt", type=float, default=0.01)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--boxz", type=float, default=0.0, help="0 = cubic sized for a tensionless sheet")
+    p.add_argument("--side", type=float, default=0.0,
+                   help="override the lateral box side. Sizing for a TENSIONLESS SPANNING sheet gives "
+                        "a bilayer; making the box larger than the lipids can span forces a FINITE "
+                        "aggregate instead, which is how a bicelle or a vesicle appears.")
     a = p.parse_args(argv)
 
     # size the box so a flat tensionless bilayer just fits: area per lipid ~1.2 sigma^2 per leaflet
-    side = math.sqrt(1.2 * a.lipids / 2.0)
+    side = a.side if a.side > 0 else math.sqrt(1.2 * a.lipids / 2.0)
     boxz = a.boxz if a.boxz > 0 else max(2.5 * side, 14.0)
     sim = CookeDeserno(a.lipids, (side, side, boxz), w_c=a.wc, kT=a.kt, dt=a.dt, seed=a.seed)
     print(f"Cooke-Deserno control: {a.lipids} lipids ({3*a.lipids} beads), "
@@ -308,11 +329,13 @@ def main(argv=None):
           f"thickness {pt:.2f}")
     print(f"            random start   : nematic {rn:+.3f} opposed {ro:.3f} "
           f"thickness {rt:.2f}")
-    print("   step    nematic  opposed  split   thick")
+    print("   step    nematic  opposed  thick  L1/L3  L2/L3  solid-core")
     for t in range(0, a.steps + 1, a.every):
         nem, opp, split = metrics(sim)
         th = bilayer_signature(sim)
-        print(f"  {t:7d}   {nem:+.3f}   {opp:.3f}   {split:.3f}  {th:5.2f}", flush=True)
+        a1, a2 = shape_of(sim)
+        print(f"  {t:7d}   {nem:+.3f}   {opp:.3f}  {th:5.2f}  {a1:5.2f}  {a2:5.2f}  {hollow(sim):.2f}",
+              flush=True)
         if t < a.steps:
             for _ in range(a.every):
                 sim.step()
