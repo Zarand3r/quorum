@@ -14,7 +14,7 @@ executed, in what order, and which conclusions are currently live.
 | 0 | two lipids prefer tail-to-tail | PASSES, at 2-bead tails once head_q < 0.8 (F22) |
 | 1 | micelle (radial head-out order) | FAILS, no radial order once the metric is unbiased (F21) |
 | 2 | bicelle | BLOCKED BY PHYSICS, not by vivarium: a single-species lipid cannot form a stable flat disc. The Cooke-Deserno control fails it too (2026-07-29c). Needs a second, rim-capping species |
-| 3 | bilayer | PLANTED BILAYER IS STABLE. lamellar 1.000 held 16k steps at kT=0, null 0.463. Self-assembly from disorder under test (2026-07-29b) |
+| 3 | bilayer | Planted bilayer STABLE (lamellar 1.000, 16k steps, kT=0). Self-assembly gives a slab ONLY with the wall/slit boundary; under pure PBC it fails at every head size (2026-07-29d). So the wall may be templating it |
 
 ## Live methodological rules
 
@@ -28,6 +28,40 @@ executed, in what order, and which conclusions are currently live.
    head dispersion were both wrong knobs; head electrostatics was the lever).
 
 ---
+
+## 2026-07-29d — longer tails help, smaller heads do not, and the slab needs the WALLS
+
+**Ran.** 4-bead tails, head_sigma in {1.0, 0.70, 0.55, 0.40}, self-assembly from disorder, under BOTH
+boundary conditions so they are directly comparable.
+
+**Got.**
+
+    4-bead tails        pure periodic                with slit (walls on z)
+    head 1.0            lamellar 0.537  L2/L3 0.77   lamellar 0.965  L2/L3 0.87  SLAB
+    head 0.70           lamellar 0.810  L2/L3 0.42   lamellar 0.935  L2/L3 0.82  SLAB
+    head 0.55           lamellar 0.740  L2/L3 0.51   -
+    head 0.40           lamellar 0.524  L2/L3 0.59   lamellar 0.896  L2/L3 0.74  SLAB
+
+**1. Longer tails help.** 4-bead tails reach L2/L3 0.87 against 0.44-0.58 for 2-bead. This is the
+packing-parameter prediction (P = v/(a0*l)) confirmed: more tail volume raises P toward lamellar.
+
+**2. Smaller heads do NOT help.** With the slit, lamellar falls monotonically as the head shrinks:
+0.965 (head 1.0) -> 0.935 (0.70) -> 0.896 (0.40). The packing-parameter argument predicts the
+opposite, so that lever is spent and the prediction is wrong here. Plausibly because in a
+SOLVENT-FREE model the head's only job is steric spreading -- there is no water to hide from -- so
+shrinking it removes the lateral pressure that holds a leaflet apart.
+
+**3. THE SLAB REQUIRES THE WALLS.** Under pure periodic boundaries there is no slab at any head size.
+Every bilayer-like result in this project depends on `--slit`, which is the one component whose
+transformer-only faithfulness is contestable (it applies a force from a token's ABSOLUTE position,
+defensible only as a position-wise feed-forward layer, and it breaks translation invariance and
+momentum conservation). A slit also CONFINES lipids to a slab-shaped region, so it may simply be
+templating the membrane rather than letting it emerge. Treat the slab as wall-assisted until a
+periodic run reproduces it.
+
+**Metric note.** head 1.0 under PBC scores "SLAB" on shape while lamellar reads 0.537, i.e. the 0.5
+null: a slab-SHAPED blob with no head-out order. Neither metric alone is sufficient, which is why
+both print on every run.
 
 ## 2026-07-29c — a bicelle needs TWO species; the control fails it as well
 
