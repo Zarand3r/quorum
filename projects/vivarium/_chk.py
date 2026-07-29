@@ -1,24 +1,26 @@
-"""Timestep convergence: does the planted bilayer still disorder as dt -> 0?
+"""Which way do the forces point on a PERFECT planted bilayer at kT=0?
 
-Comparing runs at fixed STEP COUNT is meaningless because steps*speed is the physical time, so a
-small-timestep run has simply evolved less. Held at the SAME physical time, a real phase instability
-survives dt -> 0 while a numerical blowup vanishes. This is the test that decides whether every
-"melts at kT=0" result was physics or arithmetic.
+If the planted state were a local minimum the net force would be ~0 everywhere. It is not, so the
+question is which species is pushed which way. One step from rest gives displacement proportional to
+force, and signing by leaflet turns "z" into "outward from the midplane".
 """
 import numpy as np
-from bilayer3d import build, metrics
+from bilayer3d import build
 
-T = 16.0
-print(f"  physical time T={T}, kT=0 (velocity MUST stay ~0)")
-print(f"  {'speed':>8} {'steps':>7} {'|v|':>8} {'bond':>6} {'r13':>6} {'nematic':>8}")
-for speed in (0.02, 0.005, 0.001, 0.0002):
-    n = int(round(T / speed))
-    e = build(seed=0, n_lip=142, bound=3.9, kt=0.0, speed=speed, repel=12.0, k_bond=8.0,
-              satt=0.30, spol=0.90, plant=True, n_tail=2, head_q=0.0, rad_head=0.05, no_water=True)
+for span, tag in ((2.0, "floppy chain"), (6.0, "rigid chain")):
+    e = build(seed=0, n_lip=231, bound=5.0, kt=0.0, speed=0.005, repel=12.0, k_bond=8.0,
+              satt=0.30, spol=0.90, plant=True, n_tail=2, head_q=0.0, rad_head=0.0,
+              no_water=True, aniso=0.0, bond_span=span)
     mol = e._mol
-    for _ in range(n):
-        e.step()
-    b = np.linalg.norm(e.X[mol[:,0],:3]-e.X[mol[:,1],:3], axis=1).mean()
-    r13 = np.linalg.norm(e.X[mol[:,0],:3]-e.X[mol[:,2],:3], axis=1).mean()
-    v = float(np.linalg.norm(e.vel, axis=1).mean())
-    print(f"  {speed:>8.4f} {n:>7d} {v:>8.4f} {b:>6.3f} {r13:>6.3f} {metrics(e)[2]:>+8.3f}", flush=True)
+    X0 = e.X[:, :3].copy()
+    e.step()
+    d = e.X[:, :3] - X0
+    d -= e.L * np.round(d / e.L)
+    sgn = np.sign(X0[:, 2])                      # +1 upper leaflet, -1 lower
+    outward = d[:, 2] * sgn                      # >0 means pushed AWAY from the midplane
+    print(f"\n--- span={span} ({tag})")
+    for name, idx in (("head", mol[:, 0]), ("tail1", mol[:, 1]), ("tail2 (inner)", mol[:, 2])):
+        o = outward[idx]
+        lat = np.linalg.norm(d[idx][:, :2], axis=1).mean()
+        print(f"  {name:>14}  outward={o.mean():+.3e}  |lateral|={lat:.3e}")
+    print(f"  {'TOTAL |disp|':>14}  {np.linalg.norm(d, axis=1).mean():.3e}")

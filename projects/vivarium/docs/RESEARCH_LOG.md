@@ -29,6 +29,40 @@ executed, in what order, and which conclusions are currently live.
 
 ---
 
+## 2026-07-28e — chain rigidity is the lever, and the two bond springs were cancelling
+
+**Ran.** Swept the 1-3 rest length (`bond_span`) on the planted bilayer at kT=0, everything else at
+the Cooke-Deserno-matched settings from 2026-07-28d.
+
+**Got.** Monotonic, in the predicted direction:
+
+    span   nematic   opposed   cells (collapse)
+    2.0    -0.439     0.056     33/64      floppy: the sheet balls up
+    3.2    -0.287     0.166     39/64
+    4.2    -0.084     0.219     44/64
+    6.0    +0.015     0.251     58/64      collapse essentially gone
+    9.0    -0.024     0.240     54/64      past the optimum
+
+**Then measured WHY**, by taking one step from rest and signing the displacement by leaflet so that
+positive means "away from the midplane":
+
+                     span=2.0 (floppy)   span=6.0 (rigid)
+    head             -9.2e-05 inward     +3.96e-02 OUTWARD
+    tail1            -1.29e-02           -1.29e-02
+    tail2 (inner)    -4.4e-03            -4.41e-02 inward
+
+With a floppy chain EVERYTHING moves inward: the bilayer has no mechanism to hold itself open, so it
+collapses. With a rigid chain the pattern flips to heads-out / tails-in, which is exactly the force
+pattern a bilayer needs. Chain rigidity is not a tuning detail, it is the mechanism.
+
+**Bug this exposed.** The backbone bond and the 1-3 straightener shared a single `k_bond`, and both
+are tanh kernels saturating at the same amplitude. Once the straightener saturates the two forces
+cancel EXACTLY, so the molecule can stretch with no restoring force, which is why the rigid-chain
+displacement was so large (3.3e-02 per step). Cooke-Deserno never hits this: bond stiffness 30
+against bend stiffness 10, and its FENE bond DIVERGES so a bond physically cannot overstretch.
+Vivarium is not allowed to diverge, so the equivalent is to make the straightener strictly weaker
+than the backbone. Added per-bond stiffness (`bend_frac`); base case still byte-identical.
+
 ## 2026-07-28d — porting the Cooke-Deserno recipe, one difference at a time
 
 Working hypothesis: the control (`cooke_deserno.py`) makes a bilayer, so porting its recipe into

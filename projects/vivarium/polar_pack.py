@@ -94,9 +94,10 @@ class PolarPackEngine(PackEngine):
                  water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, sink_polarity=0.0,
                  oil_frac=0.0, lipid_frac=0.0, lip_ell=0.55, k_tail=1.5, k_hydro=1.0,
                  lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.95, chain_frac=0.0, k_bond=1.5, head_q=1.2, n_tail=2, rad_head=None,
-                 bond_span=BOND_SPAN, **kw):
+                 bond_span=BOND_SPAN, bend_frac=1.0, **kw):
         super().__init__(cfg, seed, **kw)
         self.k_bond = k_bond         # strength of the bounded bond kernel
+        self.bend_frac = bend_frac   # 1-3 stiffness as a FRACTION of k_bond; < 1 so the backbone wins
         self.bond_span = bond_span   # 1-3 rest length; > 2*BOND_REST => permanent straightening tension
         self.rad_head = RAD_HEAD if rad_head is None else rad_head   # head DISPERSION radius
         self.head_q = head_q         # lipid HEAD dipole magnitude. This sets how strongly water
@@ -194,6 +195,7 @@ class PolarPackEngine(PackEngine):
         self._bond_i = np.zeros(0, dtype=int)
         self._bond_j = np.zeros(0, dtype=int)
         self._bond_r0 = np.zeros(0)
+        self._bond_k = np.zeros(0)
         self._hi = np.zeros(0, dtype=int)
         self._ti = np.zeros(0, dtype=int)
         self._mol = np.zeros((0, 3), dtype=int)
@@ -215,14 +217,25 @@ class PolarPackEngine(PackEngine):
         self._hi, self._ti = h, tri[:, 1:].ravel().copy()
         self._mol = tri
         # backbone bonds along the chain, then 1-3 straighteners to keep it extended
-        bi, bj, br = [], [], []
+        # PER-BOND stiffness. The backbone and the 1-3 straightener used to share one k_bond, and
+        # both are tanh kernels saturating at the same amplitude, so once the straightener saturated
+        # the two forces cancelled EXACTLY and the molecule could stretch with no restoring force.
+        # Cooke-Deserno avoids this by construction: bond stiffness 30 against bend stiffness 10, and
+        # its FENE bond DIVERGES so a bond physically cannot overstretch. Vivarium cannot diverge, so
+        # the equivalent is to make the straightener strictly weaker than the backbone; then the
+        # backbone wins the force balance and holds the bond near its rest length while the
+        # straightener still keeps the chain extended.
+        bi, bj, br, bk = [], [], [], []
         for k in range(nb - 1):
             bi.append(tri[:, k]); bj.append(tri[:, k + 1]); br.append(np.full(n_mol, BOND_REST))
+            bk.append(np.ones(n_mol))
         for k in range(nb - 2):
             bi.append(tri[:, k]); bj.append(tri[:, k + 2]); br.append(np.full(n_mol, self.bond_span))
+            bk.append(np.full(n_mol, self.bend_frac))
         self._bond_i = np.concatenate(bi)
         self._bond_j = np.concatenate(bj)
         self._bond_r0 = np.concatenate(br)
+        self._bond_k = np.concatenate(bk)
         self.head_u = _rand_unit(rng, len(h)) if self.pd == 3 else np.zeros((len(h), 3))
         self.head_phi = rng.uniform(0.0, 2.0 * np.pi, len(h))      # 2-D head dipole bearing
 
@@ -236,7 +249,7 @@ class PolarPackEngine(PackEngine):
         d = d - self.L * np.round(d / self.L)                 # minimum image
         dist = np.sqrt((d * d).sum(1) + 1e-4)
         g = np.tanh((dist - self._bond_r0) / BOND_W)
-        f = (self.k_bond * g / dist)[:, None] * d             # toward the partner when stretched
+        f = (self.k_bond * self._bond_k * g / dist)[:, None] * d   # per-bond stiffness; see _build_chains
         out = np.zeros_like(p)
         np.add.at(out, self._bond_i, f)
         np.add.at(out, self._bond_j, -f)
