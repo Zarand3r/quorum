@@ -301,12 +301,12 @@ class PackEngine:
             # ~3000 interpreter calls and pushed /state latency to 57 ms, which is worse for the
             # viewer than the large payload was. np.round is one vectorised pass.
             pr = np.round(pos, 3).tolist()
-            cr = np.round(C, 3).tolist()
+            cr = np.round(C, 2).tolist()   # contour drives a silhouette, 2 dp is sub-pixel
             tokens = [{"x": pr[i][0], "y": pr[i][1], "z": pr[i][2], "c": cr[i]}
                       for i in range(self.cfg.N)]
         else:
             pr = np.round(pos, 3).tolist()
-            cr = np.round(C, 3).tolist()
+            cr = np.round(C, 2).tolist()   # contour drives a silhouette, 2 dp is sub-pixel
             tokens = [{"x": pr[i][0], "y": pr[i][1], "c": cr[i]}
                       for i in range(self.cfg.N)]
         return {"status": "running", "tick": self.t, "n": self.cfg.N,

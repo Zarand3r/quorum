@@ -127,6 +127,7 @@ class PolarPackEngine(PackEngine):
         # WATER is a rigid MICKEY-MOUSE molecule: a negative O body with two positive H lobes at the
         # 104.5° HOH angle — a fixed body-frame charge/shape TEMPLATE that rotates (real water is polar
         # and reorients but does not change shape). Active tokens morph freely (all harmonics).
+        self.water_frac = water_frac   # remembered so _build_chains knows if ACTIVE was requested
         self._water_tpl = self._mickey_template(water_dipole)
         r = base_rng(seed + 7)
         # WATER (polar dipole) / OIL (round, apolar — nonpolar solute) / ACTIVE (morphs freely)
@@ -217,6 +218,21 @@ class PolarPackEngine(PackEngine):
         self.species[tri[:, 1:].ravel()] = MOL_TAIL
         self._hi, self._ti = h, tri[:, 1:].ravel().copy()
         self._mol = tri
+        # Species are drawn RANDOMLY (u = rng.random(N)), and chains take int(N*chain_frac)//nb*nb
+        # tokens out of the ACTIVE pool. Rounding plus binomial variance therefore leaves a handful of
+        # ACTIVE tokens unused, and they render as stray red "flexible" tokens even when the user set
+        # water + lipid = 1 and expects none. When the requested fractions leave no room for ACTIVE,
+        # hand the remainder to the solvent instead of stranding it.
+        if self.water_frac > 0.0 and self.water_frac + chain_frac >= 0.999:
+            leftover = np.where(self.species == ACTIVE)[0]
+            if leftover.size:
+                self.species[leftover] = WATER
+                self._wi = np.where(self.species == WATER)[0]
+                # water_phi / water_u were sized from the ORIGINAL water count a few lines above, so
+                # they have to grow with it or _write_water broadcasts a short array into _wi.
+                self.water_phi = rng.uniform(0.0, 2.0 * np.pi, self._wi.size)
+                if self.pd == 3:
+                    self.water_u = _rand_unit(rng, self._wi.size)
         # backbone bonds along the chain, then 1-3 straighteners to keep it extended
         # PER-BOND stiffness. The backbone and the 1-3 straightener used to share one k_bond, and
         # both are tanh kernels saturating at the same amplitude, so once the straightener saturated
@@ -682,8 +698,22 @@ class PolarPackEngine(PackEngine):
         return {"clusters": m["n_clusters"], "largest": round(m["largest_frac"], 3),
                 "polarity": round(float(pol[act].mean()) if act.any() else 0.0, 3)}
 
+    def chain_edges(self):
+        """The BACKBONE bonds, as [[i, j, 1.0], ...] in the same shape the viewer already draws.
+
+        `edges` carried only the attention binding graph, so a lipid's head and its own tails had no
+        line between them and the molecule looked like unrelated dots. These are the real bonds.
+        """
+        if not self._mol.size:
+            return []
+        nb = self._mol.shape[1]
+        return [[int(self._mol[m, k]), int(self._mol[m, k + 1]), 1.0]
+                for m in range(len(self._mol)) for k in range(nb - 1)]
+
     def snapshot(self, with_edges=True):
         snap = super().snapshot(with_edges=with_edges)
+        if snap.get("edges") is not None:
+            snap["edges"] = self.chain_edges() + snap["edges"]
         snap["species"] = [int(x) for x in self.species]        # 0 water · 1 active · 2 oil · 3 lipid
         snap["lip_ell"] = float(self.lip_ell)
         snap["lipids"] = {int(i): [float(self.lipid_o[k, 0]), float(self.lipid_o[k, 1])]

@@ -130,14 +130,6 @@ py_binary(
 )
 
 py_binary(
-    name = "_chk",
-    srcs = ["_chk.py", "micelle_probe.py"],
-    main = "_chk.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
     name = "cooke_deserno",
     srcs = ["cooke_deserno.py", "micelle_probe.py"],
     main = "cooke_deserno.py",

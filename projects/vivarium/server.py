@@ -42,7 +42,12 @@ class Sim:
         self.cfg = cfg
         self.seed = seed
         self.hz = hz
-        self.stream_hz = min(30.0, hz)   # SSE push rate (≤ sim rate; no point pushing faster)
+        # SSE push rate. Measured: the control endpoints answer in 0-7 ms and the status flag flips
+        # in 1-4 ms, so the click lag was never server-side -- it is the BROWSER main thread. At 30 Hz
+        # a 47 KB frame is ~1.4 MB/s of JSON.parse plus redraw on the same thread that handles the
+        # buttons, so clicks queue behind rendering. 20 Hz is still smooth and gives the UI thread a
+        # third of its time back.
+        self.stream_hz = min(20.0, hz)
         self._make = make_engine or (lambda s: Engine(cfg, s))
         self.knob_names = knob_names
         # pseudo-knobs: name → (getter, setter). Unlike real knobs (a live setattr), these need a
