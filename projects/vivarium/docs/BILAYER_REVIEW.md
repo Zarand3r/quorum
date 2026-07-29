@@ -773,13 +773,25 @@ explicit energy function, everything vivarium forbids.
     nematic          +1.000           -0.339           +0.392
     thickness         4.40             1.31             4.01
 
-Thickness reaches 91% of a perfect bilayer. `nematic` sits mid-scale because a FLUID membrane carries
-real thermal disorder. Sweeping the one tunable width reproduces the published phase behaviour, which
-is the check that the implementation is faithful rather than accidentally right:
+CORRECTION, from the full 300k-step runs: that 30k table was a single frame and the w_c ranking it
+implied was wrong. Read over the whole trajectory, the STABLE bilayer is at w_c=1.5, not 1.6:
 
-    w_c    1.5     1.6     1.7
-    nem   +0.117  +0.392  +0.332      (literature: fluid near 1.6, gel below ~1.5, unstable above 1.8)
-    thick   3.18    4.01    3.89
+    w_c=1.5   t=90k  120k  150k  180k  210k  240k  270k  300k
+    thickness  4.44  4.39  4.45  4.34  4.38  4.34  4.39  4.39     (planted 4.40, random 1.31)
+    nematic   +0.447 +0.438 +0.507 +0.384 +0.460 +0.467 +0.394 +0.408
+
+Thickness holds within 2% of the planted bilayer for 210,000 consecutive steps. That is the result:
+a bilayer self-assembles from a disordered start and stays.
+
+At w_c=1.6 and 1.7 thickness swings (4.01, 0.08, 4.06, 1.03). The likely reading is that those are
+the FLUID phase, which undulates, so a single global director describes the membrane poorly and the
+thickness metric intermittently collapses; the giveaway is that the wild values coincide with
+nonsense in the discarded tail_centre column (-31.29), which only happens when the director is
+ill-defined. That is the likeliest explanation, NOT a measured one. It is consistent with the
+literature phase behaviour (gel below ~1.5, fluid near 1.6).
+
+This was the FOURTH single-frame reading to mislead in one session. The standing rule is now: never
+report a structural claim from one frame; require it to hold across a trajectory.
 
 **What the control tells us, in order of importance.**
 
