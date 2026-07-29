@@ -31,6 +31,7 @@ from rng import base_rng, rng_for
 _LN_EPS = 1e-5
 _MLP_H = 2
 _DIR_EPS = 1e-4  # softening for the unit-direction normalisation (not a force kernel)
+_WALL_W = 0.15            # wall kernel width; bounded tanh, never divergent
 _THERMAL = 0.15  # Langevin kick per unit temperature (kT → Brownian displacement)
 _LANGEVIN_KT = 0.08   # velocity-noise scale for the FDT thermostat (see step())
 _SHAPE_THERMAL = 0.02  # the same thermostat acting on CONFORMATION (kT → shape fluctuation). Real
@@ -93,6 +94,13 @@ class PackEngine:
         #   and rung 0 needs four tail beads to see any orientation preference. A saturating core is
         #   sharp near contact while its PEAK force is still 1, so it does not tighten the timestep
         #   the way simply raising `repel` would. Symmetric in i,j, so momentum is still conserved.
+        # Which axes are CONFINED by walls; the rest stay periodic. () = fully periodic torus.
+        # (2,) is the standard membrane slit: no periodic self-interaction across the membrane
+        # NORMAL, while the sheet stays infinite laterally so it has no edges to curl at. A
+        # fully walled box is worse than either: lipids simply coat all six faces.
+        self.wall_axes = ()
+        self.wall_sigma = 0.5     # how far from a face the wall kernel starts acting
+        self.wall_k = 2.0         # bounded wall amplitude
         self.repel_contact = 0.0  # if >0, repel is a SYMMETRIC overlap force: it acts ONLY when two
         #   agents interpenetrate (d < repel_contact), ∝ overlap depth, zero otherwise (real excluded
         #   volume). Being symmetric (F_ij=−F_ji), it also CONSERVES momentum. 0 → old softmax repel.
@@ -231,8 +239,13 @@ class PackEngine:
         # yields forces computed from the wrong geometry. step() computes this once and passes it
         # down instead; that gets the same saving with no invalidation hazard.
         p = self.X[:, :self.pd]
-        delta = p[:, None, :] - p[None, :, :]          # (N, N, 2) minimum-image on the torus
-        delta = delta - self.L * np.round(delta / self.L)
+        delta = p[:, None, :] - p[None, :, :]          # (N, N, 2)
+        # minimum image only along PERIODIC axes. `wall_axes` names the confined ones.
+        if self.wall_axes:
+            free = np.array([a not in self.wall_axes for a in range(self.pd)])
+            delta[..., free] -= self.L * np.round(delta[..., free] / self.L)
+        else:
+            delta = delta - self.L * np.round(delta / self.L)
         d2 = np.einsum("ijc,ijc->ij", delta, delta)
         return delta, d2
 
@@ -406,7 +419,23 @@ class PackEngine:
         # (unlike `selectivity`, the softmax τ). The one non-attention op; genuine thermal physics.
         if self.temperature > 0.0 and not self.langevin:
             p = p + _THERMAL * self.temperature * rng_for(self.seed, self.t).standard_normal(p.shape)
-        p = ((p + cfg.pos_bound) % self.L) - cfg.pos_bound  # wrap to the torus
+        if self.wall_axes:
+            # HARD WALLS instead of a torus. A periodic membrane interacts with its own images, which
+            # is what forced the box-thickness constraint; walls remove that entirely and a slit also
+            # templates a flat bilayer. This is a BOUNDARY CONDITION, exactly like PBC is, not a new
+            # interaction: the kernel is a bounded tanh, no distance in a denominator, no energy
+            # ledger, token count unchanged.
+            B = cfg.pos_bound
+            conf = np.zeros(self.pd, dtype=bool)
+            conf[list(self.wall_axes)] = True
+            over_hi = np.where(conf, np.clip(p - (B - self.wall_sigma), 0.0, None), 0.0)
+            over_lo = np.where(conf, np.clip((-B + self.wall_sigma) - p, 0.0, None), 0.0)
+            push = np.tanh(over_lo / _WALL_W) - np.tanh(over_hi / _WALL_W)
+            self.vel = self.vel + self.wall_k * push
+            p = p + self.speed * self.wall_k * push
+            p = np.where(conf, np.clip(p, -B, B), ((p + B) % self.L) - B)   # confined vs wrapped
+        else:
+            p = ((p + cfg.pos_bound) % self.L) - cfg.pos_bound  # wrap to the torus
 
         # induced-fit morph: block updates shape/hidden, coupled through the fit attention
         z = self.X[:, self.pd:]

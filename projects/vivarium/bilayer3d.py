@@ -42,7 +42,7 @@ NEAR = 1.6
 
 def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False, attract=0.30,
           polarity=0.80,
-          head_q=1.2, n_tail=2, rad_head=None, no_water=False, aniso=0.95, bond_span=2.0, bend_frac=1.0):
+          head_q=1.2, n_tail=2, rad_head=None, no_water=False, aniso=0.95, bond_span=2.0, bend_frac=1.0, head_sigma=1.0, wall_axes=()):
     side = 2.0 * bound
     # water fills whatever the lipids do not, at roughly liquid packing
     nb = 1 + n_tail
@@ -53,11 +53,13 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False,
     e = PolarPackEngine(cfg, seed, water_frac=n_wat / N, chain_frac=nb * n_lip / N,
                         repel=repel, attract=attract, polarity=polarity, cohesion=0.0, skew=0.0,
                         morph=0.70, momentum=0.30, speed=speed, water_dipole=0.8, k_bond=k_bond,
-                        head_q=head_q, n_tail=n_tail, rad_head=rad_head, aniso=aniso, bond_span=bond_span, bend_frac=bend_frac)
+                        head_q=head_q, n_tail=n_tail, rad_head=rad_head, aniso=aniso, bond_span=bond_span, bend_frac=bend_frac,
+                        head_sigma=head_sigma)
     e.conservative = True
     e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, satt, spol
     e.repel_contact, e.rigidity, e.selectivity, e.temperature = 1.0, 0.0, 0.30, kt
     e.langevin = True
+    e.wall_axes = wall_axes
 
     mol, B = e._mol, bound
     rng = np.random.default_rng(seed + 11)
@@ -130,6 +132,19 @@ def lamellar(e):
     return float((hz > tz).mean())
 
 
+def shape(e):
+    """(L1/L3, L2/L3) of the lipid position covariance, ascending eigenvalues.
+
+    `lamellar` cannot tell a bilayer from a cylinder: a rod also puts heads outside along its thin
+    axis, and it scored 0.827 on one. A SLAB needs TWO long axes, so L2/L3 high with L1/L3 low.
+    Planted bilayer reads (0.34, 0.85); a self-assembled cylinder read (0.18, 0.31).
+    """
+    X = e.X[e._mol.ravel(), :3]
+    c = X - X.mean(0)
+    ev = np.linalg.eigvalsh(c.T @ c / len(c))
+    return float(ev[0] / max(ev[2], 1e-9)), float(ev[1] / max(ev[2], 1e-9))
+
+
 def metrics(e):
     _, d2 = e._periodic_delta()
     near = d2 < NEAR ** 2
@@ -147,7 +162,8 @@ def metrics(e):
     u = e.chain_axis()
     cen = e.X[e._mol[:, 1], :e.pd]
     dc = cen[:, None, :] - cen[None, :, :]
-    dc = dc - e.L * np.round(dc / e.L)
+    if not e.wall_axes:
+        dc = dc - e.L * np.round(dc / e.L)
     # 3.2, not 2.8: the planted leaflets sit EXACTLY 2.8 apart centre-to-centre, so a strict `< 2.8`
     # excludes every cross-leaflet pair by one epsilon and `opposed` reads 0.000 on a PERFECT planted
     # bilayer. That is the same class of defect as Finding 21: a metric that fails its own positive
@@ -186,6 +202,16 @@ def main(argv=None):
     p.add_argument("--tails", type=int, default=2)
     p.add_argument("--span", type=float, default=2.0,
                    help="1-3 rest length. 2.0 = the straight length (zero tension, floppy chain). Above 2.0 the spring is permanently stretched, the Cooke-Deserno rigid-rod trick.")
+    p.add_argument("--slit", action="store_true",
+                   help="walls on z ONLY, periodic in x,y: the standard membrane geometry. Removes "
+                        "periodic self-interaction across the membrane NORMAL while leaving the sheet "
+                        "infinite laterally, so it has no edges to curl at. A fully walled box is "
+                        "worse than either, since lipids just coat all six faces.")
+    p.add_argument("--walls", action="store_true", help="confine ALL axes (mostly a control)")
+    p.add_argument("--headsigma", type=float, default=1.0,
+                   help="head steric radius as a fraction of the tail's. THE packing-parameter knob: "
+                        "P = v/(a0*l) is a cylinder for 1/3..1/2 and a BILAYER for 1/2..1, and shrinking "
+                        "the head shrinks a0. Cooke-Deserno uses 0.95.")
     p.add_argument("--polarity", type=float, default=0.80,
                    help="electrostatic head strength. Profiling shows _extra_force is 52%% of every "
                         "step (spherical harmonics + pair basis + attention). With head_q=0 that work "
@@ -207,18 +233,21 @@ def main(argv=None):
 
     e = build(a.seed, a.lipids, a.bound, a.kt, a.speed, a.repel, a.kbond, a.satt, a.spol,
               a.plant, attract=a.attract, polarity=a.polarity, head_q=a.headq, n_tail=a.tails, rad_head=a.radhead, no_water=a.nowater,
-              aniso=a.aniso, bond_span=a.span, bend_frac=a.bendfrac)
+              aniso=a.aniso, bond_span=a.span, bend_frac=a.bendfrac, head_sigma=a.headsigma,
+              wall_axes=(0, 1, 2) if a.walls else ((2,) if a.slit else ()))
     side = 2 * a.bound
     need = 2 * side * side / APL
     print(f"N={e.cfg.N}  lipids={len(e._mol)}  water={len(e._wi)}  box={side:.1f}  "
           f"{'PLANTED' if a.plant else 'DISORDERED'}")
     print(f"  a spanning bilayer needs ~{need:.0f} lipids; solvent slab {(side - 2*LIP_LEN)/2:.1f} per side")
     print(f"  min-image margin {e.min_image_margin():.4f} (gate < 0.01)")
-    print("   step  lamellar  burial  hydration  nematic  opposed  cells")
+    print("   step  lamellar  L1/L3  L2/L3  shape      nematic  cells")
     print("         [lamellar: 0.5 random, 1.0 = every head outside its own tails -- THE bilayer test]")
     for t in range(0, a.steps + 1, a.every):
         b, h, n, o, c = metrics(e)
-        print(f"  {t:6d}   {lamellar(e):.3f}   {b:.3f}     {h:.3f}   {n:+.3f}   {o:.3f}   {c}/64", flush=True)
+        a1, a2 = shape(e)
+        kind = "SLAB" if (a1 < 0.45 and a2 > 0.60) else ("rod" if a2 < 0.45 else "blob")
+        print(f"  {t:6d}   {lamellar(e):.3f}  {a1:.2f}   {a2:.2f}   {kind:<9} {n:+.3f}   {c}/64", flush=True)
         if t < a.steps:
             for _ in range(a.every):
                 e.step()

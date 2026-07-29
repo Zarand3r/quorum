@@ -94,9 +94,10 @@ class PolarPackEngine(PackEngine):
                  water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, sink_polarity=0.0,
                  oil_frac=0.0, lipid_frac=0.0, lip_ell=0.55, k_tail=1.5, k_hydro=1.0,
                  lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.95, chain_frac=0.0, k_bond=1.5, head_q=1.2, n_tail=2, rad_head=None,
-                 bond_span=BOND_SPAN, bend_frac=1.0, **kw):
+                 bond_span=BOND_SPAN, bend_frac=1.0, head_sigma=1.0, **kw):
         super().__init__(cfg, seed, **kw)
         self.k_bond = k_bond         # strength of the bounded bond kernel
+        self.head_sigma = head_sigma  # head steric radius as a FRACTION of the tail's; < 1 raises P
         self.bend_frac = bend_frac   # 1-3 stiffness as a FRACTION of k_bond; < 1 so the backbone wins
         self.bond_span = bond_span   # 1-3 rest length; > 2*BOND_REST => permanent straightening tension
         self.rad_head = RAD_HEAD if rad_head is None else rad_head   # head DISPERSION radius
@@ -293,9 +294,17 @@ class PolarPackEngine(PackEngine):
     def _build_sigma(self):
         """Per-species steric radius. Water is a single small molecule; every coarse-grained bead
         (lipid head/tail, oil, the morphing blobs) is larger."""
+        # HEAD steric radius, separate from the tail's. This is the packing-parameter knob:
+        # P = v/(a0*l), tail volume over head area, and the phase is a cylinder for P in 1/3..1/2 and
+        # a BILAYER for 1/2..1. Cooke-Deserno sets b_head = 0.95 sigma against b_tail = 1.0 sigma for
+        # exactly this reason. Vivarium gave every bead the same SIG_BEAD, so a0 could never be tuned
+        # and the aggregate had no way to leave the cylinder window. rad_head controls DISPERSION and
+        # is a different channel; this one controls SIZE.
         sig = np.full(self.cfg.N, SIG_BEAD)
         if self._wi.size:
             sig[self._wi] = SIG_WATER
+        if self._hi is not None and len(self._hi):
+            sig[self._hi] = SIG_BEAD * self.head_sigma
         self.sigma = sig
 
     def _build_stiffness(self):

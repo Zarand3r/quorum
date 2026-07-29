@@ -1,38 +1,41 @@
-"""`lamellar`: does each lipid put its HEAD farther from the midplane than its own TAILS?
-
-The density profile shows tails forming a core at z=0 with heads pushed outside, which is the
-defining bilayer architecture, but `nematic` reads +0.02 because it measures AXIS ALIGNMENT and the
-lipids are splayed. This is a per-molecule yes/no, so it is robust to tilt and to a diffuse membrane.
-
-Calibrated against BOTH controls before use (Finding 21): a planted bilayer must score ~1.0 and a
-random configuration must score ~0.5.
+"""Slab or sphere? `lamellar` measured along z cannot tell them apart: a droplet also puts heads
+outside. The discriminator is whether the structure is FLAT -- extended in two directions and thin in
+the third -- which the eigenvalues of the position covariance answer directly, plus the density
+profile along the thin axis.
 """
 import numpy as np
-from bilayer3d import build, metrics
+from bilayer3d import build, lamellar, metrics
 
 
-def lamellar(e):
+def shape(e):
     mol = e._mol
-    mid = e.X[mol.ravel(), 2].mean()
-    hz = np.abs(e.X[mol[:, 0], 2] - mid)
-    tz = np.abs(e.X[mol[:, 1:], 2] - mid).mean(axis=1)
-    return float((hz > tz).mean())
+    X = e.X[mol.ravel(), :3]
+    c = X - X.mean(0)
+    ev = np.linalg.eigvalsh(c.T @ c / len(c))          # ascending L1<=L2<=L3
+    return float(ev[0] / ev[2]), float(ev[1] / ev[2])   # (thin/long, mid/long)
 
 
-KW = dict(seed=0, n_lip=231, bound=5.0, kt=0.0, speed=0.005, repel=12.0, k_bond=40.0,
-          satt=0.30, spol=0.90, n_tail=2, head_q=0.0, rad_head=0.0, no_water=True,
-          aniso=0.0, polarity=0.0, attract=0.30, bond_span=6.0)
+def profile(e, tag):
+    mol = e._mol
+    n = np.linalg.eigh(np.cov((e.X[mol.ravel(), :3] - e.X[mol.ravel(), :3].mean(0)).T))[1][:, 0]
+    hz = (e.X[mol[:, 0], :3] - e.X[mol.ravel(), :3].mean(0)) @ n
+    tz = (e.X[mol[:, 1:].reshape(-1), :3] - e.X[mol.ravel(), :3].mean(0)) @ n
+    bins = np.linspace(-5, 5, 17)
+    ch, _ = np.histogram(hz, bins=bins); ct, _ = np.histogram(tz, bins=bins)
+    mx = max(ch.max(), ct.max(), 1)
+    a1, a2 = shape(e)
+    print(f"\n  {tag}  lamellar={lamellar(e):.3f}  L1/L3={a1:.2f} L2/L3={a2:.2f}"
+          f"  {'SLAB (bilayer)' if a1 < 0.45 and a2 > 0.6 else 'not a slab'}")
+    print("   along the THIN axis:   HEAD                  TAIL")
+    for i in range(len(ch)):
+        z = 0.5 * (bins[i] + bins[i + 1])
+        print(f"   {z:>5.1f}  {'#'*int(18*ch[i]/mx):<20} {'*'*int(18*ct[i]/mx):<20}")
 
-pl = build(plant=True, **KW)
-print(f"  POSITIVE control (planted bilayer): lamellar={lamellar(pl):.3f}  nematic={metrics(pl)[2]:+.3f}")
-rn = build(plant=False, **{**KW, "seed": 7})
-print(f"  NULL control (disordered start):    lamellar={lamellar(rn):.3f}  nematic={metrics(rn)[2]:+.3f}")
 
-e = build(plant=True, **KW)
-print("\n  relaxation at kT=0:")
-prev = 0
-for t in (0, 2000, 4000, 8000, 16000):
-    for _ in range(t - prev):
-        e.step()
-    prev = t
-    print(f"    t={t:6d}  lamellar={lamellar(e):.3f}  nematic={metrics(e)[2]:+.3f}", flush=True)
+KW = dict(n_lip=231, bound=5.0, kt=0.02, speed=0.005, repel=12.0, k_bond=40.0, satt=0.30,
+          spol=0.90, n_tail=2, head_q=0.0, rad_head=0.0, no_water=True, aniso=0.0,
+          polarity=0.0, attract=0.30, bond_span=6.0)
+p = build(seed=0, plant=True, **KW); profile(p, "PLANTED control")
+e = build(seed=0, plant=False, **KW)
+for _ in range(30000): e.step()
+profile(e, "SELF-ASSEMBLED t=30000")
