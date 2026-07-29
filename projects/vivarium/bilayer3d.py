@@ -41,6 +41,7 @@ NEAR = 1.6
 
 
 def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False, attract=0.30,
+          polarity=0.80,
           head_q=1.2, n_tail=2, rad_head=None, no_water=False, aniso=0.95, bond_span=2.0, bend_frac=1.0):
     side = 2.0 * bound
     # water fills whatever the lipids do not, at roughly liquid packing
@@ -50,7 +51,7 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False,
     N = nb * n_lip + n_wat
     cfg = VivariumConfig(**{**DEFAULTS, "N": N, "pos_dim": 3, "n_harmonics": 2, "pos_bound": bound})
     e = PolarPackEngine(cfg, seed, water_frac=n_wat / N, chain_frac=nb * n_lip / N,
-                        repel=repel, attract=attract, polarity=0.80, cohesion=0.0, skew=0.0,
+                        repel=repel, attract=attract, polarity=polarity, cohesion=0.0, skew=0.0,
                         morph=0.70, momentum=0.30, speed=speed, water_dipole=0.8, k_bond=k_bond,
                         head_q=head_q, n_tail=n_tail, rad_head=rad_head, aniso=aniso, bond_span=bond_span, bend_frac=bend_frac)
     e.conservative = True
@@ -167,6 +168,11 @@ def main(argv=None):
     p.add_argument("--tails", type=int, default=2)
     p.add_argument("--span", type=float, default=2.0,
                    help="1-3 rest length. 2.0 = the straight length (zero tension, floppy chain). Above 2.0 the spring is permanently stretched, the Cooke-Deserno rigid-rod trick.")
+    p.add_argument("--polarity", type=float, default=0.80,
+                   help="electrostatic head strength. Profiling shows _extra_force is 52%% of every "
+                        "step (spherical harmonics + pair basis + attention). With head_q=0 that work "
+                        "contributes NOTHING, and polarity=0 takes the early-out. Cooke-Deserno has no "
+                        "electrostatics at all, so 0 is also the faithful setting for the port.")
     p.add_argument("--attract", type=float, default=0.30,
                    help="vdW cohesion amplitude. Never swept before: the default 0.30 sits against repel=12, a 1:40 ratio. This is the term that must hold a membrane together.")
     p.add_argument("--bendfrac", type=float, default=1.0,
@@ -182,7 +188,7 @@ def main(argv=None):
     a = p.parse_args(argv)
 
     e = build(a.seed, a.lipids, a.bound, a.kt, a.speed, a.repel, a.kbond, a.satt, a.spol,
-              a.plant, attract=a.attract, head_q=a.headq, n_tail=a.tails, rad_head=a.radhead, no_water=a.nowater,
+              a.plant, attract=a.attract, polarity=a.polarity, head_q=a.headq, n_tail=a.tails, rad_head=a.radhead, no_water=a.nowater,
               aniso=a.aniso, bond_span=a.span, bend_frac=a.bendfrac)
     side = 2 * a.bound
     need = 2 * side * side / APL
