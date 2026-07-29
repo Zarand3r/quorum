@@ -29,6 +29,39 @@ executed, in what order, and which conclusions are currently live.
 
 ---
 
+## 2026-07-28f — the lipids are being torn apart; the bond force is out-gunned by steric pressure
+
+**Ran.** Tracked the MOLECULE rather than the aggregate during a planted-bilayer relaxation at kT=0.
+Every orientational metric is computed from the lipid axis, so if the lipid itself deforms the metric
+is noise, and nothing above had checked.
+
+**Got.**
+
+    span=2.0   bond (rest 1.0)   r13 (straight 2.0)   tilt    |v|      nematic
+    t=0        1.01 +/- 0.20     2.02                  0.3deg  0.0000   +0.984
+    t=2000     2.10 +/- 2.65     2.86                 56.4deg  0.0254   -0.441
+
+Bonds stretch to 2.1 with a standard deviation of 2.65, so some are enormously stretched, while |v|
+stays at 0.025. This is not an explosion: the molecules are being pulled apart quasi-statically.
+
+**Mechanism.** The bond kernel is `k_bond * tanh((d-r0)/w)`, which SATURATES at k_bond = 8. The
+steric repulsion is a SUM over neighbours at repel = 12, and a bead in a dense bilayer has ~12 of
+them. The aggregate steric pressure therefore exceeds the maximum force a bond can ever exert, and
+the chain is ripped open. Cooke-Deserno cannot hit this because its FENE bond DIVERGES: no pressure
+can break it. Vivarium is not allowed to diverge, so the only equivalent is a bond amplitude that
+beats the aggregate pressure, which means k_bond >> repel * n_neighbours rather than k_bond = 8.
+
+**Also corrects 2026-07-28e.** Weakening the straightener (`bend_frac` < 1) was the WRONG move: a
+full 3x3 sweep of span x bend_frac all collapsed (nematic -0.42 to -0.44, cells 32-36) versus
+nematic +0.015 and cells 58/64 at bend_frac = 1.0. The saturation-cancellation argument was
+theoretically reasonable and empirically backwards. The straightener's saturating tension is what
+holds the bilayer open, and the molecule extending until sterics balance is the mechanism, not a bug.
+
+**Performance.** Each job spawned 32 BLAS threads while effectively using ~9 cores, so three
+concurrent runs drove load to 61 on a 32-core box. Measured: threading buys only 8% for a single run
+(39 vs 42.3 steps/s at N=440). Sweeps now run ONE thread per job with many jobs concurrent, roughly
+3x the throughput on the same hardware.
+
 ## 2026-07-28e — chain rigidity is the lever, and the two bond springs were cancelling
 
 **Ran.** Swept the 1-3 rest length (`bond_span`) on the planted bilayer at kT=0, everything else at
