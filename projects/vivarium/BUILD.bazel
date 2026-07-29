@@ -189,6 +189,14 @@ py_binary(
 )
 
 py_binary(
+    name = "bicelle2d",
+    srcs = ["bicelle2d.py"],
+    main = "bicelle2d.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "bilayer3d",
     srcs = ["bilayer3d.py"],
     main = "bilayer3d.py",

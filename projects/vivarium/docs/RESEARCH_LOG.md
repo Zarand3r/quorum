@@ -13,7 +13,7 @@ executed, in what order, and which conclusions are currently live.
 |---|---|---|
 | 0 | two lipids prefer tail-to-tail | PASSES, at 2-bead tails once head_q < 0.8 (F22) |
 | 1 | micelle (radial head-out order) | FAILS, no radial order once the metric is unbiased (F21) |
-| 2 | bicelle | BLOCKED BY PHYSICS, not by vivarium: a single-species lipid cannot form a stable flat disc. The Cooke-Deserno control fails it too (2026-07-29c). Needs a second, rim-capping species |
+| 2 | bicelle | STABLE IN 2-D once the box is big enough: a planted finite ribbon holds 20k steps at aspect ~0.33 / lamellar ~0.92 in a box of 44, and curls up in boxes of 24 and 32 (2026-07-29e). Self-assembly of one is still open. 3-D remains blocked without a rim species |
 | 3 | bilayer | Planted bilayer STABLE (lamellar 1.000, 16k steps, kT=0). Self-assembly gives a slab ONLY with the wall/slit boundary; under pure PBC it fails at every head size (2026-07-29d). So the wall may be templating it |
 
 ## Live methodological rules
@@ -28,6 +28,42 @@ executed, in what order, and which conclusions are currently live.
    head dispersion were both wrong knobs; head electrostatics was the lever).
 
 ---
+
+## 2026-07-29e — the box was the limit, not the physics (2-D bicelle is stable)
+
+**Prompted by the observation** that the environment might be too confining and lipids were piling at
+the box edges. That turned out to be right, twice over.
+
+**Bug in my own experiment first.** The planted 2-D row laid `n_lip/2` lipids across the FULL box
+whatever the count, so 30 lipids in a box of 12 started at 0.4 spacing against a contact distance of
+1.0 -- 60% over-compressed from step one. It collapsed instantly and I nearly recorded that as the
+ribbon being unstable. Sized correctly, a SPANNING 2-D bilayer is stable and gets flatter with room:
+
+    box 12   lamellar 1.000  aspect 0.205
+    box 18   lamellar 1.000  aspect 0.141
+    box 24   lamellar 1.000  aspect 0.088
+
+**Then the bicelle proper:** a FINITE ribbon (36 lipids, `--spanfrac 0.5`, empty box around it) in
+progressively larger boxes.
+
+    box   aspect 0 -> 5k -> 10k -> 15k -> 20k        lamellar   outcome
+     24   0.217  0.661  0.615  0.549  0.546            0.722    curls into a droplet
+     32   0.122  0.385  0.520  0.529  0.539            0.889    curls
+     44   0.097  0.305  0.336  0.331  0.352            0.917    HOLDS as a ribbon
+
+In the large box it PLATEAUS rather than continuing to curl. Against a random null of aspect 0.62 /
+lamellar 0.583 and a planted 0.097 / 1.000, the relaxed state sits far closer to the ribbon. The small
+boxes curl because the ribbon is confined and interacting with its own periodic images.
+
+**Metric warning found here.** `lamellar` reads 1.000 on a COLLAPSED droplet, identical to the planted
+ribbon, because a filled blob with heads on its perimeter satisfies "head farther out than its own
+tails" perfectly. Only `aspect` separates ribbon from droplet. A radial profile confirmed the collapsed
+state has tails all the way to r=0.25, so it is filled, not a closed ring -- I had briefly read it as a
+2-D vesicle, which was wrong.
+
+**Status.** A 2-D bicelle is STABLE given room. Self-assembly of one from disorder is untested, and
+that is the remaining question: stability and nucleation are separate, and nucleation is what has
+failed everywhere in 3-D.
 
 ## 2026-07-29d — longer tails help, smaller heads do not, and the slab needs the WALLS
 
