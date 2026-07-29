@@ -287,19 +287,30 @@ class PackEngine:
                 edges.append([int(i), int(top[i]), round(w, 2)])
         return edges
 
-    def snapshot(self):
+    def snapshot(self, with_edges=True):
         pos = self.X[:, :self.pd]
         C = self._contour()
         # in 3-D also ship z so the viewer can render DEPTH (near = bigger/brighter). The dish is
         # simulated volumetrically and drawn as a projection; z is ignored by the 2-D viewer path.
         if self.pd == 3:
-            tokens = [{"x": float(pos[i, 0]), "y": float(pos[i, 1]), "z": float(pos[i, 2]),
-                       "c": C[i].tolist()} for i in range(self.cfg.N)]
+            # ROUND before serialising. float64 repr costs ~18 chars per number ("1.8792029149216027"),
+            # so a 380-token frame was 108 KB of JSON, and the browser pays that in JSON.parse on every
+            # poll. Three decimals is far below one screen pixel at any zoom the viewer allows, and it
+            # cuts the payload roughly 4x. Purely a wire format change; the simulation is untouched.
+            # Round in NUMPY, not Python. A per-value round() over 380 tokens x 11 numbers cost
+            # ~3000 interpreter calls and pushed /state latency to 57 ms, which is worse for the
+            # viewer than the large payload was. np.round is one vectorised pass.
+            pr = np.round(pos, 3).tolist()
+            cr = np.round(C, 3).tolist()
+            tokens = [{"x": pr[i][0], "y": pr[i][1], "z": pr[i][2], "c": cr[i]}
+                      for i in range(self.cfg.N)]
         else:
-            tokens = [{"x": float(pos[i, 0]), "y": float(pos[i, 1]), "c": C[i].tolist()}
+            pr = np.round(pos, 3).tolist()
+            cr = np.round(C, 3).tolist()
+            tokens = [{"x": pr[i][0], "y": pr[i][1], "c": cr[i]}
                       for i in range(self.cfg.N)]
         return {"status": "running", "tick": self.t, "n": self.cfg.N,
-                "tokens": tokens, "edges": self._binding_edges(),
+                "tokens": tokens, "edges": self._binding_edges() if with_edges else None,
                 "dims": {"d": self.cfg.d, "pos": self.pd, "shape": self.cfg.shape_dim,
                          "hidden": self.cfg.hidden_dim, "z": self.cfg.z_dim,
                          "h": _MLP_H * self.cfg.z_dim, "N": self.cfg.N,

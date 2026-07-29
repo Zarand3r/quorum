@@ -682,8 +682,8 @@ class PolarPackEngine(PackEngine):
         return {"clusters": m["n_clusters"], "largest": round(m["largest_frac"], 3),
                 "polarity": round(float(pol[act].mean()) if act.any() else 0.0, 3)}
 
-    def snapshot(self):
-        snap = super().snapshot()
+    def snapshot(self, with_edges=True):
+        snap = super().snapshot(with_edges=with_edges)
         snap["species"] = [int(x) for x in self.species]        # 0 water · 1 active · 2 oil · 3 lipid
         snap["lip_ell"] = float(self.lip_ell)
         snap["lipids"] = {int(i): [float(self.lipid_o[k, 0]), float(self.lipid_o[k, 1])]

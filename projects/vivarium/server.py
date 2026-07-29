@@ -57,6 +57,7 @@ class Sim:
         #   like it does nothing (which is exactly what happened once substepping sped the sim up).
         self._autopaused = False
         self.lock = threading.Lock()
+        self._edges, self._edges_at = None, 0.0
         self.engine = self._make(seed)
         self.paused = False
         self._stop = False
@@ -90,11 +91,16 @@ class Sim:
         while not self._stop:
             t0 = time.perf_counter()
             if not self.paused:
-                with self.lock:
-                    for _ in range(max(1, self.substeps)):
-                        if self.paused:        # honour pause between substeps, not just per frame
-                            break
+                # Take the lock PER STEP, not across the whole substep batch. A step costs ~25 ms, so
+                # holding it for substeps=2 kept the lock for ~50 ms and every viewer poll had to wait
+                # that long -- which is what the render lag actually was. Per-step locking lets a poll
+                # interleave between substeps and halves the worst-case wait.
+                for _ in range(max(1, self.substeps)):
+                    if self.paused:            # honour pause between substeps, not just per frame
+                        break
+                    with self.lock:
                         self.engine.step()
+                with self.lock:
                     self._buf.append(self.engine.X[:, :2].copy())  # positions only (cheap)
                 if (self.autopause and not self._autopaused
                         and self.engine.t >= self.autopause):
@@ -119,7 +125,15 @@ class Sim:
     def state(self) -> dict:
         """Build the snapshot on demand (only when the viewer polls) — off the step hot loop."""
         with self.lock:
-            snap = self.engine.snapshot()
+            snap = self.engine.snapshot(with_edges=self._edges is None
+                                        or time.perf_counter() - self._edges_at > 0.5)
+        # `edges` needs a full O(N^2) attention pass (4.6 ms of a 5.0 ms snapshot) and the binding
+        # graph changes far slower than the frame rate, so it is refreshed at most twice a second and
+        # reused in between.
+        if snap.get("edges") is None:
+            snap["edges"] = self._edges
+        else:
+            self._edges, self._edges_at = snap["edges"], time.perf_counter()
         snap["status"] = "paused" if self.paused else "running"  # honest: reflect the real pause state
         snap["aliveness"] = self._alive
         snap["pos_bound"] = self.cfg.pos_bound

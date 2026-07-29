@@ -30,8 +30,8 @@ def frame(e, title, hide_water=False):
     sp=e.species; C=e._contour()
     COL={0:(56,189,248),5:(96,165,250),6:(249,146,58)}
     out=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{W}"><rect width="{W}" height="{W}" fill="#0b0e13"/>']
-    n=len(e._mol)
-    for a,b in zip(e._bond_i[:2*n], e._bond_j[:2*n]):
+    n=len(e._mol)*(e._mol.shape[1]-1)   # BACKBONE bonds only, any chain length
+    for a,b in zip(e._bond_i[:n], e._bond_j[:n]):
         d=P[b]-P[a]
         if np.abs(d).max() > B: continue
         X1,Y1,d1,_=proj(a); X2,Y2,d2,_=proj(b); dep=(d1+d2)/2
