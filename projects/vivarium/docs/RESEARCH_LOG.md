@@ -29,6 +29,38 @@ executed, in what order, and which conclusions are currently live.
 
 ---
 
+## 2026-07-29a — bond stiffness is not the fix; `opposed` characterised; cohesion never swept
+
+**Ran.** k_bond in {40, 100, 250} against span in {2.0, 6.0}, planted bilayer at kT=0.
+
+**Got.**
+
+    k_bond    span=2.0            span=6.0
+    40        -0.427  33/64       +0.025  55/64
+    100       -0.101  28/64       +0.001  54/64
+    250       -0.254  41/64       -0.314  50/64
+
+Raising the bond amplitude does NOT rescue the bilayer. Best remains nematic ~ +0.02 against a
+planted +0.984, so the sheet still loses essentially all orientational order. The 2026-07-28f
+hypothesis (steric pressure out-guns the bond) is real as a mechanism but is not the binding
+constraint.
+
+**Useful structure in the failure.** The planted bilayer occupies 49/64 cells. At span=2.0 the system
+falls to 33/64, which is COLLAPSE; at span=6.0 it rises to 55/64, which is DISPERSAL. We are
+overshooting in both directions, and the membrane is not being held together in either.
+
+**Metric characterisation, not a bug.** `opposed` reads 0.123 on a PERFECT planted bilayer and 0.275
+on a RANDOM start, so it is INVERTED and weak. Widening the cutoff does not help and my first
+diagnosis of an off-by-cutoff error was wrong: within a leaflet each lipid has ~42 neighbours inside
+the cutoff against only ~4 across the midplane, so in-plane parallel pairs dominate the mean by an
+order of magnitude. Read `nematic` as the discriminator (planted +0.984, random -0.339) and treat a
+LOW `opposed` as weak corroboration only. Documented in the source next to the cutoff.
+
+**Gap this exposed.** `attract`, the vdW cohesion amplitude, has NEVER been swept: it is hardcoded at
+0.30 against repel=12, a 1:40 ratio. That is the term that has to hold a membrane together, and
+collapse-versus-dispersal is exactly what an ill-set cohesion/repulsion balance looks like. Now
+wired as `--attract` and being swept over {0.3, 1, 3, 10, 30} x span {2.0, 6.0}.
+
 ## 2026-07-28f — the lipids are being torn apart; the bond force is out-gunned by steric pressure
 
 **Ran.** Tracked the MOLECULE rather than the aggregate during a planted-bilayer relaxation at kT=0.
