@@ -41,7 +41,13 @@ WATER, ACTIVE, OIL, LIPID, AMPHI, MOL_HEAD, MOL_TAIL = 0, 1, 2, 3, 4, 5, 6
 # ~16-carbon tail. Two tail beads also DOUBLE the tail-tail contact area, so the aggregation drive
 # scales with tail length — the mechanism the planted-bilayer toy showed was missing.
 BOND_REST = 1.00      # bonded neighbours sit at contact
-BOND_SPAN = 2.00      # head <-> far tail: rest length = the sum, so the chain is held STRAIGHT
+BOND_SPAN = 2.00      # 1-3 rest length. At exactly 2*BOND_REST this is the STRAIGHT length, so a
+#   straight chain feels ZERO straightening tension and bends for free. Cooke-Deserno instead sets
+#   the 1-3 rest length to 4 sigma when the chain can only reach ~1.9 sigma, so the spring is
+#   PERMANENTLY stretched and applies constant tension: their lipids measure 98% of maximum
+#   extension. A floppy chain cannot form a bilayer, so `bond_span` is now tunable and values above
+#   2*BOND_REST reproduce the Cooke-Deserno rigid-rod limit. Still a bounded tanh on a fixed pair
+#   mask, so nothing about the transformer-only requirement changes.
 BOND_W = 0.30         # width of the bounded bond well
 RAD_HEAD, RAD_TAIL = 0.30, 0.95
 # STERIC radii (sigma), distinct from the dispersion well depths above. In MARTINI every bead shares
@@ -87,9 +93,11 @@ class PolarPackEngine(PackEngine):
     def __init__(self, cfg, seed, water_frac=0.4, r0=0.9, amp=0.5, polarity=0.6, pol_gain=1.2,
                  water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, sink_polarity=0.0,
                  oil_frac=0.0, lipid_frac=0.0, lip_ell=0.55, k_tail=1.5, k_hydro=1.0,
-                 lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.95, chain_frac=0.0, k_bond=1.5, head_q=1.2, n_tail=2, rad_head=None, **kw):
+                 lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.95, chain_frac=0.0, k_bond=1.5, head_q=1.2, n_tail=2, rad_head=None,
+                 bond_span=BOND_SPAN, **kw):
         super().__init__(cfg, seed, **kw)
         self.k_bond = k_bond         # strength of the bounded bond kernel
+        self.bond_span = bond_span   # 1-3 rest length; > 2*BOND_REST => permanent straightening tension
         self.rad_head = RAD_HEAD if rad_head is None else rad_head   # head DISPERSION radius
         self.head_q = head_q         # lipid HEAD dipole magnitude. This sets how strongly water
         #   solvates the head, and therefore whether heads are FORCED to the aggregate surface.
@@ -211,7 +219,7 @@ class PolarPackEngine(PackEngine):
         for k in range(nb - 1):
             bi.append(tri[:, k]); bj.append(tri[:, k + 1]); br.append(np.full(n_mol, BOND_REST))
         for k in range(nb - 2):
-            bi.append(tri[:, k]); bj.append(tri[:, k + 2]); br.append(np.full(n_mol, BOND_SPAN))
+            bi.append(tri[:, k]); bj.append(tri[:, k + 2]); br.append(np.full(n_mol, self.bond_span))
         self._bond_i = np.concatenate(bi)
         self._bond_j = np.concatenate(bj)
         self._bond_r0 = np.concatenate(br)

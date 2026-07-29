@@ -29,6 +29,45 @@ executed, in what order, and which conclusions are currently live.
 
 ---
 
+## 2026-07-28d — porting the Cooke-Deserno recipe, one difference at a time
+
+Working hypothesis: the control (`cooke_deserno.py`) makes a bilayer, so porting its recipe into
+vivarium should too. Each run below removes ONE remaining difference and re-tests the planted bilayer
+at kT=0. Everything is solvent-free with head_q=0 and rad_head=0.05, which zeroes head cohesion while
+leaving head EXCLUDED VOLUME intact (eps = tanh(rad^2/0.25), so rad 0.05 -> eps 0.01 vs tail 0.999).
+
+| # | difference removed | result | verdict |
+|---|---|---|---|
+| 1 | direct port (no water, no electrostatics) | nematic +1.000 -> -0.315 | melts |
+| 2 | + steric overlap fixed (2.5,1.5,0.5) | +1.000 -> -0.255 | melts; overlap was NOT the cause |
+| 3 | + attraction range matched to CD (satt 0.30 = 2.77 sigma vs CD 2.62) | melts | range was not it |
+| 4 | + isotropic beads (aniso 0.95 -> 0.0) | +1.000 -> -0.424, PLATEAUS | no longer exploding |
+| 5 | + box sized so faces do not attract across PBC (bound 5.0, 231 lipids) | +0.984 -> -0.439 | still collapses |
+| 6 | + rigid-rod chain (bond_span > 2*BOND_REST) | running | - |
+
+**Bugs found and fixed along the way**, each of which invalidated earlier results:
+
+- *Steric clash in the planted bilayer.* Offsets (2.4,1.4,0.4) put opposing leaflet tails 0.8 apart
+  against a contact distance of 1.0. Fixed to (2.5,1.5,0.5), generalised to any chain length,
+  verified at 0.000 overlap. Did NOT stop the melting, which is how the next bug surfaced.
+- *The integrator was exploding.* See 2026-07-28c. At speed 0.08, |v| reached 11.5 at kT=0 and bonds
+  stretched 3x. Reducing the timestep to 0.005 stops it: the metrics now PLATEAU instead of running
+  away, which is what makes runs 4-6 admissible evidence at all.
+- *aniso=0.95 by default.* Contact distance is half*(1+0.95*nf_i) + half*(1+0.95*nf_j), so it swings
+  over [0.05, 1.95] rather than sitting at 1.0, stretching bonded pairs well past BOND_REST.
+  Cooke-Deserno beads are spheres; aniso=0.0 reproduces that.
+- *The box was too thin.* At bound 3.9 the vacuum gap is 2.8 against an attraction range of 2.77, so
+  the two faces of the bilayer attracted each other ACROSS the periodic boundary. That run also had
+  min-image margin 0.0104, over the 0.01 gate, so it was inadmissible regardless.
+
+**Open at this point.** With overlap, integrator, anisotropy and box all corrected, the planted
+bilayer still collapses to a condensed disordered blob (cells 49/64 -> 33/64, nematic below the -1/3
+isotropic baseline, i.e. actively anti-aligned). The remaining known difference from the control is
+CHAIN RIGIDITY: Cooke-Deserno sets the 1-3 rest length to 4 sigma when the chain can only reach
+~1.9 sigma, so the spring is permanently stretched and the lipid is a rigid rod (measured at 98% of
+maximum extension). Vivarium's BOND_SPAN=2.0 is exactly the straight length, so a straight chain
+feels zero tension. `bond_span` is now tunable; run 6 sweeps it.
+
 ## 2026-07-28c — the planted bilayer never melted; vivarium was exploding
 
 **Ran.** Diagnostic on the planted bilayer at kT=0, tracking bond length, 1-3 span, mean speed.

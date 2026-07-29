@@ -41,7 +41,7 @@ NEAR = 1.6
 
 
 def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False,
-          head_q=1.2, n_tail=2, rad_head=None, no_water=False):
+          head_q=1.2, n_tail=2, rad_head=None, no_water=False, aniso=0.95, bond_span=2.0):
     side = 2.0 * bound
     # water fills whatever the lipids do not, at roughly liquid packing
     nb = 1 + n_tail
@@ -52,7 +52,7 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False,
     e = PolarPackEngine(cfg, seed, water_frac=n_wat / N, chain_frac=nb * n_lip / N,
                         repel=repel, attract=0.30, polarity=0.80, cohesion=0.0, skew=0.0,
                         morph=0.70, momentum=0.30, speed=speed, water_dipole=0.8, k_bond=k_bond,
-                        head_q=head_q, n_tail=n_tail, rad_head=rad_head)
+                        head_q=head_q, n_tail=n_tail, rad_head=rad_head, aniso=aniso, bond_span=bond_span)
     e.conservative = True
     e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, satt, spol
     e.repel_contact, e.rigidity, e.selectivity, e.temperature = 1.0, 0.0, 0.30, kt
@@ -165,11 +165,19 @@ def main(argv=None):
     p.add_argument("--nowater", action="store_true",
                    help="solvent-free, as Cooke-Deserno. Tail-tail cohesion replaces water.")
     p.add_argument("--tails", type=int, default=2)
+    p.add_argument("--span", type=float, default=2.0,
+                   help="1-3 rest length. 2.0 = the straight length (zero tension, floppy chain). Above 2.0 the spring is permanently stretched, the Cooke-Deserno rigid-rod trick.")
+    p.add_argument("--aniso", type=float, default=0.95,
+                   help="how strongly the contour deforms EXCLUDED VOLUME. At the 0.95 default the "
+                        "contact distance swings over [0.05, 1.95] instead of sitting at 1.0, which "
+                        "stretches a bonded pair well past BOND_REST. Cooke-Deserno beads are "
+                        "spheres; 0.0 reproduces that.")
     p.add_argument("--plant", action="store_true")
     a = p.parse_args(argv)
 
     e = build(a.seed, a.lipids, a.bound, a.kt, a.speed, a.repel, a.kbond, a.satt, a.spol,
-              a.plant, a.headq, n_tail=a.tails, rad_head=a.radhead, no_water=a.nowater)
+              a.plant, a.headq, n_tail=a.tails, rad_head=a.radhead, no_water=a.nowater,
+              aniso=a.aniso, bond_span=a.span)
     side = 2 * a.bound
     need = 2 * side * side / APL
     print(f"N={e.cfg.N}  lipids={len(e._mol)}  water={len(e._wi)}  box={side:.1f}  "
