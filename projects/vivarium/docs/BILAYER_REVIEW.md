@@ -758,6 +758,69 @@ wrong sign structure for keeping an interface flat.
 **Next experiment:** add the like-sign head monopole, then re-run this same kT=0 planted-bilayer test.
 It is cheap and it is a direct yes/no on whether head-head repulsion is the missing term.
 
+## Finding 24 — the hard-coded control WORKS, and it says water and electrostatics are the problem
+(2026-07-28)
+
+Every negative result above was ambiguous in the same way: a bilayer that never forms could mean the
+transformer-only restriction is too weak, or that the box is too small, the run too short, or the
+order parameter blind. `cooke_deserno.py` removes that ambiguity by building a bilayer with ordinary
+hard-coded physics (Cooke, Kremer & Deserno, Phys. Rev. E 72, 011506 (2005)): 1/r^12 cores, an
+explicit energy function, everything vivarium forbids.
+
+**It works.** 200 lipids, from a disordered start, in 30k steps:
+
+    metric        planted bilayer   random start   MEASURED (w_c=1.6, t=30k)
+    nematic          +1.000           -0.339           +0.392
+    thickness         4.40             1.31             4.01
+
+Thickness reaches 91% of a perfect bilayer. `nematic` sits mid-scale because a FLUID membrane carries
+real thermal disorder. Sweeping the one tunable width reproduces the published phase behaviour, which
+is the check that the implementation is faithful rather than accidentally right:
+
+    w_c    1.5     1.6     1.7
+    nem   +0.117  +0.392  +0.332      (literature: fluid near 1.6, gel below ~1.5, unstable above 1.8)
+    thick   3.18    4.01    3.89
+
+**What the control tells us, in order of importance.**
+
+1. **A bilayer needs NO water and NO electrostatics.** Cooke-Deserno has neither. The entire recipe is
+   excluded volume with the head slightly smaller than the tail, tail-tail attraction ONLY, chain
+   connectivity, and chain stiffness. Vivarium spends ~75% of its tokens on explicit water and drives
+   cohesion with head dipoles, and is therefore trying to make the hydrophobic effect EMERGE from
+   water before any ordering can emerge from that. The control skips the first emergence entirely.
+   Folding hydrophobicity into a direct tail-tail term is not a retreat from the thesis: a tail-tail
+   attention head is still attention, and every coarse-grained lipid model in the literature does
+   exactly this. It also removes 3/4 of the tokens.
+
+2. **Head-head attraction is fatal, confirmed from the opposite direction.** In Cooke-Deserno the
+   heads have NO attraction of any kind, only a slightly smaller excluded volume. Finding 23 reached
+   the same conclusion from the hydration collapse. Two independent routes, one answer.
+
+3. **The timescale is not the blocker.** The control assembles in 30k steps at 200 lipids. Vivarium
+   has run 100k+ steps and produced nothing. The physics is the blocker, not the sampling.
+
+4. **Bounded kernels are an ADVANTAGE the control does not have.** The control exploded twice before
+   it ran: Euler-Maruyama drove the temperature to 1e12 and stretched FENE bonds to 6 sigma past
+   their 1.5 sigma limit, and an unminimised start reaches |F| ~ 1e9 because 1/r^12 diverges. It
+   needed BAOAB integration and a displacement-capped minimiser. Vivarium's bounded kernels make that
+   entire failure mode impossible. The transformer-only restriction buys real numerical robustness.
+
+5. **Metric calibration failed AGAIN, in clean new code.** Two of the four metrics written for the
+   control failed their own positive control: `opposed` read 0.000 on a PERFECT planted bilayer
+   (leaflets sit 2.5 sigma apart, the cutoff was 2.0), and `tail_centrality` read +1.00 on the
+   planted bilayer AND on a random start. Both were caught only because the planted and random
+   controls are printed beside every run. This is the third independent occurrence; treat "a new
+   metric is wrong until both controls say otherwise" as the default assumption.
+
+**The port back to vivarium**, cheap and faithful:
+
+    - drop water entirely (water_frac 0)          -> ~4x fewer tokens
+    - head_q = 0, no electrostatics at all
+    - restrict the attract head to TAIL-TAIL pairs (a species mask on an attention head)
+    - keep the bond mask and the 1-3 straightener, which vivarium already has
+    - head steric radius slightly below the tail's
+    - then re-run the kT=0 planted-bilayer test of Finding 23
+
 ## How experimentation is now structured
 
 1. **Statics before dynamics.** For any target structure, first ask whether it is a mechanical

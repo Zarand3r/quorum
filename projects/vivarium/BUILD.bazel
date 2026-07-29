@@ -130,6 +130,14 @@ py_binary(
 )
 
 py_binary(
+    name = "cooke_deserno",
+    srcs = ["cooke_deserno.py", "micelle_probe.py"],
+    main = "cooke_deserno.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "null_control",
     srcs = ["null_control.py", "micelle_probe.py"],
     main = "null_control.py",
