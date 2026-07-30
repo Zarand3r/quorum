@@ -14,7 +14,7 @@ executed, in what order, and which conclusions are currently live.
 | 0 | two lipids prefer tail-to-tail | PASSES, at 2-bead tails once head_q < 0.8 (F22) |
 | 1 | micelle (radial head-out order) | FAILS, no radial order once the metric is unbiased (F21) |
 | 2 | bicelle | STABLE IN 2-D once the box is big enough: a planted finite ribbon holds 20k steps at aspect ~0.33 / lamellar ~0.92 in a box of 44, and curls up in boxes of 24 and 32 (2026-07-29e). Self-assembly of one is still open. 3-D remains blocked without a rim species |
-| 3 | bilayer | RETRACTED. The only slab came from lipids stretched 4x by bond_span=6.0; at span 2.0 the same system makes rods (2026-07-29g). No admissible bilayer result stands |
+| 3 | bilayer | PARTIAL, and for the first time ADMISSIBLE. Planted and disordered starts CONVERGE (lamellar 0.87 vs 0.82, aspect 0.43 vs 0.55) with intact molecules, validated metrics and NO walls (2026-07-30a). Not a clean slab: aspect 0.55 against a planted 0.23 |
 
 ## Live methodological rules
 
@@ -34,6 +34,48 @@ executed, in what order, and which conclusions are currently live.
    head dispersion were both wrong knobs; head electrostatics was the lever).
 
 ---
+
+## 2026-07-30a — a validated harness, and the first admissible structural result
+
+**The bug behind three wrong diagnoses.** `molecule_ok` measured bond lengths with RAW subtraction, no
+minimum image, so any bonded pair straddling the periodic boundary read as enormous -- it reported
+13.3 in a box of 10, which is geometrically impossible and which I did not question. Measured
+correctly:
+
+    config                         bond (rest 1.0)    fraction > 1.25
+    span=2.0, repel=12             1.01 - 1.02        0.00   PERFECTLY INTACT
+    span=6.0 (the retracted SLAB)  1.76 - 3.38        1.00   genuinely stretched
+
+So the SLAB retraction was RIGHT, but the three diagnoses after it were all wrong: there was no
+steric-pressure envelope problem and no timestep problem. `span=2.0` keeps molecules perfect at
+repel=12. The ONLY real defect was bond_span=6.0.
+
+**`harness.py`: one chokepoint.** `unwrap()` and `delta()` are the only places a periodic difference
+is taken, and everything geometric goes through them. Any sample with a deformed molecule
+(bond > 1.25) or an overshooting integrator (> 0.05/step) is DISQUALIFIED rather than interpreted.
+Bonds are measured over EVERY backbone bond, shape PER CLUSTER, and both controls print every run.
+
+Calibration: planted 1.000 / 0.231, random 0.498 / 0.839, and span=6.0 correctly REFUSED.
+
+The harness immediately caught a bug of my own: the first driver sampled displacement across a
+6000-step interval and compared it to a per-step bound, disqualifying every healthy run.
+
+**First admissible result** (bond 1.02, disp <= 0.001, status ok throughout):
+
+    run                            lamellar (null 0.50)   aspect (null 0.85)
+    planted bilayer, relaxed       0.991 -> 0.870         0.23 -> 0.43   stable 24k steps
+    self-assembly, slit            0.494 -> 0.818         0.87 -> 0.48   stable
+    self-assembly, PBC (no walls)  0.506 -> 0.818         0.85 -> 0.55   stable
+
+**Two findings.** The WALL DEPENDENCE IS GONE: pure periodic matches the slit, so that caveat was an
+artifact of the stretched lipid rather than a real requirement. And both starting points CONVERGE --
+the planted bilayer decays to 0.87/0.43 while disorder rises to 0.82/0.55. Meeting from opposite
+directions is what equilibrium looks like, and it is far stronger evidence than either run alone.
+
+**Honest limit.** This is not a clean bilayer: aspect settles near 0.5 against a planted 0.23, so the
+aggregate is markedly flatter than a droplet but well short of a slab. It is a partially ordered
+lamellar aggregate, and it is the first structural claim in this project that survives its own
+admissibility checks.
 
 ## 2026-07-29g — RETRACTION: the slab was an artifact of the stretched lipid
 
