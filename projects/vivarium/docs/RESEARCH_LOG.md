@@ -14,7 +14,7 @@ executed, in what order, and which conclusions are currently live.
 | 0 | two lipids prefer tail-to-tail | PASSES, at 2-bead tails once head_q < 0.8 (F22) |
 | 1 | micelle (radial head-out order) | FAILS, no radial order once the metric is unbiased (F21) |
 | 2 | bicelle | STABLE IN 2-D once the box is big enough: a planted finite ribbon holds 20k steps at aspect ~0.33 / lamellar ~0.92 in a box of 44, and curls up in boxes of 24 and 32 (2026-07-29e). Self-assembly of one is still open. 3-D remains blocked without a rim species |
-| 3 | bilayer | Planted bilayer STABLE (lamellar 1.000, 16k steps, kT=0). Self-assembly gives a slab ONLY with the wall/slit boundary; under pure PBC it fails at every head size (2026-07-29d). So the wall may be templating it |
+| 3 | bilayer | RETRACTED. The only slab came from lipids stretched 4x by bond_span=6.0; at span 2.0 the same system makes rods (2026-07-29g). No admissible bilayer result stands |
 
 ## Live methodological rules
 
@@ -34,6 +34,36 @@ executed, in what order, and which conclusions are currently live.
    head dispersion were both wrong knobs; head electrostatics was the lever).
 
 ---
+
+## 2026-07-29g — RETRACTION: the slab was an artifact of the stretched lipid
+
+**Ran.** The three claims that had been measured at bond_span=6.0, redone at span=2.0, with bond
+length and 1-3 span now printed on EVERY line (rule 0), and span=6.0 alongside for a direct contrast.
+
+    config                      bond (rest 1.0)   L2/L3   shape   lamellar
+    span 6.0 (the old "best")        4.12          0.87    SLAB     0.965
+    span 2.0, slit                   2.14          0.14    rod      0.805
+    span 2.0, pure PBC               2.10          0.14    rod      0.810
+    span 2.0, planted bilayer        1.49          0.09    rod      0.814
+
+**The only configuration that produces a slab is the one whose lipids are stretched to 4x their rest
+length** -- a ~7-long floppy string rather than a 3-bead rod. Long strings layer readily, which is
+presumably why it looked so good. RETRACTING the L2/L3 0.87 "SLAB" result and, with it, the claim that
+4-bead tails give lamellar order. The head_sigma sweep of 2026-07-29d rested on the same stretched
+molecule and is void too.
+
+**Second problem, found by the new instrumentation.** span=2.0 does NOT keep lipids intact at 3-D
+density either: bonds still reach 1.4-2.1. In 2-D at lower density span=2.0 held perfectly
+(1.01 +/- 0.01), so this is density-dependent and is Finding 2026-07-28f's mechanism again -- steric
+pressure is a SUM over ~12 neighbours at repel=12, about 43 in total, against a bond force that
+SATURATES at k_bond=40. The bond loses.
+
+**Consequence for the whole project.** No admissible bilayer result currently stands. What survives is
+the micelle (rung 1), the stable planted 2-D bicelle, and the finding that the droplet is the
+equilibrium phase. Everything lamellar in 3-D was measured on a deformed molecule.
+
+**Running:** k_bond 150 and 400 at span 2.0, which should let the bond win the force balance. Until a
+run shows bond ~1.0 SUSTAINED, no 3-D structural claim is admissible.
 
 ## 2026-07-29f — the droplet is the PHASE, not a trap; and bond_span=6.0 was stretching every lipid
 

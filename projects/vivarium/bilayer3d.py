@@ -132,6 +132,19 @@ def lamellar(e):
     return float((hz > tz).mean())
 
 
+def molecule_ok(e):
+    """(mean bond length, mean 1-3 span). RULE 0: every order parameter here is computed from head and
+    tail POSITIONS, so a deformed lipid makes all of them meaningless. bond_span=6.0 stretched bonds to
+    2.4x their rest length in every 4-bead-tail run before this was checked, so it now prints on every
+    line. Rest length is 1.0 and a straight 1-3 span is 2.0."""
+    mol = e._mol
+    if not mol.size:
+        return 0.0, 0.0
+    b = np.linalg.norm(e.X[mol[:, 0], :3] - e.X[mol[:, 1], :3], axis=1)
+    r13 = np.linalg.norm(e.X[mol[:, 0], :3] - e.X[mol[:, 2], :3], axis=1)
+    return float(b.mean()), float(r13.mean())
+
+
 def shape(e):
     """(L1/L3, L2/L3) of the lipid position covariance, ascending eigenvalues.
 
@@ -241,13 +254,16 @@ def main(argv=None):
           f"{'PLANTED' if a.plant else 'DISORDERED'}")
     print(f"  a spanning bilayer needs ~{need:.0f} lipids; solvent slab {(side - 2*LIP_LEN)/2:.1f} per side")
     print(f"  min-image margin {e.min_image_margin():.4f} (gate < 0.01)")
-    print("   step  lamellar  L1/L3  L2/L3  shape      nematic  cells")
+    print("   step  lamellar  L1/L3  L2/L3  shape      nematic  cells   bond  r13   [bond 1.0, r13 2.0]")
     print("         [lamellar: 0.5 random, 1.0 = every head outside its own tails -- THE bilayer test]")
     for t in range(0, a.steps + 1, a.every):
         b, h, n, o, c = metrics(e)
         a1, a2 = shape(e)
         kind = "SLAB" if (a1 < 0.45 and a2 > 0.60) else ("rod" if a2 < 0.45 else "blob")
-        print(f"  {t:6d}   {lamellar(e):.3f}  {a1:.2f}   {a2:.2f}   {kind:<9} {n:+.3f}   {c}/64", flush=True)
+        bo, r13 = molecule_ok(e)
+        warn = "" if abs(bo - 1.0) < 0.25 else "  <-- LIPID STRETCHED"
+        print(f"  {t:6d}   {lamellar(e):.3f}  {a1:.2f}   {a2:.2f}   {kind:<9} {n:+.3f}   {c}/64  "
+              f"{bo:.2f}  {r13:.2f}{warn}", flush=True)
         if t < a.steps:
             for _ in range(a.every):
                 e.step()
