@@ -23,7 +23,8 @@ statistic, which is how three micelle claims survived for a day.
               tails. Planted bilayer ~1.0, random ~0.5. NOTE it reads 1.0 on a collapsed droplet too,
               so it is necessary and NOT sufficient -- always read it with `aspect`.
     aspect    L1/L3 of the largest cluster's covariance, unwrapped. A slab or ribbon is thin in one
-              axis (low); a droplet is round (~0.8+). This is the discriminator a droplet cannot fake.
+              axis (low); a droplet is round (~0.8+). A droplet cannot fake it, but a FRAGMENT can,
+              so it is only admissible when the cluster holds most of the system (MIN_CLUSTER_FRAC).
 """
 
 from __future__ import annotations
@@ -33,6 +34,11 @@ import numpy as np
 BOND_REST = 1.0
 BOND_MAX = 1.25          # beyond this the molecule is deformed and nothing structural is admissible
 DISP_MAX = 0.05          # per-step displacement above which the integrator is overshooting
+MIN_CLUSTER_FRAC = 0.60  # the largest cluster must hold this share of all lipids, or `aspect`
+#   describes a FRAGMENT rather than the system. A search minimising aspect will otherwise win by
+#   shattering the aggregate: 23 lipids out of 120 scored 0.189, beating a planted bilayer's 0.231,
+#   while looking nothing like a membrane. Guarding the molecule and the integrator was not enough --
+#   the objective also has to be denied its cheapest degenerate route.
 
 
 def _periodic_axes(e):
@@ -116,7 +122,8 @@ def measure(e, prev_X=None):
     bmean, bmax, bfrac = bond_stats(e)
     out = {"bond_mean": bmean, "bond_max": bmax, "bond_frac": bfrac,
            "disp": 0.0, "ok": True, "why": "", "n_cluster": 0,
-           "lamellar": float("nan"), "aspect": float("nan"), "aspect2": float("nan")}
+           "lamellar": float("nan"), "aspect": float("nan"), "aspect2": float("nan"),
+           "cluster_frac": 0.0}
 
     if prev_X is not None:
         d = e.X[:, :e.pd] - prev_X[:, :e.pd]
@@ -131,9 +138,13 @@ def measure(e, prev_X=None):
 
     comp = largest_cluster(e)
     out["n_cluster"] = int(len(comp))
+    out["cluster_frac"] = float(len(comp) / max(len(mol), 1))
     if len(comp) < 6:
         out["ok"], out["why"] = False, "no aggregate"
         return out
+    if out["cluster_frac"] < MIN_CLUSTER_FRAC:
+        out["ok"], out["why"] = False, (f"fragmented ({len(comp)}/{len(mol)} lipids = "
+                                        f"{out['cluster_frac']:.0%} in the largest cluster)")
 
     idx = mol[comp]
     P = unwrap(e, idx.ravel(), ref=idx[0, 0])
@@ -154,7 +165,7 @@ def measure(e, prev_X=None):
 
 
 def header():
-    return ("   step  lamellar  aspect  aspect2  n_clu  bond  disp   status")
+    return ("   step  lamellar  aspect  aspect2  n_clu  frac  bond  disp   status")
 
 
 def line(t, m):
@@ -162,5 +173,5 @@ def line(t, m):
     lam = "  n/a " if np.isnan(m["lamellar"]) else f"{m['lamellar']:6.3f}"
     a1 = "  n/a" if np.isnan(m["aspect"]) else f"{m['aspect']:5.2f}"
     a2 = "  n/a" if np.isnan(m["aspect2"]) else f"{m['aspect2']:5.2f}"
-    return (f"  {t:6d}  {lam}  {a1}   {a2}    {m['n_cluster']:4d}  {m['bond_mean']:.2f}  "
-            f"{m['disp']:.3f}  {st}")
+    return (f"  {t:6d}  {lam}  {a1}   {a2}    {m['n_cluster']:4d}  {m.get('cluster_frac', 0):.2f}  "
+            f"{m['bond_mean']:.2f}  {m['disp']:.3f}  {st}")

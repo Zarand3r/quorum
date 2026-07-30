@@ -197,6 +197,14 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "autoloop",
+    srcs = ["autoloop.py"],
+    main = "autoloop.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "run_admissible",
     srcs = ["run_admissible.py"],
     main = "run_admissible.py",
@@ -205,58 +213,10 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
-    name = "bilayer3d",
-    srcs = ["bilayer3d.py"],
-    main = "bilayer3d.py",
+    name = "fig_state",
+    srcs = ["fig_state.py"],
+    main = "fig_state.py",
     data = [":configs"],
     imports = ["."],
     deps = [":vivarium"],
-)
-
-py_binary(
-    name = "fig_xsec",
-    srcs = ["fig_xsec.py"],
-    main = "fig_xsec.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "fig_bilayer",
-    srcs = ["fig_bilayer.py"],
-    main = "fig_bilayer.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "fig_micelle",
-    srcs = ["fig_micelle.py"],
-    main = "fig_micelle.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "make_figures",
-    srcs = ["make_figures.py"],
-    main = "make_figures.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-
-py_test(
-    name = "test_suite",
-    srcs = glob(["tests/**/*.py"]),
-    main = "tests/pytest_main.py",
-    data = [
-        ":configs",
-        "pytest.ini",
-    ],
-    imports = ["."],
-    deps = [
-        ":vivarium",
-        requirement("pytest"),
-    ],
 )
