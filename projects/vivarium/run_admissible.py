@@ -26,14 +26,21 @@ def main(argv=None):
     p.add_argument("--span", type=float, default=2.0)
     p.add_argument("--headsigma", type=float, default=1.0)
     p.add_argument("--kt", type=float, default=0.02)
+    p.add_argument("--water", action="store_true",
+                   help="EXPLICIT SOLVENT. A vesicle is a shell ENCLOSING WATER, and the force that "
+                        "bends a bicelle into a cup is tail-water contact at the rim. Solvent-free "
+                        "removes both, which is why a droplet was the only outcome.")
+    p.add_argument("--branched", action="store_true", help="two tails from one head")
+    p.add_argument("--headq", type=float, default=0.0, help="head charge; needed to hydrate a head")
+    p.add_argument("--polarity", type=float, default=0.0)
     p.add_argument("--slit", action="store_true")
     p.add_argument("--plant", action="store_true")
     a = p.parse_args(argv)
 
     kw = dict(n_lip=a.lipids, bound=a.bound, kt=a.kt, speed=a.speed, repel=a.repel,
-              k_bond=a.kbond, satt=a.satt, spol=0.90, n_tail=a.tails, head_q=0.0,
-              rad_head=0.0, no_water=True, aniso=0.0, polarity=0.0, attract=a.attract,
-              bond_span=a.span, head_sigma=a.headsigma,
+              k_bond=a.kbond, satt=a.satt, spol=0.90, n_tail=a.tails, head_q=a.headq,
+              rad_head=0.0, no_water=not a.water, aniso=0.0, polarity=a.polarity,
+              attract=a.attract, bond_span=a.span, head_sigma=a.headsigma, branched=a.branched,
               wall_axes=(2,) if a.slit else ())
     for tag, pl in (("planted", True), ("random ", False)):
         m = measure(build(seed=a.seed, plant=pl, **kw))

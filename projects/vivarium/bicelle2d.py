@@ -108,9 +108,18 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, plant=False, n_tai
         cen = rng.uniform(-B, B, (len(mol), 2))
         th = rng.uniform(0, 2 * np.pi, len(mol))
         ax = np.stack([np.cos(th), np.sin(th)], axis=1)
-        half = (nb - 1) / 2.0
-        for bead in range(nb):
-            e.X[mol[:, bead], :2] = cen + (half - bead) * BOND_REST * ax
+        if branched and n_tail >= 2 and n_tail % 2 == 0:
+            perp = np.stack([-ax[:, 1], ax[:, 0]], axis=1)
+            arm = n_tail // 2
+            e.X[mol[:, 0], :2] = cen
+            for a_ in range(2):
+                off = (2 * a_ - 1) * 0.45 * perp
+                for k in range(arm):
+                    e.X[mol[:, 1 + a_ * arm + k], :2] = cen + off - (k + 1) * BOND_REST * ax
+        else:
+            half = (nb - 1) / 2.0
+            for bead in range(nb):
+                e.X[mol[:, bead], :2] = cen + (half - bead) * BOND_REST * ax
         e.head_phi[:] = th
     e.vel[:] = 0.0
     e.X[:, e.pd:e.pd + e.tK] = 0.0

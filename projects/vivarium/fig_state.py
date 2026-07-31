@@ -63,10 +63,13 @@ def render(e, title, name):
 
 
 if __name__ == "__main__":
-    render(build(seed=0, plant=True, wall_axes=(), **KW), "REFERENCE: planted bilayer (search config)", "s2_planted")
-    e = build(seed=0, plant=False, wall_axes=(), **KW)
-    for t in range(1, 8001):
+    # WHAT WE HAVE: a spanning bilayer that HOLDS. Rendered after relaxation, not at t=0, because an
+    # initial condition proves nothing -- the claim is that the structure survives its own dynamics
+    # with molecules intact, no walls, and periodic boundaries.
+    e = build(seed=0, plant=True, wall_axes=(), **KW)
+    render(e, "PLANTED bilayer at t=0 (initial condition)", "have_t0")
+    for t in range(1, 16001):
         e.step()
         if t % 4000 == 0:
             print(f"    t={t}", flush=True)
-    render(e, "SEARCH BEST (guarded): self-assembled, periodic, no walls, t=8k", "s2_emergent")
+    render(e, "SAME bilayer after 16k steps - periodic, no walls, molecules intact", "have_relaxed")

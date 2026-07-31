@@ -70,17 +70,20 @@ def unwrap(e, idx, ref=None):
 
 
 def bond_stats(e):
-    """(mean, max, fraction stretched) over EVERY backbone bond, with minimum image.
+    """(mean, max, fraction stretched) over the engine's ACTUAL backbone bonds, with minimum image.
 
-    Measuring only the first bond hid the problem once already: bonds stretch unevenly along a chain,
-    and the head-tail bond is the least affected.
+    Read the bond list, never infer it from column order. The previous version walked
+    mol[:,k] -> mol[:,k+1], which is only the topology of a LINEAR chain: on a BRANCHED lipid that
+    steps from arm 1's tip to arm 2's base, two beads that are not bonded and sit far apart, and it
+    reported 25% of bonds broken at t=0 on a perfectly built molecule. Measuring only the first bond
+    hid a different problem earlier, since bonds stretch unevenly along a chain.
     """
-    mol = e._mol
-    if not mol.size:
+    if not e._mol.size or not getattr(e, "_bond_i", np.zeros(0)).size:
         return 0.0, 0.0, 0.0
-    ds = [np.linalg.norm(delta(e, mol[:, k], mol[:, k + 1]), axis=1)
-          for k in range(mol.shape[1] - 1)]
-    d = np.concatenate(ds)
+    backbone = np.isclose(e._bond_r0, BOND_REST)      # exclude the 1-3 straighteners
+    if not backbone.any():
+        return 0.0, 0.0, 0.0
+    d = np.linalg.norm(delta(e, e._bond_i[backbone], e._bond_j[backbone]), axis=1)
     return float(d.mean()), float(d.max()), float((d > BOND_MAX).mean())
 
 

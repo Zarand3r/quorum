@@ -42,7 +42,7 @@ NEAR = 1.6
 
 def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False, attract=0.30,
           polarity=0.80,
-          head_q=1.2, n_tail=2, rad_head=None, no_water=False, aniso=0.95, bond_span=2.0, bend_frac=1.0, head_sigma=1.0, wall_axes=()):
+          head_q=1.2, n_tail=2, rad_head=None, no_water=False, aniso=0.95, bond_span=2.0, bend_frac=1.0, head_sigma=1.0, wall_axes=(), branched=False):
     side = 2.0 * bound
     # water fills whatever the lipids do not, at roughly liquid packing
     nb = 1 + n_tail
@@ -54,7 +54,7 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False,
                         repel=repel, attract=attract, polarity=polarity, cohesion=0.0, skew=0.0,
                         morph=0.70, momentum=0.30, speed=speed, water_dipole=0.8, k_bond=k_bond,
                         head_q=head_q, n_tail=n_tail, rad_head=rad_head, aniso=aniso, bond_span=bond_span, bend_frac=bend_frac,
-                        head_sigma=head_sigma)
+                        head_sigma=head_sigma, branched=branched)
     e.conservative = True
     e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, satt, spol
     e.repel_contact, e.rigidity, e.selectivity, e.temperature = 1.0, 0.0, 0.30, kt
@@ -100,9 +100,24 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, spol, plant=False,
         cen = rng.uniform(-B, B, (len(mol), 3))
         ax = rng.standard_normal((len(mol), 3))
         ax /= np.linalg.norm(ax, axis=1, keepdims=True)
-        half = (mol.shape[1] - 1) / 2.0
-        for bead in range(mol.shape[1]):
-            e.X[mol[:, bead], :3] = cen + (half - bead) * ax
+        nb_ = mol.shape[1]
+        if branched and n_tail >= 2 and n_tail % 2 == 0:
+            # Both tails hang from the head and run roughly PARALLEL, as in a real phospholipid.
+            # Stringing a branched molecule along a line puts arm 2's first bead three units from the
+            # head it is bonded to, so every branched run started with torn bonds -- which is why
+            # branching appeared not to help.
+            perp = np.cross(ax, rng.standard_normal((len(mol), 3)))
+            perp /= np.maximum(np.linalg.norm(perp, axis=1, keepdims=True), 1e-9)
+            arm = n_tail // 2
+            e.X[mol[:, 0], :3] = cen
+            for a_ in range(2):
+                off = (2 * a_ - 1) * 0.45 * perp          # the two arms sit side by side
+                for k in range(arm):
+                    e.X[mol[:, 1 + a_ * arm + k], :3] = cen + off - (k + 1) * BOND_REST_Z * ax
+        else:
+            half = (nb_ - 1) / 2.0
+            for bead in range(nb_):
+                e.X[mol[:, bead], :3] = cen + (half - bead) * ax
         e.head_u = ax.copy()
         e.X[e._wi, :3] = rng.uniform(-B, B, (len(e._wi), 3))
     e.vel[:] = 0.0
@@ -221,6 +236,8 @@ def main(argv=None):
                         "infinite laterally, so it has no edges to curl at. A fully walled box is "
                         "worse than either, since lipids just coat all six faces.")
     p.add_argument("--walls", action="store_true", help="confine ALL axes (mostly a control)")
+    p.add_argument("--branched", action="store_true",
+                   help="two tails from one head, as in a real phospholipid")
     p.add_argument("--headsigma", type=float, default=1.0,
                    help="head steric radius as a fraction of the tail's. THE packing-parameter knob: "
                         "P = v/(a0*l) is a cylinder for 1/3..1/2 and a BILAYER for 1/2..1, and shrinking "
@@ -247,7 +264,8 @@ def main(argv=None):
     e = build(a.seed, a.lipids, a.bound, a.kt, a.speed, a.repel, a.kbond, a.satt, a.spol,
               a.plant, attract=a.attract, polarity=a.polarity, head_q=a.headq, n_tail=a.tails, rad_head=a.radhead, no_water=a.nowater,
               aniso=a.aniso, bond_span=a.span, bend_frac=a.bendfrac, head_sigma=a.headsigma,
-              wall_axes=(0, 1, 2) if a.walls else ((2,) if a.slit else ()))
+              wall_axes=(0, 1, 2) if a.walls else ((2,) if a.slit else ()),
+              branched=a.branched)
     side = 2 * a.bound
     need = 2 * side * side / APL
     print(f"N={e.cfg.N}  lipids={len(e._mol)}  water={len(e._wi)}  box={side:.1f}  "
