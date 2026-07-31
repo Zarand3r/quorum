@@ -25,6 +25,17 @@ statistic, which is how three micelle claims survived for a day.
     aspect    L1/L3 of the largest cluster's covariance, unwrapped. A slab or ribbon is thin in one
               axis (low); a droplet is round (~0.8+). A droplet cannot fake it, but a FRAGMENT can,
               so it is only admissible when the cluster holds most of the system (MIN_CLUSTER_FRAC).
+    edge      fraction of lipids whose TAIL beads still touch water: the exposed rim, i.e. L_edge in
+              G_edge = 2*pi*R*gamma. This is what separates the stages of the vesicle pathway, which
+              `aspect` and `hollow` cannot do on their own:
+
+                  stage 2  BICELLE   flat (aspect low) WITH a rim   -> edge > 0
+                  stage 3  CUP       curving, rim shrinking          -> edge falling
+                  stage 4  VESICLE   sealed, no boundary at all      -> edge ~ 0 AND hollow low
+
+              A flat patch and a sealed vesicle are both "ordered", so without this the pathway is
+              invisible: the whole thermodynamic story is edge energy being traded for bending energy,
+              and edge length is the quantity actually being traded.
     hollow    tail density at the CORE divided by tail density in the shell. A VESICLE is closed, so
               its centre is empty and this goes to ~0; a filled droplet keeps tails all the way in and
               it stays near 1. This is the one structure `aspect` is blind to: a vesicle is spherical,
@@ -132,7 +143,7 @@ def measure(e, prev_X=None):
     out = {"bond_mean": bmean, "bond_max": bmax, "bond_frac": bfrac,
            "disp": 0.0, "ok": True, "why": "", "n_cluster": 0,
            "lamellar": float("nan"), "aspect": float("nan"), "aspect2": float("nan"),
-           "cluster_frac": 0.0, "hollow": float("nan")}
+           "cluster_frac": 0.0, "hollow": float("nan"), "edge": float("nan")}
 
     if prev_X is not None:
         d = e.X[:, :e.pd] - prev_X[:, :e.pd]
@@ -163,6 +174,17 @@ def measure(e, prev_X=None):
     if e.pd == 3:
         out["aspect2"] = float(ev[1] / max(ev[-1], 1e-12))
 
+    # exposed rim: tail beads with water in contact range. Requires explicit solvent -- with none,
+    # gamma = 0 by construction and the closure the pathway depends on cannot happen.
+    wi = getattr(e, "_wi", np.zeros(0, dtype=int))
+    if wi.size:
+        # deepest tail bead only -- see bicelle2d.edge_frac for why "any wet tail bead" saturates
+        tips = idx[:, -1]
+        dw = e.X[tips, :e.pd][:, None, :] - e.X[wi, :e.pd][None, :, :]
+        free = _periodic_axes(e)
+        dw[..., free] -= e.L * np.round(dw[..., free] / e.L)
+        out["edge"] = float((np.einsum("ijc,ijc->ij", dw, dw) < 1.2 ** 2).any(axis=1).mean())
+
     nb = idx.shape[1]
     Pm = P.reshape(len(comp), nb, e.pd)
 
@@ -187,7 +209,7 @@ def measure(e, prev_X=None):
 
 
 def header():
-    return ("   step  lamellar  aspect  hollow  n_clu  frac  bond  disp   status")
+    return ("   step  lamellar  aspect  hollow  edge  n_clu  frac  bond  disp   status")
 
 
 def line(t, m):
@@ -195,5 +217,6 @@ def line(t, m):
     lam = "  n/a " if np.isnan(m["lamellar"]) else f"{m['lamellar']:6.3f}"
     a1 = "  n/a" if np.isnan(m["aspect"]) else f"{m['aspect']:5.2f}"
     a2 = "  n/a" if np.isnan(m.get("hollow", float("nan"))) else f"{m['hollow']:5.2f}"
-    return (f"  {t:6d}  {lam}  {a1}   {a2}    {m['n_cluster']:4d}  {m.get('cluster_frac', 0):.2f}  "
-            f"{m['bond_mean']:.2f}  {m['disp']:.3f}  {st}")
+    ed = " n/a " if np.isnan(m.get("edge", float("nan"))) else f"{m['edge']:5.2f}"
+    return (f"  {t:6d}  {lam}  {a1}   {a2}  {ed}  {m['n_cluster']:4d}  "
+            f"{m.get('cluster_frac', 0):.2f}  {m['bond_mean']:.2f}  {m['disp']:.3f}  {st}")

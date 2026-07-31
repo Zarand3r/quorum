@@ -36,17 +36,20 @@ from polar_pack import BOND_REST, PolarPackEngine
 
 
 def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, plant=False, n_tail=2,
+          n_water=0, polarity=0.0, head_q=0.0,
           head_sigma=1.0, attract=0.30, bond_span=6.0, aniso=0.0, walls=False, span_frac=1.0, sharp=0.0, branched=False):
     nb = 1 + n_tail
-    n_tok = nb * n_lip
+    n_tok = nb * n_lip + max(0, n_water)
     cfg = VivariumConfig(**{**DEFAULTS, "N": n_tok, "pos_dim": 2, "n_harmonics": 3,
                             "pos_bound": bound})
     # Solvent-free, no electrostatics: the recipe the 3-D work converged on. Cohesion is tail-tail
     # only (rad_head=0 zeroes the head's dispersion while leaving its excluded volume), and
     # polarity=0 takes the early-out that skips ~half the step cost.
-    e = PolarPackEngine(cfg, seed, water_frac=0.0, chain_frac=1.0, repel=repel, attract=attract,
-                        polarity=0.0, cohesion=0.0, skew=0.0, morph=0.70, momentum=0.30,
-                        speed=speed, k_bond=k_bond, head_q=0.0, n_tail=n_tail, rad_head=0.0,
+    wf = 0.0 if n_water <= 0 else n_water / n_tok
+    e = PolarPackEngine(cfg, seed, water_frac=wf, chain_frac=1.0 - wf, repel=repel,
+                        attract=attract, polarity=polarity, cohesion=0.0, skew=0.0,
+                        morph=0.70, momentum=0.30,
+                        speed=speed, k_bond=k_bond, head_q=head_q, n_tail=n_tail, rad_head=0.0,
                         aniso=aniso, bond_span=bond_span, head_sigma=head_sigma,
                         branched=branched)
     e.conservative = True
@@ -137,6 +140,29 @@ def _axes(e):
     return evec[:, 1], evec[:, 0], float(ev[0] / max(ev[1], 1e-9))
 
 
+def edge_frac(e):
+    """Fraction of lipids whose TAIL beads still touch water: L_edge, the quantity the pathway trades.
+
+    stage 2 BICELLE  flat with a rim      -> edge > 0
+    stage 3 CUP      rim shrinking         -> edge falling
+    stage 4 VESICLE  sealed                -> edge ~ 0
+    Requires explicit solvent: with none, gamma = 0 and closure cannot happen at any size.
+    """
+    wi = e._wi
+    mol = e._mol
+    if not wi.size or not mol.size:
+        return float("nan")
+    # The DEEPEST tail bead only. A lipid with a damp tip is not a rim lipid: in a bilayer the tips
+    # meet at the midplane and are the driest point, so wetting THERE is what marks a genuine exposed
+    # edge. Counting any wet tail bead reported edge=1.00 even at perfect lamellar order, because a
+    # 4-bead branched lipid gives a membrane only ~4 thick and a 1.4 contact range penetrates from
+    # both faces.
+    tips = mol[:, -1]
+    d = e.X[tips, :2][:, None, :] - e.X[wi, :2][None, :, :]
+    d -= e.L * np.round(d / e.L)
+    return float((np.einsum("ijc,ijc->ij", d, d) < 1.2 ** 2).any(axis=1).mean())
+
+
 def metrics(e):
     mol = e._mol
     long_ax, thin_ax, aspect = _axes(e)
@@ -166,6 +192,10 @@ def main(argv=None):
     p.add_argument("--headsigma", type=float, default=1.0)
     p.add_argument("--span", type=float, default=6.0)
     p.add_argument("--attract", type=float, default=0.30)
+    p.add_argument("--water", type=int, default=0,
+                   help="explicit solvent tokens. gamma (line tension) comes from tail-water contact, and gamma=0 makes R_crit infinite, so closure is impossible without it.")
+    p.add_argument("--headq", type=float, default=0.0)
+    p.add_argument("--polarity", type=float, default=0.0)
     p.add_argument("--branched", action="store_true",
                    help="TWO tails branching from one head, as in a real phospholipid. A linear "
                         "head-tail-tail chain is a single-tailed SURFACTANT, and single-tailed "
@@ -200,7 +230,8 @@ def main(argv=None):
     kw = dict(n_lip=a.lipids, bound=a.bound, kt=a.kt, speed=a.speed, repel=a.repel,
               k_bond=a.kbond, satt=a.satt, n_tail=a.tails, head_sigma=a.headsigma,
               attract=a.attract, bond_span=a.span, walls=a.walls, span_frac=a.spanfrac,
-              sharp=a.sharp, branched=a.branched)
+              sharp=a.sharp, branched=a.branched, n_water=a.water, polarity=a.polarity,
+              head_q=a.headq)
     pl = build(a.seed, plant="ribbon", **kw)
     rn = build(a.seed + 99, plant=False, **kw)
     lp, ap, tp = metrics(pl)
@@ -212,12 +243,13 @@ def main(argv=None):
           f"{'PLANTED' if a.plant else 'DISORDERED'}  margin={e.min_image_margin():.4f}")
     if a.anneal > 0.0:
         print(f"  annealing: kT {a.anneal} -> {a.kt} linearly over {a.steps} steps")
-    print("   step  lamellar  aspect  thick   verdict")
+    print("   step  lamellar  aspect  thick   edge   verdict   [edge->0 = sealed vesicle]")
     for t in range(0, a.steps + 1, a.every):
         lam, asp, th = metrics(e)
         v = "RIBBON (2-D bicelle)" if (lam > 0.85 and asp < 0.35 and th > 1.5) else (
             "partial" if lam > 0.7 else "no lamellar order")
-        print(f"  {t:6d}   {lam:.3f}   {asp:.3f}  {th:5.2f}   {v}", flush=True)
+        ef = edge_frac(e)
+        print(f"  {t:6d}   {lam:.3f}   {asp:.3f}  {th:5.2f}  {ef:5.2f}   {v}", flush=True)
         if t < a.steps:
             for k in range(a.every):
                 if a.anneal > 0.0:                      # linear cool from --anneal down to --kt

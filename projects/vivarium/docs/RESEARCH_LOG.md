@@ -41,6 +41,44 @@ executed, in what order, and which conclusions are currently live.
 
 ---
 
+## 2026-07-31a — explicit water restored; cohesion sets a real flat-vs-dry trade-off
+
+**Why solvent-free was fatal, not merely expensive.** The literature pathway is
+dispersion -> bicelle -> cup -> sealed vesicle, and every step is driven by hydrophobic edges
+minimising contact with WATER. A vesicle is by definition a shell ENCLOSING water. Solvent-free gives
+line tension gamma = 0, so R_crit = (4*kappa_c + 2*kappa_bar)/gamma is INFINITE and closure cannot
+happen at any size; there is also nothing to enclose. The droplets were the correct answer to the
+model being run, and the earlier "a bicelle needs two species" conclusion was wrong -- bicelles form
+spontaneously as kinetic intermediates once water is present.
+
+**Two bugs this exposed, both of which invalidated the earlier branched test.**
+- `_build_chains` built branched TOPOLOGY while the drivers still strung beads along a LINE, so arm
+  2's first bead started 3 units from the head it is bonded to. Every branched run in 2-D and 3-D
+  began with torn bonds.
+- `harness.bond_stats` walked mol[:,k] -> mol[:,k+1], which on a branched lipid steps from arm 1's tip
+  to arm 2's base -- beads that are not bonded. It reported 25% breakage on a perfect molecule. It now
+  reads the engine's bond list.
+
+**`edge`: the quantity the pathway actually trades.** Fraction of lipids whose DEEPEST tail bead
+touches water, i.e. L_edge in G_edge = 2*pi*R*gamma. Counting any wet tail bead saturated at 1.00 even
+at perfect lamellar order, because a 4-bead branched lipid gives a membrane ~4 thick and a 1.4 contact
+range reaches the midline from both faces. Stage 2 has edge > 0, stage 4 has edge -> 0.
+
+**Result: cohesion sets a genuine trade-off** (2-D, 40 lipids, explicit water, branched):
+
+    attract    lamellar   aspect   edge    reading
+      0.3        0.600     0.765   1.00    disordered
+      5.0        0.975     0.332   1.00    FLAT but fully wet: no hydrophobic core
+     14.0        0.875     0.900   0.25    DRY CORE but round: a droplet
+     25.0        0.650     0.880   0.23    dry core, rounder still
+
+Flatness and a dry core are both reachable, but so far never together. This is the competition the
+thermodynamics predicts -- line tension against bending -- appearing directly in our own numbers, and
+it is the first time the pathway has been visible rather than inferred.
+
+**Corrected en route:** at N=40 the ribbon interior is already 95% of the molecules, so the wet core is
+a DENSITY problem, not a length problem. Scaling the lipid count is therefore the wrong lever.
+
 ## 2026-07-30b — nature's architecture implemented; the packing parameter still does not select a phase
 
 **First principles, prompted by the right question: what have we actually been searching for?**
