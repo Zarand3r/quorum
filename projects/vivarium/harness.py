@@ -25,6 +25,12 @@ statistic, which is how three micelle claims survived for a day.
     aspect    L1/L3 of the largest cluster's covariance, unwrapped. A slab or ribbon is thin in one
               axis (low); a droplet is round (~0.8+). A droplet cannot fake it, but a FRAGMENT can,
               so it is only admissible when the cluster holds most of the system (MIN_CLUSTER_FRAC).
+    hollow    tail density at the CORE divided by tail density in the shell. A VESICLE is closed, so
+              its centre is empty and this goes to ~0; a filled droplet keeps tails all the way in and
+              it stays near 1. This is the one structure `aspect` is blind to: a vesicle is spherical,
+              so aspect ~1 and lamellar high -- exactly a droplet's signature. Searching on aspect
+              alone would have DISCARDED a vesicle as a droplet, and a vesicle is what a finite amount
+              of lipid actually forms, since unlike a bicelle it has no rim to pay for.
 """
 
 from __future__ import annotations
@@ -123,7 +129,7 @@ def measure(e, prev_X=None):
     out = {"bond_mean": bmean, "bond_max": bmax, "bond_frac": bfrac,
            "disp": 0.0, "ok": True, "why": "", "n_cluster": 0,
            "lamellar": float("nan"), "aspect": float("nan"), "aspect2": float("nan"),
-           "cluster_frac": 0.0}
+           "cluster_frac": 0.0, "hollow": float("nan")}
 
     if prev_X is not None:
         d = e.X[:, :e.pd] - prev_X[:, :e.pd]
@@ -156,6 +162,19 @@ def measure(e, prev_X=None):
 
     nb = idx.shape[1]
     Pm = P.reshape(len(comp), nb, e.pd)
+
+    # hollowness: tail density in the inner third of the aggregate against the outer shell
+    cen = P.mean(0)
+    rt = np.linalg.norm(Pm[:, 1:].reshape(-1, e.pd) - cen, axis=1)
+    R = np.percentile(rt, 95)
+    if R > 1e-9:
+        core = float((rt < 0.35 * R).sum())
+        shell = float(((rt >= 0.35 * R) & (rt < R)).sum())
+        v_core = (0.35 * R) ** e.pd
+        v_shell = R ** e.pd - v_core
+        dens_core = core / max(v_core, 1e-9)
+        dens_shell = shell / max(v_shell, 1e-9)
+        out["hollow"] = float(dens_core / max(dens_shell, 1e-9))
     thin = np.linalg.eigh(c.T @ c / len(c))[1][:, 0]
     mid = P.mean(0)
     h = np.abs((Pm[:, 0] - mid) @ thin)
@@ -165,13 +184,13 @@ def measure(e, prev_X=None):
 
 
 def header():
-    return ("   step  lamellar  aspect  aspect2  n_clu  frac  bond  disp   status")
+    return ("   step  lamellar  aspect  hollow  n_clu  frac  bond  disp   status")
 
 
 def line(t, m):
     st = "ok" if m["ok"] else f"DISQUALIFIED: {m['why']}"
     lam = "  n/a " if np.isnan(m["lamellar"]) else f"{m['lamellar']:6.3f}"
     a1 = "  n/a" if np.isnan(m["aspect"]) else f"{m['aspect']:5.2f}"
-    a2 = "  n/a" if np.isnan(m["aspect2"]) else f"{m['aspect2']:5.2f}"
+    a2 = "  n/a" if np.isnan(m.get("hollow", float("nan"))) else f"{m['hollow']:5.2f}"
     return (f"  {t:6d}  {lam}  {a1}   {a2}    {m['n_cluster']:4d}  {m.get('cluster_frac', 0):.2f}  "
             f"{m['bond_mean']:.2f}  {m['disp']:.3f}  {st}")

@@ -18,6 +18,12 @@ executed, in what order, and which conclusions are currently live.
 
 ## Live methodological rules
 
+-1. TARGET THE RIGHT STRUCTURE. A LINEAR head-tail-tail chain is a single-tailed SURFACTANT, and
+   single-tailed surfactants form MICELLES in nature. Months of "why won't it form a bilayer" was
+   asking the wrong molecule to do something real chemistry says it cannot. Real phospholipids are
+   DOUBLE-TAILED (`branched=True`). Separately, a flat spanning bilayer is an MD idealisation; what a
+   finite amount of lipid forms in water is a VESICLE, which unlike a bicelle has no rim to pay for.
+
 0. CHECK THE MOLECULE FIRST. Every order parameter is computed from head/tail POSITIONS, so if the
    lipid itself is deformed the metric describes nothing. `bond_span=6.0` stretched bonds to 2.4x
    their rest length and was used in EVERY 4-bead-tail run, so those geometries were wrong. Print
@@ -34,6 +40,51 @@ executed, in what order, and which conclusions are currently live.
    head dispersion were both wrong knobs; head electrostatics was the lever).
 
 ---
+
+## 2026-07-30b — nature's architecture implemented; the packing parameter still does not select a phase
+
+**First principles, prompted by the right question: what have we actually been searching for?**
+`aspect` rewards a flat spanning sheet, which is the standard MD idealisation of a lamellar phase. But
+a finite amount of lipid in water forms a VESICLE, and a vesicle has NO RIM -- so it avoids the exact
+edge-energy penalty that killed the bicelle in both vivarium and the control. The metric was also
+blind to it: a vesicle is spherical, so `aspect` ~ 1 and `lamellar` high, which is a droplet's
+signature. A vesicle would have been DISCARDED by the 60-config search as a droplet.
+
+**And the deeper miss.** A linear head-tail-tail-tail chain is a SINGLE-TAILED surfactant. Single-
+tailed surfactants form micelles; that is textbook. The droplets this project kept producing were the
+CORRECT physics for the molecule being simulated. Real phospholipids have TWO tails branching from one
+head, which doubles v at fixed a0 and moves P = v/(a0*l) from the micelle regime into the bilayer one.
+
+**Implemented** `branched=True`: two arms from the head, verified by bond topology (head degree 2 vs 1
+for the linear chain). Base case still byte-identical.
+
+**Result: it does not help.**
+
+    2-D, 100 lipids, 4 tail beads, from a compact clump   (random 0.520/0.720, planted ribbon 1.000/0.093)
+    linear                          lamellar 0.690  aspect 0.785
+    branched, head 1.0              lamellar 0.620  aspect 0.903
+    branched, head 1.4 / 1.8 / 2.2  lamellar 0.62-0.69  aspect 0.765-0.802
+    branched, head 0.8 / 0.5 / 0.3  lamellar 0.58-0.62  aspect 0.753-0.900
+
+**Measured a0 instead of assuming it**, which corrected a wrong prediction of mine:
+
+    head_sigma   predicted spacing   MEASURED   ratio
+    1.0          1.00                1.999      1.00
+    1.4          1.40                2.336      1.17
+    1.8          1.80                2.604      1.30
+    2.2          2.20                2.883      1.44
+
+The head claims area SUB-LINEARLY (asking 2.2x delivers 1.44x), and at head_sigma=1.0 the spacing is
+already 2.0, so effective a0 is ~4x nominal. Recomputing P with measured areas, every LARGER head was
+pushing deeper into the micelle regime -- the opposite of what I had swept for. Sweeping smaller heads
+across the corrected window did not help either.
+
+**Conclusion.** The packing parameter, which is the mechanism nature uses to select lamellar over
+micellar, does not operate in this model: P was varied across 0.24 to 0.89 by two independent routes
+and the phase never changed. The reference model agrees that finite bilayers are hard -- Cooke-Deserno
+given a finite aggregate in a large box also made a ROD, and only produces a bilayer when the periodic
+box is sized to force one. Spontaneous vesicle formation needs thousands of lipids and long times,
+which is why the MD literature almost always STARTS from a planted bilayer.
 
 ## 2026-07-30a — a validated harness, and the first admissible structural result
 

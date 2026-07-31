@@ -94,9 +94,10 @@ class PolarPackEngine(PackEngine):
                  water_dipole=0.8, pol_torque=0.35, pol_morph=0.15, sink_polarity=0.0,
                  oil_frac=0.0, lipid_frac=0.0, lip_ell=0.55, k_tail=1.5, k_hydro=1.0,
                  lip_range=0.7, lip_torque=0.15, amphi_frac=0.0, amphi_charge=2.0, aniso=0.95, chain_frac=0.0, k_bond=1.5, head_q=1.2, n_tail=2, rad_head=None,
-                 bond_span=BOND_SPAN, bend_frac=1.0, head_sigma=1.0, **kw):
+                 bond_span=BOND_SPAN, bend_frac=1.0, head_sigma=1.0, branched=False, **kw):
         super().__init__(cfg, seed, **kw)
         self.k_bond = k_bond         # strength of the bounded bond kernel
+        self.branched = branched     # two tails from one head (a real lipid) vs a linear chain
         self.head_sigma = head_sigma  # head steric radius as a FRACTION of the tail's; < 1 raises P
         self.bend_frac = bend_frac   # 1-3 stiffness as a FRACTION of k_bond; < 1 so the backbone wins
         self.bond_span = bond_span   # 1-3 rest length; > 2*BOND_REST => permanent straightening tension
@@ -243,12 +244,36 @@ class PolarPackEngine(PackEngine):
         # backbone wins the force balance and holds the bond near its rest length while the
         # straightener still keeps the chain extended.
         bi, bj, br, bk = [], [], [], []
-        for k in range(nb - 1):
-            bi.append(tri[:, k]); bj.append(tri[:, k + 1]); br.append(np.full(n_mol, BOND_REST))
-            bk.append(np.ones(n_mol))
-        for k in range(nb - 2):
-            bi.append(tri[:, k]); bj.append(tri[:, k + 2]); br.append(np.full(n_mol, self.bond_span))
-            bk.append(np.full(n_mol, self.bend_frac))
+        if self.branched and n_tail >= 2 and n_tail % 2 == 0:
+            # NATURE'S ARCHITECTURE: two tails branching from ONE head, as in a phosphatidylcholine.
+            # A LINEAR head-tail-tail-tail chain is a single-tailed SURFACTANT, and single-tailed
+            # surfactants form micelles -- which is exactly what this project kept producing. Two
+            # tails double the tail volume v at fixed head area a0, moving the packing parameter
+            # P = v/(a0*l) out of the micelle regime (<1/3) and into the bilayer regime (1/2..1).
+            # This is an ARCHITECTURE change, not a parameter, which is why no amount of sweeping
+            # found it.
+            half = n_tail // 2
+            for arm in range(2):
+                prev = tri[:, 0]                      # both arms start at the head
+                for k in range(half):
+                    nxt = tri[:, 1 + arm * half + k]
+                    bi.append(prev); bj.append(nxt); br.append(np.full(n_mol, BOND_REST))
+                    bk.append(np.ones(n_mol))
+                    prev = nxt
+                # straighten each arm: head->second bead, then along the arm
+                for k in range(half - 1):
+                    a = tri[:, 0] if k == 0 else tri[:, 1 + arm * half + k - 1]
+                    b = tri[:, 1 + arm * half + k + 1]
+                    bi.append(a); bj.append(b); br.append(np.full(n_mol, self.bond_span))
+                    bk.append(np.full(n_mol, self.bend_frac))
+        else:
+            for k in range(nb - 1):
+                bi.append(tri[:, k]); bj.append(tri[:, k + 1]); br.append(np.full(n_mol, BOND_REST))
+                bk.append(np.ones(n_mol))
+            for k in range(nb - 2):
+                bi.append(tri[:, k]); bj.append(tri[:, k + 2])
+                br.append(np.full(n_mol, self.bond_span))
+                bk.append(np.full(n_mol, self.bend_frac))
         self._bond_i = np.concatenate(bi)
         self._bond_j = np.concatenate(bj)
         self._bond_r0 = np.concatenate(br)

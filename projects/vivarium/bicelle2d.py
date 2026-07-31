@@ -36,7 +36,7 @@ from polar_pack import BOND_REST, PolarPackEngine
 
 
 def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, plant=False, n_tail=2,
-          head_sigma=1.0, attract=0.30, bond_span=6.0, aniso=0.0, walls=False, span_frac=1.0, sharp=0.0):
+          head_sigma=1.0, attract=0.30, bond_span=6.0, aniso=0.0, walls=False, span_frac=1.0, sharp=0.0, branched=False):
     nb = 1 + n_tail
     n_tok = nb * n_lip
     cfg = VivariumConfig(**{**DEFAULTS, "N": n_tok, "pos_dim": 2, "n_harmonics": 3,
@@ -47,7 +47,8 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, plant=False, n_tai
     e = PolarPackEngine(cfg, seed, water_frac=0.0, chain_frac=1.0, repel=repel, attract=attract,
                         polarity=0.0, cohesion=0.0, skew=0.0, morph=0.70, momentum=0.30,
                         speed=speed, k_bond=k_bond, head_q=0.0, n_tail=n_tail, rad_head=0.0,
-                        aniso=aniso, bond_span=bond_span, head_sigma=head_sigma)
+                        aniso=aniso, bond_span=bond_span, head_sigma=head_sigma,
+                        branched=branched)
     e.conservative = True
     e.repel_sharp = sharp   # >0 = saturating tanh core: bounded, but HARD near contact
     # sink_polarity must stay non-zero even though polarity=0 disables the head, because
@@ -156,6 +157,12 @@ def main(argv=None):
     p.add_argument("--headsigma", type=float, default=1.0)
     p.add_argument("--span", type=float, default=6.0)
     p.add_argument("--attract", type=float, default=0.30)
+    p.add_argument("--branched", action="store_true",
+                   help="TWO tails branching from one head, as in a real phospholipid. A linear "
+                        "head-tail-tail chain is a single-tailed SURFACTANT, and single-tailed "
+                        "surfactants form MICELLES -- which is what this project kept producing. Two "
+                        "tails double v at fixed a0, moving P = v/(a0*l) from the micelle regime into "
+                        "the bilayer regime. An architecture change, not a parameter.")
     p.add_argument("--anneal", type=float, default=0.0,
                    help="starting kT for a cooling schedule, linearly ramped down to --kt over the run. "
                         "Every run so far has been at FIXED kT, and the droplet is a kinetic trap: the "
@@ -184,7 +191,7 @@ def main(argv=None):
     kw = dict(n_lip=a.lipids, bound=a.bound, kt=a.kt, speed=a.speed, repel=a.repel,
               k_bond=a.kbond, satt=a.satt, n_tail=a.tails, head_sigma=a.headsigma,
               attract=a.attract, bond_span=a.span, walls=a.walls, span_frac=a.spanfrac,
-              sharp=a.sharp)
+              sharp=a.sharp, branched=a.branched)
     pl = build(a.seed, plant="ribbon", **kw)
     rn = build(a.seed + 99, plant=False, **kw)
     lp, ap, tp = metrics(pl)

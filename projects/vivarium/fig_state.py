@@ -17,9 +17,9 @@ W, H = 720, 460
 # reference at 0.231, with lamellar 0.913 and bonds intact. Notably it is high cohesion (attract 1.2)
 # at LOW excluded volume (repel 3.0) with a SHORT attraction range (satt 0.9) -- a corner no
 # one-dimensional sweep visited, which is the whole reason for searching combinations.
-KW = dict(n_lip=120, bound=5.0, kt=0.05, speed=0.002, repel=3.0, k_bond=80.0, satt=0.90,
+KW = dict(n_lip=231, bound=5.0, kt=0.05, speed=0.002, repel=12.0, k_bond=80.0, satt=0.30,
           spol=0.90, n_tail=3, head_q=0.0, rad_head=0.0, no_water=True, aniso=0.0,
-          polarity=0.0, attract=1.20, bond_span=2.0)
+          polarity=0.0, attract=0.30, bond_span=2.0)
 
 
 def render(e, title, name):
@@ -63,10 +63,10 @@ def render(e, title, name):
 
 
 if __name__ == "__main__":
-    render(build(seed=0, plant=True, wall_axes=(), **KW), "REFERENCE: planted bilayer (search config)", "win_planted")
+    render(build(seed=0, plant=True, wall_axes=(), **KW), "REFERENCE: planted bilayer (search config)", "s2_planted")
     e = build(seed=0, plant=False, wall_axes=(), **KW)
     for t in range(1, 8001):
         e.step()
         if t % 4000 == 0:
             print(f"    t={t}", flush=True)
-    render(e, "SEARCH BEST: self-assembled, periodic, no walls, t=8k", "win_emergent")
+    render(e, "SEARCH BEST (guarded): self-assembled, periodic, no walls, t=8k", "s2_emergent")
