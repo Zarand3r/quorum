@@ -71,14 +71,25 @@ import numpy as np
 BOND_REST = 1.0
 BOND_MAX = 1.25          # beyond this the molecule is deformed and nothing structural is admissible
 DISP_MAX = 0.05          # per-step displacement above which the integrator is overshooting
-MIN_PACKING = 0.70       # median nearest NON-BONDED neighbour distance, as a fraction of contact.
-#   Matter has to occupy space, and nothing else in this file checks that it does. Every other guard
-#   here is blind to interpenetration: `bond_stats` reads INTRAMOLECULAR distances, so 63 molecules
-#   stacked on the same point each report a perfect bond of 1.0; `lamellar` and `align` are computed
-#   from directions, which stay well defined however dense the pile gets. Measured on a collapsed run
-#   that this file called ok=True with lamellar 1.00 and cluster 1.00: 189 beads inside a 2.2-unit
-#   blob, an area 30x smaller than the beads themselves need. A structure has to be admissible as
-#   MATTER before its shape is worth reading.
+MIN_PACKING = 0.35       # median nearest non-bonded LIPID neighbour, as a fraction of contact.
+#   Matter has to occupy space, and nothing else here checks that it does: `bond_stats` reads
+#   INTRAMOLECULAR distances, so molecules stacked on one point each report a perfect bond of 1.0,
+#   while `lamellar` and `align` come from DIRECTIONS, which stay well defined at any density, and a
+#   collapsed pile is maximally connected so `cluster_frac` reads its BEST value.
+#
+#   The threshold is DERIVED from planted references measured in the solvated regime, not chosen:
+#
+#       spanning bilayer, planted at contact   1.000
+#       spanning bilayer, relaxed              0.713
+#       MICELLE, planted                       0.683
+#       MICELLE, relaxed                       0.436   <- tightest LEGITIMATE structure
+#       genuine collapse                       0.150
+#
+#   A micelle cannot reach a bilayer's packing by geometry: its lipids converge radially, so the
+#   inner tail beads sit closer than contact by construction. That is the packing parameter showing
+#   up as a floor on the metric. An earlier gate of 0.70, calibrated on the bilayer alone, therefore
+#   rejected real micelles -- and did reject one, which is how a correct result was called a
+#   collapse. 0.35 sits below the tightest legitimate structure and well above true collapse.
 MIN_CLUSTER_FRAC = 0.60  # the largest cluster must hold this share of all lipids, or `aspect`
 #   describes a FRAGMENT rather than the system. A search minimising aspect will otherwise win by
 #   shattering the aggregate: 23 lipids out of 120 scored 0.189, beating a planted bilayer's 0.231,
@@ -175,19 +186,22 @@ def packing(e):
     contact for any sigma above 0.5; including them would report healthy overlap on every chain.
     Uses the same DERIVED contact distance as `largest_cluster` rather than a chosen constant.
 
-    The median runs over LIPID beads only, though the neighbour may be of any species. Solvent is
-    planted at random positions and legitimately starts interpenetrating -- a known-good 3-D planted
-    bilayer measures 1.000 across its lipids (exactly contact) while its water sits at 0.382, so a
-    median over all beads reports 0.622 and condemns a perfect membrane. What the guard is asked to
-    certify is the structure, and a lipid buried in overlapping solvent still fails, because its own
-    nearest neighbour is then too close whatever species that neighbour is.
+    LIPID-TO-LIPID only: both the bead measured and its neighbour must be lipid. Counting solvent as
+    a neighbour measures SOLVATION, not structure, and in a solvated box the nearest bead to a lipid
+    is nearly always a water -- so the metric reported how close the water was and ignored the
+    membrane entirely. Measured on a 2-D bilayer planted at exactly contact spacing, that read 0.637
+    for a perfect structure and made MIN_PACKING reject the very thing it was calibrated to accept.
+    The 3-D reference scored a clean 1.000 only because it happens to carry no solvent.
 
-    ~1.0 for a properly packed structure, and it falls toward 0 as an aggregate collapses through
-    itself. A median so a handful of genuinely close pairs cannot condemn a good structure, and so a
-    collapse (which moves every bead at once) cannot hide in a tail.
+    ~1.0 for a properly packed structure, falling toward 0 as an aggregate collapses through itself.
+    A median, so a handful of genuinely close pairs cannot condemn a good structure and a collapse
+    (which moves every bead at once) cannot hide in a tail.
     """
     sig = getattr(e, "sigma", None)
     contact = float(2.0 * np.median(sig)) if sig is not None else 1.0
+    lip = np.asarray(e.species) != 0
+    if not lip.any():
+        return float("nan")
     d = e.X[:, : e.pd][:, None, :] - e.X[:, : e.pd][None, :, :]
     free = _periodic_axes(e)
     d[:, :, free] -= e.L * np.round(d[:, :, free] / e.L)
@@ -197,9 +211,29 @@ def packing(e):
     if bi is not None and len(bi):
         dist[bi, bj] = np.inf
         dist[bj, bi] = np.inf
-    nn = dist.min(axis=1)
-    lip = np.asarray(e.species) != 0
-    return float(np.median(nn[lip] if lip.any() else nn) / contact)
+    return float(np.median(dist[np.ix_(lip, lip)].min(axis=1)) / contact)
+
+
+def solvation(e):
+    """Median lipid-to-nearest-SOLVENT distance over contact. The other half of `packing`.
+
+    Split out rather than folded in, because the two answer different questions and a single number
+    conflated them: `packing` asks whether the membrane interpenetrates ITSELF, this asks whether
+    solvent is jammed into it. Freshly planted water is random and legitimately overlaps, so this is
+    diagnostic rather than a gate -- it should RISE over the first few hundred steps as the solvent
+    relaxes out of the structure.
+    """
+    sig = getattr(e, "sigma", None)
+    contact = float(2.0 * np.median(sig)) if sig is not None else 1.0
+    sp = np.asarray(e.species)
+    lip, wat = sp != 0, sp == 0
+    if not lip.any() or not wat.any():
+        return float("nan")
+    d = e.X[:, : e.pd][:, None, :] - e.X[:, : e.pd][None, :, :]
+    free = _periodic_axes(e)
+    d[:, :, free] -= e.L * np.round(d[:, :, free] / e.L)
+    dist = np.linalg.norm(d, axis=2)
+    return float(np.median(dist[np.ix_(lip, wat)].min(axis=1)) / contact)
 
 
 def largest_cluster(e, cutoff=None):
@@ -268,7 +302,7 @@ def measure(e, prev_X=None):
            "lamellar": float("nan"), "aspect": float("nan"), "aspect2": float("nan"),
            "cluster_frac": 0.0, "hollow": float("nan"), "edge": float("nan"),
            "align": float("nan"), "thick_mol": float("nan"), "enclosed": float("nan"),
-           "packing": float("nan")}
+           "packing": float("nan"), "solvation": float("nan")}
 
     if prev_X is not None:
         d = e.X[:, :e.pd] - prev_X[:, :e.pd]
@@ -277,6 +311,7 @@ def measure(e, prev_X=None):
         out["disp"] = float(np.linalg.norm(d, axis=1).max())
 
     out["packing"] = packing(e)
+    out["solvation"] = solvation(e)
     if out["packing"] < MIN_PACKING:
         # FIRST, ahead of every shape metric. A collapsed pile still has well-defined bond lengths and
         # well-defined directions, so it scores as a flawless membrane on everything else here.

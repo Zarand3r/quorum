@@ -99,6 +99,50 @@ cluster detector split bilayers and merged micelles, and the test target had bee
 
 ---
 
+## 2026-08-01m — THE MICELLES WERE REAL. The gate was calibrated on the wrong structure
+
+Built the solvated references that never existed, and they settle the question against me.
+
+    structure                          packing   solv   align    bond
+    spanning bilayer, planted at contact 1.000   0.64   1.000   1.000
+    spanning bilayer, relaxed            0.713   0.92   0.678   1.009
+    MICELLE, planted                     0.683   0.56   0.000   1.000
+    MICELLE, relaxed                     0.436   1.24   0.175   1.013
+    THE FOUR-MICELLE FIGURE              0.441   1.42   0.078   1.015
+    genuine collapse                     0.150     --   0.630      --
+
+**The figure is indistinguishable from a purpose-built planted micelle** on packing (0.441 vs 0.436),
+bond (1.015 vs 1.013) and align (both near zero, i.e. radial rather than lamellar), and its solvation
+is BETTER (1.42 vs 1.24: solvent further out of the core). Those aggregates are micelles. Both of my
+verdicts on them -- first "collapsed", then "undetermined" -- were wrong.
+
+**Why the instrument was wrong, and it is a general lesson.** A micelle CANNOT reach a bilayer's
+packing by geometry: its lipids converge radially, so the inner tail beads sit closer than contact by
+construction. That is the packing parameter appearing as a floor on the metric. MIN_PACKING = 0.70
+was fitted to the bilayer alone, so it rejected the other structure by definition -- a threshold
+calibrated on ONE shape silently condemns every shape that packs differently. Gate is now 0.35,
+derived to sit below the tightest legitimate structure (micelle 0.436) and well above true collapse
+(0.150).
+
+Two tooling fixes underneath this:
+
+  `packing` is now LIPID-TO-LIPID. Counting solvent as a neighbour measured solvation, not
+  structure, and in a solvated box the nearest bead to a lipid is nearly always water -- a bilayer
+  planted at exact contact read 0.637 instead of 1.000.
+
+  `solvation` split out as its own diagnostic, since "does the membrane interpenetrate itself" and
+  "is solvent jammed into it" are different questions that one number conflated. It RISES as
+  planted solvent relaxes out (0.64 -> 0.92 for the bilayer), which is also the check that a
+  reference has been relaxed before it is read.
+
+New module `references.py` holds the solvated builders and enforces the two rules this project keeps
+relearning: the LIPID COUNT FOLLOWS THE BOX (a spanning bilayer needs box_width/contact per leaflet;
+63 across a width of 22 is 0.71 spacing, over-crowded by construction), and a reference must be
+RELAXED before it is read.
+
+104 tests pass. **Stage 1 -- hydrophobic collapse into micelles -- is achieved and now verified
+against a reference.**
+
 ## 2026-08-01l — defect #17: `packing` is confounded by explicit water, so the collapse verdicts are not reliable
 
 Prompted by re-examining the four-micelle figure (fig2d, attract=1.0, t=6000), which I had dismissed

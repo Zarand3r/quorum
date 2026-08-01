@@ -144,3 +144,30 @@ def test_packing_passes_a_known_good_bilayer_and_fails_a_collapse():
     m = measure(collapsed)
     assert packing(collapsed) < MIN_PACKING
     assert not m["ok"] and "collapsed" in m["why"], m
+
+
+def test_packing_admits_a_micelle_and_still_rejects_a_collapse():
+    """A micelle packs TIGHTER than a bilayer by geometry, and the gate must survive that.
+
+    Calibrated against both structures because a threshold fitted to one shape silently rejects the
+    other: at 0.70, tuned on a bilayer, a geometrically perfect planted micelle was called a
+    collapse. Micelle lipids converge radially, so inner tail beads sit closer than contact by
+    construction -- the packing parameter appearing as a floor on the metric.
+    """
+    from bicelle2d import build
+    from harness import MIN_PACKING, packing
+    from references import micelle_2d, relax, spanning_bilayer_2d
+
+    kw = dict(kt=0.02, speed=0.001, repel=12.0, k_bond=30.0, satt=0.30, n_tail=2, attract=1.0,
+              bond_span=2.0, n_water=250, polarity=0.80, head_q=1.2, hydrophobic=0.6)
+
+    bil = spanning_bilayer_2d(build, **kw)
+    assert packing(bil) > 0.95, "a bilayer planted at contact must read ~1.0; lower means the "\
+                                "metric is counting solvent as a neighbour again"
+    mic = micelle_2d(build, n_lip=20, **kw)
+    assert packing(mic) < packing(bil), "a micelle packs tighter than a bilayer by geometry"
+    assert packing(relax(mic, 500)) > MIN_PACKING, "the gate must ADMIT a real micelle"
+
+    collapsed = spanning_bilayer_2d(build, **kw)
+    collapsed.X[:, :collapsed.pd] *= 0.15
+    assert packing(collapsed) < MIN_PACKING, "and must still reject a genuine collapse"
