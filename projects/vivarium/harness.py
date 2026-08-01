@@ -160,7 +160,7 @@ def bond_stats(e):
     return float(d.mean()), float(d.max()), float((d > BOND_MAX).mean())
 
 
-def largest_cluster(e, cutoff=1.8):
+def largest_cluster(e, cutoff=None):
     """Molecule indices of the biggest connected aggregate, joined with minimum image.
 
     Shape must be measured PER CLUSTER: a global covariance over several droplets reports the
@@ -170,6 +170,15 @@ def largest_cluster(e, cutoff=1.8):
     n = len(mol)
     if n == 0:
         return np.zeros(0, dtype=int)
+    if cutoff is None:
+        # DERIVED, not chosen. Two beads are in contact at sigma_i + sigma_j; anything appreciably
+        # beyond that is separated by solvent. A constant was wrong in BOTH directions within hours:
+        # 2.2 merged distinct micelles (a cluster of them then read as a vesicle) and 1.4 split a
+        # bilayer's leaflets (the harness then rejected a real membrane). Scaling the actual contact
+        # distance removes the guesswork and adapts to per-species radii.
+        sig = getattr(e, "sigma", None)
+        contact = float(2.0 * np.median(sig)) if sig is not None else 1.0
+        cutoff = 1.6 * contact
     # Connect on ANY bead pair, not the middle bead: a bilayer's leaflets meet TAIL to TAIL ~1 apart
     # while their middle beads are ~5 apart, so middle-bead clustering split every bilayer in half and
     # the harness rejected it as "fragmented".

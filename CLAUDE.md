@@ -54,6 +54,17 @@ The autonomous overnight harness is the **`elves`** skill; per-project prerequis
 - Bounded queues, bounded retries, bounded caches. One slow consumer must not block unrelated work.
 - Add or update tests with every behavior change; add benchmarks with every performance claim. State invariants as tests, assertions, or metrics.
 - Report verification truthfully — including what was not run, and why.
+- **A test that has never failed is not evidence.** After writing a test, reintroduce the bug it
+  targets and confirm it trips. An empty grep result is not a pass — check the target exists.
+- **Measurement code needs the same rigour as the thing measured.** For any derived quantity, validate
+  against a known-answer case AND a null case, and require the metric to DISCRIMINATE between
+  candidates rather than merely score the intended one highly. See
+  `projects/vivarium/docs/MEASUREMENT_DISCIPLINE.md` — fifteen defects, all instrument bugs, none
+  physics.
+- **Derive constants from the configuration; do not pick them.** A hand-chosen threshold there was
+  wrong in both directions within hours.
+- **Look at the artifact before believing the summary statistic.** Every time an image was rendered in
+  that project it contradicted the scalar it was supposed to confirm.
 
 ## Required workflow for complex changes
 

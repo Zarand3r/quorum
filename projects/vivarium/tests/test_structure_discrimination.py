@@ -21,7 +21,7 @@ import numpy as np
 import pytest
 
 from config import DEFAULTS, VivariumConfig
-from harness import measure
+from harness import largest_cluster, measure
 from polar_pack import PolarPackEngine
 
 
@@ -368,3 +368,57 @@ def test_enclosed_separates_a_sealed_vesicle_from_a_filled_micelle():
     assert ves["enclosed"] > 0.02, f"a sealed vesicle must trap solvent, got {ves['enclosed']:.3f}"
     assert ves["enclosed"] > 3 * max(mic["enclosed"], 1e-3), (
         f"vesicle enclosed={ves['enclosed']:.3f} vs micelle {mic['enclosed']:.3f}: not separated")
+
+
+def _three_separated_micelles(gap=3.2, n_each=25):
+    """Three distinct micelles with clear solvent between them.
+
+    This is the test that was missing, and its absence cost a false VESICLE: with the cutoff at 2.2,
+    largest_cluster merged four separate micelles into one "aggregate", and the water BETWEEN them
+    read as a lumen (hollow 0.06, enclosed 2.96 -- above bulk density, which is impossible). Only a
+    screenshot caught it. Distinct aggregates must stay distinct.
+    """
+    n_lip = 3 * n_each
+    e = _engine(n_lip, bound=14.0)
+    mol, nb = e._mol, e._mol.shape[1]
+    # gap is set from a MEASURED closest approach, not a calculated one. Lipids point in random
+    # directions, so the nearest bead pair between two micelles is not along the centre line: at
+    # gap=3.5 the ideal separation is 1.8 but the measured closest approach is 2.39, which the broken
+    # 2.2 cutoff does NOT bridge -- so the test passed with the bug reinstated. Three geometries
+    # (6.0, 4.0, 3.5) all failed to catch it for this reason. gap=3.2 puts the measured closest approach
+    # between the correct cutoff (1.6) and the known-bad one (2.2), so the bug is caught and the
+    # fix passes. The window is NARROW: at gap=2.9 both cutoffs merge, because aggregates within
+    # ~1.5 units of each other are genuinely ambiguous and no cutoff can separate them. That is an
+    # inherent limit of contact-graph clustering, not a defect to tune away.
+    centres = np.array([[-gap, 0.0, 0.0], [gap, 0.0, 0.0], [0.0, gap * 1.9, 0.0]])
+    u = _sphere_dirs(len(mol), seed=9)
+    for m in range(len(mol)):
+        c = centres[m // n_each]
+        for bead in range(nb):
+            e.X[mol[m, bead], :3] = c + u[m] * (0.6 + (nb - 1 - bead) * 1.0)
+    return e
+
+
+def test_separate_aggregates_are_not_merged():
+    """Three micelles separated by open solvent must NOT be reported as one cluster."""
+    e = _three_separated_micelles()
+    comp = largest_cluster(e)
+    frac = len(comp) / len(e._mol)
+    assert frac < 0.5, (
+        f"largest_cluster merged distinct aggregates: {len(comp)}/{len(e._mol)} lipids = {frac:.0%} "
+        f"in one cluster, when the true answer is ~33%. The water between them then reads as a lumen "
+        f"and a cluster of micelles is misclassified as a vesicle.")
+
+
+def test_cluster_cutoff_has_margin_on_both_sides():
+    """The cutoff is bounded from BOTH sides and the window is narrow, so pin it explicitly.
+
+    Too tight and a bilayer's leaflets split (the harness then rejects a real membrane as
+    "fragmented"). Too loose and separate aggregates merge (a cluster of micelles reads as a vesicle).
+    Both failures happened, hours apart, from the same constant.
+    """
+    from harness import largest_cluster as lc
+    bil = _bilayer()
+    assert len(lc(bil)) == len(bil._mol), "cutoff too TIGHT: a bilayer's leaflets were split"
+    sep = _three_separated_micelles()
+    assert len(lc(sep)) / len(sep._mol) < 0.5, "cutoff too LOOSE: distinct aggregates merged"
