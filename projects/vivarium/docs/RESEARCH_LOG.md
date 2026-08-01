@@ -99,6 +99,42 @@ cluster detector split bilayers and merged micelles, and the test target had bee
 
 ---
 
+## 2026-08-01o — the double tail stabilises the bilayer, and micelles DO coarsen into lamellar order
+
+Two results, both pointing the same way.
+
+**Stability screen, planted spanning bilayer, order retained:**
+
+    lipid            t=500   t=2000   t=6000
+    single tail        88%      68%      28%
+    DOUBLE tail        93%      76%      51%
+
+Nearly double the retention at comparable packing (0.401 vs 0.484). Adding a second tail doubles v at
+fixed a0 and l, moving P = v/(a0*l) from the micelle range (<1/3) into the bilayer range (1/2..1),
+and the lamellar phase measurably stabilises. Nature's architecture, reproduced.
+
+Shrinking the head instead does NOT work, and the earlier "smaller heads do not help" is confirmed
+with working instruments: head_sigma 1.0 melts cleanly (28% retained, packing 0.484) while 0.7 and
+0.5 COLLAPSE (packing 0.347 and 0.289, below the 0.35 floor) with `align` rising as they do -- the
+anticorrelation signature. a0 is not the lever; the second tail is.
+
+**Coarsening, from a FULLY DISPERSED start:**
+
+    step    aggregates  largest  mean size   align   packing
+       0             5       31       10.6   0.267     0.626
+    2000             4       30       14.5   0.331     0.825
+    6000             8       15        7.4   0.530     0.673
+   20000             5       18       12.2   0.813     0.502
+
+Two phases, and the first one masks the second. Aggregates first go UP (5 -> 8) as spurious contacts
+from random placement break apart and real micelles form at a preferred aggregation number ~7. Then
+they FUSE: 8 -> 5, mean size 7.4 -> 12.2, largest 15 -> 18. And `align` climbs to 0.813 at admissible
+packing, where micelles score 0.09-0.18.
+
+That is the classic surfactant progression -- sphere -> rod -> lamellar -- appearing on its own from
+disorder. The micelle phase is not a dead end, and reading the run at t=6000 (as every previous run
+did) samples it during the fragmentation phase, before any of this is visible.
+
 ## 2026-08-01n — MICELLES EMERGE, including from a fully dispersed start
 
     start                  packing   align   largest cluster   verdict
