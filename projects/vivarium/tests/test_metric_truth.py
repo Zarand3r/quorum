@@ -60,7 +60,10 @@ def test_bilayer_is_one_cluster_not_two_leaflets():
     largest_cluster used to connect on the MIDDLE bead, whose leaflet separation is ~5, and split
     every bilayer in half -- which made the harness reject the target structure as fragmented.
     """
-    e = _engine(n_lip=128, n_tail=2, bound=6.0)
+    # bound = k/2 gives unit lateral spacing; at bound=6 with 8 columns the spacing is 1.5 and the
+    # lipids are not in contact, which is a broken REFERENCE rather than a clustering failure.
+    k = int(np.ceil(np.sqrt(128 // 2)))
+    e = _engine(n_lip=128, n_tail=2, bound=k / 2.0)
     _place_bilayer(e)
     comp = largest_cluster(e)
     assert len(comp) == len(e._mol), f"bilayer split into {len(comp)}/{len(e._mol)} molecules"
@@ -84,7 +87,8 @@ def test_planted_bilayer_fits_inside_the_box():
 
 def test_bilayer_scores_as_flat_and_ordered():
     """The metrics must actually recognise a bilayer: lamellar ~1, aspect low, one cluster."""
-    e = _engine(n_lip=128, n_tail=2, bound=6.0)
+    k = int(np.ceil(np.sqrt(128 // 2)))
+    e = _engine(n_lip=128, n_tail=2, bound=k / 2.0)
     _place_bilayer(e)
     m = measure(e)
     assert m["ok"], f"a perfect bilayer was disqualified: {m['why']}"

@@ -197,6 +197,14 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "fig2d",
+    srcs = ["fig2d.py"],
+    main = "fig2d.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "bicelle2d",
     srcs = ["bicelle2d.py"],
     main = "bicelle2d.py",

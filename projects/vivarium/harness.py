@@ -160,7 +160,7 @@ def bond_stats(e):
     return float(d.mean()), float(d.max()), float((d > BOND_MAX).mean())
 
 
-def largest_cluster(e, cutoff=2.2):
+def largest_cluster(e, cutoff=1.8):
     """Molecule indices of the biggest connected aggregate, joined with minimum image.
 
     Shape must be measured PER CLUSTER: a global covariance over several droplets reports the
@@ -170,11 +170,16 @@ def largest_cluster(e, cutoff=2.2):
     n = len(mol)
     if n == 0:
         return np.zeros(0, dtype=int)
-    # Connect on ANY bead pair, not the middle bead. In a bilayer the two leaflets meet TAIL to TAIL,
-    # so their tips are ~1 apart while their middle beads are ~5 apart. Clustering on middle beads
-    # therefore split every bilayer into its two leaflets: cluster_frac read 0.50 and
-    # MIN_CLUSTER_FRAC=0.60 DISQUALIFIED a perfect planted bilayer as "fragmented". Verified against
-    # the planted control, which now returns one cluster of 231/231 with two head rows.
+    # Connect on ANY bead pair, not the middle bead: a bilayer's leaflets meet TAIL to TAIL ~1 apart
+    # while their middle beads are ~5 apart, so middle-bead clustering split every bilayer in half and
+    # the harness rejected it as "fragmented".
+    #
+    # The cutoff is bounded from BOTH sides and 2.2 was too generous. Four separate micelles, each a
+    # distinct aggregate with 2-3 units of water between them, were merged into a single "cluster" of
+    # 63/63 lipids; the water BETWEEN them then read as a lumen, giving hollow 0.06 and enclosed 2.96
+    # -- above bulk density, which is impossible for a real interior -- and the classifier called it a
+    # VESICLE. A screenshot showed four micelles. 1.4 still joins leaflets in contact (~1.0) but no
+    # longer bridges aggregates separated by open solvent.
     P = e.X[mol.ravel(), :e.pd].reshape(n, -1, e.pd)
     d = P[:, None, :, None, :] - P[None, :, None, :, :]
     free = _periodic_axes(e)
@@ -230,7 +235,9 @@ def measure(e, prev_X=None):
     if len(comp) < 6:
         out["ok"], out["why"] = False, "no aggregate"
         return out
-    if out["cluster_frac"] < MIN_CLUSTER_FRAC:
+    if out["ok"] and out["cluster_frac"] < MIN_CLUSTER_FRAC:
+        # only if nothing more fundamental already failed: a torn molecule also fragments the cluster,
+        # and reporting "fragmented" there hides the ROOT CAUSE behind its own consequence.
         out["ok"], out["why"] = False, (f"fragmented ({len(comp)}/{len(mol)} lipids = "
                                         f"{out['cluster_frac']:.0%} in the largest cluster)")
 

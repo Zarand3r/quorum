@@ -38,7 +38,7 @@ from polar_pack import BOND_REST, PolarPackEngine
 
 def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, plant=False, n_tail=2,
           n_water=0, polarity=0.0, head_q=0.0, water_dipole=0.8, spol=0.90, hydrophobic=0.0,
-          head_sigma=1.0, attract=0.30, bond_span=6.0, aniso=0.0, walls=False, span_frac=1.0, sharp=0.0, branched=False):
+          head_sigma=1.0, attract=0.30, bond_span=2.0, aniso=0.0, walls=False, span_frac=1.0, sharp=0.0, branched=False):
     nb = 1 + n_tail
     n_tok = nb * n_lip + max(0, n_water)
     cfg = VivariumConfig(**{**DEFAULTS, "N": n_tok, "pos_dim": 2, "n_harmonics": 3,
@@ -116,9 +116,21 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, plant=False, n_tai
         cen = np.stack([rr * np.cos(ang), rr * np.sin(ang)], axis=1)
         th = rng.uniform(0, 2 * np.pi, n)
         ax = np.stack([np.cos(th), np.sin(th)], axis=1)
-        half = (nb - 1) / 2.0
-        for bead in range(nb):
-            e.X[mol[:, bead], :2] = cen + (half - bead) * BOND_REST * ax
+        if branched and n_tail >= 2 and n_tail % 2 == 0:
+            # the clump start had the SAME defect the random start did: branched TOPOLOGY placed on a
+            # LINE, so arm 2's first bead began ~3 units from the head it is bonded to and every
+            # molecule was born torn (bond 1.50, 25% over the limit).
+            perp = np.stack([-ax[:, 1], ax[:, 0]], axis=1)
+            arm = n_tail // 2
+            e.X[mol[:, 0], :2] = cen
+            for a_ in range(2):
+                off = (2 * a_ - 1) * 0.45 * perp
+                for kk in range(arm):
+                    e.X[mol[:, 1 + a_ * arm + kk], :2] = cen + off - (kk + 1) * BOND_REST * ax
+        else:
+            half = (nb - 1) / 2.0
+            for bead in range(nb):
+                e.X[mol[:, bead], :2] = cen + (half - bead) * BOND_REST * ax
         e.head_phi[:] = th
     else:
         cen = rng.uniform(-B, B, (len(mol), 2))
@@ -156,10 +168,7 @@ def metrics(e):
     Returns (lamellar, aspect, thick, edge, ok, why) so callers can refuse inadmissible samples.
     """
     m = hmeasure(e)
-    thick = float("nan")
-    if m["ok"] or not np.isnan(m["aspect"]):
-        thick = m.get("hollow", float("nan"))
-    return m["lamellar"], m["aspect"], thick, m.get("edge", float("nan")), m["ok"], m["why"]
+    return m
 
 
 def main(argv=None):
@@ -233,25 +242,33 @@ def main(argv=None):
               hydrophobic=a.hydrophobic)
     pl = build(a.seed, plant="ribbon", **kw)
     rn = build(a.seed + 99, plant=False, **kw)
-    lp, ap, _, ep, _, _ = metrics(pl)
-    lr, ar, _, er, _, _ = metrics(rn)
-    print(f"  CONTROLS  planted ribbon: lamellar {lp:.3f}  aspect {ap:.3f}  edge {ep:.2f}")
-    print(f"            random start  : lamellar {lr:.3f}  aspect {ar:.3f}  edge {er:.2f}")
+    mp, mr = metrics(pl), metrics(rn)
+    print(f"  CONTROLS  planted ribbon: align {mp['align']:.3f} hollow {mp['hollow']:.2f} "
+          f"lamellar {mp['lamellar']:.3f}")
+    print(f"            random start  : align {mr['align']:.3f} hollow {mr['hollow']:.2f} "
+          f"lamellar {mr['lamellar']:.3f}")
     e = build(a.seed, plant=(a.plant or False), **kw)
     print(f"  N={e.cfg.N} lipids={len(e._mol)} tails={a.tails} box={2*a.bound:.0f} "
           f"{'PLANTED' if a.plant else 'DISORDERED'}  margin={e.min_image_margin():.4f}")
     if a.anneal > 0.0:
         print(f"  annealing: kT {a.anneal} -> {a.kt} linearly over {a.steps} steps")
-    print("   step  lamellar  aspect  edge   status   [all three needed: lam>.85 asp<.5 edge<.5]")
+    print("   step  align  hollow  enclosed  edge  aspect  n_clu  status")
+    print("         [VESICLE: align~0 radial, hollow~0 empty core, enclosed>0 traps water]")
     for t in range(0, a.steps + 1, a.every):
-        lam, asp, _, ef, ok, why = metrics(e)
-        if not ok:
-            v = f"DISQUALIFIED: {why}"
-        elif lam > 0.85 and asp < 0.50 and ef < 0.50:
-            v = "*** BICELLE: flat, ordered, dry core ***"
+        m = metrics(e)
+        if not m["ok"]:
+            v = f"DISQUALIFIED: {m['why']}"
+        elif m["align"] > 0.5:
+            v = "BILAYER (lamellar order)"
+        elif m["hollow"] < 0.4 and m["enclosed"] > 0.15:
+            v = "*** VESICLE: hollow shell trapping solvent ***"
+        elif m["lamellar"] > 0.8:
+            v = "micelle (radial, filled)"
         else:
-            v = "partial" if lam > 0.7 else "no lamellar order"
-        print(f"  {t:6d}   {lam:.3f}   {asp:.3f}  {ef:5.2f}   {v}", flush=True)
+            v = "disordered"
+        f2 = lambda x: "  n/a" if np.isnan(x) else f"{x:5.2f}"
+        print(f"  {t:6d}  {f2(m['align'])}  {f2(m['hollow'])}  {f2(m['enclosed'])}  "
+              f"{f2(m['edge'])}  {f2(m['aspect'])}  {m['n_cluster']:4d}  {v}", flush=True)
         if t < a.steps:
             for k in range(a.every):
                 if a.anneal > 0.0:                      # linear cool from --anneal down to --kt
