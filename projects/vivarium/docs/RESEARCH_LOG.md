@@ -99,6 +99,29 @@ cluster detector split bilayers and merged micelles, and the test target had bee
 
 ---
 
+## 2026-08-01n — MICELLES EMERGE, including from a fully dispersed start
+
+    start                  packing   align   largest cluster   verdict
+    clump (as published)     0.441   0.078              98%    OK
+    DISPERSED (random)       0.673   0.530              24%    "fragmented"
+
+`plant="clump"` was never a planted micelle: the code places lipids at RANDOM positions inside a disc
+with RANDOM orientations, supplying concentration and nothing else. So the tails-in/heads-out
+organisation and the split into discrete aggregates were already emergent in the published figure.
+
+From a fully DISPERSED start -- neither concentration nor order given -- roughly eight micelles form
+anyway, and pack BETTER (0.673 vs 0.441, since smaller aggregates compress less). Self-assembly is
+complete, not partial.
+
+**The "fragmented" verdict is a metric artifact and a real bug for this phase.** MIN_CLUSTER_FRAC
+demands that one aggregate hold 60% of the lipids, which is correct for a bilayer or a vesicle and
+WRONG for a micelle phase, where many small aggregates is the right answer. The guard is
+bilayer-shaped, in exactly the way MIN_PACKING was bilayer-shaped. Same lesson twice in one day: a
+threshold calibrated on one phase silently condemns the others.
+
+**Stage 1 of the vesicle pathway is done and verified.** Hydrophobic collapse produces micelles from
+disorder, against a reference, with intact molecules.
+
 ## 2026-08-01m — THE MICELLES WERE REAL. The gate was calibrated on the wrong structure
 
 Built the solvated references that never existed, and they settle the question against me.
