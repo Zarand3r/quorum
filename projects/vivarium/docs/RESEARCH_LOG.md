@@ -7,6 +7,23 @@ retractions are the most useful part of this file.
 `docs/BILAYER_REVIEW.md` holds the narrative findings (1-24). This file is the audit trail: what was
 executed, in what order, and which conclusions are currently live.
 
+## Where this stands right now (2026-08-01)
+
+**Admissible:** vivarium HOLDS a planted bilayer (align 0.994, molecules intact, no walls) and
+self-assembles MICELLES from disorder (align 0.05, radial, filled -- admissible under all gates).
+
+**The live signal:** with explicit water and a species-pair interaction matrix, self-assembly reaches
+align 0.63 where geometric mixing reaches 0.00. That is the hydrophobicity argument holding: a mixing
+rule CANNOT express hydrophobicity (AM-GM), and replacing it produces lamellar order. It is not yet
+admissible -- the matrix generates forces that tear ~11% of bonds -- so it is a lead, not a result.
+
+**Not achieved:** no self-assembled bilayer, bicelle or vesicle. Rungs 2 and 3 remain open.
+
+**Everything before 2026-08-01 is retracted.** The instruments were wrong: `lamellar` scores a micelle
+ABOVE a bilayer, `aspect` measured the box rather than the structure, `unwrap` failed beyond L/2, the
+cluster detector split bilayers and merged micelles, and the test target had been deleted so two
+"tests pass" claims were vacuous. See MEASUREMENT_DISCIPLINE.md.
+
 ## Status board
 
 | rung | target | status |
