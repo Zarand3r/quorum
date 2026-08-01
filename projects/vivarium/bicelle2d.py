@@ -32,6 +32,7 @@ import math
 import numpy as np
 
 from config import DEFAULTS, VivariumConfig
+from harness import measure as hmeasure
 from polar_pack import BOND_REST, PolarPackEngine
 
 
@@ -144,48 +145,21 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, plant=False, n_tai
     return e
 
 
-def _axes(e):
-    """(long, thin) unit vectors of the aggregate, from the position covariance."""
-    X = e.X[e._mol.ravel(), :2]
-    c = X - X.mean(0)
-    ev, evec = np.linalg.eigh(c.T @ c / len(c))
-    return evec[:, 1], evec[:, 0], float(ev[0] / max(ev[1], 1e-9))
-
-
-def edge_frac(e):
-    """Fraction of lipids whose TAIL beads still touch water: L_edge, the quantity the pathway trades.
-
-    stage 2 BICELLE  flat with a rim      -> edge > 0
-    stage 3 CUP      rim shrinking         -> edge falling
-    stage 4 VESICLE  sealed                -> edge ~ 0
-    Requires explicit solvent: with none, gamma = 0 and closure cannot happen at any size.
-    """
-    wi = e._wi
-    mol = e._mol
-    if not wi.size or not mol.size:
-        return float("nan")
-    # The DEEPEST tail bead only. A lipid with a damp tip is not a rim lipid: in a bilayer the tips
-    # meet at the midplane and are the driest point, so wetting THERE is what marks a genuine exposed
-    # edge. Counting any wet tail bead reported edge=1.00 even at perfect lamellar order, because a
-    # 4-bead branched lipid gives a membrane only ~4 thick and a 1.4 contact range penetrates from
-    # both faces.
-    tips = mol[:, -1]
-    d = e.X[tips, :2][:, None, :] - e.X[wi, :2][None, :, :]
-    d -= e.L * np.round(d / e.L)
-    return float((np.einsum("ijc,ijc->ij", d, d) < 1.2 ** 2).any(axis=1).mean())
-
-
 def metrics(e):
-    mol = e._mol
-    long_ax, thin_ax, aspect = _axes(e)
-    mid = e.X[mol.ravel(), :2].mean(0)
-    # signed distance along the THIN axis = "which side of the midline"
-    h = (e.X[mol[:, 0], :2] - mid) @ thin_ax
-    t = ((e.X[mol[:, 1:], :2] - mid) @ thin_ax).mean(axis=1)
-    lamellar = float((np.abs(h) > np.abs(t)).mean())
-    up = h > 0
-    thick = float(h[up].mean() - h[~up].mean()) if up.any() and not up.all() else 0.0
-    return lamellar, aspect, thick
+    """Delegates to harness.measure. The previous local implementation computed `aspect`, `lamellar`
+    and `thick` from RAW WRAPPED coordinates over ALL lipids: no minimum image, no unwrapping, and no
+    restriction to the largest cluster. An aggregate straddling the periodic boundary therefore gave a
+    meaningless covariance and midplane, and a fragmented system reported the arrangement of the
+    fragments rather than any structure. 2-D also had no molecular-integrity or integrator gate at
+    all, so a deformed or exploding run was scored as a result.
+
+    Returns (lamellar, aspect, thick, edge, ok, why) so callers can refuse inadmissible samples.
+    """
+    m = hmeasure(e)
+    thick = float("nan")
+    if m["ok"] or not np.isnan(m["aspect"]):
+        thick = m.get("hollow", float("nan"))
+    return m["lamellar"], m["aspect"], thick, m.get("edge", float("nan")), m["ok"], m["why"]
 
 
 def main(argv=None):
@@ -259,22 +233,25 @@ def main(argv=None):
               hydrophobic=a.hydrophobic)
     pl = build(a.seed, plant="ribbon", **kw)
     rn = build(a.seed + 99, plant=False, **kw)
-    lp, ap, tp = metrics(pl)
-    lr, ar, tr = metrics(rn)
-    print(f"  CONTROLS  planted ribbon: lamellar {lp:.3f}  aspect {ap:.3f}  thick {tp:.2f}")
-    print(f"            random start  : lamellar {lr:.3f}  aspect {ar:.3f}  thick {tr:.2f}")
+    lp, ap, _, ep, _, _ = metrics(pl)
+    lr, ar, _, er, _, _ = metrics(rn)
+    print(f"  CONTROLS  planted ribbon: lamellar {lp:.3f}  aspect {ap:.3f}  edge {ep:.2f}")
+    print(f"            random start  : lamellar {lr:.3f}  aspect {ar:.3f}  edge {er:.2f}")
     e = build(a.seed, plant=(a.plant or False), **kw)
     print(f"  N={e.cfg.N} lipids={len(e._mol)} tails={a.tails} box={2*a.bound:.0f} "
           f"{'PLANTED' if a.plant else 'DISORDERED'}  margin={e.min_image_margin():.4f}")
     if a.anneal > 0.0:
         print(f"  annealing: kT {a.anneal} -> {a.kt} linearly over {a.steps} steps")
-    print("   step  lamellar  aspect  thick   edge   verdict   [edge->0 = sealed vesicle]")
+    print("   step  lamellar  aspect  edge   status   [all three needed: lam>.85 asp<.5 edge<.5]")
     for t in range(0, a.steps + 1, a.every):
-        lam, asp, th = metrics(e)
-        v = "RIBBON (2-D bicelle)" if (lam > 0.85 and asp < 0.35 and th > 1.5) else (
-            "partial" if lam > 0.7 else "no lamellar order")
-        ef = edge_frac(e)
-        print(f"  {t:6d}   {lam:.3f}   {asp:.3f}  {th:5.2f}  {ef:5.2f}   {v}", flush=True)
+        lam, asp, _, ef, ok, why = metrics(e)
+        if not ok:
+            v = f"DISQUALIFIED: {why}"
+        elif lam > 0.85 and asp < 0.50 and ef < 0.50:
+            v = "*** BICELLE: flat, ordered, dry core ***"
+        else:
+            v = "partial" if lam > 0.7 else "no lamellar order"
+        print(f"  {t:6d}   {lam:.3f}   {asp:.3f}  {ef:5.2f}   {v}", flush=True)
         if t < a.steps:
             for k in range(a.every):
                 if a.anneal > 0.0:                      # linear cool from --anneal down to --kt

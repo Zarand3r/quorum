@@ -236,3 +236,18 @@ py_binary(
     imports = ["."],
     deps = [":vivarium"],
 )
+
+py_test(
+    name = "test_suite",
+    srcs = glob(["tests/**/*.py"]),
+    main = "tests/pytest_main.py",
+    data = [
+        ":configs",
+        "pytest.ini",
+    ],
+    imports = ["."],
+    deps = [
+        ":vivarium",
+        requirement("pytest"),
+    ],
+)
