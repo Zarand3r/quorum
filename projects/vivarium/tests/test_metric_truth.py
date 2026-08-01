@@ -119,3 +119,28 @@ def test_deformed_molecule_is_refused_not_scored():
     e.X[e._mol[:, 1], 0] += 3.0            # tear every first bond
     m = measure(e)
     assert not m["ok"] and "deformed" in m["why"], f"torn molecule was scored: {m}"
+
+
+def test_packing_passes_a_known_good_bilayer_and_fails_a_collapse():
+    """The guard that was missing for fifteen defects: matter must occupy space.
+
+    Calibrated against both ends, because a threshold validated only against failures will happily
+    reject every good structure too. The 3-D planted bilayer's lipids sit at EXACTLY contact.
+    """
+    from bilayer3d import build as build3d
+    from harness import MIN_PACKING, measure, packing
+
+    good = build3d(seed=1, n_lip=48, bound=3.4, kt=0.02, speed=0.08, repel=12.0,
+                   k_bond=8.0, satt=0.55, spol=0.90, plant=True)
+    assert packing(good) > 0.95, "a planted bilayer's lipids sit at contact; anything less is a bug"
+    assert measure(good)["ok"], "the guard must not reject a known-good structure"
+
+    # A collapse is invisible to every other guard here: bonds are INTRAMOLECULAR so each stacked
+    # molecule reports a perfect 1.0, direction-based metrics stay well defined at any density, and
+    # a collapsed pile is maximally connected so cluster_frac reads its BEST value.
+    collapsed = build3d(seed=1, n_lip=48, bound=3.4, kt=0.02, speed=0.08, repel=12.0,
+                        k_bond=8.0, satt=0.55, spol=0.90, plant=True)
+    collapsed.X[:, :collapsed.pd] *= 0.15
+    m = measure(collapsed)
+    assert packing(collapsed) < MIN_PACKING
+    assert not m["ok"] and "collapsed" in m["why"], m

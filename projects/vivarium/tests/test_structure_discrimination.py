@@ -17,11 +17,13 @@ are round with heads out, so any search ranking on `aspect` alone would discard 
 droplet, which is precisely the structure we are hunting.
 """
 
+import math
+
 import numpy as np
 import pytest
 
 from config import DEFAULTS, VivariumConfig
-from harness import largest_cluster, measure
+from harness import BOND_REST, largest_cluster, measure
 from polar_pack import PolarPackEngine
 
 
@@ -63,24 +65,88 @@ def _bilayer(n_lip=288):
     return e
 
 
-def _sphere_dirs(n, seed=1):
+def _sphere_dirs(n):
+    """n directions spread EVENLY over the sphere (Fibonacci spiral), not sampled at random.
+
+    Normalised Gaussians are Poisson-random on the sphere, and Poisson points clump: their median
+    nearest-neighbour distance is 2r*sqrt(ln2/n), against 2r*sqrt(pi/n) for an even arrangement --
+    a factor of 2.1 closer. On the planted vesicle that put the shells at 0.59 of contact no matter
+    how the radii or the leaflet split were chosen, because the clumping is in the sampling itself.
+
+    Points are returned ordered along the spiral, so a CONTIGUOUS slice is a band rather than a
+    subsample of the whole sphere. Callers that need two independent shells must build each with its
+    own call.
+    """
+    k = np.arange(n) + 0.5
+    z = 1.0 - 2.0 * k / n
+    r = np.sqrt(np.maximum(0.0, 1.0 - z * z))
+    th = np.pi * (1.0 + 5.0 ** 0.5) * k
+    return np.stack([r * np.cos(th), r * np.sin(th), z], axis=1)
+
+
+def _random_dirs(n, seed=1):
+    """Poisson-random directions. ONLY for the null reference, which has to be genuinely disordered.
+
+    Every ordered structure wants `_sphere_dirs` instead: random directions clump, and that clumping
+    is what put the planted shells at 0.59 of contact. Here the clumping is the point.
+    """
     rng = np.random.default_rng(seed)
     u = rng.standard_normal((n, 3))
     return u / np.linalg.norm(u, axis=1, keepdims=True)
 
 
 def _micelle(n_lip=60):
-    # a compact ball; any roomy box works
-    """Heads on the surface, tails to the centre. FILLED."""
-    e = _engine(n_lip, bound=7.0)
+    """A round FILLED aggregate: radially-oriented molecules packed through the whole ball.
+
+    This is the contrast partner for `_vesicle` -- round and filled against round and hollow -- and
+    that contrast is the only thing `hollow` and `enclosed` are asked to make.
+
+    It is deliberately NOT the concentric-shells geometry it used to be. That version put every
+    lipid's tail END on one inner shell of radius 0.6, i.e. 0.32 of contact, and a shell of n points
+    at radius r only holds them ~2r*sqrt(pi/n) apart. Nothing in the harness could reject it until
+    `packing` existed, so both discriminators were calibrated against an impossible structure.
+
+    Shells cannot be repaired here, because THIS LIPID CANNOT FORM A MICELLE AT ALL. With two tail
+    beads the packing parameter is
+
+        P = v / (a0 * l) = 1.05 / (1.0 * 2.0) = 0.52
+
+    which is the bilayer range (1/2 to 1); micelles need P < 1/3. Enlarging the inner shell until it
+    is sterically legal empties the core and turns the reference into a small vesicle, which is
+    exactly what happened -- `hollow` then read 0.00 for both. A true micelle reference would need a
+    different molecule (one tail, or a wider head), and that is a separate structure, not a fix here.
+
+    Molecules stay RADIALLY oriented and their centres are staggered through the volume, with radii
+    as ((m+0.5)/n)^(1/3) so density is uniform rather than piled on a surface. Radial orientation is
+    not cosmetic: it is what makes this a droplet rather than a slab, and it is what `align` and
+    `lamellar` are calibrated against. A space-filling cubic lattice packs perfectly but leaves every
+    molecule parallel, which reads as high nematic order and destroys exactly that contrast.
+
+    The fill fraction is deliberately loose. A tight ball placed by construction rather than by
+    relaxation measured 0.59 of contact, because sprinkling points at uniform density does not
+    respect exclusion the way a relaxed liquid does; a looser ball is still unambiguously FILLED
+    against a vesicle's empty lumen, which is the only contrast this reference has to carry.
+    With directions spread evenly rather than sampled at random the ball packs far better, so the
+    fill can stay compact enough for the droplet to fit its own box.
+    """
+    # The box follows from R, not the other way round: the droplet's DIAMETER must stay under L/2 or
+    # it wraps onto itself, and a loose fill in the old bound=7.0 box did exactly that -- `hollow`
+    # went NaN and separate aggregates merged. Same defect the vesicle and bilayer each had once.
+    R = ((n_lip * (1 + 2) * (math.pi / 6.0) * BOND_REST ** 3)
+         / (0.35 * (4.0 / 3.0) * math.pi)) ** (1.0 / 3.0)
+    e = _engine(n_lip, bound=max(7.0, 1.4 * 2.0 * (R + BOND_REST)))
     mol, nb = e._mol, e._mol.shape[1]
-    u = _sphere_dirs(len(mol))
+    n = len(mol)
+    u = _sphere_dirs(n)
+    r_mid = R * ((np.arange(n) + 0.5) / n) ** (1.0 / 3.0)
     for bead in range(nb):
-        e.X[mol[:, bead], :3] = u * (0.6 + (nb - 1 - bead) * 1.0)
+        # head (bead 0) sits radially OUTWARD of its own tails, so heads still face out
+        off = (nb - 1) / 2.0 - bead
+        e.X[mol[:, bead], :3] = u * (r_mid + off * BOND_REST)[:, None]
     return e
 
 
-def _vesicle(n_lip=180, R=4.0):
+def _vesicle(n_lip=260, R=4.0):
     """Closed shell: outer leaflet heads out, inner leaflet heads in. EMPTY middle.
 
     R and the box are chosen so the OUTER radius (R + molecule length) leaves clear margin inside the
@@ -92,13 +158,25 @@ def _vesicle(n_lip=180, R=4.0):
     # Unwrapping relative to a SINGLE reference bead requires the structure's DIAMETER to be under
     # L/2, or the far side wraps onto the near side: at diameter 13 in a box of 20 the shell folded
     # into itself and read as filled (hollow 2.6) and flat (aspect 0.39).
+    # The leaflets are split by AREA, not in half. A vesicle's inner leaflet wraps a much smaller
+    # sphere, so an even split crams it: 90 molecules on the r=1.5 inner shell sit 0.63 of contact
+    # apart, and until `packing` existed nothing could say so. Real vesicles carry the same
+    # constraint, which is why their leaflets hold different lipid counts.
+    #   n_inner / n_outer = (r_inner / r_outer)^2
+    # n_lip then follows from wanting the OUTER shell dense enough to stay one cluster: spacing goes
+    # as 2*r*sqrt(pi/n), and at n_lip=180 the outer shell sits 1.76 apart, past the 1.6 contact
+    # cutoff, so a legal vesicle would have measured as fragmented instead.
     e = _engine(n_lip, bound=16.0)
     mol, nb = e._mol, e._mol.shape[1]
     n = len(mol)
-    u = _sphere_dirs(n)
-    half = n // 2
+    depth_max = 0.5 + (nb - 1) * 1.0
+    r_i, r_o = R - depth_max, R + depth_max
+    n_out = int(round(n / (1.0 + (r_i / r_o) ** 2)))
+    # each leaflet gets its OWN spiral: a contiguous slice of one spiral is a band, which would
+    # leave the inner leaflet as a cap over one pole rather than a closed shell.
+    u = np.concatenate([_sphere_dirs(n_out), _sphere_dirs(n - n_out)])
     for m in range(n):
-        outer = m < half
+        outer = m < n_out
         for bead in range(nb):
             depth = 0.5 + (nb - 1 - bead) * 1.0        # head outermost within its own leaflet
             r = R + depth if outer else R - depth
@@ -214,15 +292,28 @@ def _solvated_sphere(n_lip, R, hollow_shell, n_water=1800, bound=12.0):
     e.vel[:] = 0.0
     mol, nb = e._mol, e._mol.shape[1]
     n = len(mol)
-    u = _sphere_dirs(n, seed=5)
+    # separate spirals per leaflet, for the same reason as _vesicle: a contiguous slice of one
+    # spiral is a band over one pole, not a closed shell.
     half = n // 2
+    # A SHELL needs one spiral per leaflet, since a contiguous slice of one spiral is a band over a
+    # pole. A filled BALL needs the opposite: a single spiral of n, because two spirals of n/2 each
+    # cover the whole sphere and so hand out directions in near-coincident PAIRS -- which measured
+    # 0.39 of contact even after the radii were fixed.
+    u = (np.concatenate([_sphere_dirs(half), _sphere_dirs(n - half)]) if hollow_shell
+         else _sphere_dirs(n))
+    # The FILLED case fills a ball at uniform density. Placing beads at r = depth put every tail end
+    # on a shell of radius 0.5, i.e. 0.04 of contact -- the same impossible core `_micelle` had, and
+    # for the same reason: a shell of n points at radius r only holds them ~2r*sqrt(pi/n) apart.
+    r_fill = ((n * nb * (math.pi / 6.0) * BOND_REST ** 3)
+              / (0.35 * (4.0 / 3.0) * math.pi)) ** (1.0 / 3.0)
+    r_mid = r_fill * ((np.arange(n) + 0.5) / n) ** (1.0 / 3.0)
     for m in range(n):
         for bead in range(nb):
             depth = 0.5 + (nb - 1 - bead) * 1.0
             if hollow_shell:
                 r = (R + depth) if m < half else (R - depth)
             else:
-                r = depth
+                r = r_mid[m] + ((nb - 1) / 2.0 - bead) * BOND_REST
             e.X[mol[m, bead], :3] = u[m] * r
     rng = np.random.default_rng(11)
     wi = e._wi
@@ -233,8 +324,10 @@ def _solvated_sphere(n_lip, R, hollow_shell, n_water=1800, bound=12.0):
         bad = (rr > R - 2.6) & (rr < R + 2.6)
         pos[bad] *= ((R + 4.0) / np.maximum(rr[bad], 1e-9))[:, None]
     else:
-        bad = rr < 3.2                      # a filled micelle admits no water at all
-        pos[bad] *= (5.0 / np.maximum(rr[bad], 1e-9))[:, None]
+        # a filled micelle admits no water at all, so clear the whole ball it now occupies
+        keep_out = r_fill + 1.5 * BOND_REST
+        bad = rr < keep_out
+        pos[bad] *= ((keep_out + 1.8) / np.maximum(rr[bad], 1e-9))[:, None]
     e.X[wi, :3] = pos
     return e
 
@@ -245,7 +338,7 @@ def _random(n_lip=128):
     rng = np.random.default_rng(0)
     B = e.cfg.pos_bound
     cen = rng.uniform(-B, B, (len(mol), 3))
-    ax = _sphere_dirs(len(mol), seed=2)
+    ax = _random_dirs(len(mol), seed=2)
     for b in range(mol.shape[1]):
         e.X[mol[:, b], :3] = cen + (1.0 - b) * ax
     return e
@@ -391,7 +484,10 @@ def _three_separated_micelles(gap=3.2, n_each=25):
     # ~1.5 units of each other are genuinely ambiguous and no cutoff can separate them. That is an
     # inherent limit of contact-graph clustering, not a defect to tune away.
     centres = np.array([[-gap, 0.0, 0.0], [gap, 0.0, 0.0], [0.0, gap * 1.9, 0.0]])
-    u = _sphere_dirs(len(mol), seed=9)
+    # each micelle gets its OWN spiral. Points along one spiral are ordered pole to pole, so slicing
+    # a single spiral three ways would give three BANDS rather than three balls, and the closest
+    # approach between them would be geometry this test never meant to measure.
+    u = np.concatenate([_sphere_dirs(n_each) for _ in range(3)])
     for m in range(len(mol)):
         c = centres[m // n_each]
         for bead in range(nb):

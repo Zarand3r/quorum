@@ -99,6 +99,48 @@ cluster detector split bilayers and merged micelles, and the test target had bee
 
 ---
 
+## 2026-08-01h — the packing guard immediately condemned the reference structures it was added to check
+
+`packing` was added to catch a collapsed RUN. Turned on the planted references, it rejected most of
+them, and every rejection was a real defect that had been calibrating the metrics all along.
+
+    reference               before   cause
+    micelle                   0.32   all 60 tail ENDS on one shell of radius 0.6
+    solvated filled sphere    0.04   same, at radius 0.5
+    vesicle                   0.63   leaflets split in HALF, so the inner shell is crammed
+    3-D planted bilayer       1.000   already correct -- lipids sit exactly at contact
+
+Four distinct root causes, three of them geometric and one statistical:
+
+**1. Shells cannot hold a filled core.** A shell of n points at radius r spaces them ~2r*sqrt(pi/n)
+apart, so the INNERMOST shell caps the aggregation number. Enlarging it until it is legal empties the
+core and turns a micelle into a small vesicle -- `hollow` then read 0.00 for both.
+
+**2. This lipid cannot form a micelle at all.** Packing parameter P = v/(a0*l) = 1.05/(1.0*2.0) =
+0.52, which is the BILAYER range; micelles need P < 1/3. The planted micelle was never a structure
+this molecule could make. The reference is now an honest uniformly-filled droplet, which is all the
+`hollow` / `enclosed` contrast ever needed, and a real micelle reference would require a different
+molecule (one tail, or a wider head).
+
+**3. Vesicle leaflets must split by AREA, not in half.** n_inner/n_outer = (r_inner/r_outer)^2. Real
+vesicles carry the same constraint, which is why their leaflets hold different lipid counts.
+
+**4. `_sphere_dirs` sampled normalised Gaussians, i.e. Poisson-random points.** Poisson points CLUMP:
+median nearest-neighbour distance is 2r*sqrt(ln2/n) against 2r*sqrt(pi/n) for an even arrangement, a
+factor of 2.1 closer. This defeated every geometric fix -- the shells stayed at 0.59 of contact
+whatever radii or leaflet split were chosen, because the clumping was in the SAMPLING. Replaced with
+a Fibonacci spiral, with a separate `_random_dirs` kept for the null reference, where clumping is the
+point. Two corollaries, each of which cost a test: a contiguous SLICE of one spiral is a band over a
+pole, not a shell, so each leaflet needs its own spiral; and two spirals of n/2 both cover the whole
+sphere, handing out directions in near-coincident PAIRS, so a filled ball needs a single spiral of n.
+
+All 103 tests pass. The cluster-cutoff window was re-measured rather than assumed after the geometry
+changed, and gap=3.2 still separates correctly (cutoff 1.6 -> 0.33) while catching the known-bad
+cutoff (2.2 -> 1.00).
+
+This closes the long-standing task "fix planted bilayer steric overlap": the 3-D planted bilayer was
+in fact already correct at exactly 1.000, and the overlap was in the micelle and vesicle instead.
+
 ## 2026-08-01g — RETRACTION of 2026-08-01f's structural claim, and defect #16: nothing checked that matter occupies space
 
 The k_bond finding in 2026-08-01f stands: raising the force ceiling while holding speed * k_bond

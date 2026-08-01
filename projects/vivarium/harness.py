@@ -175,13 +175,19 @@ def packing(e):
     contact for any sigma above 0.5; including them would report healthy overlap on every chain.
     Uses the same DERIVED contact distance as `largest_cluster` rather than a chosen constant.
 
+    The median runs over LIPID beads only, though the neighbour may be of any species. Solvent is
+    planted at random positions and legitimately starts interpenetrating -- a known-good 3-D planted
+    bilayer measures 1.000 across its lipids (exactly contact) while its water sits at 0.382, so a
+    median over all beads reports 0.622 and condemns a perfect membrane. What the guard is asked to
+    certify is the structure, and a lipid buried in overlapping solvent still fails, because its own
+    nearest neighbour is then too close whatever species that neighbour is.
+
     ~1.0 for a properly packed structure, and it falls toward 0 as an aggregate collapses through
-    itself. Reported as a median so a handful of genuinely close pairs cannot condemn a good
-    structure, and so a collapse (which moves every bead at once) cannot hide in a tail.
+    itself. A median so a handful of genuinely close pairs cannot condemn a good structure, and so a
+    collapse (which moves every bead at once) cannot hide in a tail.
     """
     sig = getattr(e, "sigma", None)
     contact = float(2.0 * np.median(sig)) if sig is not None else 1.0
-    n = len(e.X)
     d = e.X[:, : e.pd][:, None, :] - e.X[:, : e.pd][None, :, :]
     free = _periodic_axes(e)
     d[:, :, free] -= e.L * np.round(d[:, :, free] / e.L)
@@ -191,7 +197,9 @@ def packing(e):
     if bi is not None and len(bi):
         dist[bi, bj] = np.inf
         dist[bj, bi] = np.inf
-    return float(np.median(dist.min(axis=1)) / contact)
+    nn = dist.min(axis=1)
+    lip = np.asarray(e.species) != 0
+    return float(np.median(nn[lip] if lip.any() else nn) / contact)
 
 
 def largest_cluster(e, cutoff=None):
