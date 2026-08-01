@@ -99,6 +99,44 @@ cluster detector split bilayers and merged micelles, and the test target had bee
 
 ---
 
+## 2026-08-01l — defect #17: `packing` is confounded by explicit water, so the collapse verdicts are not reliable
+
+Prompted by re-examining the four-micelle figure (fig2d, attract=1.0, t=6000), which I had dismissed
+as a collapse. That dismissal was wrong twice over.
+
+**First error: wrong parameters.** I demonstrated collapse at attract=2.0 / repel=12 (ratio 6) and
+generalised it to a figure made at attract=1.0 (ratio 12). The collapse threshold sits BETWEEN those,
+so the demonstration says nothing about the figure.
+
+**Second error: miscalibrated instrument.** A 2-D bilayer planted at exact contact spacing, with the
+lipid count derived from the box (22 columns per leaflet at contact = 44 lipids, not the 63 I first
+planted across the same width at 0.71 spacing):
+
+    step   packing   align
+       0     0.637   1.000    <- PERFECT planted bilayer reads 0.637, not 1.0
+     500     0.690   0.883    <- after the randomly-placed water relaxes
+    2000     0.672   0.678
+    6000     0.482   0.275    <- melted
+
+`packing` takes each lipid's distance to the nearest bead of ANY species. With 250 randomly-placed
+waters the nearest bead is usually WATER, so the metric reports solvent proximity rather than lipid
+spacing. The 3-D planted bilayer scored a clean 1.000 only because that reference has no solvent.
+
+So MIN_PACKING = 0.70 is too strict for solvated 2-D -- a healthy solvated bilayer sits at ~0.69 and
+fails its own gate. Every "collapsed" verdict on a solvated 2-D run is therefore unreliable as
+stated, including the repel sweep used to void the earlier micelle results. The figure's 0.441 is
+still below the MELTED bilayer's 0.482, so it is not vindicated either; it is undetermined.
+
+**One result survives, because `align` is not affected by the water confound:** a planted bilayer
+MELTS at the figure's parameters, align 1.00 -> 0.275 over 6000 steps. Those parameters do not
+support a stable lamellar phase. That is the stability screen doing its job.
+
+**The recurring failure, now four instances deep:** treating a freshly built reference as ground
+truth without checking it fits its own box -- bilayer, micelle, vesicle, and now my own control. It
+is rule one of MEASUREMENT_DISCIPLINE.md, violated repeatedly since writing it. What is missing for
+the micelle question specifically is a SOLVATED planted micelle reference; none exists, so the
+figure cannot be judged at all right now.
+
 ## 2026-08-01k — RETRACTION of 01j's mechanism: uniform force scaling is a time rescaling
 
 01j read the scale 1 -> 4 gain (align 0.082 -> 0.225) as evidence that absolute force scale buys
