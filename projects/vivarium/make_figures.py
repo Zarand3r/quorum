@@ -21,7 +21,17 @@ def frame(e, title, hide_water=False):
     B=e.cfg.pos_bound; sc=(W*0.44)/B; cx=cy=W/2
     ROT,TILT=0.7,0.30
     ca,sa=math.cos(ROT),math.sin(ROT); cb,sb=math.cos(TILT),math.sin(TILT); FOC=4.0*B
-    P=e.X[:,:3]
+    # UNWRAP before projecting. Raw wrapped coordinates render an aggregate that straddles the
+    # periodic boundary as scattered debris, which silently misrepresents the structure -- the same
+    # class of error that corrupted the bond measurements. Reference the largest cluster's first bead.
+    P=e.X[:,:3].copy()
+    if getattr(e, "_mol", None) is not None and e._mol.size:
+        ref = e.X[e._mol[0,0], :3]
+        d = P - ref
+        walls = tuple(getattr(e, "wall_axes", ()) or ())
+        free = np.array([a not in walls for a in range(3)])
+        d[:, free] -= e.L * np.round(d[:, free] / e.L)
+        P = ref + d
     cam=[(ca*p[0]-sa*p[2], -sb*sa*p[0]+cb*p[1]-sb*ca*p[2], cb*sa*p[0]+sb*p[1]+cb*ca*p[2]) for p in P]
     zs=[c[2] for c in cam]; zmin,zmax=min(zs),max(zs); zr=(zmax-zmin) or 1
     def proj(i):

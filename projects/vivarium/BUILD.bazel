@@ -221,6 +221,14 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "inspect_raw",
+    srcs = ["inspect_raw.py"],
+    main = "inspect_raw.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "run_admissible",
     srcs = ["run_admissible.py"],
     main = "run_admissible.py",

@@ -108,11 +108,16 @@ def largest_cluster(e, cutoff=2.2):
     n = len(mol)
     if n == 0:
         return np.zeros(0, dtype=int)
-    cen = mol[:, mol.shape[1] // 2]
-    d = e.X[cen, :e.pd][:, None, :] - e.X[cen, :e.pd][None, :, :]
+    # Connect on ANY bead pair, not the middle bead. In a bilayer the two leaflets meet TAIL to TAIL,
+    # so their tips are ~1 apart while their middle beads are ~5 apart. Clustering on middle beads
+    # therefore split every bilayer into its two leaflets: cluster_frac read 0.50 and
+    # MIN_CLUSTER_FRAC=0.60 DISQUALIFIED a perfect planted bilayer as "fragmented". Verified against
+    # the planted control, which now returns one cluster of 231/231 with two head rows.
+    P = e.X[mol.ravel(), :e.pd].reshape(n, -1, e.pd)
+    d = P[:, None, :, None, :] - P[None, :, None, :, :]
     free = _periodic_axes(e)
     d[..., free] -= e.L * np.round(d[..., free] / e.L)
-    near = np.einsum("ijc,ijc->ij", d, d) < cutoff ** 2
+    near = (np.einsum("ijabc,ijabc->ijab", d, d) < cutoff ** 2).any(axis=(2, 3))
     np.fill_diagonal(near, False)
     seen, best = set(), []
     for s in range(n):

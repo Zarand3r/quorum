@@ -18,6 +18,22 @@ executed, in what order, and which conclusions are currently live.
 
 ## Live methodological rules
 
+-3. "PLANT IT AND CHECK IT READS SUCCESS" IS NOT ENOUGH. A metric that returns success for everything
+   passes that test, and `lamellar` really does read 1.000 on a collapsed droplet. Plant EVERY
+   candidate and require DISCRIMINATION: bilayer vs micelle is separated only by `aspect`, and micelle
+   vs vesicle only by `hollow`, since both are round with heads out. A search ranking on `aspect`
+   alone would discard a vesicle as a droplet -- the very structure being hunted.
+   Also: a test that has never failed is not evidence. Verify each one catches the bug it was written
+   for by reintroducing that bug.
+
+-4. A REFERENCE STRUCTURE MUST FIT ITS BOX, AND THE BOX HAS TWO SEPARATE REQUIREMENTS.
+   * Spanning bilayer: half-width must EXCEED the membrane thickness, or minimum image folds the two
+     leaflets together and a flat bilayer measures as round (measured: aspect 0.98).
+   * Finite structure: unwrapping from a single reference bead needs DIAMETER < L/2, or the far side
+     wraps onto the near side (measured: a hollow vesicle read as filled, hollow 2.6).
+   Lateral spacing is a third, independent constraint: too large a box and the lipids never touch at
+   all ("no aggregate").
+
 -2. A MIXING RULE CANNOT EXPRESS HYDROPHOBICITY. Geometric (Lorentz-Berthelot) mixing pins the cross
    term at eps_ij = sqrt(eps_i * eps_j), and the contrast (eps_ii + eps_jj)/2 - eps_ij is >= 0 by
    AM-GM, LARGEST when one species is weak. So the only demixing available is "oil is sticky": tails
@@ -48,6 +64,44 @@ executed, in what order, and which conclusions are currently live.
    head dispersion were both wrong knobs; head electrostatics was the lever).
 
 ---
+
+## 2026-08-01a — the tools were wrong, and known-answer tests found it
+
+**Question asked: are you judging by screenshots or by the raw tensors, and are the tools correct?**
+Almost entirely by scalars, and no. Images were consulted maybe five times all session and EVERY time
+contradicted the scalar: a "SLAB" that was a droplet, an "aspect 0.189" that was a 23-lipid fragment,
+a "ring" that was a filled blob. Each time I went back to optimising scalars.
+
+**Tool audit.** `make_figures.frame()` rendered RAW WRAPPED coordinates, so several images sent
+earlier could show an aggregate as scattered debris purely from wrapping. `fig_state.py` was correct.
+Orientation arrays had never been inspected directly at all. Fixed the renderer; added
+`inspect_raw.py`, which prints head-position histograms, per-lipid tilt and the leaflet split, and
+validates itself against a planted bilayer.
+
+**Then a real process failure.** `py_test(test_suite)` had been silently DELETED from BUILD.bazel by
+one of my scripted edits at 93b8449. Two "85 tests pass" claims were therefore vacuous: the grep
+matched nothing and I read empty output as success. Restored.
+
+**Bugs the known-answer tests caught, none of which inspection had found:**
+
+1. `largest_cluster` connected molecules by their MIDDLE bead, ~5 apart across a bilayer, so it split
+   every bilayer into leaflets. cluster_frac read 0.50 and MIN_CLUSTER_FRAC=0.60 DISQUALIFIED a
+   perfect bilayer as "fragmented". Many of today's "fragmented" rejections were plausibly membranes.
+   Now connects on any bead pair, since the leaflets meet tail to tail ~1 apart.
+2. The planted bilayer control at bound=5 with 4-bead tails spans 9 of a 10 box: its head layers sat
+   1.0 apart through the wrap. The reference itself was invalid.
+3. A planted VESICLE read as flat (aspect 0.39) and FILLED (hollow 2.6) because its diameter exceeded
+   L/2 and the far side wrapped onto the near side.
+4. A spanning bilayer read as ROUND (aspect 0.98) because the box half-width was under the membrane
+   thickness, so minimum image folded the leaflets together.
+
+**Now in place:** `tests/test_metric_truth.py` and `tests/test_structure_discrimination.py`, 96 tests
+passing, pinning what the metrics MEAN rather than what they currently output. Verified they can fail
+by reintroducing the clustering bug (3 tests tripped) and restoring it.
+
+**Consequence.** No structural conclusion from the preceding day survives: the scalars sat downstream
+of a cluster detector that could not see a bilayer, references that did not fit their boxes, and a
+renderer that did not unwrap.
 
 ## 2026-07-31c — the mixing rule was the blocker; species-pair matrix implemented
 
