@@ -71,6 +71,14 @@ import numpy as np
 BOND_REST = 1.0
 BOND_MAX = 1.25          # beyond this the molecule is deformed and nothing structural is admissible
 DISP_MAX = 0.05          # per-step displacement above which the integrator is overshooting
+MIN_PACKING = 0.70       # median nearest NON-BONDED neighbour distance, as a fraction of contact.
+#   Matter has to occupy space, and nothing else in this file checks that it does. Every other guard
+#   here is blind to interpenetration: `bond_stats` reads INTRAMOLECULAR distances, so 63 molecules
+#   stacked on the same point each report a perfect bond of 1.0; `lamellar` and `align` are computed
+#   from directions, which stay well defined however dense the pile gets. Measured on a collapsed run
+#   that this file called ok=True with lamellar 1.00 and cluster 1.00: 189 beads inside a 2.2-unit
+#   blob, an area 30x smaller than the beads themselves need. A structure has to be admissible as
+#   MATTER before its shape is worth reading.
 MIN_CLUSTER_FRAC = 0.60  # the largest cluster must hold this share of all lipids, or `aspect`
 #   describes a FRAGMENT rather than the system. A search minimising aspect will otherwise win by
 #   shattering the aggregate: 23 lipids out of 120 scored 0.189, beating a planted bilayer's 0.231,
@@ -160,6 +168,32 @@ def bond_stats(e):
     return float(d.mean()), float(d.max()), float((d > BOND_MAX).mean())
 
 
+def packing(e):
+    """Median nearest NON-BONDED neighbour distance, as a fraction of the contact distance.
+
+    Bonded pairs are excluded because a bond legitimately holds beads at BOND_REST, which is inside
+    contact for any sigma above 0.5; including them would report healthy overlap on every chain.
+    Uses the same DERIVED contact distance as `largest_cluster` rather than a chosen constant.
+
+    ~1.0 for a properly packed structure, and it falls toward 0 as an aggregate collapses through
+    itself. Reported as a median so a handful of genuinely close pairs cannot condemn a good
+    structure, and so a collapse (which moves every bead at once) cannot hide in a tail.
+    """
+    sig = getattr(e, "sigma", None)
+    contact = float(2.0 * np.median(sig)) if sig is not None else 1.0
+    n = len(e.X)
+    d = e.X[:, : e.pd][:, None, :] - e.X[:, : e.pd][None, :, :]
+    free = _periodic_axes(e)
+    d[:, :, free] -= e.L * np.round(d[:, :, free] / e.L)
+    dist = np.linalg.norm(d, axis=2)
+    np.fill_diagonal(dist, np.inf)
+    bi, bj = getattr(e, "_bond_i", None), getattr(e, "_bond_j", None)
+    if bi is not None and len(bi):
+        dist[bi, bj] = np.inf
+        dist[bj, bi] = np.inf
+    return float(np.median(dist.min(axis=1)) / contact)
+
+
 def largest_cluster(e, cutoff=None):
     """Molecule indices of the biggest connected aggregate, joined with minimum image.
 
@@ -225,7 +259,8 @@ def measure(e, prev_X=None):
            "disp": 0.0, "ok": True, "why": "", "n_cluster": 0,
            "lamellar": float("nan"), "aspect": float("nan"), "aspect2": float("nan"),
            "cluster_frac": 0.0, "hollow": float("nan"), "edge": float("nan"),
-           "align": float("nan"), "thick_mol": float("nan"), "enclosed": float("nan")}
+           "align": float("nan"), "thick_mol": float("nan"), "enclosed": float("nan"),
+           "packing": float("nan")}
 
     if prev_X is not None:
         d = e.X[:, :e.pd] - prev_X[:, :e.pd]
@@ -233,7 +268,13 @@ def measure(e, prev_X=None):
         d[:, free] -= e.L * np.round(d[:, free] / e.L)
         out["disp"] = float(np.linalg.norm(d, axis=1).max())
 
-    if bfrac > 0.02:
+    out["packing"] = packing(e)
+    if out["packing"] < MIN_PACKING:
+        # FIRST, ahead of every shape metric. A collapsed pile still has well-defined bond lengths and
+        # well-defined directions, so it scores as a flawless membrane on everything else here.
+        out["ok"], out["why"] = False, (f"collapsed (nearest non-bonded neighbour at "
+                                        f"{out['packing']:.2f} of contact)")
+    elif bfrac > 0.02:
         out["ok"], out["why"] = False, f"molecule deformed (bond mean {bmean:.2f}, {bfrac:.0%} > {BOND_MAX})"
     elif out["disp"] > DISP_MAX:
         out["ok"], out["why"] = False, f"integrator overshooting ({out['disp']:.3f}/step)"

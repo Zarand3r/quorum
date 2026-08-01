@@ -1,19 +1,30 @@
-"""The damage is a TAIL, not bulk pressure: a saturating bond has a bounded max force, so once
-steric push exceeds it the bond stretches freely. Raise that ceiling (k_bond) while holding the
-integrator stability product speed*k_bond fixed, so the earlier blow-up cannot recur.
+"""Calibrate the packing guard against planted references BEFORE trusting it.
+A threshold that rejects a known-good bilayer is worse than no threshold at all.
 """
-from bicelle2d import build
-from harness import bond_stats, measure
+from harness import measure
+from bicelle2d import build as build2d
+from bilayer3d import build as build3d
 
-print(f"  {'k_bond':>7}{'speed':>9}{'prod':>7}{'bond':>7}{'max':>7}{'frac>1.25':>11}{'align':>8}", flush=True)
-for kb, sp in ((20, 0.0006), (60, 0.0002), (120, 0.0001), (240, 0.00005)):
-    e = build(0, n_lip=63, bound=11.0, kt=0.02, speed=sp, repel=6.0, k_bond=float(kb),
-              satt=0.30, n_tail=2, attract=2.0, bond_span=2.0, polarity=0.0, head_q=0.0,
-              hydrophobic=0.6, n_water=250, plant="clump")
-    # hold total integrated time fixed: fewer steps at larger k means less physical time,
-    # so scale step count by 1/speed to compare structures at the same point in their evolution.
-    for _ in range(int(8000 * 0.0006 / sp)):
+print(f"  {'structure':<34}{'packing':>9}{'ok':>7}   why", flush=True)
+cases = [
+    ("2-D planted ribbon, t=0", lambda: build2d(0, n_lip=63, bound=11.0, kt=0.02, speed=0.0002,
+        repel=6.0, k_bond=60.0, satt=0.30, n_tail=2, attract=2.0, bond_span=2.0, polarity=0.0,
+        head_q=0.0, hydrophobic=0.6, n_water=250, plant="ribbon"), 0),
+    ("2-D planted ribbon, relaxed", lambda: build2d(0, n_lip=63, bound=11.0, kt=0.02, speed=0.0002,
+        repel=6.0, k_bond=60.0, satt=0.30, n_tail=2, attract=2.0, bond_span=2.0, polarity=0.0,
+        head_q=0.0, hydrophobic=0.6, n_water=250, plant="ribbon"), 6000),
+    ("3-D planted bilayer, t=0", lambda: build3d(seed=1, n_lip=48, bound=3.4, kt=0.02, speed=0.08,
+        repel=12.0, k_bond=8.0, satt=0.55, spol=0.90, plant=True), 0),
+    ("2-D collapsed run (repel 6)", lambda: build2d(0, n_lip=63, bound=11.0, kt=0.02, speed=0.0002,
+        repel=6.0, k_bond=60.0, satt=0.30, n_tail=2, attract=2.0, bond_span=2.0, polarity=0.0,
+        head_q=0.0, hydrophobic=0.6, n_water=250, plant="clump"), 60000),
+    ("2-D repel 12 (pre-softening)", lambda: build2d(0, n_lip=63, bound=11.0, kt=0.02, speed=0.0002,
+        repel=12.0, k_bond=60.0, satt=0.30, n_tail=2, attract=2.0, bond_span=2.0, polarity=0.0,
+        head_q=0.0, hydrophobic=0.6, n_water=250, plant="clump"), 60000),
+]
+for name, mk, steps in cases:
+    e = mk()
+    for _ in range(steps):
         e.step()
-    mean, mx, frac = bond_stats(e)
     m = measure(e)
-    print(f"  {kb:>7}{sp:>9.5f}{kb*sp:>7.3f}{mean:>7.3f}{mx:>7.2f}{frac:>11.2f}{m['align']:>8.3f}", flush=True)
+    print(f"  {name:<34}{m['packing']:>9.3f}{str(m['ok']):>7}   {m['why']}", flush=True)

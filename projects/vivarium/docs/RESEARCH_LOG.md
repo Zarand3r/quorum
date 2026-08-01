@@ -99,6 +99,43 @@ cluster detector split bilayers and merged micelles, and the test target had bee
 
 ---
 
+## 2026-08-01g — RETRACTION of 2026-08-01f's structural claim, and defect #16: nothing checked that matter occupies space
+
+The k_bond finding in 2026-08-01f stands: raising the force ceiling while holding speed * k_bond
+fixed does keep bonds intact, and that mechanism is real. **The structural claim built on it does
+not.** Calling that run "the first admissible ordered structure" was wrong, and the render is what
+caught it.
+
+    lipid beads       189
+    raw extent x/y    2.18 x 2.33      -> area ~5
+    area needed       148              -> 30x over-packed
+
+189 beads inside a 2.2-unit blob. The aggregate had collapsed THROUGH ITSELF, and measure() returned
+ok=True, lamellar 1.00, cluster_frac 1.00, align 0.53 on it.
+
+**Defect #16, and the worst class so far: the harness had no excluded-volume check at all.** Every
+existing guard is structurally blind to interpenetration.
+
+    bond_stats   reads INTRAMOLECULAR distances, so 63 molecules stacked on one point each
+                 report a flawless bond of 1.0
+    lamellar     computed from DIRECTIONS, which stay well defined at any density
+    align        same
+    cluster_frac a collapsed pile is maximally connected, so this reads 1.00 -- its BEST value
+
+So "zero deformed bonds" was true and irrelevant. Lowering repel 12 -> 6 is what let attraction win;
+the repel 3 row was very likely the same collapse, which is exactly why its bonds read COMPRESSED
+(0.943) rather than stretched. That number was visible at the time and I read it as a curiosity
+instead of as the signature it was.
+
+Fix: `packing(e)` -- median nearest NON-BONDED neighbour distance over the derived contact distance,
+gated at MIN_PACKING and checked BEFORE every shape metric, since a collapsed pile scores perfectly
+on all of them. Bonded pairs are excluded because a bond legitimately sits inside contact.
+
+The methodological lesson, which is the same one this project keeps paying for: a metric suite
+assembled by fixing defects one at a time only ever guards the failures it has already seen. Fifteen
+defects in, nothing had asked whether the configuration was admissible as MATTER before asking what
+SHAPE it was. Physical admissibility is a precondition, not another metric alongside the rest.
+
 ## 2026-08-01f — SOLVED: a saturating bond needs a higher force ceiling, not a stiffer spring
 
 First admissible ordered structure with explicit water in this project.
