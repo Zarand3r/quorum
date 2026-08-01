@@ -99,6 +99,35 @@ cluster detector split bilayers and merged micelles, and the test target had bee
 
 ---
 
+## 2026-08-01f — SOLVED: a saturating bond needs a higher force ceiling, not a stiffer spring
+
+First admissible ordered structure with explicit water in this project.
+
+    k_bond   speed    product   bond    max   frac>1.25   align
+        20  0.0006      0.012  1.019   1.38        0.06   0.537
+        60  0.0002      0.012  1.008   1.15        0.00   0.458
+
+The damage was never bulk pressure. At repel 6 the MEAN bond (1.019) was better than the no-water
+baseline (1.027) while order was fully retained, and at repel 3 the mean fell to 0.943 -- most bonds
+COMPRESSED -- yet 13% still exceeded 1.25. That is bimodal: soft cores let a bead thread through a
+neighbouring molecule and drag its bond long behind it. The failure is a TAIL, not a squeeze.
+
+A tail is exactly what a SATURATING force produces. The transformer-only constraint means the bond is
+an attention kernel with a bounded maximum force; once steric push exceeds that bound the bond
+stretches freely and nothing pulls it back. Raising k_bond earlier appeared to make things worse only
+because it broke the integrator -- displacement per step is speed * k_bond / (1 - momentum), and
+k_bond = 100 at unchanged speed blew through the 0.05 stability limit. Raising the ceiling WHILE
+holding the product fixed was never tested until now.
+
+    k_bond 60, speed 0.0002, repel 6, water 250   ->   frac>1.25 = 0.00, align 0.458
+
+Zero deformed bonds, max bond 1.15 (against 1.05 for a relaxed planted bilayer and a 1.25 gate), with
+lamellar order retained. The no-water baseline scores align 0.042, i.e. random, so the order is real
+and solvent-driven.
+
+Working parameter set for the vesicle attempt: k_bond 60, speed 0.0002, repel 6, bond_span 2.0,
+n_water 250, hydrophobic 0.6. Step counts must scale as 1/speed to reach the same physical time.
+
 ## 2026-08-01e — water is BOTH the source of lamellar order and the cause of bond damage
 
 **Isolated by elimination**, after the bond threshold was first calibrated against a known-good
