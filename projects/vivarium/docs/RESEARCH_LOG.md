@@ -99,6 +99,40 @@ cluster detector split bilayers and merged micelles, and the test target had bee
 
 ---
 
+## 2026-08-01i — the micelles were collapses. Every structural result in the 2-D line is void
+
+Re-ran the repel sweep under the packing guard, because every earlier row was scored by a harness
+that could not see collapse.
+
+    repel   packing   bond    bad   align   cluster   verdict
+        3      0.09  0.980   0.00   0.691      0.70   collapsed
+        6      0.12  1.008   0.00   0.458      1.00   collapsed
+       12      0.15  1.028   0.00   0.635      1.00   collapsed
+       24      0.45  1.012   0.00   0.045      0.98   collapsed
+       48      0.82  1.019   0.00   0.108      0.98   OK
+
+**repel 12 is the setting every earlier 2-D run used, and it sits at 0.15 of contact -- sevenfold
+interpenetration.** The micelles seen in screenshots, orange tail core with blue heads, were collapsed
+piles. A collapse and a micelle are indistinguishable from OUTSIDE; the difference is interior
+density, which nothing measured. Rendering at TRUE bead radius (sigma) rather than a cosmetic marker
+size makes it obvious at a glance: 189 beads of diameter 1.0 inside a span of 3.9, fused into a solid
+disc.
+
+**Note the anticorrelation.** Every high-`align` row is collapsed and the one admissible row has
+almost no order. `align` was tracking COLLAPSE, not lipid organisation -- denser piles score higher.
+So the apparent progress across this whole line of work was an artifact, and the ranking it induced
+actively drove the search toward collapse.
+
+What survives at repel 48, the first sterically valid aggregate here: tails segregate from solvent
+and heads sit at the interface, so hydrophobic aggregation is REAL. But span 23.3 exceeds the box
+width of 22 with cluster_frac 0.98, i.e. an amorphous PERCOLATING network rather than a finite
+aggregate. No micelle, no bilayer, no vesicle.
+
+Two things follow for the parameters. Excluded volume has to be far stronger than anything used so
+far -- repel 48, not 12. And attraction was tuned against collapsed runs, so `attract` 2.0 against
+repel 48 is a different balance entirely and has to be re-tuned from scratch, now against a guard
+that cannot be gamed by piling up.
+
 ## 2026-08-01h — the packing guard immediately condemned the reference structures it was added to check
 
 `packing` was added to catch a collapsed RUN. Turned on the planted references, it rejected most of
