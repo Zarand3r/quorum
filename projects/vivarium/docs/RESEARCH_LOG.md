@@ -99,6 +99,35 @@ cluster detector split bilayers and merged micelles, and the test target had bee
 
 ---
 
+## 2026-08-01k — RETRACTION of 01j's mechanism: uniform force scaling is a time rescaling
+
+01j read the scale 1 -> 4 gain (align 0.082 -> 0.225) as evidence that absolute force scale buys
+order. Scaling further with k_bond scaled to match kills that reading:
+
+    scale  repel  attr  k_bond   pack   bad   align
+        4    192     8     240   0.78  0.00   0.111
+       16    768    32     960   0.76  0.00   0.116
+
+Fixing the bond ceiling worked -- scale 16 is fully valid now, zero bad bonds. But a further 4x in
+every force moves align by 0.005. Order PLATEAUS.
+
+Dimensionally it had to. Scaling every force by s while scaling the timestep by 1/s is a rescaling of
+TIME; the trajectory is unchanged. The only quantity that genuinely moves is force relative to kT,
+i.e. effective temperature, and lowering it does not order the system -- it freezes it into a
+disordered glass.
+
+So the 01j gain was NOT from absolute scale. It was from k_bond staying at 60 while the other forces
+went to 192, i.e. a SOFT bond relative to its surroundings. Stiffening it to 240 at the same scale
+halved the order, 0.225 -> 0.111. Flexibility is what lets lipids rearrange into a lamellar packing;
+force magnitude is not.
+
+    scale 4, k_bond  60   align 0.225   bad 0.01   <- best valid config so far
+    scale 4, k_bond 240   align 0.111   bad 0.00
+
+That reframes the problem as KINETIC rather than energetic. The forces are strong enough; the system
+cannot explore its way to the ordered state. Which makes temperature and bond flexibility the knobs
+worth sweeping, not force magnitude.
+
 ## 2026-08-01j — order CAN be bought without collapse: scale both forces at fixed ratio
 
 The first increase in order in this project that is not an artifact of collapse.
