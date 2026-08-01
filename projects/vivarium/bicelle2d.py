@@ -36,7 +36,7 @@ from polar_pack import BOND_REST, PolarPackEngine
 
 
 def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, plant=False, n_tail=2,
-          n_water=0, polarity=0.0, head_q=0.0,
+          n_water=0, polarity=0.0, head_q=0.0, water_dipole=0.8, spol=0.90,
           head_sigma=1.0, attract=0.30, bond_span=6.0, aniso=0.0, walls=False, span_frac=1.0, sharp=0.0, branched=False):
     nb = 1 + n_tail
     n_tok = nb * n_lip + max(0, n_water)
@@ -48,7 +48,7 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, plant=False, n_tai
     wf = 0.0 if n_water <= 0 else n_water / n_tok
     e = PolarPackEngine(cfg, seed, water_frac=wf, chain_frac=1.0 - wf, repel=repel,
                         attract=attract, polarity=polarity, cohesion=0.0, skew=0.0,
-                        morph=0.70, momentum=0.30,
+                        morph=0.70, momentum=0.30, water_dipole=water_dipole,
                         speed=speed, k_bond=k_bond, head_q=head_q, n_tail=n_tail, rad_head=0.0,
                         aniso=aniso, bond_span=bond_span, head_sigma=head_sigma,
                         branched=branched)
@@ -57,7 +57,7 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, plant=False, n_tai
     # sink_polarity must stay non-zero even though polarity=0 disables the head, because
     # min_image_margin() takes the max over ALL sink ranges and exp(-0*d^2)=1 would report a bogus
     # margin of 1.0 (the gate is <0.01) for a head that is not even active.
-    e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, satt, 0.90
+    e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, satt, spol
     e.repel_contact, e.rigidity, e.selectivity, e.temperature = 1.0, 0.0, 0.30, kt
     e.langevin = True
     e.wall_axes = (1,) if walls else ()
@@ -195,6 +195,13 @@ def main(argv=None):
     p.add_argument("--water", type=int, default=0,
                    help="explicit solvent tokens. gamma (line tension) comes from tail-water contact, and gamma=0 makes R_crit infinite, so closure is impossible without it.")
     p.add_argument("--headq", type=float, default=0.0)
+    p.add_argument("--waterdipole", type=float, default=0.8,
+                   help="WATER SELF-ATTRACTION, the hydrogen-bond analogue. This is the actual driver of "
+                        "the hydrophobic effect: water cages a tail because it would rather bond to other "
+                        "water. Our water has dispersion eps 0.09 against tail-tail 0.99, i.e. nearly an "
+                        "ideal gas, so solvating a tail costs almost nothing and the aggregate never "
+                        "develops a dry core.")
+    p.add_argument("--spol", type=float, default=0.90, help="range of the electrostatic head")
     p.add_argument("--polarity", type=float, default=0.0)
     p.add_argument("--branched", action="store_true",
                    help="TWO tails branching from one head, as in a real phospholipid. A linear "
@@ -231,7 +238,7 @@ def main(argv=None):
               k_bond=a.kbond, satt=a.satt, n_tail=a.tails, head_sigma=a.headsigma,
               attract=a.attract, bond_span=a.span, walls=a.walls, span_frac=a.spanfrac,
               sharp=a.sharp, branched=a.branched, n_water=a.water, polarity=a.polarity,
-              head_q=a.headq)
+              head_q=a.headq, water_dipole=a.waterdipole, spol=a.spol)
     pl = build(a.seed, plant="ribbon", **kw)
     rn = build(a.seed + 99, plant=False, **kw)
     lp, ap, tp = metrics(pl)

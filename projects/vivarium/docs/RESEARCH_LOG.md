@@ -41,6 +41,44 @@ executed, in what order, and which conclusions are currently live.
 
 ---
 
+## 2026-07-31b — auditing against the physics: our water is nearly an ideal gas
+
+**Prompted by "are we overcomplicating or on the wrong path".** Yes, on both counts, and the audit is
+worth recording because it caught a first-principles error a nine-parameter search could not.
+
+**The stage-1 driver is water preferring ITSELF.** Water cannot hydrogen-bond to a tail, so it cages
+it, and aggregation releases that structured water for a favourable entropy change. The hydrophobic
+effect is therefore powered by water-water attraction. Ours:
+
+    tail-tail    eps 0.994
+    tail-water   eps 0.299
+    water-water  eps 0.090      <- the hydrogen-bond analogue
+
+Our water is nearly an ideal gas. Solvating a tail costs almost nothing, so there is barely a
+hydrophobic effect to collapse the aggregate -- exactly what `edge` = 1.00 (wet cores) had been
+reporting for hours while I searched packing parameters instead.
+
+**One axis, from the physics, beat nine chosen by me.** Sweeping water self-attraction:
+
+    water_dipole   lamellar   aspect   verdict
+      0.8            0.967     0.815   partial
+      2.5            0.933     0.307   RIBBON (2-D bicelle)   <- first unbiased ribbon verdict
+      5.0            0.900     0.438   partial
+      9.0            0.967     0.476   partial
+
+Water self-attraction is the FLATNESS lever, and 2.5 is a clear optimum.
+
+**Why `edge` stays at 1.00 is geometric, not thermodynamic.** At tails=4 the membrane measures
+thick = 2.61, so tips sit ~1.3 from each face, inside the 1.2 water-contact range: they physically
+cannot be dry. Lengthening the arms thickens it (thick 4.7-6.4) but ORDERING DEGRADES
+(lamellar 0.93 -> 0.70) and edge stays 1.00, which means water crosses through defects rather than
+the sheet being too thin.
+
+**Standing correction to method.** A nine-dimensional random search over parameters was the wrong
+instrument for a question the physics answers directly. The 60-config and 120-config searches produced
+one usable number between them; a four-point sweep chosen from the stage-1 mechanism produced the
+first ribbon.
+
 ## 2026-07-31a — explicit water restored; cohesion sets a real flat-vs-dry trade-off
 
 **Why solvent-free was fatal, not merely expensive.** The literature pathway is
