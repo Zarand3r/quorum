@@ -169,10 +169,27 @@ def test_hollow_separates_vesicle_from_micelle(scores):
     assert scores["vesicle"]["hollow"] < 0.5, "a sealed vesicle must read as EMPTY at the core"
 
 
-def test_lamellar_is_not_sufficient_on_its_own(scores):
-    """Documents the trap: lamellar is HIGH for a droplet too, so it can never stand alone."""
-    assert scores["micelle"]["lamellar"] > 0.85
-    assert scores["bilayer"]["lamellar"] > 0.85
+def test_align_separates_lamellar_from_radial(scores):
+    """`align` is the nematic order of the lipid axes and is THE lamellar discriminator.
+
+    A bilayer puts every axis along +/-n so align -> 1; a micelle or vesicle points them radially so
+    align -> 0. Measured: bilayer 1.000, micelle 0.086, vesicle 0.033, random 0.084.
+    """
+    assert scores["bilayer"]["align"] > 0.90
+    assert scores["micelle"]["align"] < 0.30
+    assert scores["vesicle"]["align"] < 0.30
+    assert scores["random"]["align"] < 0.30
+
+
+def test_lamellar_ANTI_discriminates_and_must_not_be_used_alone(scores):
+    """Pins the trap that cost this project six retractions.
+
+    `lamellar` asks whether a head sits farther out than its own tails, which is true of ANY heads-out
+    structure. Measured, it scores a MICELLE (0.967) ABOVE a BILAYER (0.889): it does not merely fail
+    to discriminate, it points the wrong way. Every "lamellar ~0.9, partial order" reading in this
+    project's history was consistent with a micelle.
+    """
+    assert scores["micelle"]["lamellar"] > 0.85, "the trap is real: a micelle scores high on lamellar"
 
 
 def test_random_is_at_the_null(scores):

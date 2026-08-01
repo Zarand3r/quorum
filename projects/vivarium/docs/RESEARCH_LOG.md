@@ -18,6 +18,16 @@ executed, in what order, and which conclusions are currently live.
 
 ## Live methodological rules
 
+-5. `lamellar` ANTI-DISCRIMINATES and must never be read alone. It asks whether a head sits farther
+   out than its own tails, which is true of ANY heads-out structure, and it scores a MICELLE (0.967)
+   ABOVE a BILAYER (0.889). Use `align`, the nematic order of the lipid axes: bilayer 1.00, micelle
+   0.09, vesicle 0.03, random 0.08. Together they CLASSIFY:
+       lamellar high + align LOW  -> micelle (radial order)
+       lamellar high + align HIGH -> bilayer (lamellar order)
+       lamellar low               -> disordered
+   Every "lamellar 0.8-0.97, partial order" claim in this project's history is consistent with a
+   micelle, i.e. was evidence AGAINST a membrane.
+
 -3. "PLANT IT AND CHECK IT READS SUCCESS" IS NOT ENOUGH. A metric that returns success for everything
    passes that test, and `lamellar` really does read 1.000 on a collapsed droplet. Plant EVERY
    candidate and require DISCRIMINATION: bilayer vs micelle is separated only by `aspect`, and micelle
@@ -64,6 +74,45 @@ executed, in what order, and which conclusions are currently live.
    head dispersion were both wrong knobs; head electrostatics was the lever).
 
 ---
+
+## 2026-08-01b — adversarial tool audit: three more bugs, and the discriminator we never had
+
+**Asked to deep dive for remaining tooling bugs.** Attacked each tool with cases it had never seen.
+All three attacks succeeded.
+
+    A  unwrap() on a structure wider than L/2   true span 8.0 -> reported 9.79      BROKEN
+    B  lamellar on a planted SPHERE             0.967, with near-degenerate          BROKEN
+                                                eigenvalues so the "thin axis"
+                                                is arbitrary noise
+    C  aspect on the SAME membrane, two boxes   0.245 at bound=6, 0.109 at bound=9   MEASURES THE BOX
+
+C invalidates every cross-box `aspect` comparison in this project. B explains why `lamellar` read 1.0
+on droplets: it was never measuring lamellar order.
+
+**Fixes.**
+* `unwrap` now walks the molecule graph by BFS, unwrapping each molecule against an ALREADY-UNWRAPPED
+  neighbour, which has no size limit. Note a genuine limitation recorded honestly: for a structure
+  that PERCOLATES the periodic box, unwrapping is mathematically ill-defined and BFS unrolls it
+  arbitrarily.
+* `align`: nematic order S of the lipid axes, computed from INTRAMOLECULAR minimum-image vectors so
+  it needs no unwrapping and is valid for spanning and finite structures alike. This is the
+  discriminator the project never had.
+
+      structure   align    lamellar   hollow
+      bilayer     1.000    0.889      n/a (guarded)
+      micelle     0.086    0.967      14.56
+      vesicle     0.033    0.489       0.00
+      random      0.084    0.477       5.21
+
+* `thick_mol`: thickness along the director in molecule lengths, independent of the box.
+* `hollow` guarded to roughly spherical aggregates only -- core-vs-shell is a radial decomposition and
+  read 22.27 on a planted slab, which is meaningless.
+* The RENDERER now unwraps through the same BFS, so an image can no longer show a coherent aggregate
+  as scattered debris.
+
+**Re-examination with the corrected instruments.** Planted bilayer align 0.994; self-assembled
+solvent-free align 0.084, i.e. the random value. NO PRIOR STRUCTURAL CLAIM SURVIVES. What stands is
+that vivarium HOLDS a planted membrane; it does not FORM one.
 
 ## 2026-08-01a — the tools were wrong, and known-answer tests found it
 

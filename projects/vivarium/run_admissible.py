@@ -44,8 +44,8 @@ def main(argv=None):
               wall_axes=(2,) if a.slit else ())
     for tag, pl in (("planted", True), ("random ", False)):
         m = measure(build(seed=a.seed, plant=pl, **kw))
-        print(f"  CONTROL {tag}: lamellar={m['lamellar']:.3f} aspect={m['aspect']:.3f} "
-              f"bond={m['bond_mean']:.2f}")
+        print(f"  CONTROL {tag}: align={m['align']:.3f} hollow={m['hollow']:.2f} "
+              f"lamellar={m['lamellar']:.3f} bond={m['bond_mean']:.2f}")
     e = build(seed=a.seed, plant=a.plant, **kw)
     print(f"  N={e.cfg.N} lipids={len(e._mol)} tails={a.tails} box={2*a.bound:.0f} "
           f"{'SLIT' if a.slit else 'periodic'} {'PLANTED' if a.plant else 'DISORDERED'}")

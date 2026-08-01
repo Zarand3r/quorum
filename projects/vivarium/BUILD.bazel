@@ -189,6 +189,14 @@ py_binary(
 )
 
 py_binary(
+    name = "_chk2",
+    srcs = ["_chk.py"],
+    main = "_chk.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_chk",
     srcs = ["_chk.py"],
     main = "_chk.py",

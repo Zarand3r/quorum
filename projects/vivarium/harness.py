@@ -36,7 +36,18 @@ statistic, which is how three micelle claims survived for a day.
               A flat patch and a sealed vesicle are both "ordered", so without this the pathway is
               invisible: the whole thermodynamic story is edge energy being traded for bending energy,
               and edge length is the quantity actually being traded.
-    hollow    tail density at the CORE divided by tail density in the shell. A VESICLE is closed, so
+    align     nematic order S of the lipid axes: S = (3<(u.n)^2> - 1)/2 against the director n.
+              A BILAYER puts every lipid along +/-n, so S -> 1. A MICELLE or VESICLE points its lipids
+              radially in all directions, so S -> 0. This is the metric that actually separates
+              lamellar from radial order, and `lamellar` never did: on a planted sphere `lamellar`
+              reads 0.967, because "head farther out than its own tails" is true of any heads-out
+              structure, and the sphere's covariance eigenvalues are near-degenerate so its "thin
+              axis" is arbitrary noise.
+    hollow    tail density at the CORE divided by tail density in the shell. ONLY DEFINED FOR A
+              ROUGHLY SPHERICAL aggregate: "core versus shell" is a radial decomposition, so on a slab
+              it is nonsense (a planted bilayer scored 22.27). Returns NaN unless the shape is round,
+              which is exactly the regime where it is needed -- separating a filled micelle from a
+              sealed vesicle, the one pair `align` and `lamellar` cannot tell apart. A VESICLE is closed, so
               its centre is empty and this goes to ~0; a filled droplet keeps tails all the way in and
               it stays near 1. This is the one structure `aspect` is blind to: a vesicle is spherical,
               so aspect ~1 and lamellar high -- exactly a droplet's signature. Searching on aspect
@@ -72,12 +83,54 @@ def delta(e, a, b):
 
 
 def unwrap(e, idx, ref=None):
-    """Positions of `idx` made contiguous around `ref`, so covariance and midplane are meaningful."""
-    ref = idx[0] if ref is None else ref
-    d = e.X[idx, :e.pd] - e.X[ref, :e.pd]
+    """Positions of `idx` made contiguous, by BFS over the molecule graph.
+
+    Unwrapping every bead against ONE reference is only valid when the whole structure lies within
+    L/2 of it. A real aggregate is routinely wider than that, and the far side then folds onto the
+    near side: measured directly, a rod of true span 8.0 in a box of 10 reported 9.79, a hollow
+    vesicle read as filled, and a flat bilayer read as round. Walking the connectivity graph and
+    unwrapping each molecule against an ALREADY-UNWRAPPED neighbour has no size limit.
+    """
+    idx = np.asarray(idx)
+    mol = e._mol
     free = _periodic_axes(e)
-    d[:, free] -= e.L * np.round(d[:, free] / e.L)
-    return e.X[ref, :e.pd] + d
+    if mol.size == 0:
+        return e.X[idx, :e.pd].copy()
+    nb = mol.shape[1]
+    # which molecule each requested bead belongs to
+    owner = np.full(e.cfg.N, -1, dtype=int)
+    owner[mol.ravel()] = np.repeat(np.arange(len(mol)), nb)
+
+    cen = e.X[mol[:, nb // 2], :e.pd]
+    d = cen[:, None, :] - cen[None, :, :]
+    d[..., free] -= e.L * np.round(d[..., free] / e.L)
+    near = np.einsum("ijc,ijc->ij", d, d) < (2.6 * BOND_REST) ** 2
+    np.fill_diagonal(near, False)
+
+    start = owner[idx[0]] if owner[idx[0]] >= 0 else 0
+    shift = np.zeros((len(mol), e.pd))
+    seen = np.zeros(len(mol), dtype=bool)
+    seen[start] = True
+    stack = [start]
+    while stack:
+        a = stack.pop()
+        for b in np.where(near[a] & ~seen)[0]:
+            dd = cen[b] - (cen[a] + shift[a])
+            dd[free] -= e.L * np.round(dd[free] / e.L)
+            shift[b] = cen[a] + shift[a] + dd - cen[b]
+            seen[b] = True
+            stack.append(b)
+    # anything not reached by the graph falls back to a single-reference shift
+    if not seen.all():
+        dd = cen[~seen] - cen[start]
+        dd[:, free] -= e.L * np.round(dd[:, free] / e.L)
+        shift[~seen] = cen[start] + dd - cen[~seen]
+
+    out = e.X[idx, :e.pd].copy()
+    own = owner[idx]
+    ok = own >= 0
+    out[ok] += shift[own[ok]]
+    return out
 
 
 def bond_stats(e):
@@ -148,7 +201,8 @@ def measure(e, prev_X=None):
     out = {"bond_mean": bmean, "bond_max": bmax, "bond_frac": bfrac,
            "disp": 0.0, "ok": True, "why": "", "n_cluster": 0,
            "lamellar": float("nan"), "aspect": float("nan"), "aspect2": float("nan"),
-           "cluster_frac": 0.0, "hollow": float("nan"), "edge": float("nan")}
+           "cluster_frac": 0.0, "hollow": float("nan"), "edge": float("nan"),
+           "align": float("nan"), "thick_mol": float("nan")}
 
     if prev_X is not None:
         d = e.X[:, :e.pd] - prev_X[:, :e.pd]
@@ -193,11 +247,35 @@ def measure(e, prev_X=None):
     nb = idx.shape[1]
     Pm = P.reshape(len(comp), nb, e.pd)
 
-    # hollowness: tail density in the inner third of the aggregate against the outer shell
+    # nematic order of the lipid axes: 1 for a bilayer, 0 for a radial (micelle/vesicle) structure.
+    # Computed from INTRAMOLECULAR vectors via minimum image, never from unwrapped positions: a
+    # molecule is always smaller than L/2 so this is exact, whereas unwrapping is ill-defined for a
+    # structure that PERCOLATES the box (BFS unrolls it arbitrarily). That makes `align` the one
+    # orientational metric that is valid for spanning and finite structures alike.
+    u = np.zeros((len(comp), e.pd))
+    for k in range(1, nb):
+        u += -delta(e, idx[:, 0], idx[:, k])
+    u /= max(nb - 1, 1)
+    u /= np.maximum(np.linalg.norm(u, axis=1, keepdims=True), 1e-9)
+    Q = np.einsum("ia,ib->ab", u, u) / len(u)
+    lam_max = float(np.linalg.eigvalsh(Q)[-1])
+    out["align"] = float((e.pd * lam_max - 1.0) / (e.pd - 1.0))
+
+    # thickness along the director, in molecule lengths. Unlike `aspect` this does not depend on the
+    # BOX: the same membrane measured aspect 0.245 at bound=6 and 0.109 at bound=9, because a spanning
+    # structure inherits its lateral extent from the container.
+    nrm = np.linalg.eigh(Q)[1][:, -1]
+    proj = (P - P.mean(0)) @ nrm
+    mol_len = max(nb - 1, 1) * BOND_REST
+    out["thick_mol"] = float((np.percentile(proj, 97) - np.percentile(proj, 3)) / (2 * mol_len))
+
+    # hollowness, guarded: radial core-vs-shell is only meaningful for a round aggregate. On a slab
+    # the "core" is a disc through the membrane and the ratio means nothing.
+    round_enough = out["aspect"] > 0.55
     cen = P.mean(0)
     rt = np.linalg.norm(Pm[:, 1:].reshape(-1, e.pd) - cen, axis=1)
     R = np.percentile(rt, 95)
-    if R > 1e-9:
+    if R > 1e-9 and round_enough:
         core = float((rt < 0.35 * R).sum())
         shell = float(((rt >= 0.35 * R) & (rt < R)).sum())
         v_core = (0.35 * R) ** e.pd

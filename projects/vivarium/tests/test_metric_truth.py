@@ -88,7 +88,7 @@ def test_bilayer_scores_as_flat_and_ordered():
     _place_bilayer(e)
     m = measure(e)
     assert m["ok"], f"a perfect bilayer was disqualified: {m['why']}"
-    assert m["lamellar"] > 0.95, f"lamellar={m['lamellar']:.3f} on a perfect bilayer"
+    assert m["align"] > 0.90, f"align={m['align']:.3f} on a perfect bilayer (axes must share a normal)"
     assert m["aspect"] < 0.45, f"aspect={m['aspect']:.3f} on a perfect bilayer (should be thin)"
     assert m["cluster_frac"] > 0.95, f"cluster_frac={m['cluster_frac']:.2f}"
 

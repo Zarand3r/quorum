@@ -24,14 +24,14 @@ def frame(e, title, hide_water=False):
     # UNWRAP before projecting. Raw wrapped coordinates render an aggregate that straddles the
     # periodic boundary as scattered debris, which silently misrepresents the structure -- the same
     # class of error that corrupted the bond measurements. Reference the largest cluster's first bead.
+    # Unwrap through the harness (BFS over the molecule graph). A single-reference unwrap only works
+    # when the whole structure is within L/2 of the reference, so on a real aggregate the far side
+    # folded onto the near side and the image showed scattered debris that was actually coherent.
     P=e.X[:,:3].copy()
     if getattr(e, "_mol", None) is not None and e._mol.size:
-        ref = e.X[e._mol[0,0], :3]
-        d = P - ref
-        walls = tuple(getattr(e, "wall_axes", ()) or ())
-        free = np.array([a not in walls for a in range(3)])
-        d[:, free] -= e.L * np.round(d[:, free] / e.L)
-        P = ref + d
+        from harness import unwrap as _unwrap
+        idx = np.arange(len(P))
+        P = _unwrap(e, idx)[:, :3]
     cam=[(ca*p[0]-sa*p[2], -sb*sa*p[0]+cb*p[1]-sb*ca*p[2], cb*sa*p[0]+sb*p[1]+cb*ca*p[2]) for p in P]
     zs=[c[2] for c in cam]; zmin,zmax=min(zs),max(zs); zr=(zmax-zmin) or 1
     def proj(i):
