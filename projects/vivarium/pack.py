@@ -82,6 +82,9 @@ class PackEngine:
         self.sigma = None       # per-token STERIC radius (N,). None → every token is
         #   repel_contact/2. Distinct from the `rad` channel, which is a dispersion well depth.
         self.vdw_scale = 0.25   # saturation scale of the per-token dispersion well depth
+        self.eps_pair = None    # (n_species, n_species) well depths. None -> geometric mixing, which
+        #   cannot produce hydrophobicity (see the attract head). Set it to give water strong
+        #   SELF-attraction and weak coupling to tails, the combination a mixing rule forbids.
         self.stiff = None
         self.c_rest = None
         self.rigidity = 0.0     # ELASTIC STIFFNESS: restoring pull of the contour toward its ROUND rest
@@ -359,7 +362,26 @@ class PackEngine:
             # like-like interactions are unchanged, only the cross term is corrected (and it moves
             # in the hydrophobic direction).
             eps = np.tanh(rad * rad / self.vdw_scale)
-            g = np.sqrt(eps[:, None] * eps[None, :]) * np.exp(-self.sink_attract * d2)
+            if self.eps_pair is None:
+                g = np.sqrt(eps[:, None] * eps[None, :]) * np.exp(-self.sink_attract * d2)
+            else:
+                # SPECIES-PAIR INTERACTION MATRIX instead of a mixing rule.
+                #
+                # Geometric (Lorentz-Berthelot) mixing CANNOT express hydrophobicity. The contrast
+                # (eps_ii + eps_jj)/2 - sqrt(eps_ii * eps_jj) is >= 0 by AM-GM and is LARGEST when one
+                # species is weak, so the only demixing it offers is "oil is sticky" -- tails clump
+                # while water, having little self-attraction, freely permeates them. The real
+                # hydrophobic effect is the opposite: water coheres strongly and SQUEEZES tails out,
+                # which needs eps_tw BELOW the geometric mean. A mixing rule forbids that by
+                # construction, which is why `edge` stayed at 1.00 (wet cores) through every sweep.
+                #
+                # MARTINI and every coarse-grained lipid force field use a per-species-pair matrix for
+                # exactly this reason. It stays inside the transformer-only requirement: a
+                # species-pair coefficient is a bilinear form on species embeddings, i.e. a structured
+                # linear op of the same shape as an attention bias. Still bounded, still symmetric, so
+                # the force remains conservative.
+                sp = self.species.astype(int)
+                g = self.eps_pair[sp[:, None], sp[None, :]] * np.exp(-self.sink_attract * d2)
             np.fill_diagonal(g, 0.0)
             attract = -np.einsum("ij,ijc->ic", g, dirn)
         else:

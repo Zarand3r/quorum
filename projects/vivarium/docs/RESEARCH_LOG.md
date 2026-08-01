@@ -18,6 +18,14 @@ executed, in what order, and which conclusions are currently live.
 
 ## Live methodological rules
 
+-2. A MIXING RULE CANNOT EXPRESS HYDROPHOBICITY. Geometric (Lorentz-Berthelot) mixing pins the cross
+   term at eps_ij = sqrt(eps_i * eps_j), and the contrast (eps_ii + eps_jj)/2 - eps_ij is >= 0 by
+   AM-GM, LARGEST when one species is weak. So the only demixing available is "oil is sticky": tails
+   clump while water, having little self-attraction, freely permeates them. The real hydrophobic
+   effect is the opposite -- water coheres and SQUEEZES tails out -- and needs eps_tw BELOW the
+   geometric mean, which the rule forbids. Every CG lipid force field uses a species-pair MATRIX for
+   this reason. This is why `edge` sat at 1.00 through every sweep.
+
 -1. TARGET THE RIGHT STRUCTURE. A LINEAR head-tail-tail chain is a single-tailed SURFACTANT, and
    single-tailed surfactants form MICELLES in nature. Months of "why won't it form a bilayer" was
    asking the wrong molecule to do something real chemistry says it cannot. Real phospholipids are
@@ -40,6 +48,44 @@ executed, in what order, and which conclusions are currently live.
    head dispersion were both wrong knobs; head electrostatics was the lever).
 
 ---
+
+## 2026-07-31c — the mixing rule was the blocker; species-pair matrix implemented
+
+**Question asked: is it working, or should we pivot?** Pivot, and the reason is structural rather
+than a tuning failure.
+
+Vivarium mixed dispersion geometrically. Computing the hydrophobic contrast across the whole range of
+water strengths:
+
+    rad_water   eps_ww   eps_tt   eps_tw = sqrt      contrast
+    0.15        0.090    0.994    0.299              +0.243
+    0.40        0.565    0.994    0.749              +0.030
+    0.60        0.894    0.994    0.942              +0.001
+    0.85        0.994    0.994    0.994              +0.000
+
+By AM-GM the contrast is non-negative and largest when water is WEAK, so a mixing rule offers exactly
+one demixing mechanism: "oil is sticky". Tails clump because they attract each other, while water has
+little reason to leave and permeates the aggregate. That is a weak analogue of the hydrophobic effect
+and it is why every wet-core reading persisted.
+
+The real stage-1 driver needs water to cohere strongly AND couple weakly to tails, i.e. eps_tw below
+the geometric mean. A mixing rule cannot produce a negative deviation by construction.
+
+**Implemented `eps_pair`**, an (n_species, n_species) well-depth matrix replacing the mixing rule.
+Defaults to None so the base case stays byte-identical. It remains inside the transformer-only
+requirement: a species-pair coefficient is a bilinear form on species embeddings, a structured linear
+op of the same shape as an attention bias, still bounded and still symmetric so forces stay
+conservative.
+
+    water-water   tunable (the hydrogen-bond analogue)
+    tail-tail     1.00
+    tail-water    0.02   <- FAR below the geometric mean; impossible under a mixing rule
+    head-water    0.60   <- heads are hydrophilic
+    head-head     0.10   <- heads must not cohere
+
+**Note on verification:** the claim that CG force fields use interaction matrices rather than mixing
+rules is from background knowledge; the session's web-search budget was exhausted, so it is not
+independently sourced here.
 
 ## 2026-07-31b — auditing against the physics: our water is nearly an ideal gas
 

@@ -36,7 +36,7 @@ from polar_pack import BOND_REST, PolarPackEngine
 
 
 def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, plant=False, n_tail=2,
-          n_water=0, polarity=0.0, head_q=0.0, water_dipole=0.8, spol=0.90,
+          n_water=0, polarity=0.0, head_q=0.0, water_dipole=0.8, spol=0.90, hydrophobic=0.0,
           head_sigma=1.0, attract=0.30, bond_span=6.0, aniso=0.0, walls=False, span_frac=1.0, sharp=0.0, branched=False):
     nb = 1 + n_tail
     n_tok = nb * n_lip + max(0, n_water)
@@ -61,6 +61,18 @@ def build(seed, n_lip, bound, kt, speed, repel, k_bond, satt, plant=False, n_tai
     e.repel_contact, e.rigidity, e.selectivity, e.temperature = 1.0, 0.0, 0.30, kt
     e.langevin = True
     e.wall_axes = (1,) if walls else ()
+    if hydrophobic > 0.0:
+        # water coheres with itself, tails cohere with each other, and the CROSS term is suppressed.
+        # WATER=0, MOL_HEAD=5, MOL_TAIL=6 (see polar_pack).
+        n_sp = 7
+        m = np.full((n_sp, n_sp), 0.15)
+        m[0, 0] = hydrophobic                      # water-water: the hydrogen-bond analogue
+        m[6, 6] = 1.0                              # tail-tail
+        m[0, 6] = m[6, 0] = 0.02                   # tail-water: FAR below the geometric mean
+        m[5, 5] = 0.10                             # head-head: weak, heads must not cohere
+        m[0, 5] = m[5, 0] = 0.60                   # head-water: heads are hydrophilic
+        m[5, 6] = m[6, 5] = 0.05
+        e.eps_pair = m
 
     mol, B = e._mol, bound
     rng = np.random.default_rng(seed + 11)
@@ -202,6 +214,11 @@ def main(argv=None):
                         "ideal gas, so solvating a tail costs almost nothing and the aggregate never "
                         "develops a dry core.")
     p.add_argument("--spol", type=float, default=0.90, help="range of the electrostatic head")
+    p.add_argument("--hydrophobic", type=float, default=0.0,
+                   help="water-water well depth in a species-pair MATRIX that replaces geometric "
+                        "mixing. Mixing rules cannot express hydrophobicity: the cross term is pinned "
+                        "at the geometric mean, so strong water necessarily attracts tails strongly. "
+                        "This lets water cohere AND exclude tails, which is the real stage-1 driver.")
     p.add_argument("--polarity", type=float, default=0.0)
     p.add_argument("--branched", action="store_true",
                    help="TWO tails branching from one head, as in a real phospholipid. A linear "
@@ -238,7 +255,8 @@ def main(argv=None):
               k_bond=a.kbond, satt=a.satt, n_tail=a.tails, head_sigma=a.headsigma,
               attract=a.attract, bond_span=a.span, walls=a.walls, span_frac=a.spanfrac,
               sharp=a.sharp, branched=a.branched, n_water=a.water, polarity=a.polarity,
-              head_q=a.headq, water_dipole=a.waterdipole, spol=a.spol)
+              head_q=a.headq, water_dipole=a.waterdipole, spol=a.spol,
+              hydrophobic=a.hydrophobic)
     pl = build(a.seed, plant="ribbon", **kw)
     rn = build(a.seed + 99, plant=False, **kw)
     lp, ap, tp = metrics(pl)
