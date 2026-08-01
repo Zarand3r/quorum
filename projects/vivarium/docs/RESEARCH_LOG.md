@@ -99,6 +99,38 @@ cluster detector split bilayers and merged micelles, and the test target had bee
 
 ---
 
+## 2026-08-01e — water is BOTH the source of lamellar order and the cause of bond damage
+
+**Isolated by elimination**, after the bond threshold was first calibrated against a known-good
+structure: a relaxed planted bilayer keeps EVERY bond under 1.05 (p99 = 1.050, frac>1.25 = 0.00), so
+the 1.25 threshold is generous and runs exceeding it are genuinely deforming.
+
+Ruled out one at a time, each by a run rather than an argument:
+
+    the species-pair matrix   deforms without it too
+    the electrostatic head    10-12% deformed at polarity 0.80, 0.30 AND 0.00
+    the timestep              3x stability margin, still deforms
+    bond stiffness            WORSE when raised (100 -> 100% of bonds over the limit)
+
+**The cause is explicit water**, and the isolation is clean:
+
+    2-D, NO water, clump start    bond 1.027  frac>1.25 0.00   align 0.042
+    2-D, water 250, clump start   bond 1.061  frac>1.25 0.07   align 0.529
+    2-D, water 120, clump start   bond 1.045  frac>1.25 0.05   align 0.346
+
+Polarity looked exonerating only because water was still present when polarity was zeroed -- clearing
+one variable while another stayed did not clear the pair.
+
+**The trade-off is the finding.** Water is REQUIRED for lamellar order: without it align is 0.042,
+i.e. random. With it, align reaches 0.529. But solvent multiplies the neighbours around each lipid
+bead, and summed steric pressure then exceeds what a SATURATING bond kernel can resist -- the
+mechanism from 2026-07-28f, now with the culprit identified. Halving the water halves the damage and
+also halves the order.
+
+That is the real shape of the problem: the same solvent that drives stage 1 also breaks the molecule,
+and a bounded bond force cannot be strengthened out of it (raising k_bond makes it worse). The lever
+that reduces pressure WITHOUT removing water is the excluded-volume strength.
+
 ## 2026-08-01d — bicelle vs vesicle: Finding 25 was right, and I retracted it wrongly
 
 **Two sources used the same word for different things.**
