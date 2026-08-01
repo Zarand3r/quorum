@@ -106,6 +106,91 @@ def _vesicle(n_lip=180, R=4.0):
     return e
 
 
+def _bicelle(n_lip=500, R=9.0, n_water=600):
+    """A FINITE bilayer disc: two leaflets, shared normal, and a RIM of exposed tails.
+
+    This is the structure the project is actually hunting, and until now it was absent from the suite:
+    every metric was validated against bilayer / micelle / vesicle / random, none of which has a rim.
+    A bicelle differs from a SPANNING bilayer only in being finite, so `edge` -- the rim metric -- is
+    the thing that separates them, and it had never been checked against a known answer.
+    """
+    # R must be much larger than the membrane thickness or the disc is a squat cylinder, not a
+    # bicelle: at R=5 with thickness 5 the aspect ratio is 0.46, barely flatter than a sphere. A real
+    # bicelle has radius several times its thickness. Box half-width clears R + molecule length.
+    # EXPLICIT WATER IS REQUIRED. `edge` is defined by tail-water contact, so a rim cannot be
+    # measured without solvent: it returns NaN. A bicelle is therefore unverifiable in ANY
+    # solvent-free run, whatever else is computed -- which is a hard constraint on the experiments,
+    # not just the tests.
+    nb_ = 3
+    tot = nb_ * n_lip + n_water
+    cfg = VivariumConfig(**{**DEFAULTS, "N": tot, "pos_dim": 3, "n_harmonics": 2,
+                            "pos_bound": 14.0})
+    e = PolarPackEngine(cfg, 0, water_frac=n_water / tot, chain_frac=nb_ * n_lip / tot,
+                        polarity=0.0, repel=12.0, n_tail=2, rad_head=0.0, head_q=0.0,
+                        bond_span=2.0, aniso=0.0)
+    e.wall_axes = ()
+    e.vel[:] = 0.0
+    mol, nb = e._mol, e._mol.shape[1]
+    per = len(mol) // 2
+    # a disc of radius R: place molecules on a spiral so the density is roughly uniform
+    k = np.arange(per)
+    rr = R * np.sqrt((k + 0.5) / per)
+    th = k * np.pi * (3.0 - np.sqrt(5.0))
+    pts = np.stack([rr * np.cos(th), rr * np.sin(th)], axis=1)
+    for leaf, sgn in ((0, +1.0), (1, -1.0)):
+        idx = mol[leaf * per:(leaf + 1) * per]
+        for bead in range(nb):
+            off = 0.5 + (nb - 1 - bead) * 1.0
+            e.X[idx[:, bead], 0] = pts[:len(idx), 0]
+            e.X[idx[:, bead], 1] = pts[:len(idx), 1]
+            e.X[idx[:, bead], 2] = sgn * off
+    # solvent everywhere outside the disc, so the rim has water to touch
+    rng = np.random.default_rng(7)
+    wi = e._wi
+    B = e.cfg.pos_bound
+    pos = rng.uniform(-B, B, (len(wi), 3))
+    inside = (np.hypot(pos[:, 0], pos[:, 1]) < R - 0.5) & (np.abs(pos[:, 2]) < 2.6)
+    pos[inside, 2] = np.sign(pos[inside, 2] + 1e-9) * rng.uniform(3.0, B, inside.sum())
+    e.X[wi, :3] = pos
+    return e
+
+
+def _spanning_bilayer_with_water(n_lip=288, n_water=400):
+    """A spanning bilayer PLUS solvent, so `edge` has water to detect. A periodic sheet has NO rim,
+    so a correct `edge` must read near zero here -- that is the negative control it never had."""
+    per = n_lip // 2
+    k = int(np.ceil(np.sqrt(per)))
+    nb = 3
+    cfg = VivariumConfig(**{**DEFAULTS, "N": nb * n_lip + n_water, "pos_dim": 3,
+                            "n_harmonics": 2, "pos_bound": k / 2.0})
+    e = PolarPackEngine(cfg, 0, water_frac=n_water / (nb * n_lip + n_water),
+                        chain_frac=nb * n_lip / (nb * n_lip + n_water),
+                        polarity=0.0, repel=12.0, n_tail=2, rad_head=0.0, head_q=0.0,
+                        bond_span=2.0, aniso=0.0)
+    e.wall_axes = ()
+    e.vel[:] = 0.0
+    mol, B = e._mol, e.cfg.pos_bound
+    per = len(mol) // 2
+    xs = (np.arange(k) + 0.5) / k * 2 * B - B
+    gx, gy = np.meshgrid(xs, xs, indexing="ij")
+    flat = np.stack([gx.ravel(), gy.ravel()], axis=1)
+    for leaf, sgn in ((0, +1.0), (1, -1.0)):
+        idx = mol[leaf * per:(leaf + 1) * per]
+        for bead in range(mol.shape[1]):
+            off = 0.5 + (mol.shape[1] - 1 - bead) * 1.0
+            e.X[idx[:, bead], 0] = flat[:len(idx), 0]
+            e.X[idx[:, bead], 1] = flat[:len(idx), 1]
+            e.X[idx[:, bead], 2] = sgn * off
+    # water only OUTSIDE the membrane, as it would be physically
+    rng = np.random.default_rng(4)
+    wi = e._wi
+    zz = rng.uniform(2.6, B, len(wi)) * rng.choice([-1.0, 1.0], len(wi))
+    e.X[wi, 0] = rng.uniform(-B, B, len(wi))
+    e.X[wi, 1] = rng.uniform(-B, B, len(wi))
+    e.X[wi, 2] = zz
+    return e
+
+
 def _random(n_lip=128):
     e = _engine(n_lip, bound=6.0)
     mol = e._mol
@@ -195,3 +280,28 @@ def test_lamellar_ANTI_discriminates_and_must_not_be_used_alone(scores):
 def test_random_is_at_the_null(scores):
     """Without a measured null the scale has no zero."""
     assert scores["random"]["lamellar"] < 0.75
+
+
+def test_bicelle_reads_as_a_flat_bilayer_with_a_rim():
+    """The structure the project is hunting must be recognisable: lamellar order AND a rim."""
+    m = measure(_bicelle())
+    assert m["ok"], f"a planted bicelle was disqualified: {m['why']}"
+    assert m["align"] > 0.90, f"align={m['align']:.3f}: a bicelle IS a bilayer, axes share a normal"
+    assert m["aspect"] < 0.20, f"aspect={m['aspect']:.3f}: a bicelle is a flat disc (R >> thickness)"
+
+
+
+def test_edge_separates_a_finite_bicelle_from_a_spanning_bilayer():
+    """`edge` is the rim metric and had NEVER been validated.
+
+    It must be read RELATIVE to a control, never against an absolute threshold: `edge` counts lipids
+    whose deepest tail bead contacts water, so its value scales with SOLVENT DENSITY. The same planted
+    bicelle reads 0.03 in dilute solvent and much more in dense solvent. What is invariant is the
+    ORDERING: a finite disc exposes a rim, a periodic sheet has no edges at all.
+    """
+    bic = measure(_bicelle())
+    span = measure(_spanning_bilayer_with_water())
+    assert bic["ok"] and span["ok"], f"controls disqualified: {bic['why']} / {span['why']}"
+    assert bic["edge"] > span["edge"], (
+        f"a finite bicelle (edge={bic['edge']:.3f}) must expose MORE rim than a spanning bilayer "
+        f"(edge={span['edge']:.3f}); if not, `edge` cannot verify a bicelle at all")

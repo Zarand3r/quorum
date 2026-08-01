@@ -18,6 +18,13 @@ executed, in what order, and which conclusions are currently live.
 
 ## Live methodological rules
 
+-6. A BICELLE CANNOT BE VERIFIED WITHOUT EXPLICIT SOLVENT. `edge` is defined by tail-water contact, so
+   with no water it returns NaN and the rim -- the feature that makes a disc finite -- is unmeasurable.
+   Any solvent-free run is incapable of demonstrating a bicelle whatever else it computes.
+   `edge` is also SOLVENT-DENSITY dependent, so it must be read RELATIVE to a control, never against
+   an absolute threshold: the same planted bicelle reads 0.03 in dilute solvent and higher in dense.
+   What is invariant is the ordering, finite disc > spanning sheet.
+
 -5. `lamellar` ANTI-DISCRIMINATES and must never be read alone. It asks whether a head sits farther
    out than its own tails, which is true of ANY heads-out structure, and it scores a MICELLE (0.967)
    ABOVE a BILAYER (0.889). Use `align`, the nematic order of the lipid axes: bilayer 1.00, micelle
@@ -74,6 +81,30 @@ executed, in what order, and which conclusions are currently live.
    head dispersion were both wrong knobs; head electrostatics was the lever).
 
 ---
+
+## 2026-08-01c — can the tooling verify a BICELLE? Not until now
+
+**Asked directly, and the audit found the gap.** Verifying a bicelle needs three things: lamellar
+order, a flat disc shape, and a RIM. The suite covered bilayer, micelle, vesicle and random -- none of
+which has a rim -- so the one structure the project is hunting had never been planted, and `edge`, the
+rim metric, had never been validated against a known answer.
+
+**Added a planted bicelle and a spanning-bilayer-with-solvent control.** Building them surfaced three
+things:
+
+1. `edge` WORKS. A periodic spanning sheet has no edges and reads near zero; a finite disc reads
+   higher. That ordering is the test, and it now passes.
+2. `edge` is UNDEFINED without solvent (NaN), so a bicelle cannot be demonstrated in any solvent-free
+   run. This is a hard constraint on experiment design, not just on tests.
+3. `edge` scales with SOLVENT DENSITY, so it must be compared to a control rather than a fixed
+   threshold: the same planted bicelle read 0.032 in dilute solvent.
+
+**Also corrected a bad reference of my own:** the first planted "bicelle" had radius 5 and thickness 5,
+a squat cylinder that scored aspect 0.46, barely flatter than a sphere. A real bicelle has radius
+several times its thickness; rebuilt at R=9 with 500 lipids.
+
+**Verdict: the tooling can now verify a bicelle**, provided the run has explicit solvent and a control
+to compare `edge` against. 99 tests pass.
 
 ## 2026-08-01b — adversarial tool audit: three more bugs, and the discriminator we never had
 
