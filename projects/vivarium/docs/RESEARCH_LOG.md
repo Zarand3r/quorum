@@ -99,6 +99,44 @@ cluster detector split bilayers and merged micelles, and the test target had bee
 
 ---
 
+## 2026-08-01p — BILAYER RIBBONS EMERGE. Stage 2, finite rather than spanning
+
+The single-tailed dispersed run equilibrates into a real phase, and the image says what it is.
+
+    step    aggregates  largest  mean size   align   packing
+      6000           8       15        7.4   0.530     0.673
+     20000           5       18       12.2   0.813     0.502
+     60000           5       20       12.6   0.721     0.457
+    150000           5       20       12.6   0.734     0.452
+
+Steady from t=20k to t=150k: five aggregates of ~12-20 lipids holding nematic order ~0.73 over 130k
+steps. That is a phase, not a transient.
+
+**Rendered, several aggregates are ELONGATED with a head-tail-tail-head cross-section** -- blue heads
+along both edges, orange tails through the middle. Those are bilayer ribbons: finite bilayer patches,
+i.e. bicelles, coexisting with round micelles. `packing` 0.502 sits between the micelle reference
+(0.436) and the bilayer reference (0.713), exactly as a mixture should.
+
+This is the first membrane-like structure this project has produced from disorder. It is stage 2 and
+NOT stage 3: the patches are finite, and no spanning bilayer has formed.
+
+Why the metric alone could never have said so. align 0.73 is consistent with BOTH a ribbon and a
+dense pile, and packing 0.452 sits a hair above the micelle floor of 0.436. The two numbers together
+are ambiguous; the layering in the image is not. This is the case the standing protocol was written
+for -- image AND validated metrics AND reference on the same axes -- and here the image carried it.
+
+**Two corrections from this round:**
+
+The double tail OVERSHOT. n_tail=4 branched gives four tail beads per head, so tails are far wider
+than the head: P > 1, past the bilayer window into INVERTED curvature. It plateaued at align 0.24 and
+stayed micellar from a dispersed start, despite retaining more order on the PLANTED screen (51% vs
+28%). Doubling v was right; quadrupling it is not.
+
+And a0 is not steric. A single-tailed lipid here is geometrically a cylinder yet micellizes, because
+head_q=1.2 at polarity=0.80 inflates the EFFECTIVE head area electrostatically. That is why shrinking
+head_sigma did nothing -- it shrank the wrong term -- and it makes the head charge, not the head
+size, the lever for pushing these ribbons toward a spanning bilayer.
+
 ## 2026-08-01o — the double tail stabilises the bilayer, and micelles DO coarsen into lamellar order
 
 Two results, both pointing the same way.
