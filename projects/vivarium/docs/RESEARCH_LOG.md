@@ -99,6 +99,34 @@ cluster detector split bilayers and merged micelles, and the test target had bee
 
 ---
 
+## 2026-08-01j — order CAN be bought without collapse: scale both forces at fixed ratio
+
+The first increase in order in this project that is not an artifact of collapse.
+
+Collapse is set by the attract/repel RATIO; ordering is set by cohesion against kT. Those are
+different knobs, so both forces were scaled together at the ratio that holds (1/24) with kT fixed,
+and the timestep scaled as 1/force to keep the stability product speed*force constant.
+
+    scale  repel  attr  k_bond   pack   bad   align   verdict
+        1     48     2      60   0.80  0.00   0.082   OK
+        4    192     8      60   0.80  0.01   0.225   OK
+       16    768    32      60   0.82  0.30   0.063   molecule deformed
+
+Packing stays pinned at 0.80 while `align` rises 2.7x. Every earlier rise in `align` came with
+collapse -- this one does not, so it is measuring lipid organisation rather than pile density.
+
+Two things this settles. Bounded kernels are NOT immediately fatal: the crowding hypothesis was
+wrong (the collapse threshold is identical at phi 0.71 and phi 0.34, so it is the force ratio and not
+density), but the ratio is not a dead end either, because absolute scale is a free parameter once the
+ratio is held.
+
+scale 16 fails on BONDS, not collapse -- packing is a healthy 0.82 while 30% of bonds deform. repel
+and attract went to 768/32 and k_bond was left at 60, so the saturating bond lost to external force.
+That is the same ceiling mechanism as 2026-08-01f, and it says k_bond is not an independent knob: it
+has to scale with whatever load the other forces impose.
+
+Still far from a membrane. align 0.225 against 1.00 for a planted bilayer.
+
 ## 2026-08-01i — the micelles were collapses. Every structural result in the 2-D line is void
 
 Re-ran the repel sweep under the packing guard, because every earlier row was scored by a harness
