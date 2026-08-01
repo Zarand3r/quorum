@@ -13,7 +13,7 @@ executed, in what order, and which conclusions are currently live.
 |---|---|---|
 | 0 | two lipids prefer tail-to-tail | PASSES, at 2-bead tails once head_q < 0.8 (F22) |
 | 1 | micelle (radial head-out order) | FAILS, no radial order once the metric is unbiased (F21) |
-| 2 | bicelle | STABLE IN 2-D once the box is big enough: a planted finite ribbon holds 20k steps at aspect ~0.33 / lamellar ~0.92 in a box of 44, and curls up in boxes of 24 and 32 (2026-07-29e). Self-assembly of one is still open. 3-D remains blocked without a rim species |
+| 2 | bicelle | DE-PRIORITISED: a true bicelle is a TWO-COMPONENT phase (long lipid + short detergent), not a single-species intermediate. Finding 25 was right and its retraction was wrong. Previously: stable in 2-D once the box is big enough: a planted finite ribbon holds 20k steps at aspect ~0.33 / lamellar ~0.92 in a box of 44, and curls up in boxes of 24 and 32 (2026-07-29e). Self-assembly of one is still open. 3-D remains blocked without a rim species |
 | 3 | bilayer | PARTIAL, and for the first time ADMISSIBLE. Planted and disordered starts CONVERGE (lamellar 0.87 vs 0.82, aspect 0.43 vs 0.55) with intact molecules, validated metrics and NO walls (2026-07-30a). Not a clean slab: aspect 0.55 against a planted 0.23 |
 
 ## Live methodological rules
@@ -81,6 +81,33 @@ executed, in what order, and which conclusions are currently live.
    head dispersion were both wrong knobs; head electrostatics was the lever).
 
 ---
+
+## 2026-08-01d — bicelle vs vesicle: Finding 25 was right, and I retracted it wrongly
+
+**Two sources used the same word for different things.**
+* A TRUE BICELLE is a two-component equilibrium phase: long-chain lipid plus a short-chain detergent
+  (DMPC/DHPC) that caps the rim. Vesicles are the usual STARTING material -- adding detergent cracks
+  them into discs, and diluting the detergent lets the discs reseal into vesicles.
+* A transient DISC-LIKE INTERMEDIATE in single-component CG self-assembly is a kinetic structure, not
+  a thermodynamic phase, and is loosely called "bicelle-like".
+
+**Our own control already said so.** Cooke-Deserno, given one lipid species and a finite aggregate,
+made a ROD rather than a disc. Finding 25 concluded from that "a bicelle needs a second, rim-capping
+species" -- which matches the literature -- and I RETRACTED it when the vesicle-pathway description
+arrived. The retraction was the error, not the finding.
+
+**Consequence: target the VESICLE, not the bicelle.** A vesicle is what a single phospholipid forms in
+water, needs no detergent, and is now fully verifiable:
+
+    align     ~0.03 radial (validated: bilayer 1.00, micelle 0.09, vesicle 0.03, random 0.08)
+    hollow    ~0.00 empty core, guarded to spherical aggregates
+    enclosed  ~0.55 lumen at bulk solvent density; a filled micelle reads 0.00
+
+A bicelle remains reachable later, but only by adding a SECOND species, which is a modelling change
+rather than a parameter sweep.
+
+**Not independently sourced:** the web-search budget was exhausted, so this rests on background
+knowledge plus our own control experiment, which agree.
 
 ## 2026-08-01c — can the tooling verify a BICELLE? Not until now
 

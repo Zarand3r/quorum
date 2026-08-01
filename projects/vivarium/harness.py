@@ -43,6 +43,15 @@ statistic, which is how three micelle claims survived for a day.
               reads 0.967, because "head farther out than its own tails" is true of any heads-out
               structure, and the sphere's covariance eigenvalues are near-degenerate so its "thin
               axis" is arbitrary noise.
+    enclosed  water density INSIDE the aggregate's shell, relative to the bulk water density. ~1
+              means the lumen is filled with solvent at normal density (a sealed vesicle); 0 means no
+              solvent inside (a filled micelle). Defined as a DENSITY RATIO, not a fraction of all
+              water: a vesicle lumen is a tiny share of the box (~0.2%), so a fraction reads 0.000
+              even for a perfectly water-filled vesicle. This is what makes a
+              vesicle a vesicle rather than a hollow shell in vacuum, and it is the stage-4 signature:
+              a sealed shell traps solvent. A filled micelle has tails in the middle and encloses
+              nothing; a bicelle is open on both faces so its "interior" is continuous with the bulk.
+              Requires explicit solvent, like `edge`; NaN without it.
     hollow    tail density at the CORE divided by tail density in the shell. ONLY DEFINED FOR A
               ROUGHLY SPHERICAL aggregate: "core versus shell" is a radial decomposition, so on a slab
               it is nonsense (a planted bilayer scored 22.27). Returns NaN unless the shape is round,
@@ -202,7 +211,7 @@ def measure(e, prev_X=None):
            "disp": 0.0, "ok": True, "why": "", "n_cluster": 0,
            "lamellar": float("nan"), "aspect": float("nan"), "aspect2": float("nan"),
            "cluster_frac": 0.0, "hollow": float("nan"), "edge": float("nan"),
-           "align": float("nan"), "thick_mol": float("nan")}
+           "align": float("nan"), "thick_mol": float("nan"), "enclosed": float("nan")}
 
     if prev_X is not None:
         d = e.X[:, :e.pd] - prev_X[:, :e.pd]
@@ -243,6 +252,27 @@ def measure(e, prev_X=None):
         free = _periodic_axes(e)
         dw[..., free] -= e.L * np.round(dw[..., free] / e.L)
         out["edge"] = float((np.einsum("ijc,ijc->ij", dw, dw) < 1.2 ** 2).any(axis=1).mean())
+
+    # enclosed solvent: water nearer the aggregate centre than the lipid shell it sits inside.
+    # A sealed vesicle traps water; a micelle fills the same volume with tails; an open disc does not
+    # separate an interior at all.
+    if wi.size:
+        cen0 = P.mean(0)
+        dwc = e.X[wi, :e.pd] - cen0
+        free2 = _periodic_axes(e)
+        dwc[:, free2] -= e.L * np.round(dwc[:, free2] / e.L)
+        rw = np.linalg.norm(dwc, axis=1)
+        rl = np.linalg.norm(P - cen0, axis=1)
+        r_inner = np.percentile(rl, 15)          # inner face of the lipid shell
+        if r_inner <= 0.5:
+            # no lumen at all (a FILLED aggregate): definitively zero trapped solvent, not undefined
+            out["enclosed"] = 0.0
+        else:
+            v_in = (4.0 / 3.0 * np.pi * r_inner ** 3) if e.pd == 3 else (np.pi * r_inner ** 2)
+            v_box = float(np.prod(e.L)) if np.ndim(e.L) else float(e.L) ** e.pd
+            dens_in = float((rw < r_inner).sum()) / max(v_in, 1e-9)
+            dens_bulk = len(wi) / max(v_box, 1e-9)
+            out["enclosed"] = float(dens_in / max(dens_bulk, 1e-12))
 
     nb = idx.shape[1]
     Pm = P.reshape(len(comp), nb, e.pd)

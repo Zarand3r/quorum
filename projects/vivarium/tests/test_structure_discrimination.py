@@ -191,6 +191,54 @@ def _spanning_bilayer_with_water(n_lip=288, n_water=400):
     return e
 
 
+def _solvated_sphere(n_lip, R, hollow_shell, n_water=1800, bound=12.0):
+    """A sphere WITH solvent, so `enclosed` can be measured.
+
+    R, the box and the water count are chosen so the LUMEN holds a countable number of waters. At
+    R=5 in a box of 32 with 900 waters the expected count inside is ~1.6, so a Poisson zero is likely
+    and the test reads 0.000 for a perfectly good vesicle -- an underpowered test, not a bad metric.
+
+    hollow_shell=True gives a sealed vesicle: two leaflets forming a shell of radius R, with water
+    both inside and outside. hollow_shell=False gives a filled micelle: tails to the centre, water
+    only outside. The pair is the only way to validate `enclosed`, which is the stage-4 signature and
+    the feature that makes a vesicle a vesicle rather than a shell in vacuum.
+    """
+    nb_ = 3
+    tot = nb_ * n_lip + n_water
+    cfg = VivariumConfig(**{**DEFAULTS, "N": tot, "pos_dim": 3, "n_harmonics": 2,
+                            "pos_bound": bound})
+    e = PolarPackEngine(cfg, 0, water_frac=n_water / tot, chain_frac=nb_ * n_lip / tot,
+                        polarity=0.0, repel=12.0, n_tail=2, rad_head=0.0, head_q=0.0,
+                        bond_span=2.0, aniso=0.0)
+    e.wall_axes = ()
+    e.vel[:] = 0.0
+    mol, nb = e._mol, e._mol.shape[1]
+    n = len(mol)
+    u = _sphere_dirs(n, seed=5)
+    half = n // 2
+    for m in range(n):
+        for bead in range(nb):
+            depth = 0.5 + (nb - 1 - bead) * 1.0
+            if hollow_shell:
+                r = (R + depth) if m < half else (R - depth)
+            else:
+                r = depth
+            e.X[mol[m, bead], :3] = u[m] * r
+    rng = np.random.default_rng(11)
+    wi = e._wi
+    pos = rng.uniform(-bound, bound, (len(wi), 3))
+    rr = np.linalg.norm(pos, axis=1)
+    if hollow_shell:
+        # water is allowed inside the shell and outside it, but not within the leaflets themselves
+        bad = (rr > R - 2.6) & (rr < R + 2.6)
+        pos[bad] *= ((R + 4.0) / np.maximum(rr[bad], 1e-9))[:, None]
+    else:
+        bad = rr < 3.2                      # a filled micelle admits no water at all
+        pos[bad] *= (5.0 / np.maximum(rr[bad], 1e-9))[:, None]
+    e.X[wi, :3] = pos
+    return e
+
+
 def _random(n_lip=128):
     e = _engine(n_lip, bound=6.0)
     mol = e._mol
@@ -305,3 +353,18 @@ def test_edge_separates_a_finite_bicelle_from_a_spanning_bilayer():
     assert bic["edge"] > span["edge"], (
         f"a finite bicelle (edge={bic['edge']:.3f}) must expose MORE rim than a spanning bilayer "
         f"(edge={span['edge']:.3f}); if not, `edge` cannot verify a bicelle at all")
+
+
+def test_enclosed_separates_a_sealed_vesicle_from_a_filled_micelle():
+    """`enclosed` is the stage-4 signature and had no validation at all.
+
+    A vesicle TRAPS solvent; a micelle fills the same volume with tails and traps none. Neither
+    `align` nor `lamellar` can tell these apart (both are round with heads out), and `hollow` only
+    says the core is tail-free -- it cannot say the core holds WATER, which is what a vesicle is.
+    """
+    ves = measure(_solvated_sphere(220, 6.5, True))
+    mic = measure(_solvated_sphere(60, 0.0, False))
+    assert ves["ok"] and mic["ok"], f"{ves['why']} / {mic['why']}"
+    assert ves["enclosed"] > 0.02, f"a sealed vesicle must trap solvent, got {ves['enclosed']:.3f}"
+    assert ves["enclosed"] > 3 * max(mic["enclosed"], 1e-3), (
+        f"vesicle enclosed={ves['enclosed']:.3f} vs micelle {mic['enclosed']:.3f}: not separated")
