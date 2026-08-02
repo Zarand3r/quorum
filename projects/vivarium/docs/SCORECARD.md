@@ -70,6 +70,27 @@ The contact term is short-ranged (`overlap` is exactly 0 beyond ~1.95 = repel_co
 is computed densely for all pairs. Exploiting that is EXACT and changes the scaling from L^6 to ~L^3.
 Not yet done.
 
+## Running experiments (read this before launching anything)
+
+    OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 MKL_NUM_THREADS=4 bazel run //projects/vivarium:_probe
+
+Two measured traps, both of which silently cost ~1.5x:
+
+  THREADS. numpy defaults to one thread per core (32 here) and this workload is elementwise over
+  (N,N,3) and (N,N,8) arrays, which numpy does NOT thread -- so the pool never helps and its
+  synchronisation costs real time:
+
+      OMP_NUM_THREADS=1     60.4 ms/step
+      OMP_NUM_THREADS=4     59.0 ms/step   <- use this
+      OMP_NUM_THREADS=16    80.3 ms/step   <- 33% SLOWER
+
+  ORPHANS. Background runs survive the shell that launched them. Six accumulated in one session, some
+  for 3+ hours, and contention alone moved the same benchmark from 60 to 89 ms/step. `pkill -f` on a
+  pattern is NOT safe here: the pattern matches the killing shell's own command line, so it kills
+  itself and nothing else. Kill by PID:
+
+      for p in $(pgrep -f "vivarium/_probe"); do kill -9 $p; done
+
 ## Re-measuring
 
     bazel test //projects/vivarium:test_suite     # 105 tests: metric truth + discrimination

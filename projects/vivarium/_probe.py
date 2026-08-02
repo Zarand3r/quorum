@@ -1,44 +1,33 @@
-"""Verify the sigma fix: exact where it must be, effective where it was broken."""
+"""Re-run the 3-D micelle question on the CORRECTED molecule.
+
+Every previous 3-D run had water, heads and tails at one steric radius, so it could not express the
+packing parameter at all. With per-species sigma now reaching the contact distance, head_sigma is a
+real lever again -- and micelles need a head WIDER than the tail (P < 1/3), which is head_sigma > 1.
+
+Bands, all measured (planted references plus the random null, which was the control missing until
+now):  bilayer 0.000   micelle 0.605   RANDOM 1.103
+"""
 import numpy as np
 from bilayer3d import build
+from harness import bond_stats, largest_cluster, measure
 
-FIG = dict(kt=0.02, speed=0.001, repel=12.0, k_bond=30.0, satt=0.55, spol=0.90, attract=1.0,
+MOM, KB, SPEED = 0.30, 30.0, 0.001
+assert SPEED * KB / (1 - MOM) < 0.05
+FIG = dict(kt=0.02, speed=SPEED, repel=12.0, k_bond=KB, satt=0.55, spol=0.90, attract=1.0,
            polarity=0.80, head_q=1.2, n_tail=2, bond_span=2.0)
 
-def contact_of(**kw):
-    e = build(3, n_lip=20, bound=4.5, plant=False, **{**FIG, **kw})
-    C = e._contour(); d, d2 = e._periodic_delta(); dist = np.sqrt(d2 + 1e-4)
-    return e, e._contact_distance(C, d, dist)
-
-# 1. head_sigma must now MATTER at aniso>0 (it previously did not)
-e_s, cd_s = contact_of(head_sigma=0.5)
-e_b, cd_b = contact_of(head_sigma=1.0)
-print(f"  head_sigma 0.5 vs 1.0 now differs? {not np.allclose(cd_s, cd_b)}  "
-      f"(max delta {np.max(np.abs(cd_s - cd_b)):.4f})", flush=True)
-hi = np.where(e_s.species == 5)[0]
-print(f"  head-head contact:  small heads {cd_s[np.ix_(hi,hi)].mean():.3f}   "
-      f"normal heads {cd_b[np.ix_(hi,hi)].mean():.3f}", flush=True)
-
-# 2. BASE CASE must be untouched: uniform sigma -> identical trajectory
-def run(n, uniform):
-    e = build(3, n_lip=20, bound=4.5, plant=False, **FIG)
-    if uniform:
-        e.sigma = None                       # the no-species base case
-    for _ in range(n):
-        e.step()
-    return e.X.copy()
-
-a = run(120, uniform=True)
-b = run(120, uniform=True)
-print(f"  base case reproducible: {np.array_equal(a, b)}", flush=True)
-
-# 3. and with uniform sigma equal to repel_contact/2 the new expression must equal the old one
-e = build(3, n_lip=20, bound=4.5, plant=False, **FIG)
-e.sigma = np.full(len(e.X), 0.5 * e.repel_contact)
-C = e._contour(); d, d2 = e._periodic_delta(); dist = np.sqrt(d2 + 1e-4)
-new = e._contact_distance(C, d, dist)
-shaped = (e.stiff.max(axis=1) > 0.0)[:, None]
-nf = np.tanh(e._bearing_nf(C, d, dist)) * shaped
-half = 0.5 * e.repel_contact
-old = half * (1.0 + e.aniso * nf) + half * (1.0 + e.aniso * nf.T)
-print(f"  uniform sigma reduces to the old expression exactly: {np.array_equal(new, old)}", flush=True)
+print("  bands: bilayer 0.000 | micelle 0.605 | random 1.103", flush=True)
+print(f"  {'head_sigma':>11}{'t':>8}{'splay':>7}{'pack':>7}{'align':>7}{'aggr':>7}{'bond':>7}  call",
+      flush=True)
+for hs in (1.0, 1.6, 2.2):
+    e = build(3, n_lip=30, bound=4.5, plant=False, head_sigma=hs, **FIG)
+    for t in (5000, 20000, 50000):
+        while getattr(e, "_t", 0) < t:
+            e.step(); e._t = getattr(e, "_t", 0) + 1
+        m = measure(e); mean, _, _ = bond_stats(e)
+        frac = len(largest_cluster(e)) / max(len(e._mol), 1)
+        call = ("BILAYER" if m["splay"] < 0.30 else
+                "MICELLE" if 0.45 <= m["splay"] <= 0.80 else
+                "disordered" if m["splay"] > 0.95 else "partial")
+        print(f"  {hs:>11.1f}{t:>8}{m['splay']:>7.3f}{m['packing']:>7.3f}{m['align']:>7.3f}"
+              f"{frac:>7.2f}{mean:>7.3f}  {call} {'ok' if m['ok'] else m['why'][:14]}", flush=True)
