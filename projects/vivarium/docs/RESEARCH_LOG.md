@@ -157,6 +157,41 @@ defects found. 104 tests pass.
 
 ---
 
+## 2026-08-02c — THE 2-D LAMELLAR PHASE IS STABLE. Stage 3 was blocked by collapse all along
+
+Prompted by the right question: did 2-D fail for the same reason 3-D did?
+
+It did. Every 2-D run in this project used repel=12 with attract=1.0 -- the same 1/12 ratio that
+turned out to be inside the collapse regime in 3-D -- and the 2-D planted bilayer degraded on BOTH
+axes at once (packing 1.000 -> 0.484, align 0.883 -> 0.275), which is the collapse signature rather
+than a melting one. 2-D was never run above repel 12.
+
+Planted spanning bilayer, 2-D, `splay` against time:
+
+    repel   ratio    t=500   t=2000   t=8000   packing @8k   verdict
+       12    1/12    0.207    0.295    0.378         0.450   degrading
+       24    1/24    0.197    0.121    0.098         0.873   HOLDS
+
+**At repel 24 `splay` DECREASES over time** -- 0.197 -> 0.121 -> 0.098 -- so the bilayer is not
+merely surviving, it is ORDERING, and it ends well below the relaxed planted reference (0.207) with
+align steady at 0.91.
+
+The 2-D lamellar phase exists and is stable. Stage 3 has been blocked by a force-balance artifact,
+not by thermodynamics, for the entire project.
+
+**And this is where 2-D and 3-D genuinely differ**, which the earlier "does 2-D transfer" question
+could not settle while both were confounded. Lifting the collapse in 3-D revealed REAL melting
+(packing 0.90, splay still decaying to the random null at every head size). Lifting it in 2-D reveals
+a STABLE MEMBRANE. A physical reason to expect exactly this: each bead has ~6 neighbours in 2-D
+against ~12 in 3-D, so summed attraction per bead is roughly halved, and the collapse threshold is
+not transferable between dimensionalities.
+
+**What this reclassifies.** Self-assembly in 2-D is now a KINETIC question, not a thermodynamic one:
+the target phase demonstrably exists, so the only issue is whether disorder can reach it. First runs
+from a clump start at repel 24 give ONE aggregate covering 64-68% of the box with packing 0.82-0.85,
+but splay 0.61-0.69 -- consolidated and not yet lamellar. That is the shape of a nucleation problem,
+which is what annealing (already implemented, never used) exists for.
+
 ## 2026-08-02b — collapse was masking the answer: with packing held, the 3-D lamellar phase is NOT stable
 
 The cleanest negative result of this work, and it took separating two failures that looked identical.

@@ -49,7 +49,7 @@ alike.
 | 0 | tail-to-tail preference | two lipids associate tails-in | **PASS** | untested |
 | 1 | **micelle from disorder** | heads enriched on the surface (`head_enrich` -> 3.0) + tails buried | **PASS** — splay 0.527, packing 0.441 vs reference 0.436 | **PASS** — head_enrich **3.00**, equal to the planted reference and the theoretical max; splay 0.807 vs 0.605 means a rougher surface, not a different structure |
 | 2 | **finite bilayer patch** | `splay` < 0.30, stable over 100k+ steps | **PASS** — splay 0.253, held t=20k→150k | not reached |
-| 3 | **spanning bilayer** | `splay` < 0.30 AND `spanning` > 0.8 AND `packing` > 0.35, simultaneously | **FAIL** — best is either/or: (splay 0.25, span 0.27) or (span 0.82, align 0.11) | **FAIL, and now cleanly** — with packing held at 0.90 (repel 96) a planted bilayer melts at every head_sigma from 0.5 to 1.4; the phase is not stable, and it is not a collapse artifact |
+| 3 | **spanning bilayer** | `splay` < 0.30 AND `spanning` > 0.8 AND `packing` > 0.35, simultaneously | **PHASE IS STABLE** at repel 24: a planted bilayer holds and ORDERS (splay 0.197 → 0.098, packing 0.87). Self-assembly not yet there — one aggregate, 64–68% spanning, splay 0.61. A KINETIC problem now, not thermodynamic. | **FAIL** — with packing held at 0.90 (repel 96) a planted bilayer melts at every head_sigma from 0.5 to 1.4; genuinely unstable, not a collapse artifact |
 | 4 | vesicle | `enclosed` > 0.02, `edge` ~ 0, sealed | not started | not started |
 
 **2-D: 2 of 4 stages. 3-D: 0 of 4.**
