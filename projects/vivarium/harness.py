@@ -289,6 +289,43 @@ def splay(e, cutoff=None):
     return float(np.median(vals)) if vals else float("nan")
 
 
+def head_enrichment(e):
+    """How strongly HEADS are enriched on the aggregate's outer surface, as a ratio to the bulk.
+
+    1.0 means no enrichment (heads sit wherever tails do -- a disordered blob). A clean micelle buries
+    every tail and puts only heads outside, so with a 1-head/2-tail lipid the outer shell approaches
+    all heads against a bulk fraction of 1/3, i.e. a ratio near 3.
+
+    This exists because `splay` conflates two different failures that look identical in the middle of
+    its range: WRONG STRUCTURE, and RIGHT STRUCTURE WITH A PATCHY SURFACE. A self-assembled 3-D
+    aggregate read splay 0.807 -- nearer the random null (1.103) than the micelle band (0.605) -- and
+    was called disordered, but its cross-section showed a proper tail core with heads at the surface
+    and GAPS between them. Those two readings imply opposite next steps, so they need separating.
+
+    Measured on the largest cluster only, since a ratio over several aggregates describes their
+    arrangement rather than any one of them, and on UNWRAPPED positions.
+    """
+    mol = e._mol
+    if mol.size == 0:
+        return float("nan")
+    comp = largest_cluster(e)
+    if len(comp) < 4:
+        return float("nan")
+    idx = mol[comp].ravel()
+    P = unwrap(e, idx)
+    P = P - P.mean(axis=0)
+    r = np.linalg.norm(P, axis=1)
+    sp = np.asarray(e.species)[idx]
+    is_head = sp == 5
+    bulk = float(is_head.mean())
+    if bulk <= 0.0 or bulk >= 1.0:
+        return float("nan")
+    outer = r >= np.percentile(r, 75.0)      # the outermost quarter by radius
+    if not outer.any():
+        return float("nan")
+    return float(is_head[outer].mean() / bulk)
+
+
 def largest_cluster(e, cutoff=None):
     """Molecule indices of the biggest connected aggregate, joined with minimum image.
 
@@ -356,7 +393,7 @@ def measure(e, prev_X=None):
            "cluster_frac": 0.0, "hollow": float("nan"), "edge": float("nan"),
            "align": float("nan"), "thick_mol": float("nan"), "enclosed": float("nan"),
            "packing": float("nan"), "solvation": float("nan"),
-           "splay": float("nan")}
+           "splay": float("nan"), "head_enrich": float("nan")}
 
     if prev_X is not None:
         d = e.X[:, :e.pd] - prev_X[:, :e.pd]
@@ -368,6 +405,7 @@ def measure(e, prev_X=None):
     out["packing"] = packing(e, _dist)
     out["solvation"] = solvation(e, _dist)
     out["splay"] = splay(e)
+    out["head_enrich"] = head_enrichment(e)
     if out["packing"] < MIN_PACKING:
         # FIRST, ahead of every shape metric. A collapsed pile still has well-defined bond lengths and
         # well-defined directions, so it scores as a flawless membrane on everything else here.

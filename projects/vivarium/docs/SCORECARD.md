@@ -10,11 +10,19 @@ from `references.py` (planted, solvated, relaxed before reading).
 |---|---|---|---|---|
 | `splay` (2-D) | 0.00 – 0.21 | 0.47 – 0.63 | — | is the local order lamellar or radial? |
 | `splay` (3-D) | 0.00 | 0.59 – 0.76 | — | same, calibrated separately |
+| `head_enrich` | 1.34 (n/a for a slab) | **3.0** = max | ~1.0 | are tails buried and heads outside? |
 | `packing` | 0.71 – 1.00 | 0.44 – 0.68 | < 0.35 | does matter occupy space? |
 | `align` | ~1.0 | 0.08 – 0.18 | ambiguous 0.5–0.8 | global nematic order (NOT sufficient alone) |
 | `spanning` | ~1.0 | low | — | does the aggregate wrap the periodic box? |
 
-`splay` is the discriminator. `align` alone cannot separate a ribbon from a dense pile, which is
+`head_enrich` is the MICELLE criterion and `splay` the LAMELLAR one, and they answer different
+questions. `splay` conflates "wrong structure" with "right structure, patchy surface" -- a
+self-assembled 3-D aggregate read splay 0.807, nearer the random null than the micelle band, and was
+called disordered, while its cross-section showed a proper tail core with heads outside and
+`head_enrich` read 3.00, the theoretical maximum. Radial enrichment is meaningless for a SLAB, so
+`head_enrich` applies to compact aggregates only.
+
+`splay` is the discriminator for lamellar order. `align` alone cannot separate a ribbon from a dense pile, which is
 what made three claims wrong before it existed.
 
 ### Null controls (a positive control alone validates nothing)
@@ -39,7 +47,7 @@ alike.
 | # | stage | criterion | 2-D | 3-D |
 |---|---|---|---|---|
 | 0 | tail-to-tail preference | two lipids associate tails-in | **PASS** | untested |
-| 1 | **micelle from disorder** | `splay` in micelle band, `packing` > 0.35, dispersed start | **PASS** — splay 0.527, packing 0.441 vs reference 0.436 | **FAIL** — splay 0.90–0.95, disordered |
+| 1 | **micelle from disorder** | heads enriched on the surface (`head_enrich` -> 3.0) + tails buried | **PASS** — splay 0.527, packing 0.441 vs reference 0.436 | **PASS** — head_enrich **3.00**, equal to the planted reference and the theoretical max; splay 0.807 vs 0.605 means a rougher surface, not a different structure |
 | 2 | **finite bilayer patch** | `splay` < 0.30, stable over 100k+ steps | **PASS** — splay 0.253, held t=20k→150k | not reached |
 | 3 | **spanning bilayer** | `splay` < 0.30 AND `spanning` > 0.8 AND `packing` > 0.35, simultaneously | **FAIL** — best is either/or: (splay 0.25, span 0.27) or (span 0.82, align 0.11) | **FAIL** — planted one melts, splay 0.000 → 0.824 |
 | 4 | vesicle | `enclosed` > 0.02, `edge` ~ 0, sealed | not started | not started |
