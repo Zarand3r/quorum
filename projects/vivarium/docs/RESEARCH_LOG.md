@@ -157,6 +157,75 @@ defects found. 104 tests pass.
 
 ---
 
+## 2026-08-01s — first 3-D check: PRELIMINARY and NOT controlled. Read the caveats before the numbers
+
+Ran the 3-D transfer question early because it is the one whose answer could invalidate the most.
+
+**First attempt was INVALID and is retracted.** speed=0.02 at k_bond=30 gives displacement/step of
+0.02*30/0.7 = 0.86, seventeen times the DISP_MAX of 0.05 -- a stability limit derived earlier in this
+same session and then violated by carrying a timestep over from a different configuration without
+re-checking the product. Every bond read 1.70 against a rest length of 1.0. The probe now ASSERTS the
+stability product at build time so this cannot recur silently.
+
+Rerun at speed=0.001 (bonds 1.028-1.037, ok=True):
+
+    structure                            splay   align
+    planted 3-D bilayer (t=0)            0.000   1.000
+    planted 3-D bilayer (relaxed 2k)     0.727   0.188
+    3-D self-assembly t=5000             0.914   0.143
+    3-D self-assembly t=20000            0.722   0.183
+    2-D self-assembly, for contrast      0.253   0.813
+
+**What is trustworthy here:** the planted 3-D bilayer decays against ITSELF, splay 0.000 -> 0.727 and
+align 1.000 -> 0.188. That comparison needs no external calibration, and it says the lamellar phase
+is not stable in 3-D at these parameters.
+
+**What is NOT trustworthy, and must be fixed before anything else is concluded:**
+
+  1. THE COMPARISON IS UNCONTROLLED. The 3-D run differs from the 2-D one in concentration, in
+     satt/spol, and in water fraction. Several variables changed at once -- the exact error this log
+     documents repeatedly.
+  2. `splay` IS NOT CALIBRATED IN 3-D. Its expected value 2*pi/n is a CIRCLE result; a 3-D micelle
+     fans over a SPHERE, so the micelle band is unknown. Reading 0.72 as "micelle" is reasoning by
+     analogy from an unvalidated reference, which is the mistake made four times today.
+  3. THE 3-D PLANTED BILAYER IS NOT AT CONTACT. It measures packing 1.360, i.e. its lipids sit BEYOND
+     contact spacing, so it is not a properly built reference either.
+
+So the 2-D result is not yet shown to fail in 3-D; it is shown to be unmeasured in 3-D.
+
+**Terminology, because it caused a real confusion.** "2-D bilayer" in the membrane literature means a
+lipid bilayer whose SHAPE is a flat sheet -- a 2-D surface embedded in 3-D space, e.g. a supported
+lipid bilayer on mica. The molecules, the water and the tails are all fully 3-D. THIS PROJECT's 2-D
+runs are different: pos_dim=2, so the entire universe is a plane and a "bilayer" is a double ROW, a
+1-D line of material in a 2-D world. Supported lipid bilayers do not validate 2-spatial-dimension
+simulation; they are 3-D physics, and are what a 3-D run is supposed to PRODUCE.
+
+**Physical reasons to expect 2-D not to transfer** (reasoning, not literature -- the session's web
+search budget was exhausted, so this is unverified):
+
+  EDGE DIMENSIONALITY. A finite 3-D patch has a 1-D rim costing 2*pi*R*gamma, growing with size. The
+  same patch in 2-D has TWO ENDPOINTS, a 0-D edge whose cost is CONSTANT however long the ribbon. The
+  competition between finite patches and closed vesicles is therefore not the same problem, and
+  R_crit = (4*kappa_c + 2*kappa_bar)/gamma is a 3-D result with no direct 2-D analogue.
+
+  PACKING THRESHOLDS ARE 3-D. P < 1/3 micelle, 1/2..1 bilayer come from sphere/cylinder/plane
+  geometry. A 2-D "micelle" is a disc and a 2-D "bilayer" a double row; the numbers do not carry over,
+  and they were applied to 2-D runs repeatedly today without that being flagged.
+
+  MERMIN-WAGNER. Long-range order for continuous symmetries is destroyed by fluctuations in 2-D, so a
+  2-D system is more fluctuation-dominated and an extended ordered phase may not be stable at all.
+
+Independent corroboration of the EDGE argument (via the user, from Gemini, on supported bilayers):
+free-standing lipid patches have high edge energy from exposed tails at the borders, and free
+membranes prefer to close into vesicles to hide them; flat bilayers in the laboratory require a solid
+substrate plus a thin water cushion. That supports the rim/closure reasoning and adds a design option
+this project has not used -- a SUBSTRATE (the codebase already has `wall_axes`) is the physical way to
+stabilise a flat bilayer, alongside the periodic box.
+
+**Next, in this order:** build 3-D references properly (solvated, lipid count derived from the box,
+relaxed before reading), calibrate `splay` and `packing` against them, and only then run a CONTROLLED
+2-D vs 3-D comparison with one variable changed. Start from what already works in 2-D -- the micelle.
+
 ## 2026-08-01r — `splay`: the bilayer ribbons are REAL, measured rather than eyeballed
 
 Every stage-2 claim so far rested on my reading of a render, which is the weakest evidence in a
