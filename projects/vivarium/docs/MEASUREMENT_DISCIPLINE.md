@@ -61,3 +61,47 @@ Concrete instances:
 A mechanism-derived single-axis test outperformed multi-parameter search badly here: a 60-config and
 a 120-config search produced one usable number between them, while a four-point sweep chosen from the
 stage-1 driver produced the first real signal.
+
+## Rule 13 — calibrate a threshold against EVERY structure it will judge, not one
+
+`MIN_PACKING` was fitted to a planted bilayer (1.000) and then applied to micelles. A micelle cannot
+reach a bilayer's packing BY GEOMETRY: its lipids converge radially, so the inner tail beads sit
+closer than contact by construction. The gate therefore rejected real micelles as "collapsed", and a
+correct result was called a failure twice before the reference was built that exposed it.
+
+    spanning bilayer, planted at contact   1.000
+    spanning bilayer, relaxed              0.713
+    MICELLE, planted                       0.683
+    MICELLE, relaxed                       0.436   <- tightest LEGITIMATE structure
+    genuine collapse                       0.150
+
+The same error repeated with `MIN_CLUSTER_FRAC`, which demands one aggregate hold 60% of the lipids:
+correct for a bilayer or vesicle, WRONG for a micelle phase, where many small aggregates IS the
+answer. Both guards were bilayer-shaped. Before trusting any threshold, measure it on every phase it
+might see, and expect the phases to disagree.
+
+## Rule 14 — render at TRUE bead radius
+
+A fixed pixel radius makes an interpenetrating pile look cleanly resolved. That is precisely how a
+collapse passed for a structure: the published micelle figure drew beads at 3.6-4.5 px regardless of
+scale, so overlap was invisible either way. Draw circles at sigma scaled by the view, and overlap
+shows as overlap.
+
+## Rule 15 — the numbers can be ambiguous in BOTH directions; the image resolves it
+
+The finite-ribbon result could not have been established from metrics: `align` 0.73 is consistent
+with a bilayer ribbon AND with a dense pile, and `packing` 0.452 sits a hair above the micelle floor
+of 0.436. Two numbers, both ambiguous. The head-tail-tail-head layering in the render is not. This is
+the case the image-plus-metrics-plus-reference protocol exists for.
+
+## Rule 16 — check the STRUCTURE is physically possible for the molecule before blaming the run
+
+A planted bilayer that dissolves into micelles is not a tuning failure. In nature bilayers do not do
+that; DETERGENTS dissolve bilayers into micelles, and that is the standard way membranes are
+solubilised in the laboratory. So the observation identifies the MOLECULE, not the parameters: an
+amphiphile with packing parameter P = v/(a0*l) < 1/3 forms micelles and solubilises membranes, and no
+annealing schedule or run length will make it build one. Every kinetic intervention tried against
+this plateaued, which is what a thermodynamic constraint looks like from inside a parameter search.
+
+Ask first whether the target phase is REACHABLE for this molecule's geometry. If it is not, the
+search is over before it starts.

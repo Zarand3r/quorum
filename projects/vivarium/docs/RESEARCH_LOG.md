@@ -7,31 +7,89 @@ retractions are the most useful part of this file.
 `docs/BILAYER_REVIEW.md` holds the narrative findings (1-24). This file is the audit trail: what was
 executed, in what order, and which conclusions are currently live.
 
-## Where this stands right now (2026-08-01)
+## Where this stands right now (2026-08-01, end of session)
 
-**Admissible:** vivarium HOLDS a planted bilayer (align 0.994, molecules intact, no walls) and
-self-assembles MICELLES from disorder (align 0.05, radial, filled -- admissible under all gates).
+**THE CENTRAL FINDING: we built a DETERGENT, not a lipid.**
 
-**The live signal:** with explicit water and a species-pair interaction matrix, self-assembly reaches
-align 0.63 where geometric mixing reaches 0.00. That is the hydrophobicity argument holding: a mixing
-rule CANNOT express hydrophobicity (AM-GM), and replacing it produces lamellar order. It is not yet
-admissible -- the matrix generates forces that tear ~11% of bonds -- so it is a lead, not a result.
+In nature a phospholipid bilayer does not spontaneously break into micelles -- it is one of the most
+stable structures in biology. A membrane dissolving into micelles happens when you add DETERGENT
+(Triton X-100, SDS, octyl glucoside); that is the standard laboratory method for solubilising
+membranes, and the product is mixed micelles. Fragmenting into micelles is what a detergent does and
+what a lipid does not.
 
-**Not achieved:** no self-assembled bilayer, bicelle or vesicle. Rungs 2 and 3 remain open.
+Every observation here is consistent with that, and each had previously been read as a failure:
 
-**Everything before 2026-08-01 is retracted.** The instruments were wrong: `lamellar` scores a micelle
-ABOVE a bilayer, `aspect` measured the box rather than the structure, `unwrap` failed beyond L/2, the
-cluster detector split bilayers and merged micelles, and the test target had been deleted so two
-"tests pass" claims were vacuous. See MEASUREMENT_DISCIPLINE.md.
+    observation                        read as failure        read as DETERGENT
+    self-assembly gives micelles       wrong phase            CORRECT for P < 1/3
+    planted bilayer fragments          unstable, needs tuning CORRECT -- detergents solubilise
+    preferred aggregation number ~12   odd plateau            CORRECT -- micelles have a set size
+    finite ribbons, never spanning     nearly there           CORRECT -- mixed-micelle regime
+
+So the melting is not a kinetic problem, a parameter problem or an annealing problem: it is the
+thermodynamically correct behaviour of the molecule that was built. No amount of longer runs or
+better annealing changes it, which is exactly why every kinetic intervention tried this session
+plateaued. The fix is MOLECULAR GEOMETRY -- raising the packing parameter P = v/(a0*l) out of the
+detergent range (< 1/3) into the bilayer range (1/2 to 1).
+
+**Achieved and verified:**
+
+  STAGE 1, MICELLES. Self-assembled from a FULLY DISPERSED random start -- no concentration and no
+  order supplied -- and verified against a purpose-built solvated reference:
+
+      structure                packing   solvation   align    bond
+      planted micelle (ref)      0.436        1.24   0.175   1.013
+      SELF-ASSEMBLED             0.441        1.42   0.078   1.015
+      genuine collapse           0.150          --   0.630      --
+
+  Indistinguishable from the reference, with better solvation. Molecules intact, transformer-only
+  constraint held.
+
+  STAGE 2, BILAYER RIBBONS (finite). The dispersed run equilibrates into five aggregates of ~12-20
+  lipids holding align ~0.73, unchanged from t=20k to t=150k. Rendered at true bead radius, several
+  are ELONGATED with a head-tail-tail-head cross-section: finite bilayer patches coexisting with
+  round micelles. packing 0.502 sits between the micelle reference (0.436) and the bilayer reference
+  (0.713), as a mixture should.
+
+**Not achieved:** a SPANNING bilayer. The patches stay finite, and a planted spanning bilayer
+dissolves. No vesicle.
+
+**The levers, tested:**
+
+    head_sigma (steric a0)   NO EFFECT, and it drives collapse at 0.5. a0 here is set
+                             ELECTROSTATICALLY, not sterically, so this shrank the wrong term.
+    n_tail=4 branched        OVERSHOOTS. Four tail beads per head puts P > 1, past the bilayer
+                             window into INVERTED curvature; still micellar from a dispersed start
+                             despite retaining more order on the PLANTED screen.
+    force magnitude          NO EFFECT. Scaling every force with the timestep is a rescaling of
+                             TIME; only force-relative-to-kT moves, and lowering effective
+                             temperature freezes a glass rather than ordering it.
+    head_q (electrostatic)   UNDER TEST. This is the term that actually sets effective a0.
+
+**Reading protocol, non-negotiable.** A structural claim needs an image AND validated metrics AND the
+reference on the same axes. The ribbon result is why: align 0.73 fits a ribbon AND a dense pile, and
+packing 0.452 sits a hair above the micelle floor of 0.436, so the numbers alone are ambiguous in
+both directions. The layering in the image is not. Render at TRUE bead radius (sigma) -- a fixed
+pixel radius makes an interpenetrating pile look cleanly resolved, which is how a collapse passed for
+a structure.
+
+**Sampling:** read runs at t >= 20000. Aggregate count first RISES as spurious contacts from random
+placement break apart and real micelles form, then FALLS as they fuse. Every run in this project
+before 2026-08-01 stopped at t=6000, inside the fragmentation phase, before any of the ordering is
+visible.
+
+**Instruments added this session:** `packing` (lipid-to-lipid excluded volume), `solvation` (the
+solvent half, split out), and `references.py` (solvated planted structures). Seventeen measurement
+defects found. 104 tests pass.
 
 ## Status board
 
 | rung | target | status |
 |---|---|---|
 | 0 | two lipids prefer tail-to-tail | PASSES, at 2-bead tails once head_q < 0.8 (F22) |
-| 1 | micelle (radial head-out order) | FAILS, no radial order once the metric is unbiased (F21) |
-| 2 | bicelle | DE-PRIORITISED: a true bicelle is a TWO-COMPONENT phase (long lipid + short detergent), not a single-species intermediate. Finding 25 was right and its retraction was wrong. Previously: stable in 2-D once the box is big enough: a planted finite ribbon holds 20k steps at aspect ~0.33 / lamellar ~0.92 in a box of 44, and curls up in boxes of 24 and 32 (2026-07-29e). Self-assembly of one is still open. 3-D remains blocked without a rim species |
-| 3 | bilayer | PARTIAL, and for the first time ADMISSIBLE. Planted and disordered starts CONVERGE (lamellar 0.87 vs 0.82, aspect 0.43 vs 0.55) with intact molecules, validated metrics and NO walls (2026-07-30a). Not a clean slab: aspect 0.55 against a planted 0.23 |
+| 1 | micelle (radial head-out order) | **ACHIEVED AND VERIFIED** (2026-08-01m/n). Self-assembles from a FULLY DISPERSED start; matches a purpose-built solvated reference on packing, bond and align. |
+| 2 | bicelle / finite bilayer patch | **PARTIAL, EMERGENT** (2026-08-01p). Finite ribbons with head-tail-tail-head layering appear from disorder and persist 130k steps at align ~0.73, coexisting with micelles. Note this is a SINGLE-species ribbon; the earlier "a true bicelle is two-component" finding concerns the rim-stabilised disc, which is a different object. |
+| 3 | spanning bilayer | **NOT ACHIEVED.** Exists only when planted, and a planted one dissolves into micelles -- the detergent signature. Blocked on molecular geometry (P), not on kinetics. |
+| 4 | vesicle | NOT STARTED. Requires a stable bilayer first. |
 
 ## Live methodological rules
 
@@ -98,6 +156,48 @@ cluster detector split bilayers and merged micelles, and the test target had bee
    head dispersion were both wrong knobs; head electrostatics was the lever).
 
 ---
+
+## 2026-08-01q — the diagnosis: we built a DETERGENT, not a lipid
+
+Prompted by the right question: in nature, do bilayers melt into multiple micelles?
+
+They do not. A phospholipid bilayer is among the most stable structures in biology. A membrane
+dissolving into micelles is what happens when DETERGENT is added -- Triton X-100, SDS, octyl
+glucoside -- and it is the standard laboratory method for solubilising membranes, yielding mixed
+micelles. Fragmenting into micelles is what a detergent does and what a lipid does not.
+
+(Keep the vocabulary straight: "melting" in membrane biophysics means the gel to liquid-crystalline
+CHAIN transition at Tm, where tails disorder and the bilayer REMAINS a bilayer. Our runs do not do
+that. They fragment into five separate aggregates, which is dissolution.)
+
+**So the planted bilayer's failure identifies the MOLECULE, not the parameters.** Every observation
+lines up, and each had been read as a failure to be tuned away:
+
+    observation                        read as failure          read as DETERGENT
+    self-assembly gives micelles       wrong phase              CORRECT for P < 1/3
+    planted bilayer fragments          unstable, needs tuning   CORRECT -- detergents solubilise
+    preferred aggregation number ~12   odd plateau              CORRECT -- micelles have a set size
+    finite ribbons, never spanning     nearly there             CORRECT -- mixed-micelle regime
+
+This retroactively explains why EVERY kinetic intervention plateaued: annealing, longer runs, force
+scaling, bond stiffness, temperature. A thermodynamic constraint viewed from inside a parameter
+search looks exactly like a series of plateaus, and I read each plateau as a reason to try the next
+parameter instead of as evidence about the molecule.
+
+The consequence is that the search space was wrong, not merely badly sampled. The fix is molecular
+geometry: raise P = v/(a0*l) from the detergent range (< 1/3) into the bilayer range (1/2 to 1).
+
+Head-charge sweep, dispersed start, t=20000 (a0 is set electrostatically here, so this is the term
+that matters -- steric head_sigma had no effect):
+
+    head_q   polarity   aggregates   largest   align   packing
+       1.2       0.80            5        18   0.813     0.502
+       0.6       0.80            6        20   0.579     0.552
+
+Lowering the charge alone does NOT consolidate the aggregates -- still fragmented, and align falls.
+So effective a0 is not reducible by charge alone at this tail volume, and P has to be raised from the
+v side and the a0 side together: a TWO-bead double tail (n_tail=2 branched, not the n_tail=4 that
+overshot into P > 1) at reduced head charge is the untested combination.
 
 ## 2026-08-01p — BILAYER RIBBONS EMERGE. Stage 2, finite rather than spanning
 
