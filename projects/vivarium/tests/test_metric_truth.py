@@ -15,6 +15,8 @@ about what the metrics MEAN. Bugs already caught by exactly this method:
     layers were 1.0 apart ACROSS the periodic boundary: the reference itself was invalid.
 """
 
+import math
+
 import numpy as np
 import pytest
 
@@ -171,3 +173,31 @@ def test_packing_admits_a_micelle_and_still_rejects_a_collapse():
     collapsed = spanning_bilayer_2d(build, **kw)
     collapsed.X[:, :collapsed.pd] *= 0.15
     assert packing(collapsed) < MIN_PACKING, "and must still reject a genuine collapse"
+
+
+def test_splay_separates_a_bilayer_from_a_micelle():
+    """The local discriminator, calibrated against both structures.
+
+    Every global metric here is ambiguous mid-range: `align` reads 1.0 flat and ~0.09 radial, but a
+    curved patch or a mixture lands between and cannot be told from a dense pile. Curvature is the
+    real difference, and splay measures it locally: same-leaflet neighbours are PARALLEL in a bilayer
+    (-> 0) and fan by ~2*pi/n in a micelle of n lipids (~0.5 rad at n=12).
+    """
+    from bicelle2d import build
+    from harness import splay
+    from references import micelle_2d, relax, spanning_bilayer_2d
+
+    kw = dict(kt=0.02, speed=0.001, repel=12.0, k_bond=30.0, satt=0.30, n_tail=2, attract=1.0,
+              bond_span=2.0, n_water=250, polarity=0.80, head_q=1.2, hydrophobic=0.6)
+
+    bil = spanning_bilayer_2d(build, **kw)
+    assert splay(bil) < 0.05, "a planted bilayer's leaflets are parallel; splay must be ~0"
+    bil_relaxed = splay(relax(bil, 500))
+
+    mic = micelle_2d(build, n_lip=12, **kw)
+    # the fan angle is geometric, so it must land near 2*pi/n rather than merely be 'large'
+    assert abs(splay(mic) - 2 * math.pi / 12) < 0.20, splay(mic)
+
+    assert bil_relaxed < splay(mic), "a relaxed bilayer must still splay less than a micelle"
+    assert splay(mic) - bil_relaxed > 0.20, (
+        f"bands too close to discriminate: bilayer {bil_relaxed:.3f} vs micelle {splay(mic):.3f}")

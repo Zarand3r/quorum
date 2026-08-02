@@ -236,6 +236,48 @@ def solvation(e):
     return float(np.median(dist[np.ix_(lip, wat)].min(axis=1)) / contact)
 
 
+def splay(e, cutoff=None):
+    """Median angle between a lipid's axis and its SAME-LEAFLET neighbours' axes, in radians.
+
+    This is the local, scale-free discriminator between a bilayer and a micelle, and it exists
+    because every global metric here is ambiguous in the middle of the range. `align` reads 1.0 for a
+    flat bilayer and ~0.09 for a micelle, but a mixture or a curved patch lands between and cannot be
+    told from a dense pile; `packing` distinguishes matter from collapse and says nothing about shape.
+
+    The geometry is unambiguous though. In a BILAYER, neighbouring lipids in the same leaflet are
+    PARALLEL, so the splay goes to 0. In a MICELLE of n lipids they fan out around the circle, so
+    neighbours differ by ~2*pi/n -- about 0.5 rad for the n~12 aggregates seen here. Curvature is the
+    actual difference between the two structures, and this measures curvature directly instead of
+    inferring it from a whole-aggregate average.
+
+    Same-leaflet is defined by u_i . u_j > 0: two lipids in opposing leaflets point antiparallel, and
+    including them would report ~pi for a perfect bilayer, which is the structure's OWN signature
+    mistaken for disorder.
+    """
+    mol = e._mol
+    if len(mol) < 3:
+        return float("nan")
+    nb = mol.shape[1]
+    u = np.zeros((len(mol), e.pd))
+    for k in range(1, nb):
+        u += -delta(e, mol[:, 0], mol[:, k])
+    u /= np.maximum(np.linalg.norm(u, axis=1, keepdims=True), 1e-9)
+    if cutoff is None:
+        sig = getattr(e, "sigma", None)
+        contact = float(2.0 * np.median(sig)) if sig is not None else 1.0
+        cutoff = 2.2 * contact          # first shell of neighbouring molecules
+    cen = e.X[mol[:, 0], :e.pd]
+    d = cen[:, None, :] - cen[None, :, :]
+    free = _periodic_axes(e)
+    d[:, :, free] -= e.L * np.round(d[:, :, free] / e.L)
+    near = np.linalg.norm(d, axis=2) < cutoff
+    np.fill_diagonal(near, False)
+    dots = np.clip(u @ u.T, -1.0, 1.0)
+    same = near & (dots > 0.0)
+    vals = [float(np.median(np.arccos(dots[i, same[i]]))) for i in range(len(mol)) if same[i].any()]
+    return float(np.median(vals)) if vals else float("nan")
+
+
 def largest_cluster(e, cutoff=None):
     """Molecule indices of the biggest connected aggregate, joined with minimum image.
 
@@ -302,7 +344,8 @@ def measure(e, prev_X=None):
            "lamellar": float("nan"), "aspect": float("nan"), "aspect2": float("nan"),
            "cluster_frac": 0.0, "hollow": float("nan"), "edge": float("nan"),
            "align": float("nan"), "thick_mol": float("nan"), "enclosed": float("nan"),
-           "packing": float("nan"), "solvation": float("nan")}
+           "packing": float("nan"), "solvation": float("nan"),
+           "splay": float("nan")}
 
     if prev_X is not None:
         d = e.X[:, :e.pd] - prev_X[:, :e.pd]
@@ -312,6 +355,7 @@ def measure(e, prev_X=None):
 
     out["packing"] = packing(e)
     out["solvation"] = solvation(e)
+    out["splay"] = splay(e)
     if out["packing"] < MIN_PACKING:
         # FIRST, ahead of every shape metric. A collapsed pile still has well-defined bond lengths and
         # well-defined directions, so it scores as a flawless membrane on everything else here.

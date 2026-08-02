@@ -157,6 +157,58 @@ defects found. 104 tests pass.
 
 ---
 
+## 2026-08-01r — `splay`: the bilayer ribbons are REAL, measured rather than eyeballed
+
+Every stage-2 claim so far rested on my reading of a render, which is the weakest evidence in a
+project that has found seventeen measurement defects. So the discriminator got built.
+
+`splay` is the median angle between a lipid's axis and its SAME-LEAFLET neighbours' axes. Curvature
+is the actual difference between a bilayer and a micelle, and this measures it LOCALLY: same-leaflet
+neighbours are parallel in a bilayer (-> 0) and fan by ~2*pi/n in a micelle of n lipids. Same-leaflet
+is defined by u_i . u_j > 0, since opposing leaflets are antiparallel and including them would report
+~pi for a perfect bilayer -- the structure's own signature mistaken for disorder.
+
+Calibrated against both references, and it matches the geometric prediction:
+
+    structure                    splay   predicted 2*pi/n   align
+    planted bilayer (t=0)        0.000               0.00   1.000
+    planted bilayer (relaxed)    0.207               0.00   0.883
+    planted micelle n=12         0.571               0.52   0.000
+    micelle n=12 relaxed         0.631               0.52   0.056
+    planted micelle n=20         0.471               0.31   0.000
+
+Bilayers 0.00-0.21, micelles 0.47-0.63, with an empty gap. Then the runs:
+
+    run                                  splay   align   packing   call
+    four-micelle figure (clump, t=6k)    0.527   0.078     0.441   micelle
+    dispersed, t=20k                     0.253   0.813     0.502   BILAYER
+
+**The ribbons are real.** splay 0.253 sits beside the relaxed planted bilayer at 0.207 and nowhere
+near the micelle band. The visual reading was right, and it is now independent of the visual reading.
+The four-micelle figure reads 0.527, confirming micelles a third time and by a third method.
+
+`align` alone could not have done this: it reads 0.813 for the ribbons and 0.078 for the micelles,
+but 0.5-0.8 is exactly where a dense pile also lands. `splay` is local, scale-free, and its expected
+value is derivable from geometry rather than fitted.
+
+**Concentration sweep** (fixed box, dispersed, t=20k) -- `spanning` is the fraction of the periodic
+axis the largest aggregate covers, binned on wrapped coordinates rather than taken as an extent,
+because an aggregate that WRAPS reports a span larger than the box:
+
+    phi_lipid   n_lip   spanning   cluster   align   packing
+         0.43      63       0.27      0.29   0.813     0.502
+         0.65     110       0.82      0.50   0.113     0.503
+         0.83     160       0.50      0.36   0.114     0.365
+
+Spanning peaks at phi ~0.65 and DEGRADES beyond it, with packing falling to 0.365 near the floor. The
+two levers currently pull apart: low concentration gives bilayer order in finite patches (align 0.81,
+splay 0.25), high concentration gives spanning without order (span 0.82, align 0.11). The target is
+the overlap, and finding it is the next experiment.
+
+Box size is a weaker version of the same lever: shrinking the half-width 8 -> 5 raised spanning
+0.38 -> 0.60 and produced the only admissible row, but it bottoms out because the membrane is ~5
+thick and a box under ~10 wide lets the bilayer feel its own periodic image.
+
 ## 2026-08-01q — the diagnosis: we built a DETERGENT, not a lipid
 
 Prompted by the right question: in nature, do bilayers melt into multiple micelles?
