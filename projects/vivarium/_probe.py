@@ -12,7 +12,7 @@ import numpy as np
 from bilayer3d import build
 from harness import bond_stats, largest_cluster, measure
 from references import clump_start
-from render import cross_section
+from xsection import cross_section
 
 OUT = "/home/rbao/quorum-thermolife/projects/vivarium/docs/images"
 FIG = dict(kt=0.02, speed=0.001, repel=12.0, k_bond=30.0, satt=0.55, spol=0.90, attract=1.0,
