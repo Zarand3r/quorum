@@ -181,3 +181,36 @@ def micelle_3d(build, n_lip=30, bound=6.0, **kw):
         off = (nb - 1) / 2.0 - bead      # head radially OUTWARD of its own tails
         e.X[mol[:, bead], :3] = u * (r_mid + off * BOND_REST)[:, None]
     return e
+
+
+def clump_start(e, seed=0):
+    """Reposition the lipids into a COMPACT but fully disordered ball, leaving solvent alone.
+
+    The 3-D counterpart of bicelle2d's `plant="clump"`, for the reason that file gives: a dispersed
+    start conflates two questions and only the second is the physics under test.
+
+        can dispersed molecules FIND each other?   ordinary diffusion, slow, and at these densities
+                                                   it dominates the entire run
+        can molecules already together ORDER?      the actual question
+
+    Measured on the 3-D runs this replaces: after 5000 steps from a dispersed start only 25% of the
+    lipids were in the largest aggregate, so nothing about ordering could be read yet.
+
+    Positions inside the ball are random and orientations are random, so NO order is supplied, only
+    proximity. The radius puts the beads at roughly contact -- dense enough to interact, not planted
+    on top of one another.
+    """
+    rng = np.random.default_rng(seed)
+    mol, nb = e._mol, e._mol.shape[1]
+    n = len(mol)
+    rad = max((n * nb * 0.125 / 0.5) ** (1.0 / 3.0), (nb - 1) * BOND_REST)
+    u = rng.standard_normal((n, 3))
+    u /= np.linalg.norm(u, axis=1, keepdims=True)
+    rr = rad * rng.random(n) ** (1.0 / 3.0)          # uniform in the ball, not biased to the centre
+    cen = u * rr[:, None]
+    ax = rng.standard_normal((n, 3))
+    ax /= np.linalg.norm(ax, axis=1, keepdims=True)   # random orientations: proximity, not order
+    for bead in range(nb):
+        off = (nb - 1) / 2.0 - bead
+        e.X[mol[:, bead], :3] = cen + ax * (off * BOND_REST)
+    return e
