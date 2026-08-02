@@ -17,6 +17,23 @@ from `references.py` (planted, solvated, relaxed before reading).
 `splay` is the discriminator. `align` alone cannot separate a ribbon from a dense pile, which is
 what made three claims wrong before it existed.
 
+### Null controls (a positive control alone validates nothing)
+
+| metric | bilayer | micelle | RANDOM null |
+|---|---|---|---|
+| `splay` 2-D | 0.00 – 0.21 | 0.52 | **0.60 – 0.70** |
+| `splay` 3-D | 0.000 | 0.605 | **1.103** |
+| `packing` | 0.78 – 1.00 | 0.51 | **0.77 – 0.80** |
+| `solvation` | 0.64 – 0.79 | 0.95 | 0.63 – 0.65 |
+
+**`packing` reads HIGH for random dispersed lipids** -- higher than a real micelle -- because
+unaggregated molecules are simply far apart. It is a FLOOR check that catches collapse; a high value
+is NOT evidence of structure, and must never be quoted as if it were.
+
+`splay` separates all three in both dimensionalities, which is why it is the discriminator: the
+2-D ribbons at 0.253 sit beside the relaxed planted bilayer (0.207) and far from micelle and random
+alike.
+
 ## Stages
 
 | # | stage | criterion | 2-D | 3-D |

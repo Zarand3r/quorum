@@ -179,7 +179,27 @@ def bond_stats(e):
     return float(d.mean()), float(d.max()), float((d > BOND_MAX).mean())
 
 
-def packing(e):
+def _pair_dist(e):
+    """Minimum-image distance between every pair, with self and BONDED pairs set to inf.
+
+    Built once and shared: `packing` and `solvation` each constructed this same (N,N) matrix, ~9 MB
+    apiece at N=626, and `measure()` called both. Bonded pairs are excluded because a bond
+    legitimately holds beads inside contact; a lipid and a water are never bonded, so the lipid-water
+    block `solvation` reads is identical either way.
+    """
+    d = e.X[:, : e.pd][:, None, :] - e.X[:, : e.pd][None, :, :]
+    free = _periodic_axes(e)
+    d[:, :, free] -= e.L * np.round(d[:, :, free] / e.L)
+    dist = np.linalg.norm(d, axis=2)
+    np.fill_diagonal(dist, np.inf)
+    bi, bj = getattr(e, "_bond_i", None), getattr(e, "_bond_j", None)
+    if bi is not None and len(bi):
+        dist[bi, bj] = np.inf
+        dist[bj, bi] = np.inf
+    return dist
+
+
+def packing(e, _dist=None):
     """Median nearest NON-BONDED neighbour distance, as a fraction of the contact distance.
 
     Bonded pairs are excluded because a bond legitimately holds beads at BOND_REST, which is inside
@@ -202,19 +222,11 @@ def packing(e):
     lip = np.asarray(e.species) != 0
     if not lip.any():
         return float("nan")
-    d = e.X[:, : e.pd][:, None, :] - e.X[:, : e.pd][None, :, :]
-    free = _periodic_axes(e)
-    d[:, :, free] -= e.L * np.round(d[:, :, free] / e.L)
-    dist = np.linalg.norm(d, axis=2)
-    np.fill_diagonal(dist, np.inf)
-    bi, bj = getattr(e, "_bond_i", None), getattr(e, "_bond_j", None)
-    if bi is not None and len(bi):
-        dist[bi, bj] = np.inf
-        dist[bj, bi] = np.inf
+    dist = _pair_dist(e) if _dist is None else _dist
     return float(np.median(dist[np.ix_(lip, lip)].min(axis=1)) / contact)
 
 
-def solvation(e):
+def solvation(e, _dist=None):
     """Median lipid-to-nearest-SOLVENT distance over contact. The other half of `packing`.
 
     Split out rather than folded in, because the two answer different questions and a single number
@@ -229,10 +241,9 @@ def solvation(e):
     lip, wat = sp != 0, sp == 0
     if not lip.any() or not wat.any():
         return float("nan")
-    d = e.X[:, : e.pd][:, None, :] - e.X[:, : e.pd][None, :, :]
-    free = _periodic_axes(e)
-    d[:, :, free] -= e.L * np.round(d[:, :, free] / e.L)
-    dist = np.linalg.norm(d, axis=2)
+    # bonded pairs are masked to inf in the shared matrix, which is right for `packing`; a lipid and
+    # a water are never bonded, so the lipid-water block is unaffected either way.
+    dist = _pair_dist(e) if _dist is None else _dist
     return float(np.median(dist[np.ix_(lip, wat)].min(axis=1)) / contact)
 
 
@@ -353,8 +364,9 @@ def measure(e, prev_X=None):
         d[:, free] -= e.L * np.round(d[:, free] / e.L)
         out["disp"] = float(np.linalg.norm(d, axis=1).max())
 
-    out["packing"] = packing(e)
-    out["solvation"] = solvation(e)
+    _dist = _pair_dist(e)                 # one (N,N) matrix, shared by both
+    out["packing"] = packing(e, _dist)
+    out["solvation"] = solvation(e, _dist)
     out["splay"] = splay(e)
     if out["packing"] < MIN_PACKING:
         # FIRST, ahead of every shape metric. A collapsed pile still has well-defined bond lengths and
