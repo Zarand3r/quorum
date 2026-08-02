@@ -1,33 +1,53 @@
-"""Did 2-D fail for the same reason 3-D did?
+"""Self-assembly at the ratio where the phase is PROVEN stable, with annealing.
 
-The 3-D bilayer was being CRUSHED, not melted: at attract/repel = 1/12 packing fell to 0.24, and
-raising repel to 96 held packing at 0.90 and showed the melting was real. Every 2-D run in this
-project also used repel=12 with attract=1.0 -- the same 1/12 ratio -- and the 2-D planted bilayer
-degrades on BOTH axes at once (packing 1.000 -> 0.484, align 0.883 -> 0.275), which is the same
-signature. 2-D was never run above repel 12.
+Established: a planted 2-D bilayer at repel 48 reaches splay 0.071 and holds it to 20k steps at
+packing 0.95. So the target exists and the only remaining question is whether disorder can REACH it.
+First clump-start runs at repel 24 gave one consolidated aggregate at 64-68% spanning but splay 0.61
+-- condensed and not lamellar, which is a nucleation problem.
 
-If the 2-D bilayer HOLDS at higher repel, then stage 3 in 2-D was a collapse artifact all along.
-Bands (2-D): splay bilayer 0.00-0.21 | micelle 0.52 | random 0.60-0.70.
+Annealing is the standard escape from a kinetic trap, it has been implemented in bicelle2d for
+months, and it has never been used in any run. Temperature is ramped linearly from `hot` down to the
+production kT over the first 60% of the run, then held, so the structure orders while cold.
+
+Stage 3 criterion, all three together:
+    splay < 0.30   AND   spanning > 0.8   AND   packing > 0.35
 """
 import numpy as np
 from bicelle2d import build
-from harness import bond_stats, measure
-from references import spanning_bilayer_2d
+from harness import bond_stats, largest_cluster, measure
+from xsection import cross_section
 
-BASE = dict(kt=0.02, speed=0.001, k_bond=30.0, satt=0.30, n_tail=2, attract=1.0, bond_span=2.0,
-            n_water=250, polarity=0.80, head_q=1.2, hydrophobic=0.6)
+OUT = "/home/rbao/quorum-thermolife/projects/vivarium/docs/images"
+KT = 0.02
+BASE = dict(kt=KT, speed=0.001, k_bond=30.0, satt=0.30, n_tail=2, attract=1.0, bond_span=2.0,
+            polarity=0.80, head_q=1.2, hydrophobic=0.6, repel=48.0)
 
-print("  2-D bands: splay bilayer 0.00-0.21 | micelle 0.52 | random 0.60-0.70", flush=True)
-print(f"  {'repel':>6}{'ratio':>8}{'t':>7}{'splay':>7}{'pack':>7}{'align':>7}{'bond':>7}  verdict",
-      flush=True)
-for rp in (12.0, 24.0, 48.0, 96.0):
-    e = spanning_bilayer_2d(build, bound=11.0, repel=rp, **BASE)
-    for t in (500, 2000, 8000, 20000):
-        while getattr(e, "_t", 0) < t:
-            e.step(); e._t = getattr(e, "_t", 0) + 1
-        m = measure(e); mean, _, _ = bond_stats(e)
-        verdict = ("HOLDS" if m["splay"] < 0.30 and m["packing"] > 0.35 else
-                   "collapsed" if m["packing"] < 0.35 else
-                   "degrading" if m["splay"] < 0.50 else "melted")
-        print(f"  {rp:>6.0f}{1.0/rp:>8.3f}{t:>7}{m['splay']:>7.3f}{m['packing']:>7.3f}"
-              f"{m['align']:>7.3f}{mean:>7.3f}  {verdict}", flush=True)
+def spanning_frac(e):
+    comp = largest_cluster(e)
+    if len(comp) < 3:
+        return 0.0
+    x = np.mod(e.X[e._mol[comp].ravel(), 0] + e.cfg.pos_bound, 2 * e.cfg.pos_bound)
+    nb = max(8, int(2 * e.cfg.pos_bound))
+    return float(len(np.unique((x / (2 * e.cfg.pos_bound) * nb).astype(int))) / nb)
+
+TOTAL = 60000
+print("  repel 48 (phase proven stable: planted holds at splay 0.071)", flush=True)
+print(f"  {'hot kT':>7}{'n_lip':>6}{'t':>7}{'kT':>7}{'splay':>7}{'span':>6}{'pack':>7}"
+      f"{'align':>7}  STAGE 3?", flush=True)
+for hot in (0.02, 0.20, 0.60):
+    for n_lip in (44,):
+        e = build(7, n_lip=n_lip, bound=11.0, n_water=250, plant="clump", **BASE)
+        for step in range(TOTAL):
+            frac = min(1.0, step / (0.6 * TOTAL))          # cool over the first 60%, then hold
+            e.temperature = hot + (KT - hot) * frac
+            e.step()
+            if step + 1 in (20000, 40000, TOTAL):
+                m = measure(e); sf = spanning_frac(e)
+                ok = m["splay"] < 0.30 and sf > 0.8 and m["packing"] > 0.35
+                print(f"  {hot:>7.2f}{n_lip:>6}{step+1:>7}{e.temperature:>7.3f}{m['splay']:>7.3f}"
+                      f"{sf:>6.2f}{m['packing']:>7.3f}{m['align']:>7.3f}"
+                      f"  {'*** YES ***' if ok else 'no'}", flush=True)
+        cross_section(e, f"{OUT}/anneal_{str(hot).replace('.','p')}",
+                      title=f"2-D self-assembly, repel 48, anneal kT {hot} -> {KT}, t={TOTAL}",
+                      sub=f"splay {m['splay']:.3f} (bilayer <0.30)  spanning {sf:.2f}  "
+                          f"packing {m['packing']:.3f}")

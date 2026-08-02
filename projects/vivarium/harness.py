@@ -289,6 +289,28 @@ def splay(e, cutoff=None):
     return float(np.median(vals)) if vals else float("nan")
 
 
+def spanning(e):
+    """Fraction of the periodic x-axis covered by the largest aggregate. ~1.0 means it WRAPS the box.
+
+    Occupancy binning on WRAPPED coordinates, not an extent: an unwrapped aggregate that spans the
+    box reports a span LARGER than the box, so an extent-based measure reads > 1 for the very
+    structure it is meant to identify. Coverage is what "spans" actually means.
+
+    A spanning bilayer must wrap the box -- that is what makes it rimless and therefore reachable at
+    all, since a finite patch pays edge energy and closes into a vesicle instead.
+    """
+    mol = e._mol
+    if mol.size == 0:
+        return 0.0
+    comp = largest_cluster(e)
+    if len(comp) < 3:
+        return 0.0
+    L = 2.0 * e.cfg.pos_bound
+    x = np.mod(e.X[mol[comp].ravel(), 0] + e.cfg.pos_bound, L)
+    nbins = max(8, int(L))
+    return float(len(np.unique((x / L * nbins).astype(int))) / nbins)
+
+
 def head_enrichment(e):
     """How strongly HEADS are enriched on the aggregate's outer surface, as a ratio to the bulk.
 
@@ -393,7 +415,8 @@ def measure(e, prev_X=None):
            "cluster_frac": 0.0, "hollow": float("nan"), "edge": float("nan"),
            "align": float("nan"), "thick_mol": float("nan"), "enclosed": float("nan"),
            "packing": float("nan"), "solvation": float("nan"),
-           "splay": float("nan"), "head_enrich": float("nan")}
+           "splay": float("nan"), "head_enrich": float("nan"),
+           "spanning": 0.0}
 
     if prev_X is not None:
         d = e.X[:, :e.pd] - prev_X[:, :e.pd]
@@ -406,6 +429,7 @@ def measure(e, prev_X=None):
     out["solvation"] = solvation(e, _dist)
     out["splay"] = splay(e)
     out["head_enrich"] = head_enrichment(e)
+    out["spanning"] = spanning(e)
     if out["packing"] < MIN_PACKING:
         # FIRST, ahead of every shape metric. A collapsed pile still has well-defined bond lengths and
         # well-defined directions, so it scores as a flawless membrane on everything else here.
