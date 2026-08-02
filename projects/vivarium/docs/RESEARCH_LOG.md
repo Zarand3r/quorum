@@ -157,6 +157,50 @@ defects found. 104 tests pass.
 
 ---
 
+## 2026-08-02a — 3-D MICELLES ACHIEVED; the head-size sweep finds no lamellar window
+
+**Stage 1 in 3-D passes.** A self-assembled aggregate reaches `head_enrich` 3.00 -- the theoretical
+maximum for a 1-head/2-tail lipid, identical to the planted reference. Every tail is buried and the
+outer shell is entirely heads, which is the defining property of a micelle.
+
+    3-D structure                     head_enrich   splay   packing
+    planted micelle (reference)              3.00   0.605     0.700
+    SELF-ASSEMBLED t=8000                    3.00   0.807     0.530
+    RANDOM NULL                        0.60, 1.00   1.103     1.112
+
+It had been forming for hours and was called "disordered" three times, because `splay` reads
+mid-range for BOTH a wrong structure and a right structure with a rough surface. The cross-section
+settled it, and `head_enrich` then quantified it. **The picture was right and the scalar was
+misleading** -- the third time today the model turned out healthier than the instruments said.
+
+New metric `head_enrichment`: outer-quarter head fraction over the bulk head fraction, on the
+largest cluster, unwrapped. Its maximum is DERIVABLE (1/head_fraction = 3.0) rather than fitted --
+the property that also makes `splay` trustworthy. Radial enrichment is meaningless for a slab, so it
+applies to compact aggregates only, and `splay` remains the lamellar criterion.
+
+**The bilayer, however, is not where the head-size lever reaches.** Sweeping head_sigma across both
+regimes, with the lever working for the first time since the sigma fix:
+
+    head_sigma   enrich   splay   phase
+          0.50     0.71    0.96   INVERTED (tails outside, heads buried; below the random null)
+          0.55     2.14    1.02   partial
+          0.65     2.94    0.92   partial/micelle
+          0.85     3.00    0.85   micelle
+          1.00     3.00    0.81   micelle
+
+The progression is micelle -> partial -> inverted, and `splay` never approaches the lamellar band
+(0.00-0.35) anywhere in it. The bilayer window that P = v/(a0*l) predicts between 1/2 and 1 does not
+appear as a stable phase here: the system steps over it.
+
+Two caveats that keep this from being a clean negative:
+
+  SIZE. 30 lipids CANNOT form a 3-D bilayer -- a patch of radius R needs ~pi*R^2/a0 lipids per
+  leaflet, so even a minimal R=3 patch needs ~56. Raising to 70-110 (free, since bilayer3d sizes
+  solvent to fill the box, so N stays ~626) still gave micelles.
+
+  DENSITY. At 70 lipids `packing` slides to 0.314-0.360, at or under the 0.35 collapse floor, so the
+  densest runs are disqualified rather than informative.
+
 ## 2026-08-01t — 3-D has no per-species steric radius. Every 3-D result measures a different molecule
 
 Found while reading the force path for a performance refactor, then verified directly.
