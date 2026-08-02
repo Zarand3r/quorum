@@ -114,3 +114,70 @@ def spanning_bilayer_2d_branched(build, bound=11.0, n_tail=4, **kw):
                 e.X[idx[:, b], 0] = x + (dx if arm else -dx)
                 e.X[idx[:, b], 1] = sgn * (y_head - dy0 - k * BOND_REST)
     return e
+
+
+def _fib_sphere(n):
+    """n directions spread evenly over a sphere. Same reason as the 2-D case: normalised Gaussians
+    are Poisson-random and CLUMP, which put the planted shells at 0.59 of contact no matter how the
+    radii were chosen."""
+    k = np.arange(n) + 0.5
+    z = 1.0 - 2.0 * k / n
+    r = np.sqrt(np.maximum(0.0, 1.0 - z * z))
+    th = np.pi * (1.0 + 5.0 ** 0.5) * k
+    return np.stack([r * np.cos(th), r * np.sin(th), z], axis=1)
+
+
+def spanning_bilayer_3d(build, bound=3.4, **kw):
+    """A rimless bilayer spanning the periodic box in 3-D: a SHEET, not a row.
+
+    This is the object the 2-D runs only approximate. A 2-D "bilayer" is a double ROW whose edge is
+    two endpoints at constant cost; a 3-D bilayer is a SHEET whose rim costs 2*pi*R*gamma and grows
+    with size. The periodic box removes the rim in both cases, but the structures are not the same
+    dimensionality of thing, which is why the 2-D result cannot be assumed to transfer.
+
+    LIPID COUNT FOLLOWS THE BOX, in two dimensions here rather than one: per leaflet =
+    (box_width / contact)^2. The existing 3-D planted bilayer used 48 lipids in a box of width 6.8,
+    i.e. a 4.9 x 4.9 grid at 1.39 spacing, and measured packing 1.360 -- BEYOND contact, so it was
+    never a properly built reference.
+    """
+    per_side = max(2, int(round(2.0 * bound / BOND_REST)))
+    per = per_side * per_side
+    e = build(0, n_lip=2 * per, bound=bound, plant=False, **kw)
+    mol, nb = e._mol, e._mol.shape[1]
+    B = e.cfg.pos_bound
+    xs = -B + (np.arange(per_side) + 0.5) * (2.0 * B / per_side)
+    gx, gy = np.meshgrid(xs, xs, indexing="ij")
+    flat = np.stack([gx.ravel(), gy.ravel()], axis=1)
+    for leaf, sgn in ((0, +1.0), (1, -1.0)):
+        idx = mol[leaf * per:(leaf + 1) * per]
+        n = len(idx)
+        for bead in range(nb):
+            e.X[idx[:, bead], 0] = flat[:n, 0]
+            e.X[idx[:, bead], 1] = flat[:n, 1]
+            e.X[idx[:, bead], 2] = sgn * (0.5 + (nb - 1 - bead) * BOND_REST)
+    return e
+
+
+def micelle_3d(build, n_lip=30, bound=6.0, **kw):
+    """A single 3-D micelle: a BALL of radially oriented lipids, tails in, heads out.
+
+    Aggregation number is capped by geometry from both sides, and both caps matter. The head shell of
+    n points at radius r spaces them ~2r*sqrt(pi/n) apart, needing r >= sqrt(n/(4*pi)) * contact; and
+    the tails must REACH the centre, needing r <= (nb-1)*contact. Those cross at n ~ 4*pi*l^2, about
+    50 lipids for a 2-bead tail -- so a larger "micelle" than that is not a micelle.
+
+    Molecule CENTRES are staggered through the ball as ((m+0.5)/n)^(1/3) rather than placed on
+    concentric shells. Shells put every tail END on one tiny inner sphere: the old 3-D reference had
+    60 tail ends at radius 0.6, i.e. 0.32 of contact, an impossible core that calibrated `hollow` and
+    `enclosed` for weeks before `packing` existed to reject it.
+    """
+    e = build(0, n_lip=n_lip, bound=bound, plant=False, **kw)
+    mol, nb = e._mol, e._mol.shape[1]
+    n = len(mol)
+    u = _fib_sphere(n)
+    r_out = max(float(np.sqrt(n / (4.0 * np.pi))) * BOND_REST, (nb - 1) * BOND_REST + 0.5)
+    r_mid = r_out * ((np.arange(n) + 0.5) / n) ** (1.0 / 3.0)
+    for bead in range(nb):
+        off = (nb - 1) / 2.0 - bead      # head radially OUTWARD of its own tails
+        e.X[mol[:, bead], :3] = u * (r_mid + off * BOND_REST)[:, None]
+    return e

@@ -381,8 +381,20 @@ class PolarPackEngine(PackEngine):
         return b
 
     def _pair_basis(self, delta, dist):
-        """Spherical-harmonic basis at every i→j direction. NOT cached — see _periodic_delta."""
-        return self._sh_basis(-delta / dist[..., None])
+        """Spherical-harmonic basis at every i→j direction, (N,N,tK).
+
+        Reused within a single step through `_basis_slot`, which step() clears before and after it
+        runs. Within a step `delta` and `dist` are constant, so the two callers -- _contact_distance
+        and _extra_force -- were building the identical tensor twice at ~25% of step time. This is
+        NOT a cache in the sense _periodic_delta warns about: nothing is keyed on t or on id(X), and
+        nothing survives the step, so a caller outside step() always recomputes.
+        """
+        b = getattr(self, "_basis_slot", None)
+        if b is None:
+            b = self._sh_basis(-delta / dist[..., None])
+            if hasattr(self, "_basis_slot"):
+                self._basis_slot = b
+        return b
 
     def _axial_coeffs(self, u, amps):
         """Contour coefficients for an AXIALLY SYMMETRIC charge pattern around unit axis u (n,3):

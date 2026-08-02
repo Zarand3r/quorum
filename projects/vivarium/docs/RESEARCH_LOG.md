@@ -157,6 +157,60 @@ defects found. 104 tests pass.
 
 ---
 
+## 2026-08-01t — 3-D has no per-species steric radius. Every 3-D result measures a different molecule
+
+Found while reading the force path for a performance refactor, then verified directly.
+
+    aniso=0.95   head_sigma 0.5 vs 1.0  ->  contact matrices IDENTICAL   (sigma itself differs)
+
+`_contact_distance` computes `base` from per-species sigma and then DISCARDS it whenever aniso > 0:
+
+    base = (self.repel_contact if self.sigma is None
+            else self.sigma[:, None] + self.sigma[None, :])
+    if self.aniso <= 0.0:
+        return base                       # 2-D path (bicelle2d, aniso=0): sigma IS used
+    half = 0.5 * self.repel_contact       # 3-D path (bilayer3d, aniso=0.95): sigma DISCARDED
+    return half * (1.0 + self.aniso * nf) + half * (1.0 + self.aniso * nf.T)
+
+So in every 3-D run, water, heads and tails have had the SAME steric radius. The packing parameter
+P = v/(a0*l) is a head-area to tail-volume ratio, so the 3-D model has been missing the single
+property its phase behaviour depends on.
+
+**Consequences, which reach back over the whole 3-D line:**
+
+  - The 2-D vs 3-D comparison is INVALID as run. It was never one variable (dimensionality); the
+    molecules differed too. The 2026-08-01s conclusion that "2-D may not transfer" is not supported
+    by the runs that were used to reach it.
+  - A `head_sigma` sweep in 3-D would be a no-op, and would have read as "head size does not matter"
+    -- the same null the 2-D sweep produced for a different reason.
+  - The melting 3-D planted bilayer was measured on a molecule with no head/tail asymmetry, so it
+    says nothing about whether a proper lipid holds a bilayer in 3-D.
+
+`base` being computed and never used is the tell: this reads as a bug rather than a decision to let
+the anisotropic contour supersede sigma. Not yet fixed -- fixing it changes 3-D physics, so it wants
+its own change with the base case re-verified.
+
+**Cost wall, quantified.** Solvent fills the box so N ~ L^3, and forces are O(N^2), giving cost ~ L^6:
+
+    bound=4.5   N= 626    0.09 s/step     20k steps =   0.5 h
+    bound=7.0   N=2358    1.26 s/step     20k steps =   7.0 h
+    bound=8.0   N=3520    2.81 s/step     20k steps =  15.6 h
+    bound=11.0  N=9151   19.02 s/step     20k steps = 105.7 h   <- the 2-D box that works
+
+This is why 3-D is barely explored: not a choice, a cost wall. The contact term is short-ranged --
+`overlap` is exactly zero beyond repel_contact*(1+aniso) ~ 1.95, and only ~2% of pairs are within it
+at liquid density -- yet an (N,N,tK) basis is built for every pair. Exploiting that is EXACT and takes
+the scaling from L^6 to ~L^3.
+
+**Performance, done:** the spherical-harmonic pair basis was being built TWICE per step from
+identical inputs (via _contact_distance and again in _extra_force) at ~25% of step time. Now shared
+through a slot that step() clears on both ends, so nothing survives a step and callers outside step()
+always recompute. Verified BYTE-IDENTICAL over 200 steps (max |diff| = 0.000e+00) for 1.08x -- real,
+but smaller than the 1.15x predicted, and reported as measured.
+
+Adds `docs/SCORECARD.md`: binary PASS/FAIL criteria per stage against the calibrated metric bands.
+Current state is 2 of 4 stages in 2-D, 0 of 4 in 3-D.
+
 ## 2026-08-01s — first 3-D check: PRELIMINARY and NOT controlled. Read the caveats before the numbers
 
 Ran the 3-D transfer question early because it is the one whose answer could invalidate the most.

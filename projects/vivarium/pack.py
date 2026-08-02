@@ -322,6 +322,13 @@ class PackEngine:
     def step(self):
         cfg = self.cfg
         tau = max(1e-2, self.selectivity)    # softmax selectivity τ (NOT kT — see self.temperature)
+        # Per-step slot for the pair basis. `delta` and `dist` are fixed for the whole step, and the
+        # 3-D spherical-harmonic basis over them was being built TWICE from identical inputs -- once
+        # via _contact_distance and once in _extra_force -- at ~25% of step time. Same discipline as
+        # _periodic_delta: compute once, reuse within the step, and hold nothing across steps. The
+        # slot is cleared on BOTH ends so any caller outside step() always recomputes and cannot read
+        # a stale tensor.
+        self._basis_slot = None
         C = self._contour()
         delta, d2 = self._periodic_delta()
         idx = self._neighbors(d2, cfg.n_neighbors)
@@ -425,6 +432,7 @@ class PackEngine:
             force = force + self.cohesion * cohere
 
         force = force + self._extra_force(delta, d2)   # subclass hook (default 0.0) — e.g. contour-charge force
+        self._basis_slot = None                        # never survives the step that built it
 
         # OVERDAMPED (Brownian / DPD) integration: a molecule in a viscous solvent has negligible
         # inertia — velocity tracks force (v ≈ μ·F), drag dominates. `momentum` is the small inertial
