@@ -1,42 +1,34 @@
-"""The head_sigma sweep never reached the lamellar band, but 30 lipids CANNOT form a 3-D bilayer:
-a patch of radius R needs ~pi*R^2/a0 lipids PER LEAFLET, so even a minimal R=3 patch needs ~56 total.
-The structure was below its own existence threshold, so that sweep could not have found it whatever
-the head size did.
+"""Re-run the head-size stability screen where packing HOLDS.
 
-Lipids are cheap next to solvent -- N 626 -> ~800 is 1.5x, against the L^6 wall that makes a bigger
-BOX unaffordable -- so raise the lipid count instead and keep the box fixed.
+The first screen ran at repel=12, inside the collapse regime: packing fell to 0.24-0.32, below the
+0.35 floor, so "the bilayer melted" was confounded with "the bilayer was crushed". Raising repel
+separates them -- at repel 96 packing stays at 0.90 with no interpenetration at all -- and only then
+does the melting mean what it appears to.
 
-Scored on `splay` (the lamellar criterion). Bands: bilayer 0.000 | micelle 0.605 | random 1.103.
+head_sigma is a fraction of the tail radius, so < 1 is a NARROW head (raises P toward the bilayer
+window) and > 1 is a WIDE head (lowers P toward micelles).
 """
 import numpy as np
 from bilayer3d import build
-from harness import bond_stats, largest_cluster, measure
-from references import clump_start
-from xsection import cross_section
+from harness import bond_stats, measure
+from references import spanning_bilayer_3d
 
-OUT = "/home/rbao/quorum-thermolife/projects/vivarium/docs/images"
-FIG = dict(kt=0.02, speed=0.001, repel=12.0, k_bond=30.0, satt=0.55, spol=0.90, attract=1.0,
-           polarity=0.80, head_q=1.2, n_tail=2, bond_span=2.0)
-assert 0.001 * 30.0 / (1 - 0.30) < 0.05
+MOM, KB, SPEED = 0.30, 30.0, 0.001
+assert SPEED * KB / (1 - MOM) < 0.05
+BASE = dict(kt=0.02, speed=SPEED, k_bond=KB, satt=0.55, spol=0.90, attract=1.0, repel=96.0,
+            polarity=0.80, head_q=1.2, n_tail=2, bond_span=2.0)
 
-print(f"  {'n_lip':>6}{'head_sig':>9}{'N':>6}{'t':>7}{'splay':>7}{'enrich':>8}{'pack':>7}"
-      f"{'aggr':>6}  reading", flush=True)
-for n_lip in (70, 110):
-    for hs in (0.65, 0.85):
-        e = clump_start(build(3, n_lip=n_lip, bound=4.5, plant=False, head_sigma=hs, **FIG))
-        for t in (5000, 18000):
-            while getattr(e, "_t", 0) < t:
-                e.step(); e._t = getattr(e, "_t", 0) + 1
-            m = measure(e); mean, _, _ = bond_stats(e)
-            frac = len(largest_cluster(e)) / max(len(e._mol), 1)
-            reading = ("LAMELLAR" if m["splay"] < 0.35 else
-                       "part-lamellar" if m["splay"] < 0.60 else
-                       "micelle" if m["head_enrich"] > 2.5 else
-                       "inverted" if m["head_enrich"] < 1.0 else "partial")
-            print(f"  {n_lip:>6}{hs:>9.2f}{len(e.X):>6}{t:>7}{m['splay']:>7.3f}"
-                  f"{m['head_enrich']:>8.2f}{m['packing']:>7.3f}{frac:>6.2f}  {reading}"
-                  f"{'' if m['ok'] else '  [' + m['why'][:14] + ']'}", flush=True)
-        cross_section(e, f"{OUT}/big_{n_lip}_{str(hs).replace('.','p')}",
-                      title=f"3-D, {n_lip} lipids, head_sigma {hs}, t=18000",
-                      sub=f"splay {m['splay']:.3f} (bilayer 0.00)  enrich {m['head_enrich']:.2f}  "
-                          f"packing {m['packing']:.3f}")
+print("  repel=96 (packing holds ~0.90).  splay: 0.000 lamellar | 0.605 micelle | 1.103 random",
+      flush=True)
+print(f"  {'head_sig':>9}{'t':>7}{'splay':>7}{'pack':>7}{'align':>7}{'bond':>7}  verdict", flush=True)
+for hs in (0.5, 0.7, 1.0, 1.4):
+    e = spanning_bilayer_3d(build, bound=3.4, head_sigma=hs, **BASE)
+    for t in (500, 2000, 8000):
+        while getattr(e, "_t", 0) < t:
+            e.step(); e._t = getattr(e, "_t", 0) + 1
+        m = measure(e); mean, _, _ = bond_stats(e)
+        verdict = ("HOLDS" if m["splay"] < 0.35 and m["packing"] > 0.35 else
+                   "collapsed" if m["packing"] < 0.35 else
+                   "degrading" if m["splay"] < 0.60 else "melted")
+        print(f"  {hs:>9.2f}{t:>7}{m['splay']:>7.3f}{m['packing']:>7.3f}{m['align']:>7.3f}"
+              f"{mean:>7.3f}  {verdict}", flush=True)

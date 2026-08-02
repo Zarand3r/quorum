@@ -157,6 +157,54 @@ defects found. 104 tests pass.
 
 ---
 
+## 2026-08-02b — collapse was masking the answer: with packing held, the 3-D lamellar phase is NOT stable
+
+The cleanest negative result of this work, and it took separating two failures that looked identical.
+
+**Collapse was confounding everything.** A planted 3-D bilayer at the standard parameters does not
+melt into micelles -- it COLLAPSES: packing 0.971 -> 0.24-0.32, far under the 0.35 floor. That is a
+force-balance failure, and it had been read as a phase-stability result. The 2-D work had already
+established that collapse sets in below an attract/repel ratio of ~1/24, and every 3-D run was at
+1/12 -- twice the threshold. The finding was simply never carried across.
+
+Raising repel separates them cleanly:
+
+    repel   ratio   packing @8k   splay @8k   verdict
+       12    1/12         0.348       0.760   COLLAPSED
+       24    1/24         0.720       0.865   melted
+       48    1/48         0.848       0.814   melted
+       96    1/96         0.903       0.952   melted
+
+At repel 96 there is no interpenetration at all (packing 0.90) and the lamellar order still decays to
+the random null. So the melting is real and is not an artifact of crushing.
+
+**With packing held, no head size gives a stable bilayer.** splay against time, repel 96:
+
+    head_sigma   t=2000   t=8000   t=20000
+          0.60    0.663    0.810     0.974
+          0.65    0.581    0.818     0.926
+          0.70    0.583    0.810     0.904
+          0.75    0.560    0.788     0.930
+
+Flat and uniformly melting, with packing healthy at 0.73-0.92 throughout. head_sigma 0.70 registered
+HOLDS once at t=500 in the coarser screen and decayed slowest, which is the lamellar window making
+itself faintly visible -- but nothing survives to 20k. head_sigma 1.40 is disqualified outright: wide
+heads stretch bonds to 1.54-1.61, past the 1.25 limit.
+
+Doubling the membrane AREA does not rescue it either (bound 3.4 -> 4.2, N 334 -> 509: splay 0.708 at
+t=2000 against 0.583), so the decay is not obviously a finite-size effect.
+
+**Conclusion, stated at the strength the evidence supports:** for this molecule -- a 1-head/2-tail
+linear amphiphile with a bounded attention cohesion -- the 3-D lamellar phase is not stable anywhere
+in head_sigma 0.5 to 1.4 once excluded volume is enforced. Micelles ARE stable and DO self-assemble
+(2026-08-02a). That is the detergent signature, now established in 3-D under controlled packing
+rather than inferred: P is below the bilayer window and head size alone does not lift it there.
+
+What remains untested, and is where a bilayer would have to come from: TAIL architecture. A second
+tail doubles v at fixed a0 and l, which is the term head size cannot reach. n_tail=4 branched
+overshot into inverted curvature (P > 1) in 2-D; n_tail=2 branched -- two ONE-bead tails -- is the
+untried middle, and 3-D branched has never been run at all.
+
 ## 2026-08-02a — 3-D MICELLES ACHIEVED; the head-size sweep finds no lamellar window
 
 **Stage 1 in 3-D passes.** A self-assembled aggregate reaches `head_enrich` 3.00 -- the theoretical
