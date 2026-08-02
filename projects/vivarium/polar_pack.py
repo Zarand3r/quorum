@@ -329,8 +329,23 @@ class PolarPackEngine(PackEngine):
         # base case exact: with no species assigned, every token is free-morphing.
         shaped = (self.stiff.max(axis=1) > 0.0)[:, None]
         nf = np.tanh(self._bearing_nf(C, delta, dist)) * shaped
-        half = 0.5 * self.repel_contact
-        return half * (1.0 + self.aniso * nf) + half * (1.0 + self.aniso * nf.T)
+        # EACH token contributes ITS OWN radius, modulated by what IT presents toward the other:
+        #
+        #     contact_ij = sigma_i*(1 + a*tanh(nf_i->j)) + sigma_j*(1 + a*tanh(nf_j->i))
+        #
+        # This branch previously used half = 0.5*repel_contact for BOTH terms, computing `base` from
+        # per-species sigma and then discarding it -- so with aniso > 0, water, heads and tails all
+        # had the same steric radius. Verified directly: head_sigma 0.5 and 1.0 produced identical
+        # contact matrices. Since the packing parameter P = v/(a0*l) is exactly a head-area to
+        # tail-volume ratio, every 3-D run (bilayer3d defaults aniso=0.95) was missing the property
+        # its phase behaviour depends on, while 2-D (aniso=0) took the `base` return and was fine.
+        #
+        # Still symmetric -- swapping i and j swaps both terms -- so the repulsion stays conservative.
+        # Reduces EXACTLY to the old expression when every sigma equals repel_contact/2, which is the
+        # base case (no species assigned).
+        si = 0.5 * self.repel_contact if self.sigma is None else self.sigma[:, None]
+        sj = 0.5 * self.repel_contact if self.sigma is None else self.sigma[None, :]
+        return si * (1.0 + self.aniso * nf) + sj * (1.0 + self.aniso * nf.T)
 
     def _build_sigma(self):
         """Per-species steric radius. Water is a single small molecule; every coarse-grained bead

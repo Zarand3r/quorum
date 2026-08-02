@@ -201,3 +201,47 @@ def test_splay_separates_a_bilayer_from_a_micelle():
     assert bil_relaxed < splay(mic), "a relaxed bilayer must still splay less than a micelle"
     assert splay(mic) - bil_relaxed > 0.20, (
         f"bands too close to discriminate: bilayer {bil_relaxed:.3f} vs micelle {splay(mic):.3f}")
+
+
+def test_per_species_radius_reaches_the_contact_distance_when_anisotropic():
+    """`aniso > 0` must not discard per-species sigma.
+
+    It did, for the whole life of the 3-D work: `base` was computed from sigma and then thrown away,
+    so water, heads and tails all had one steric radius and `head_sigma` was a no-op. The packing
+    parameter P = v/(a0*l) is exactly a head-area to tail-volume ratio, so every 3-D run was missing
+    the property its phase behaviour depends on, while 2-D (aniso=0) returned `base` and was fine.
+    """
+    import numpy as np
+    from bilayer3d import build
+
+    kw = dict(kt=0.02, speed=0.001, repel=12.0, k_bond=30.0, satt=0.55, spol=0.90, attract=1.0,
+              polarity=0.80, head_q=1.2, n_tail=2, bond_span=2.0)
+
+    def contact(head_sigma):
+        e = build(3, n_lip=20, bound=4.5, plant=False, head_sigma=head_sigma, **kw)
+        assert e.aniso > 0.0, "this test is meaningless unless the anisotropic branch is taken"
+        C = e._contour()
+        d, d2 = e._periodic_delta()
+        return e, e._contact_distance(C, d, np.sqrt(d2 + 1e-4))
+
+    e_small, cd_small = contact(0.5)
+    _, cd_big = contact(1.0)
+    assert not np.allclose(cd_small, cd_big), "head_sigma must change the contact distance"
+
+    # and it must change it BY THE RIGHT AMOUNT: halving the head radius halves head-head contact
+    hi = np.where(e_small.species == 5)[0]
+    assert len(hi) > 1
+    ratio = cd_small[np.ix_(hi, hi)].mean() / cd_big[np.ix_(hi, hi)].mean()
+    assert abs(ratio - 0.5) < 0.05, f"expected ~0.5x head-head contact, got {ratio:.3f}"
+
+    # the base case must be untouched: uniform sigma reduces to the old single-radius expression
+    e = build(3, n_lip=20, bound=4.5, plant=False, **kw)
+    e.sigma = np.full(len(e.X), 0.5 * e.repel_contact)
+    C = e._contour()
+    d, d2 = e._periodic_delta()
+    dist = np.sqrt(d2 + 1e-4)
+    shaped = (e.stiff.max(axis=1) > 0.0)[:, None]
+    nf = np.tanh(e._bearing_nf(C, d, dist)) * shaped
+    half = 0.5 * e.repel_contact
+    legacy = half * (1.0 + e.aniso * nf) + half * (1.0 + e.aniso * nf.T)
+    assert np.array_equal(e._contact_distance(C, d, dist), legacy)
