@@ -214,3 +214,46 @@ def clump_start(e, seed=0):
         off = (nb - 1) / 2.0 - bead
         e.X[mol[:, bead], :3] = cen + ax * (off * BOND_REST)
     return e
+
+
+def closed_loop_2d(build, R=4.0, bound=None, **kw):
+    """A closed 2-D vesicle: a bilayer loop, heads out on the outside and in on the inside.
+
+    This is the structure the project is actually after, and the 2-D analogue of a vesicle. Unlike a
+    spanning bilayer -- which only exists because a periodic box wraps, and has no counterpart in
+    nature -- a closed loop is edge-free the way a real membrane is: it eliminates its rim by
+    curving rather than by tiling the universe.
+
+    Planting it at a range of radii measures R_crit for THIS model. Closure trades edge energy
+    against bending: G_edge = 2*pi*R*gamma falls with shrinking R while the bending cost rises, so
+    below some radius the loop cannot hold and springs open. That radius is what tells us whether the
+    finite ribbons this model already makes (12-20 lipids) can ever close.
+
+    Leaflets are split by CIRCUMFERENCE, the 2-D counterpart of the area split a sphere needs: the
+    inner leaflet wraps a shorter path, so an even split crams it -- the defect that put the planted
+    3-D vesicle's shells at 0.63 of contact.
+    """
+    nb_est = 3
+    depth_max = 0.5 + (nb_est - 1) * BOND_REST
+    r_i, r_o = R - depth_max, R + depth_max
+    if r_i <= 0.5:
+        raise ValueError(f"R={R} too small for a bilayer of half-thickness {depth_max}")
+    n_out = int(round(2.0 * np.pi * r_o / BOND_REST))
+    n_in = int(round(2.0 * np.pi * r_i / BOND_REST))
+    n_lip = n_out + n_in
+    # the loop must FIT: outer diameter under L/2, or it wraps onto itself
+    bound = bound if bound is not None else max(8.0, 2.2 * r_o)
+    e = build(0, n_lip=n_lip, bound=bound, plant="clump", **kw)
+    mol, nb = e._mol, e._mol.shape[1]
+    n = len(mol)
+    n_out = min(n_out, n)
+    th_o = 2.0 * np.pi * (np.arange(n_out) + 0.5) / max(n_out, 1)
+    th_i = 2.0 * np.pi * (np.arange(n - n_out) + 0.5) / max(n - n_out, 1)
+    for m in range(n):
+        outer = m < n_out
+        th = th_o[m] if outer else th_i[m - n_out]
+        u = np.array([np.cos(th), np.sin(th)])
+        for bead in range(nb):
+            depth = 0.5 + (nb - 1 - bead) * BOND_REST      # head outermost within its own leaflet
+            e.X[mol[m, bead], :2] = u * (R + depth if outer else R - depth)
+    return e

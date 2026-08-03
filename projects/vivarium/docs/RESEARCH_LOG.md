@@ -157,6 +157,45 @@ defects found. 104 tests pass.
 
 ---
 
+## 2026-08-03a — chasing the wrong target: the spanning bilayer is a box artifact, the closed loop is the goal
+
+A review of my own next-step proposal killed it, and then killed the target it served.
+
+**The seeded-growth test does not discriminate.** I proposed planting a bilayer PATCH in disorder to
+see whether it grows or dissolves. But a finite patch has EDGES and a spanning bilayer does not, so
+dissolution would only show that edges are costly -- which G_edge = 2*pi*R*gamma already says. The
+two outcomes I claimed would separate do not.
+
+**And the target itself was wrong.** A spanning bilayer exists ONLY because a periodic box wraps; it
+has no counterpart in nature, where every membrane is closed. Meanwhile the structure this model
+ALREADY makes in 2-D -- finite bilayer ribbons, splay 0.253, stable over 130k steps -- is the vesicle
+PRECURSOR: a patch with exposed edges is under pressure to close, and above R_crit closure wins. So
+three sessions of levers (margin, operating point, annealing) were spent forcing an intermediate that
+is a simulation construct, while stage 4 may be reachable from what already works.
+
+New reference `closed_loop_2d`: a bilayer loop, heads out on the outside and in on the inside,
+leaflets split by CIRCUMFERENCE (the 2-D counterpart of the sphere's area split; an even split crams
+the inner leaflet, the defect that put the planted 3-D vesicle's shells at 0.63 of contact).
+
+First measurement, planted loop at R=4.0 (50 lipids):
+
+    t        splay    edge   enclosed   packing   aspect
+    0        0.230   0.800      1.530     0.842    1.000
+    2000     0.183   0.520      2.082     0.879    0.926
+    10000    0.204   0.420      2.245     0.873    0.751
+
+**The LOCAL bilayer structure survives** -- splay 0.18-0.20 is inside the bilayer band (0.00-0.21)
+and packing holds at 0.87 -- while the SHAPE degrades, aspect falling 1.00 -> 0.75. So at R=4 the
+membrane stays a membrane but the loop stops being round.
+
+**`edge` is currently uninterpretable and that is my error.** It reads 0.800 on a freshly planted
+CLOSED loop, which should be near zero. The harness docs say plainly that `edge` is solvent-density
+dependent and must be read RELATIVE to a control, and I ran it without one. Same missing-null pattern
+as everything else this session, this time in a metric I inherited rather than built. It needs
+calibrating against a planted SPANNING bilayer (no rim, edge -> 0) and a planted RIBBON (rim, edge >
+0) before any closure claim rests on it. `enclosed` above bulk (1.5-2.2) is the known false-vesicle
+signature and is equally suspect here.
+
 ## 2026-08-02d — stage 3 in 2-D: the phase is stable, assembly stalls just short, and lipid margin is NOT the fix
 
 With the lamellar phase proven stable (2026-08-02c), self-assembly became a kinetics question. Where

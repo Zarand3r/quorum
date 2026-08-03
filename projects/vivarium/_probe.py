@@ -1,37 +1,35 @@
-"""LOOK at the spanning-but-disordered structure. The small box reaches spanning 0.90 with splay
-0.54, and those numbers alone cannot say whether it is a bilayer with defects, a stripe that is too
-thick, or something else -- exactly the ambiguity that has misled this session three times.
+"""Measure R_crit: below what radius does a closed 2-D loop stop being stable?
 
-Renders the small-box run beside a planted spanning bilayer in the SAME box, so the comparison is on
-identical axes rather than against a remembered number.
+Closure trades edge energy against bending -- G_edge = 2*pi*R*gamma falls as R shrinks while bending
+cost rises -- so below some radius a loop springs open. That radius decides whether the finite
+ribbons this model already makes (12-20 lipids, splay 0.253, stable 130k steps) can ever close into
+a vesicle, which is the project's actual target and does NOT depend on the periodic box the way a
+spanning bilayer does.
+
+A loop that HOLDS reads: edge -> 0 (no exposed tails), splay low (locally lamellar), enclosed finite
+(solvent trapped inside). A loop that opens reads rising edge and falling enclosed.
 """
+import numpy as np
 from bicelle2d import build
 from harness import bond_stats, measure
-from references import relax, spanning_bilayer_2d
-from xsection import cross_section
+from references import closed_loop_2d, relax
 
-OUT = "/home/rbao/quorum-thermolife/projects/vivarium/docs/images"
-DENS = 382 / (22.0 ** 2)
 BASE = dict(kt=0.02, speed=0.001, k_bond=30.0, satt=0.30, n_tail=2, attract=1.0, bond_span=2.0,
-            polarity=0.80, head_q=1.2, hydrophobic=0.6, repel=24.0)
+            polarity=0.80, head_q=1.2, hydrophobic=0.6, repel=24.0, n_water=250)
 
-def shot(e, tag, title):
-    m = measure(e); mean, _, _ = bond_stats(e)
-    sub = (f"splay {m['splay']:.3f} (bilayer <0.30)  spanning {m['spanning']:.2f} (need >0.80)  "
-           f"packing {m['packing']:.3f}  bond {mean:.3f}")
-    cross_section(e, f"{OUT}/{tag}", title=title, sub=sub)
-    print(f"  {title:<44} splay {m['splay']:.3f}  span {m['spanning']:.2f}", flush=True)
-
-B = 5.0
-n_lip = int(round(2 * (2 * B)))
-n_water = max(8, int(round(DENS * (2 * B) ** 2 - 3 * n_lip)))
-
-# the reference, in the SAME box: what success looks like here
-ref = relax(spanning_bilayer_2d(build, bound=B, n_water=n_water, **BASE), 2000)
-shot(ref, "sb_ref", f"PLANTED spanning bilayer, box {2*B:.0f}, relaxed")
-
-# the self-assembled run that reaches spanning 0.90
-e = build(7, bound=B, n_lip=n_lip, n_water=n_water, plant="clump", **BASE)
-for _ in range(60000):
-    e.step()
-shot(e, "sb_run", f"SELF-ASSEMBLED, box {2*B:.0f}, {n_lip} lipids, t=60000")
+print(f"  {'R':>5}{'n_lip':>6}{'box':>6}{'t':>7}{'splay':>7}{'edge':>7}{'encl':>7}{'pack':>7}"
+      f"{'aspect':>8}  verdict", flush=True)
+for R in (3.0, 4.0, 5.5):
+    try:
+        e = closed_loop_2d(build, R=R, **BASE)
+    except ValueError as err:
+        print(f"  R={R}: {err}", flush=True); continue
+    n_lip, bound = len(e._mol), e.cfg.pos_bound
+    for t in (0, 2000, 10000, 40000):
+        if t:
+            relax(e, t - getattr(e, "_t", 0)); e._t = t
+        m = measure(e); mean, _, _ = bond_stats(e)
+        verdict = ("HOLDS" if m["edge"] < 0.15 and m["packing"] > 0.35 else
+                   "collapsed" if m["packing"] < 0.35 else "opened")
+        print(f"  {R:>5.1f}{n_lip:>6}{2*bound:>6.0f}{t:>7}{m['splay']:>7.3f}{m['edge']:>7.3f}"
+              f"{m['enclosed']:>7.3f}{m['packing']:>7.3f}{m['aspect']:>8.3f}  {verdict}", flush=True)
