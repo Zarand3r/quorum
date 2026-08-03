@@ -245,3 +245,33 @@ def test_per_species_radius_reaches_the_contact_distance_when_anisotropic():
     half = 0.5 * e.repel_contact
     legacy = half * (1.0 + e.aniso * nf) + half * (1.0 + e.aniso * nf.T)
     assert np.array_equal(e._contact_distance(C, d, dist), legacy)
+
+
+def test_encloses_detects_a_closed_loop_and_nothing_else():
+    """Closure is TOPOLOGICAL, and every local proxy for it failed.
+
+    `edge` -- solvent density at the tail tips -- could not tell a rimless spanning bilayer (0.727)
+    from a random gas (0.727) from a closed loop (0.800): at any realistic solvent density the shell
+    around a tail is occupied almost everywhere, so the predicate saturates. Rebuilt as a ratio to
+    bulk it ANTI-discriminated, because a membrane planted at exactly contact spacing is porous and
+    leaks where its topology is perfectly intact.
+
+    A partition either exists or it does not, so measure the partition.
+    """
+    from bicelle2d import build
+    from harness import encloses
+    from references import closed_loop_2d, micelle_2d, relax, spanning_bilayer_2d
+
+    kw = dict(kt=0.02, speed=0.001, k_bond=30.0, satt=0.30, n_tail=2, attract=1.0, bond_span=2.0,
+              polarity=0.80, head_q=1.2, hydrophobic=0.6, repel=24.0, n_water=250)
+
+    # relaxed first: freshly planted solvent sits INSIDE the membrane and takes a few hundred steps
+    # to be expelled, which made every density-based reading meaningless at t=0
+    loop = encloses(relax(closed_loop_2d(build, R=4.0, **kw), 1500))
+    sheet = encloses(relax(spanning_bilayer_2d(build, bound=11.0, **kw), 1500))
+    drop = encloses(relax(micelle_2d(build, n_lip=20, bound=11.0, **kw), 1500))
+    rand = encloses(relax(build(5, n_lip=44, bound=11.0, plant=False, **kw), 1500))
+
+    assert loop > 0.02, f"a closed loop must partition space, got {loop:.4f}"
+    for name, val in (("spanning sheet", sheet), ("droplet", drop), ("random", rand)):
+        assert val < loop / 2.0, f"{name} ({val:.4f}) must not read as enclosing like a loop ({loop:.4f})"

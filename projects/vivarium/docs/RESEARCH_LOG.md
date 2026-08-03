@@ -157,6 +157,52 @@ defects found. 104 tests pass.
 
 ---
 
+## 2026-08-03b — `edge` was measuring nothing. Closure is TOPOLOGICAL, so measure the topology
+
+Checked `edge` against controls whose answer is known by construction, and it failed completely:
+
+    structure                          edge    expected
+    planted SPANNING bilayer (no rim)  0.727        ~0
+    planted CLOSED LOOP (no rim)       0.800        ~0
+    RANDOM (every tail wet)            0.727        ~1
+    planted RIBBON (two ends)          0.654        >0
+
+**All four the same number.** A perfect rimless membrane and a random gas score identically -- zero
+discriminating power, in a metric that has been in the harness for weeks and was used to reason about
+rims and the bicelle pathway.
+
+The physics of the failure: `edge` asked whether ANY water lay within 1.2 of the deepest tail bead,
+and at our solvent density that shell holds ~2.3 waters ANYWHERE in the box, so the predicate is true
+almost everywhere. It saturates.
+
+Rebuilding it as a ratio to bulk -- the form that works for `enclosed` and `head_enrichment` -- did
+not save it. After relaxing (freshly planted solvent sits INSIDE the membrane and takes hundreds of
+steps to be expelled, which is why the first attempt read ~1.0 for everything) it came out
+ANTI-discriminating: the rimless spanning bilayer read 0.710 and the ribbon WITH a rim read 0.253. A
+membrane planted at exactly contact spacing is porous, so a density proxy reports leakage where the
+topology is perfectly intact.
+
+**So stop proxying.** A vesicle is not defined by how wet its tails are -- it is defined by
+PARTITIONING SPACE, solvent inside disconnected from solvent outside. That is a topological
+invariant, immune to porosity, density and normalisation.
+
+New metric `encloses`: coarsen the box to a grid, mark cells within a bead radius of any lipid, flood
+fill the free cells with periodic wrapping, and report the largest component that never WRAPS -- the
+exterior is the component that percolates, so anything else is an enclosed pocket.
+
+    structure                       encloses   expected
+    planted CLOSED LOOP R=4.0         0.0297        > 0
+    planted CLOSED LOOP R=5.5         0.0322        > 0
+    planted spanning bilayer          0.0091          0
+    planted micelle (solid droplet)   0.0016          0
+    RANDOM                            0.0009          0
+
+20-35x separation, with the bands well clear of each other. The sheet's residual 0.0091 is small
+pockets from thermal gaps in a membrane planted at exactly contact, and sits 3x below a true loop.
+
+This is now the stage-4 criterion, and it is the first metric in this project measuring the thing a
+vesicle actually IS rather than a correlate of it.
+
 ## 2026-08-03a — chasing the wrong target: the spanning bilayer is a box artifact, the closed loop is the goal
 
 A review of my own next-step proposal killed it, and then killed the target it served.

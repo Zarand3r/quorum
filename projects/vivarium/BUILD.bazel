@@ -197,14 +197,6 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
-    name = "_probe2",
-    srcs = ["_probe2.py"],
-    main = "_probe2.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
     name = "_probe",
     srcs = ["_probe.py"],
     main = "_probe.py",

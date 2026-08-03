@@ -25,8 +25,9 @@ statistic, which is how three micelle claims survived for a day.
     aspect    L1/L3 of the largest cluster's covariance, unwrapped. A slab or ribbon is thin in one
               axis (low); a droplet is round (~0.8+). A droplet cannot fake it, but a FRAGMENT can,
               so it is only admissible when the cluster holds most of the system (MIN_CLUSTER_FRAC).
-    edge      fraction of lipids whose TAIL beads still touch water: the exposed rim, i.e. L_edge in
-              G_edge = 2*pi*R*gamma. This is what separates the stages of the vesicle pathway, which
+    edge      LOCAL SOLVENT DENSITY at the tail tips, RELATIVE TO BULK: the exposed rim, i.e. L_edge
+              in G_edge = 2*pi*R*gamma. 0 = tails fully buried (sealed membrane or closed vesicle),
+              1 = as wet as free in bulk, a rim in between. This is what separates the stages of the vesicle pathway, which
               `aspect` and `hollow` cannot do on their own:
 
                   stage 2  BICELLE   flat (aspect low) WITH a rim   -> edge > 0
@@ -316,6 +317,76 @@ def spanning(e):
     return float(len(np.unique((x / L * nbins).astype(int))) / nbins)
 
 
+def encloses(e, cell=0.6):
+    """Does the aggregate PARTITION space? Returns the largest enclosed solvent pocket, as a
+    fraction of the box. 0 means no interior; > 0 means a sealed compartment.
+
+    This is what a vesicle IS. Closure is topological -- solvent inside is disconnected from solvent
+    outside -- and every local proxy for it fails. `edge` (solvent density at the tail tips) cannot
+    distinguish a rimless spanning bilayer from a random gas, because at any realistic solvent
+    density the shell around a tail is occupied almost everywhere; and a membrane planted at exactly
+    contact spacing is slightly porous, so a density proxy reports leakage where the topology is
+    intact. A partition either exists or it does not.
+
+    Method: coarsen the box to a grid, mark cells within contact of any LIPID bead as wall, then
+    flood-fill the free cells with periodic wrapping. The exterior is the component that PERCOLATES
+    the box; any other component is an enclosed pocket. Reporting the largest such pocket makes a
+    vesicle read > 0 while a sheet, a ribbon and a droplet all read 0.
+
+    `cell` trades resolution against cost. It must be well under the bead diameter or a wall of beads
+    at contact will not close on the grid, and the metric would then report the exterior leaking in
+    through gaps that are not physically there.
+    """
+    pd = e.pd
+    L = e.L
+    n = max(8, int(np.ceil(L / cell)))
+    sp = np.asarray(e.species)
+    lip = np.where(sp != 0)[0]
+    if lip.size == 0:
+        return 0.0
+    sig = e.sigma if e.sigma is not None else np.full(len(e.X), 0.5)
+    grid = np.zeros((n,) * pd, dtype=bool)
+    axes = np.arange(n)
+    coords = np.stack(np.meshgrid(*([axes] * pd), indexing="ij"), axis=-1).reshape(-1, pd)
+    centres = (coords + 0.5) * (L / n) - 0.5 * L
+    P = e.X[lip, :pd]
+    # mark any cell whose centre lies within a bead radius of a lipid bead (minimum image)
+    wall = np.zeros(len(centres), dtype=bool)
+    chunk = max(1, 200000 // max(len(lip), 1))
+    for s in range(0, len(centres), chunk):
+        d = centres[s:s + chunk, None, :] - P[None, :, :]
+        d -= L * np.round(d / L)
+        wall[s:s + chunk] = (np.linalg.norm(d, axis=2) < sig[lip][None, :]).any(axis=1)
+    grid = wall.reshape((n,) * pd)
+
+    free = ~grid
+    seen = np.zeros_like(free)
+    best = 0
+    for start in np.argwhere(free):
+        st = tuple(start)
+        if seen[st]:
+            continue
+        stack, comp, touches = [st], [], set()
+        seen[st] = True
+        while stack:
+            cur = stack.pop()
+            comp.append(cur)
+            for ax in range(pd):
+                for step in (-1, 1):
+                    nxt = list(cur)
+                    raw = nxt[ax] + step
+                    nxt[ax] = raw % n
+                    if raw != nxt[ax]:
+                        touches.add(ax)          # this component wrapped: it is the exterior
+                    t = tuple(nxt)
+                    if free[t] and not seen[t]:
+                        seen[t] = True
+                        stack.append(t)
+        if not touches:                          # never wrapped -> enclosed pocket
+            best = max(best, len(comp))
+    return float(best / free.sum()) if free.sum() else 0.0
+
+
 def head_enrichment(e):
     """How strongly HEADS are enriched on the aggregate's outer surface, as a ratio to the bulk.
 
@@ -421,7 +492,7 @@ def measure(e, prev_X=None):
            "align": float("nan"), "thick_mol": float("nan"), "enclosed": float("nan"),
            "packing": float("nan"), "solvation": float("nan"),
            "splay": float("nan"), "head_enrich": float("nan"),
-           "spanning": 0.0}
+           "spanning": 0.0, "encloses": 0.0}
 
     if prev_X is not None:
         d = e.X[:, :e.pd] - prev_X[:, :e.pd]
@@ -434,6 +505,7 @@ def measure(e, prev_X=None):
     out["solvation"] = solvation(e, _dist)
     out["splay"] = splay(e)
     out["head_enrich"] = head_enrichment(e)
+    out["encloses"] = encloses(e)
     out["spanning"] = spanning(e)
     if out["packing"] < MIN_PACKING:
         # FIRST, ahead of every shape metric. A collapsed pile still has well-defined bond lengths and
@@ -474,7 +546,23 @@ def measure(e, prev_X=None):
         dw = e.X[tips, :e.pd][:, None, :] - e.X[wi, :e.pd][None, :, :]
         free = _periodic_axes(e)
         dw[..., free] -= e.L * np.round(dw[..., free] / e.L)
-        out["edge"] = float((np.einsum("ijc,ijc->ij", dw, dw) < 1.2 ** 2).any(axis=1).mean())
+        # LOCAL SOLVENT DENSITY AROUND TAIL TIPS, RELATIVE TO BULK -- not "is any water nearby".
+        #
+        # The predicate version saturated and was useless: it asked whether ANY water lay within 1.2
+        # of the deepest tail bead, and at our solvent density that shell holds ~2 waters ANYWHERE in
+        # the box, so it was true almost everywhere. Measured against controls it could not tell a
+        # rimless spanning bilayer (0.727) from a random gas (0.727) from a closed loop (0.800).
+        #
+        # A ratio to bulk cannot saturate, and has the same form as `enclosed` and `head_enrichment`:
+        #     0  tails fully buried, no solvent contact  (a sealed membrane or a closed vesicle)
+        #     1  tails as wet as if they were free in bulk solvent
+        # A rim sits between, since its tails are exposed on one side and shielded on the other.
+        r_shell = 1.2
+        cnt = (np.einsum("ijc,ijc->ij", dw, dw) < r_shell ** 2).sum(axis=1)
+        vol_box = (e.L ** e.pd)
+        vol_shell = (np.pi * r_shell ** 2 if e.pd == 2 else (4.0 / 3.0) * np.pi * r_shell ** 3)
+        expect = wi.size * vol_shell / vol_box          # waters in that shell at BULK density
+        out["edge"] = float(cnt.mean() / expect) if expect > 0 else float("nan")
 
     # enclosed solvent: water nearer the aggregate centre than the lipid shell it sits inside.
     # A sealed vesicle traps water; a micelle fills the same volume with tails; an open disc does not
