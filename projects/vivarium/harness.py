@@ -30,9 +30,15 @@ statistic, which is how three micelle claims survived for a day.
               1 = as wet as free in bulk, a rim in between. This is what separates the stages of the vesicle pathway, which
               `aspect` and `hollow` cannot do on their own:
 
-                  stage 2  BICELLE   flat (aspect low) WITH a rim   -> edge > 0
-                  stage 3  CUP       curving, rim shrinking          -> edge falling
-                  stage 4  VESICLE   sealed, no boundary at all      -> edge ~ 0 AND hollow low
+                  stage 2  BICELLE   flat (aspect low) WITH a rim   -> encloses = 0, splay low
+                  stage 3  CUP       curving, rim shrinking          -> encloses = 0, aspect rising
+                  stage 4  VESICLE   sealed, no boundary at all      -> encloses > 0
+
+              THE STAGING WAS ORIGINALLY DEFINED ON `edge` AND THAT WAS UNSOUND. Measured against
+              controls, `edge` gave the SAME value for a rimless spanning bilayer, a closed loop and
+              a random gas, so no stage boundary defined by it could ever have been detected. Stage 4
+              is now `encloses`, which measures the partition itself. `edge` is retained as a
+              diagnostic and must never carry a stage claim alone.
 
               A flat patch and a sealed vesicle are both "ordered", so without this the pathway is
               invisible: the whole thermodynamic story is edge energy being traded for bending energy,
@@ -332,6 +338,12 @@ def encloses(e, cell=0.6):
     flood-fill the free cells with periodic wrapping. The exterior is the component that PERCOLATES
     the box; any other component is an enclosed pocket. Reporting the largest such pocket makes a
     vesicle read > 0 while a sheet, a ribbon and a droplet all read 0.
+
+    THRESHOLD DETECTOR, NOT AN AREA. Verified resolution-independent from cell 0.6 down to 0.3, but
+    it does NOT track lumen area at small radii: an R=4 loop (lumen radius 1.0) over-reads by ~6x
+    because that lumen is under two cells across and the fill picks up membrane-interior voids with
+    it. At R=7 it is within ~25% of the true fraction. So read it as "is there a partition", and do
+    not quote the value as a lumen size.
 
     `cell` trades resolution against cost. It must be well under the bead diameter or a wall of beads
     at contact will not close on the grid, and the metric would then report the exterior leaking in

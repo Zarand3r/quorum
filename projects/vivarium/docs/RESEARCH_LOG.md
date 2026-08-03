@@ -93,6 +93,13 @@ defects found. 104 tests pass.
 
 ## Live methodological rules
 
+-7. RETRACTED (2026-08-03): rule -6 below rests on `edge`, which measures nothing. Against controls
+   it returned the SAME value for a rimless spanning bilayer, a closed loop and a random gas. Solvent
+   is still required to model hydrophobicity, but the specific claim that `edge` verifies a rim is
+   void, and so is every stage boundary that was defined by it. Closure is now `encloses`, a
+   topological partition test. Any earlier reasoning about rims, bicelles or the cup stage that
+   leaned on `edge` should be treated as unsupported rather than wrong -- it was never measured.
+
 -6. A BICELLE CANNOT BE VERIFIED WITHOUT EXPLICIT SOLVENT. `edge` is defined by tail-water contact, so
    with no water it returns NaN and the rim -- the feature that makes a disc finite -- is unmeasurable.
    Any solvent-free run is incapable of demonstrating a bicelle whatever else it computes.
