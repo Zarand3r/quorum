@@ -1,0 +1,7 @@
+label	t	repel	n_lip	splay	spanning	packing	align	head_enrich	bond_mean	ok	stage3
+control-fixed-kT	20000	48.0	44	0.7859	0.682	0.9212	0.0771	1.455	1.0266	True	False
+control-fixed-kT	40000	48.0	44	0.7147	0.682	0.9231	0.0996	1.364	1.0261	True	False
+r24-control	30000	44	0.3670	0.727	0.8068	0.3585	1.364	1.0182	True	False
+r24-control	60000	44	0.3519	0.682	0.8175	0.2773	1.448	1.0169	True	False
+margin-only	30000	52	0.4792	0.636	0.7966	0.2207	1.769	1.0140	True	False
+margin-only	60000	52	0.3758	0.636	0.7979	0.2482	1.667	1.0129	True	False

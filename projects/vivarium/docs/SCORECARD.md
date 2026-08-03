@@ -52,7 +52,12 @@ alike.
 | 3 | **spanning bilayer** | `splay` < 0.30 AND `spanning` > 0.8 AND `packing` > 0.35, simultaneously | **PHASE IS STABLE** at repel 24: a planted bilayer holds and ORDERS (splay 0.197 → 0.098, packing 0.87). Self-assembly not yet there — one aggregate, 64–68% spanning, splay 0.61. A KINETIC problem now, not thermodynamic. | **FAIL** — with packing held at 0.90 (repel 96) a planted bilayer melts at every head_sigma from 0.5 to 1.4; genuinely unstable, not a collapse artifact |
 | 4 | vesicle | `enclosed` > 0.02, `edge` ~ 0, sealed | not started | not started |
 
-**2-D: 2 of 4 stages. 3-D: 0 of 4.**
+**2-D: 2 of 4 stages, with stage 3's PHASE proven stable. 3-D: 1 of 4.**
+
+Both dimensionalities are maintained. 2-D is the near-term target because its lamellar phase EXISTS
+(a planted bilayer holds at splay 0.071, packing 0.95) so only kinetics remain; 3-D's genuinely melts
+at every head size once packing is enforced, so it needs a different MOLECULE -- branched tails,
+never yet run in 3-D.
 
 ## What blocks each
 

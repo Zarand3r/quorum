@@ -157,6 +157,39 @@ defects found. 104 tests pass.
 
 ---
 
+## 2026-08-02d — stage 3 in 2-D: the phase is stable, assembly stalls just short, and lipid margin is NOT the fix
+
+With the lamellar phase proven stable (2026-08-02c), self-assembly became a kinetics question. Where
+it actually gets to, from a clump start at repel 24:
+
+    n_lip   t=20000   t=30000   t=60000   spanning   packing
+       44     0.614     0.367     0.352       0.68     0.817
+       52         -     0.479     0.376       0.64     0.798
+
+    stage 3 needs splay < 0.30 AND spanning > 0.80 AND packing > 0.35, together
+
+**It stalls.** splay flattens at ~0.35 between t=30k and t=60k, short of 0.30, and spanning sits at
+0.64-0.73 against a required 0.80. Packing is healthy throughout, so this is not collapse.
+
+**Lipid margin is not the fix, and the hypothesis was reasonable.** 44 lipids is EXACTLY the minimum
+to span -- 22 per leaflet at contact across a width-22 box -- so a single defect should leave a
+permanent gap that no amount of ordering can close. Adding 18% more lipids made BOTH metrics worse
+(splay 0.376 vs 0.352, spanning 0.64 vs 0.68): the excess forms defects or a partial second layer
+rather than filling gaps.
+
+**Assembly speed and phase stability pull in opposite directions**, which decides the operating point:
+
+    repel   planted phase        assembly from disorder
+       24   holds, splay 0.098   FASTER: 0.614 @20k -> 0.352 @60k
+       48   holds, splay 0.071   slower: 0.786 @20k -> 0.715 @40k
+
+Stronger excluded volume stabilises the membrane and slows its ordering. Since stability is already
+sufficient at repel 24, that is the right place to run assembly -- picking 48 for the first sweep was
+a mistake, chosen for stability when speed was the binding constraint.
+
+Remaining untested lever for stage 3: ANNEALING, which has never been used in this project despite
+being implemented in bicelle2d for months, its own help text naming the droplet a kinetic trap.
+
 ## 2026-08-02c — THE 2-D LAMELLAR PHASE IS STABLE. Stage 3 was blocked by collapse all along
 
 Prompted by the right question: did 2-D fail for the same reason 3-D did?
