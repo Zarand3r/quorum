@@ -1,31 +1,37 @@
-"""Stage 3, testing both blockers at once against a control we already have.
+"""LOOK at the spanning-but-disordered structure. The small box reaches spanning 0.90 with splay
+0.54, and those numbers alone cannot say whether it is a bilayer with defects, a stripe that is too
+thick, or something else -- exactly the ambiguity that has misled this session three times.
 
-Fixed-kT control at repel 24, 44 lipids plateaus at splay 0.352 / spanning 0.68 -- short of the
-0.30 / 0.80 thresholds and no longer improving between t=30k and t=60k. Two reasons it can stall
-there, and they are independent:
-
-  KINETIC TRAP. It condenses before it orders and then cannot rearrange. Annealing is the standard
-  escape and has never been used in this project.
-
-  NO MARGIN TO SPAN. 44 lipids is EXACTLY the minimum for a spanning bilayer -- 22 per leaflet at
-  contact across a width-22 box -- so a single defect leaves a permanent gap and `spanning` cannot
-  reach 0.80 however well ordered the rest is. A modest excess gives the membrane slack.
-
-Runs at 60k, where the control had already flattened, so the comparison is like-for-like.
+Renders the small-box run beside a planted spanning bilayer in the SAME box, so the comparison is on
+identical axes rather than against a remembered number.
 """
 from bicelle2d import build
-from experiment import sweep
+from harness import bond_stats, measure
+from references import relax, spanning_bilayer_2d
+from xsection import cross_section
 
-LOG = "/home/rbao/quorum-thermolife/projects/vivarium/docs/sweeps_stage3.tsv"
+OUT = "/home/rbao/quorum-thermolife/projects/vivarium/docs/images"
+DENS = 382 / (22.0 ** 2)
 BASE = dict(kt=0.02, speed=0.001, k_bond=30.0, satt=0.30, n_tail=2, attract=1.0, bond_span=2.0,
-            polarity=0.80, head_q=1.2, hydrophobic=0.6, bound=11.0, n_water=250, plant="clump",
-            repel=24.0)
+            polarity=0.80, head_q=1.2, hydrophobic=0.6, repel=24.0)
 
-def mk(**p):
-    return build(7, **{**BASE, **p})
+def shot(e, tag, title):
+    m = measure(e); mean, _, _ = bond_stats(e)
+    sub = (f"splay {m['splay']:.3f} (bilayer <0.30)  spanning {m['spanning']:.2f} (need >0.80)  "
+           f"packing {m['packing']:.3f}  bond {mean:.3f}")
+    cross_section(e, f"{OUT}/{tag}", title=title, sub=sub)
+    print(f"  {title:<44} splay {m['splay']:.3f}  span {m['spanning']:.2f}", flush=True)
 
-# margin alone, then margin + annealing: which of the two blockers actually binds
-sweep(mk, {"n_lip": [52]}, steps=60000, log_path=LOG, hot=0.02, cold=0.02,
-      samples=(30000, 60000), label="margin-only")
-sweep(mk, {"n_lip": [52]}, steps=60000, log_path=LOG, hot=0.30, cold=0.02,
-      samples=(30000, 60000), label="margin+anneal")
+B = 5.0
+n_lip = int(round(2 * (2 * B)))
+n_water = max(8, int(round(DENS * (2 * B) ** 2 - 3 * n_lip)))
+
+# the reference, in the SAME box: what success looks like here
+ref = relax(spanning_bilayer_2d(build, bound=B, n_water=n_water, **BASE), 2000)
+shot(ref, "sb_ref", f"PLANTED spanning bilayer, box {2*B:.0f}, relaxed")
+
+# the self-assembled run that reaches spanning 0.90
+e = build(7, bound=B, n_lip=n_lip, n_water=n_water, plant="clump", **BASE)
+for _ in range(60000):
+    e.step()
+shot(e, "sb_run", f"SELF-ASSEMBLED, box {2*B:.0f}, {n_lip} lipids, t=60000")

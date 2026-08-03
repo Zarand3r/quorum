@@ -298,6 +298,11 @@ def spanning(e):
 
     A spanning bilayer must wrap the box -- that is what makes it rimless and therefore reachable at
     all, since a finite patch pays edge energy and closes into a vesicle instead.
+
+    NECESSARY, NOT SUFFICIENT, and the failure is easy to walk into: in a SMALL box any decent
+    aggregate covers most of the width simply by existing. A round droplet of 20 lipids in a
+    10-wide box measured 0.90 here while being visibly not a membrane. Always read it with `splay`,
+    which distinguishes a spanning MEMBRANE from an aggregate that merely happens to be wide.
     """
     mol = e._mol
     if mol.size == 0:

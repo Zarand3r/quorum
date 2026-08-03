@@ -25,6 +25,13 @@ import numpy as np
 
 from harness import largest_cluster, unwrap
 
+
+def _esc(t):
+    """Escape text for SVG. A raw '<' in a caption -- e.g. "bilayer <0.30" -- makes the document
+    invalid XML, and the renderer then draws only the part before it. Silent, and it corrupted
+    several figures before an image showed the parser error banner."""
+    return (str(t).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+
 HEAD, TAIL, WATER = "#38bdf8", "#fb923c", "#1e3a5f"
 
 
@@ -92,9 +99,9 @@ def cross_section(e, path, title="", sub="", axis=None, thickness=2.0, width=560
     n_shown = int((keep & (sp != 0)).sum())
     out.append(f'<rect x="0" y="{width-42}" width="{width}" height="42" fill="#0b0e13" opacity="0.92"/>'
                f'<text x="9" y="{width-25}" fill="#e2e8f0" font-family="monospace" font-size="12">'
-               f'{title}</text>'
+               f'{_esc(title)}</text>'
                f'<text x="9" y="{width-8}" fill="#94a3b8" font-family="monospace" font-size="11">'
-               f'{sub}   slab {thickness:.1f} thick, {n_shown} lipid beads shown</text></svg>')
+               f'{_esc(sub)}   slab {thickness:.1f} thick, {n_shown} lipid beads shown</text></svg>')
     open(path + ".svg", "w").write("".join(out))
     subprocess.run(["google-chrome", "--headless", "--disable-gpu", "--no-sandbox",
                     f"--user-data-dir=/tmp/cr_{abs(hash(path)) % 99999}",
