@@ -352,7 +352,12 @@ def main(argv: list[str] | None = None) -> int:
             # Range hierarchy: Pauli (repel) < vdW (attract) < electrostatic (polarity).
             e = PolarPackEngine(cfg, s, water_frac=water_box[0], lipid_frac=lipid_box[0],
                                 amphi_frac=amphi_box[0], chain_frac=chain_box[0],
-                                k_bond=8.0,
+                                k_bond=(30.0 if args.lipid2d else 8.0),
+                                #  aniso 0 and rad_head 0 are NOT cosmetic in 2-D. aniso > 0 takes the
+                                #  anisotropic branch of _contact_distance, which discards per-species
+                                #  sigma -- so head and tail would have the SAME steric radius and the
+                                #  packing parameter P = v/(a0*l) could not be expressed at all.
+                                **({"aniso": 0.0, "rad_head": 0.0} if args.lipid2d else {}),
                                 repel=(24.0 if args.lipid2d else 12.0 if args.dim3 else 5.00),
                                 attract=(1.00 if args.lipid2d else 0.30),
                                 polarity=0.80, cohesion=0.00, skew=0.00,
@@ -382,12 +387,29 @@ def main(argv: list[str] | None = None) -> int:
                 # 380 (4x), and is still well inside Cooke's fluid-membrane window (> ~0.7 sigma).
                 e.sink_attract = 0.55
                 e.langevin = True          # FDT thermostat, no velocity cap
+            if args.lipid2d:
+                # THE SPECIES-PAIR MATRIX, without which this dish cannot demix at all. Geometric
+                # (Lorentz-Berthelot) mixing CANNOT express hydrophobicity: by AM-GM the cross term
+                # is pinned at or above sqrt(eps_ii*eps_jj), while the real hydrophobic effect needs
+                # tail-water BELOW that -- water cohering with itself and squeezing tails out. Every
+                # 2-D result in docs/ was measured with this matrix; serving the dish without it
+                # would display a system that cannot form the micelles those results report.
+                m = np.full((7, 7), 0.15)          # WATER=0, MOL_HEAD=5, MOL_TAIL=6
+                m[0, 0] = 0.60                     # water-water: the hydrogen-bond analogue
+                m[6, 6] = 1.00                     # tail-tail
+                m[0, 6] = m[6, 0] = 0.02           # tail-water: FAR below the geometric mean
+                m[5, 5] = 0.10                     # head-head: weak, heads must not cohere
+                m[0, 5] = m[5, 0] = 0.60           # head-water: heads are hydrophilic
+                m[5, 6] = m[6, 5] = 0.05
+                e.eps_pair = m
+                e.sink_repel, e.sink_attract, e.sink_polarity = 6.0, 0.30, 0.90
+                e.langevin = True                  # FDT thermostat, no velocity cap
             e.repel_contact = 1.00     # σ = particle diameter; repel acts only on overlap
             e.rigidity = 0.00
             e.selectivity = 0.30
             # NB: set LAST, and per-mode — an earlier `if args.dim3: e.temperature = 0.02` was
             # silently clobbered by this line, so the 3-D dish ran at 2.5x its intended kT.
-            e.temperature = 0.02 if args.dim3 else 0.05
+            e.temperature = 0.02 if (args.dim3 or args.lipid2d) else 0.05
             e.k_tail, e.k_hydro = 1.5, 1.0   # amphiphile: tail cohesion + hydrophobic effect
             return e
         knob_names = ("repel", "sink_repel", "repel_contact", "attract", "sink_attract",

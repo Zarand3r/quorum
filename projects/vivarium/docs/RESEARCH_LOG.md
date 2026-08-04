@@ -164,6 +164,37 @@ defects found. 104 tests pass.
 
 ---
 
+## 2026-08-04b — the hosted 2-D dish was NOT the system the 2-D results came from
+
+Caught by asking whether the viewer served the configuration the micelle and ribbon results were
+measured on. It did not, and the gap was disqualifying:
+
+    field         research   as hosted
+    eps_pair           set      ABSENT     <- geometric mixing, which CANNOT demix
+    k_bond            30.0         8.0
+    aniso              0.0        0.95     <- discards per-species radius entirely
+    rad_head           0.0        0.30
+    sink_attract      0.30     default
+
+The first line alone invalidates it. AM-GM pins the geometric cross term at or above
+sqrt(eps_ii*eps_jj) while hydrophobicity needs tail-water BELOW it, so without the species-pair
+matrix the hosted dish could not form the micelles it was displaying results for. `aniso = 0.95`
+compounds it by taking the branch that discards per-species sigma, erasing head/tail size asymmetry.
+
+Now verified by ATTRIBUTE DIFF rather than by reading source -- the two are built by different code
+paths (server.make_engine vs bicelle2d.build), and a parameter can agree in the source while
+differing in the object, which is how the matrix went missing. 0 of 26 fields differ.
+
+**And a constraint question, recorded rather than resolved.** The contact-shell envelope
+exp(-lambda*(d - r0)^2) is probably NOT transformer-only. exp(-lambda*d^2) decomposes into an inner
+product plus per-token terms, i.e. an attention logit; the shifted form expands to a term LINEAR in
+d, the norm itself, which is not an attention primitive. sqrt already appears in accepted code
+(dirn = delta/dist), so it adds no new primitive class, but that is a weaker justification than the
+original. `test_transformer_only` did not catch it because it checks that step() contains "exp(",
+which verifies a TOKEN and not a FORM. r0 = 0 is the default and takes the identical path, so nothing
+committed or hosted is affected. A difference of two Gaussians in d^2 would give a shell-shaped
+envelope without ever needing d, if the form is wanted later.
+
 ## 2026-08-04a — external physics review corrects four of my claims; two architectural defects found by reading the force code
 
 An external research handoff came back and **corrected me on four things**, three of which had been
