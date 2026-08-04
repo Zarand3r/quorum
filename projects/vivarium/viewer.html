@@ -59,7 +59,6 @@
     <button onclick="post('/restart?same=1')">restart (same seed)</button>
     <button onclick="post('/restart')">restart (new seed)</button>
     <button onclick="resetKnobs()">reset sliders to defaults</button>
-    <label style="color:#94a3b8"><input type="checkbox" id="showedges" checked> binding lines</label>
   </div>
   <canvas id="c" width="720" height="720"></canvas>
   <div id="fwwrap" style="display:none; text-align:center; margin-top:8px; color:#94a3b8; font-size:11px">
@@ -378,6 +377,45 @@ let pollDt = 100;                       // adaptive gap between polls (ms), smoo
 const POLL_MS = 90;
 const lerp = (a,b,t)=> a + (b-a)*t;
 
+// ---- ONE token painter, shared by the 2-D and 3-D paths ----------------------------------------
+// There used to be two independent draw paths. The 3-D one coloured by SPECIES and drew each token's
+// real contour silhouette; the 2-D one coloured by contour SPIKINESS and never consulted species at
+// all -- it predates chain lipids, so water, heads and tails all rendered the same blue and a whole
+// membrane dish looked uniform. Three fixes were made to the 3-D branch that could not possibly
+// affect the 2-D dish. One painter now serves both.
+const SP_COL = {0:[30,58,95], 2:[148,163,184], 3:[245,158,11], 4:[52,211,153],
+                5:[56,189,248], 6:[249,146,58]};
+const SP_RAD = {0:0.30, 5:0.50, 6:0.50};        // TRUE steric radii, in world units
+// Solvent is dim and drawn first; it outnumbers the lipids and at equal weight it buries them.
+const SP_ALPHA = {0:0.22};
+const SP_ORDER = {0:0, 6:1, 5:2};               // solvent behind, then tails, then heads
+
+function spikeColour(c, K){                      // generic morphing blob: smooth -> blue, spiky -> red
+  let spik = 0;
+  for(let k=1;k<=K;k++){ spik += k*(c[2*(k-1)]*c[2*(k-1)] + c[2*(k-1)+1]*c[2*(k-1)+1]); }
+  const t = Math.max(0, Math.min(1, (spik - 4)/14));
+  const hue = 210*(1 - t);
+  return `hsla(${hue},65%,58%,0.92)`;
+}
+
+// radAt(theta) -> radius multiplier at that bearing, so the SILHOUETTE is the token's charge shape.
+// Passing it in is what lets 2-D use circular harmonics and 3-D use spherical ones without forking
+// the painter.
+function paintToken(ctx, X, Y, base, radAt, fill, stroke, alpha){
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = fill;
+  ctx.beginPath();
+  const STEP = 28;
+  for(let m=0; m<=STEP; m++){
+    const th = 2*Math.PI*m/STEP;
+    const r = base * radAt(th);
+    const x = X + r*Math.cos(th), y = Y - r*Math.sin(th);
+    if(m===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.closePath(); ctx.fill();
+  if(stroke){ ctx.strokeStyle = stroke; ctx.lineWidth = 1.1; ctx.stroke(); }
+}
+
 function draw(al){
   const s = CUR; if(!s) return;
   document.getElementById('tick').textContent = s.tick;
@@ -508,19 +546,13 @@ function draw(al){
         }
         // TRUE steric radius (water 0.30, every other bead 0.50). Drawing beads at ~half
         // their real size made touching particles look separated — the 'gaps' were an artefact.
-        const base = (sp===0 ? 0.30 : 0.50) * sc * persp;
-        ctx.fillStyle = `rgb(${col[0]|0},${col[1]|0},${col[2]|0})`;
-        ctx.beginPath();
-        for(let k=0;k<=28;k++){
-          const ph = k/28 * Math.PI*2;
-          const cp = Math.cos(ph), sp2 = Math.sin(ph);
-          // view-plane direction in WORLD coords = right·cos(φ) + up·sin(φ)
-          const nf = shDot(cc, ca*cp - sb*sa*sp2, cb*sp2, -sa*cp - sb*ca*sp2);
-          const rr = base * (1 + 0.42*Math.tanh(nf));
-          const px2 = X3 + rr*cp, py2 = Y3 - rr*sp2;
-          k ? ctx.lineTo(px2, py2) : ctx.moveTo(px2, py2);
-        }
-        ctx.closePath(); ctx.fill();
+        const base = (SP_RAD[sp] ?? 0.50) * sc * persp;
+        // spherical harmonics here, circular in 2-D -- same painter, different bearing evaluator
+        const radAt = (ph) => 1 + 0.42*Math.tanh(
+          shDot(cc, ca*Math.cos(ph) - sb*sa*Math.sin(ph), cb*Math.sin(ph),
+                    -sa*Math.cos(ph) - sb*ca*Math.sin(ph)));
+        paintToken(ctx, X3, Y3, base, radAt,
+                   `rgb(${col[0]|0},${col[1]|0},${col[2]|0})`, null, ctx.globalAlpha);
       } else {
         // water small; lipid head/tail sized by their dispersion radii so the tails read as bulky
       // TRUE steric radius, matching the contour branch above: water 0.30, every lipid bead 0.50.
@@ -544,7 +576,42 @@ function draw(al){
     return;
   }
 
+  // CHAIN-LIPID SPECIES ARE COLOURED BY SPECIES, NOT BY SPIKINESS. The 2-D path below dates from
+  // the morphing-blob showcase and colours every token by contour spikiness (hue 210 -> blue when
+  // smooth). Water, lipid heads and lipid TAILS all have low spikiness, so the whole membrane dish
+  // rendered a uniform blue with no hydrophobic core visible anywhere -- the structure was present
+  // and measurable (head enrichment 3.00) and simply could not be told apart on screen. Solvent is
+  // drawn first and dim so it sits behind; heads bright blue, tails orange, both at true radius.
+  const hasChain = s.species && s.species.some(v => v===5 || v===6);
+  if(hasChain){
+    for(const pass of [0, 6, 5]){                       // solvent behind, then tails, then heads
+      for(let idx=0; idx<N; idx++){
+        const sp = s.species[idx];
+        if(sp !== pass) continue;
+        const col = SP_COL[sp], K = s.tokens[idx].c.length/2;
+        let c = s.tokens[idx].c;
+        if(canInterp){
+          const pc = PREV.tokens[idx].c, ic = new Array(c.length);
+          for(let q=0;q<c.length;q++) ic[q] = lerp(pc[q], c[q], al);
+          c = ic;
+        }
+        // circular harmonics: the same grounded contour the physics reads at a relative bearing
+        const radAt = (th) => {
+          let nf = 0;
+          for(let k=1;k<=K;k++) nf += c[2*(k-1)]*Math.cos(k*th) + c[2*(k-1)+1]*Math.sin(k*th);
+          return 1 + 0.42*Math.tanh(nf);
+        };
+        paintToken(ctx, px[idx], py[idx], SP_RAD[sp]*sc, radAt,
+                   `rgb(${col[0]},${col[1]},${col[2]})`,
+                   sp===0 ? null : `rgba(226,232,240,0.55)`,
+                   SP_ALPHA[sp] ?? 0.95);
+      }
+    }
+    ctx.globalAlpha = 1.0;
+  }
+
   for(let idx=0; idx<N; idx++){
+    if(hasChain && (s.species[idx]===0 || s.species[idx]===5 || s.species[idx]===6)) continue;
     if(s.species && s.species[idx]===3){          // LIPID → draw as a rod (blue head, orange tail)
       const o = (s.lipids && s.lipids[idx]) || [1,0], e2 = (s.lip_ell||0.55)*sc;
       const hx=px[idx]-o[0]*e2, hy=py[idx]+o[1]*e2, tx=px[idx]+o[0]*e2, ty=py[idx]-o[1]*e2;
@@ -584,22 +651,30 @@ function draw(al){
     ctx.lineWidth = 1.3; ctx.fill(); ctx.stroke();
   }
 
-  // binding graph ON TOP: each agent's strongest complementary-fit attention (the real
-  // interaction the transformer computes), opacity ∝ attention weight. Amber = a bond.
-  if(!document.getElementById('showedges').checked) return;
-  const maxlen = W * 0.35;  // skip wrapped edges that would streak across the torus
-  ctx.lineWidth = 1.6;
-  for(const e of s.edges){
-    const i = e[0], j = e[1], w = e[2] ?? 0.5;
-    if(Math.hypot(px[i]-px[j], py[i]-py[j]) > maxlen) continue;
-    ctx.strokeStyle = `rgba(251,191,36,${Math.min(0.9, 0.25 + w)})`;
-    ctx.beginPath(); ctx.moveTo(px[i],py[i]); ctx.lineTo(px[j],py[j]); ctx.stroke();
-  }
+  // The binding graph (each agent's strongest complementary-fit attention, drawn amber) is gone.
+  // At membrane densities it was a thicket of lines over the top of every aggregate, and it obscured
+  // the one thing the dish exists to show: which beads are hydrophobic core and which are surface.
+  // The attention it visualised is still measured; it just is not drawn.
 }
 
 // STREAM frames over one persistent Server-Sent-Events connection — no per-frame round-trip,
 // so the frame rate is the server's push rate, independent of network round-trip latency.
+// ?poll=1 uses /state polling instead of the SSE stream. An open EventSource keeps the document in
+// 'loading' forever, so the page cannot be screenshotted, embedded in anything that waits for load,
+// or used where a proxy blocks event streams -- headless capture of this viewer was impossible until
+// this existed. Polling is slower and is only for those cases; the stream stays the default.
+function connectPoll(){
+  const tick = () => {
+    fetch(BASE + '/state').then(r => r.json()).then(d => {
+      const now = performance.now();
+      if(CUR_T) pollDt = 0.7*pollDt + 0.3*Math.max(20, Math.min(400, now - CUR_T));
+      PREV = CUR; CUR = d; CUR_T = now;
+    }).catch(()=>{}).finally(() => setTimeout(tick, 120));
+  };
+  tick();
+}
 function connect(){
+  if(new URLSearchParams(location.search).get('poll') === '1') return connectPoll();
   const ev = new EventSource(BASE + '/stream');
   ev.onmessage = (e) => {
     let d; try { d = JSON.parse(e.data); } catch(_) { return; }
