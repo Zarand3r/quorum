@@ -256,6 +256,11 @@ def main(argv: list[str] | None = None) -> int:
                    help="serve the PACKING engine (boundaries + induced-fit, periodic domain)")
     p.add_argument("--dim3", action="store_true",
                    help="run the polar showcase in a 3-D dish (spherical-harmonic contour)")
+    p.add_argument("--lipid2d", action="store_true",
+                   help="2-D LIPID MEMBRANE dish: the validated chain-lipid parameters, not the "
+                        "generic polar showcase. Without this the 2-D path serves a different "
+                        "system from the one the 2-D research runs use, which makes the hosted "
+                        "viewer unrepresentative of the results.")
     p.add_argument("--polar", action="store_true",
                    help="serve the POLAR PACK engine (electrostatic polarity head from the contour + water)")
     args = p.parse_args(argv)
@@ -320,6 +325,19 @@ def main(argv: list[str] | None = None) -> int:
             # amphiphile are RIGID molecules (they only reorient), so without these nothing in the
             # dish would actually morph — the induced-fit deformation vivarium is named for.
 
+        if args.lipid2d:
+            # The 2-D dish that MATCHES THE RESEARCH RUNS. The plain 2-D path is a generic polar
+            # showcase with repel 5.0 and no bonded lipids, so hosting it would display a different
+            # system from the one every 2-D result in docs/ was measured on.
+            #
+            # Parameters are the validated ones: repel 24 (below this the aggregate COLLAPSES --
+            # attract/repel must stay under ~1/24), attract 1.0, and a 3-bead bonded lipid. The
+            # spanning-bilayer phase is stable here (a planted one holds at splay ~0.07-0.10).
+            cfg = replace(cfg, N=420, pos_dim=2, n_harmonics=3, pos_bound=11.0)
+            water_box, lipid_box = [0.62], [0.0]
+            amphi_box[0] = 0.0
+            chain_box[0] = 0.38
+
         def make_engine(s):
             # sensible SHOWCASE defaults (base-case identity is defined vs PackEngine's own defaults, so
             # setting these here does not weaken it — dial polarity→0, water→0 to recover the prev sim).
@@ -335,10 +353,11 @@ def main(argv: list[str] | None = None) -> int:
             e = PolarPackEngine(cfg, s, water_frac=water_box[0], lipid_frac=lipid_box[0],
                                 amphi_frac=amphi_box[0], chain_frac=chain_box[0],
                                 k_bond=8.0,
-                                repel=(12.0 if args.dim3 else 5.00),
-                                attract=0.30, polarity=0.80, cohesion=0.00, skew=0.00,
+                                repel=(24.0 if args.lipid2d else 12.0 if args.dim3 else 5.00),
+                                attract=(1.00 if args.lipid2d else 0.30),
+                                polarity=0.80, cohesion=0.00, skew=0.00,
                                 morph=0.70, momentum=0.30,
-                                speed=(0.02 if args.dim3 else 1.20))
+                                speed=(0.001 if args.lipid2d else 0.02 if args.dim3 else 1.20))
             #  speed 0.02, not 0.10: with langevin the velocity CAP is gone, and the cap was the
             #  only thing bounding the step on the capped path. At 0.10 the measured displacement is
             #  ~0.51 sigma/step and the lipid bonds stretch to ~2x their rest length.

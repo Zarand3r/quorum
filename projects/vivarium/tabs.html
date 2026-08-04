@@ -1,0 +1,40 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>vivarium — 2-D and 3-D</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin:0; height:100%; background:#0b0e13; color:#e2e8f0;
+               font:14px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  header { display:flex; align-items:center; gap:14px; padding:8px 14px;
+           border-bottom:1px solid #1e293b; background:#0f141b; }
+  .tab { padding:6px 14px; border:1px solid #1e293b; border-radius:6px; cursor:pointer;
+         background:#0b0e13; color:#94a3b8; }
+  .tab[aria-selected="true"] { background:#1e3a5f; color:#e2e8f0; border-color:#38bdf8; }
+  .note { color:#64748b; margin-left:auto; font-size:12px; }
+  iframe { width:100%; height:calc(100vh - 47px); border:0; display:none; background:#0b0e13; }
+  iframe[data-active="1"] { display:block; }
+</style>
+<header>
+  <div class="tab" role="tab" aria-selected="true"  data-target="f2">2-D lipid membrane</div>
+  <div class="tab" role="tab" aria-selected="false" data-target="f3">3-D dish</div>
+  <span class="note">both engines are the same PolarPackEngine; only dimensionality and the
+    validated parameter set differ</span>
+</header>
+<!-- Frames are created lazily: an iframe that has never been shown never connects, so the hidden
+     engine does not stream or step in the background and compete for CPU with the visible one. -->
+<iframe id="f2" data-active="1" data-src="http://127.0.0.1:8083/"></iframe>
+<iframe id="f3" data-src="http://127.0.0.1:8082/"></iframe>
+<script>
+  const show = id => {
+    for (const f of document.querySelectorAll('iframe')) {
+      const on = f.id === id;
+      f.dataset.active = on ? '1' : '0';
+      if (on && !f.src) f.src = f.dataset.src;   // connect only on first view
+    }
+    for (const t of document.querySelectorAll('.tab'))
+      t.setAttribute('aria-selected', t.dataset.target === id ? 'true' : 'false');
+  };
+  for (const t of document.querySelectorAll('.tab'))
+    t.addEventListener('click', () => show(t.dataset.target));
+  show('f2');
+</script>

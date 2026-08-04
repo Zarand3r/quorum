@@ -100,6 +100,17 @@ The contact term is short-ranged (`overlap` is exactly 0 beyond ~1.95 = repel_co
 is computed densely for all pairs. Exploiting that is EXACT and changes the scaling from L^6 to ~L^3.
 Not yet done.
 
+## Hosted viewers
+
+    :8081/tabs.html   tabbed page (lazy iframes: a tab never opened never connects or steps)
+    :8083             2-D LIPID MEMBRANE   --polar --lipid2d
+    :8082             3-D dish             --polar --dim3
+
+`--lipid2d` exists because the plain 2-D path is a generic polar showcase at repel 5.0 with no bonded
+lipids -- hosting it would display a DIFFERENT system from the one every 2-D result in these docs was
+measured on. The flag uses the validated set: repel 24 (below ~1/24 attract:repel the aggregate
+collapses), attract 1.0, 3-bead bonded lipid, in the box where the spanning-bilayer phase is stable.
+
 ## Running experiments (read this before launching anything)
 
 Scratch probes are NOT committed. Add a `py_binary(name = "_probe", srcs = ["_probe.py"], main =
