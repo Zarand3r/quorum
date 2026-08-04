@@ -102,6 +102,14 @@ Not yet done.
 
 ## Running experiments (read this before launching anything)
 
+Scratch probes are NOT committed. Add a `py_binary(name = "_probe", srcs = ["_probe.py"], main =
+"_probe.py", data = [":configs"], imports = ["."], deps = [":vivarium"])` to BUILD.bazel while you
+need one and REMOVE IT with the file. A target left behind pointing at a deleted source breaks
+`bazel build //projects/vivarium/...` while `bazel test //projects/vivarium:test_suite` keeps
+passing, so the tests stay green and the build does not -- which is how a broken tree reached main.
+Check the BUILD, not only the tests, before calling a state a checkpoint.
+
+
     OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 MKL_NUM_THREADS=4 bazel run //projects/vivarium:_probe
 
 Two measured traps, both of which silently cost ~1.5x:
