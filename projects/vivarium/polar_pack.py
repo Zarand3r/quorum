@@ -579,12 +579,25 @@ class PolarPackEngine(PackEngine):
 
     def _near_face(self, C, ang):
         """⟨C, basis(ang)⟩ — the contour radius-deviation each token presents along bearing `ang` (N,N).
-        >0 a prong faces that way (positive charge), <0 a valley/centre faces it (negative)."""
+        >0 a prong faces that way (positive charge), <0 a valley/centre faces it (negative).
+
+        Reused within a single step through `_nf_slot`, which step() clears before and after it runs.
+        `ang` is derived from `delta`, which is fixed for the whole step, so the two callers --
+        _contact_distance and _extra_force -- were building this identical (N,N) array TWICE. It is
+        the 2-D counterpart of the duplicate `_pair_basis` already shared on the 3-D path, and it was
+        32% of 2-D step time. Nothing is keyed on t or on id(X) and nothing survives the step, so a
+        caller outside step() always recomputes.
+        """
+        nf = getattr(self, "_nf_slot", None)
+        if nf is not None:
+            return nf
         K = self.cfg.n_harmonics
         nf = np.zeros_like(ang)
         for k in range(1, K + 1):
             nf = nf + C[:, 2 * (k - 1)][:, None] * np.cos(k * ang) \
                     + C[:, 2 * (k - 1) + 1][:, None] * np.sin(k * ang)
+        if hasattr(self, "_nf_slot"):
+            self._nf_slot = nf
         return nf
 
     def _extra_force(self, delta=None, d2=None):

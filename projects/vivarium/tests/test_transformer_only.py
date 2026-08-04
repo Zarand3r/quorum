@@ -28,11 +28,22 @@ _FORBIDDEN = [
 ]
 
 
+# Helpers that step() calls to build a force kernel. Their source is inspected TOGETHER with step(),
+# because otherwise moving a kernel into a helper silently escapes the architectural guard -- which
+# is exactly what happened when the cohesive envelope was refactored into `_attract_env` to add a
+# contact-shell option. The guard should follow the code, not be satisfied by relocating it.
+_KERNEL_HELPERS = ("_attract_env",)
+
+
 def _step_source(mod) -> str:
     src = []
     for _, obj in inspect.getmembers(mod, inspect.isclass):
         if hasattr(obj, "step"):
             src.append(_strip_comments(inspect.getsource(obj.step)))
+            for name in _KERNEL_HELPERS:
+                fn = getattr(obj, name, None)
+                if fn is not None:
+                    src.append(_strip_comments(inspect.getsource(fn)))
     return "\n".join(src)
 
 

@@ -59,6 +59,12 @@ class PackEngine:
         # attn_sink (0 → plain softmax = the previous engine exactly, base case preserved).
         self.sink_repel = attn_sink       # Pauli exclusion  — shortest range (decays fastest)
         self.sink_attract = attn_sink     # van der Waals    — short range
+        self.attract_r0 = 0.0
+        #   Centre of the cohesive shell. 0.0 keeps the historical kernel exp(-lambda*d^2), whose
+        #   maximum is at ZERO SEPARATION -- so cohesion pulls hardest when two beads are already
+        #   coincident, a pressure toward overlap built into the force. Physical van der Waals has
+        #   its minimum at CONTACT. Setting r0 to the tail-tail contact distance gives
+        #   exp(-lambda*(r - r0)^2), which attracts toward touching rather than toward merging.
         self.sink_cohesion = attn_sink    # cohesion shortcut (surface-tension; being deprecated)
         self.repel = repel      # bounded repulsive-attention strength (soft excluded volume)
         self.attract = attract  # complementary-fit attraction (interlocking)
@@ -222,6 +228,13 @@ class PackEngine:
         amphiphile a head END and a tail END and therefore a real packing parameter."""
         return self.repel_contact
 
+    def _attract_env(self, dist, d2):
+        """Cohesive envelope. r0 = 0 is exactly the historical exp(-lambda*d^2); r0 > 0 puts the
+        attraction maximum at CONTACT instead of at zero separation."""
+        if self.attract_r0 <= 0.0:
+            return np.exp(-self.sink_attract * d2)
+        return np.exp(-self.sink_attract * (dist - self.attract_r0) ** 2)
+
     def _contour(self):
         return self.X[:, self.pd:self.pd + self.tK]  # grounded contour = shape channels
 
@@ -329,6 +342,7 @@ class PackEngine:
         # slot is cleared on BOTH ends so any caller outside step() always recomputes and cannot read
         # a stale tensor.
         self._basis_slot = None
+        self._nf_slot = None            # 2-D counterpart: the contour readout is also step-local
         C = self._contour()
         delta, d2 = self._periodic_delta()
         idx = self._neighbors(d2, cfg.n_neighbors)
@@ -370,7 +384,7 @@ class PackEngine:
             # in the hydrophobic direction).
             eps = np.tanh(rad * rad / self.vdw_scale)
             if self.eps_pair is None:
-                g = np.sqrt(eps[:, None] * eps[None, :]) * np.exp(-self.sink_attract * d2)
+                g = np.sqrt(eps[:, None] * eps[None, :]) * self._attract_env(dist, d2)
             else:
                 # SPECIES-PAIR INTERACTION MATRIX instead of a mixing rule.
                 #
@@ -388,7 +402,7 @@ class PackEngine:
                 # linear op of the same shape as an attention bias. Still bounded, still symmetric, so
                 # the force remains conservative.
                 sp = self.species.astype(int)
-                g = self.eps_pair[sp[:, None], sp[None, :]] * np.exp(-self.sink_attract * d2)
+                g = self.eps_pair[sp[:, None], sp[None, :]] * self._attract_env(dist, d2)
             np.fill_diagonal(g, 0.0)
             attract = -np.einsum("ij,ijc->ic", g, dirn)
         else:
@@ -433,6 +447,7 @@ class PackEngine:
 
         force = force + self._extra_force(delta, d2)   # subclass hook (default 0.0) — e.g. contour-charge force
         self._basis_slot = None                        # never survives the step that built it
+        self._nf_slot = None
 
         # OVERDAMPED (Brownian / DPD) integration: a molecule in a viscous solvent has negligible
         # inertia — velocity tracks force (v ≈ μ·F), drag dominates. `momentum` is the small inertial
