@@ -438,8 +438,13 @@ function draw(al){
     const order = [...Array(N).keys()].sort((a,b) => cam[b][2] - cam[a][2]);  // far → near
     // 0 water · 2 oil · 3 legacy lipid rod · 4 single-bead amphiphile ·
     // 5 lipid HEAD (hydrophilic, blue) · 6 lipid TAIL (hydrophobic, orange)
-    const COL = {0:[56,189,248], 2:[148,163,184], 3:[245,158,11], 4:[52,211,153],
-                 5:[96,165,250], 6:[249,146,58]};
+    // Water is DIM, heads are BRIGHT. It used to be the other way round -- water [56,189,248] is a
+    // brighter cyan than the lipid head [96,165,250] and nearly the same hue, so with 250 waters
+    // against 63 heads a micelle's head shell was camouflaged by the solvent it was supposed to
+    // stand out against. The structure was there and measurable (head enrichment 3.00) and simply
+    // could not be seen. Matches the offline figures, where water is dim navy and heads are bright.
+    const COL = {0:[30,58,95], 2:[148,163,184], 3:[245,158,11], 4:[52,211,153],
+                 5:[56,189,248], 6:[249,146,58]};
     const zmin = Math.min(...cam.map(c=>c[2])), zmax = Math.max(...cam.map(c=>c[2]));
     const zr = (zmax - zmin) || 1;
     // real spherical harmonics l=1,2 at a unit direction — the SAME basis the engine uses, so the
@@ -482,7 +487,10 @@ function draw(al){
       const sp = (s.species && s.species[idx]) ?? 1;
       let col = COL[sp] || [203,213,225];
       const cc = s.tokens[idx].c || [];
-      ctx.globalAlpha = 0.30 + 0.70*dep;
+      // Solvent is also pushed BACK in alpha, not only in colour. 250 waters against 63 lipid
+      // heads means the dish is mostly solvent by count, so drawing it at full opacity buries the
+      // structure regardless of hue.
+      ctx.globalAlpha = (sp === 0 ? 0.10 + 0.18*dep : 0.30 + 0.70*dep);
       // Draw the REAL contour silhouette for anything POLAR, not only the morphing blobs. Water
       // and the lipid HEAD carry a genuine charge shape (|C| ~1.6 and ~2.5) but were drawn as plain
       // circles, so their polarity was invisible and they looked like the neutral tail. The tail

@@ -256,6 +256,9 @@ def main(argv: list[str] | None = None) -> int:
                    help="serve the PACKING engine (boundaries + induced-fit, periodic domain)")
     p.add_argument("--dim3", action="store_true",
                    help="run the polar showcase in a 3-D dish (spherical-harmonic contour)")
+    p.add_argument("--plant", default="", choices=["", "clump", "ribbon", "micelle"],
+                   help="2-D initial condition: empty = fully dispersed (micelles EMERGE, ~6k "
+                        "steps); clump = pre-concentrated but disordered; ribbon/micelle = planted")
     p.add_argument("--lipid2d", action="store_true",
                    help="2-D LIPID MEMBRANE dish: the validated chain-lipid parameters, not the "
                         "generic polar showcase. Without this the 2-D path serves a different "
@@ -326,17 +329,40 @@ def main(argv: list[str] | None = None) -> int:
             # dish would actually morph — the induced-fit deformation vivarium is named for.
 
         if args.lipid2d:
-            # The 2-D dish that MATCHES THE RESEARCH RUNS. The plain 2-D path is a generic polar
-            # showcase with repel 5.0 and no bonded lipids, so hosting it would display a different
-            # system from the one every 2-D result in docs/ was measured on.
+            # THE EXACT CONFIGURATION THAT PRODUCED MICELLES, taken from fig2d.py -- the run behind
+            # the four-micelle figure and the dispersed-start emergence result (head enrichment 3.00,
+            # the theoretical maximum for a 1-head/2-tail lipid).
             #
-            # Parameters are the validated ones: repel 24 (below this the aggregate COLLAPSES --
-            # attract/repel must stay under ~1/24), attract 1.0, and a 3-bead bonded lipid. The
-            # spanning-bilayer phase is stable here (a planted one holds at splay ~0.07-0.10).
-            cfg = replace(cfg, N=420, pos_dim=2, n_harmonics=3, pos_bound=11.0)
-            water_box, lipid_box = [0.62], [0.0]
+            #     n_lip 63, n_water 250, bound 11.0  ->  N = 63*3 + 250 = 439
+            #     repel 12.0, attract 1.0, k_bond 30.0, speed 0.001, satt 0.30, kt 0.02
+            #
+            # repel is 12, NOT 24. The 24 came from the planted-BILAYER stability sweep, a different
+            # experiment: it makes the lamellar phase more stable and assembly slower. Hosting it
+            # gave aggregates with head enrichment 0.52 -- below the random null of ~1.0, i.e. heads
+            # DEPLETED from the surface, an inverted structure rather than a micelle. Matching 26
+            # config fields was necessary and not sufficient; the check that matters is structural.
+            cfg = replace(cfg, N=439, pos_dim=2, n_harmonics=3, pos_bound=11.0)
+            water_box, lipid_box = [250.0 / 439.0], [0.0]
             amphi_box[0] = 0.0
-            chain_box[0] = 0.38
+            chain_box[0] = 189.0 / 439.0
+
+        def make_engine_lipid2d(s):
+            """Delegate to bicelle2d.build -- the SAME function every 2-D result was produced with.
+
+            Reimplementing its construction in this file drifted twice: first missing the
+            species-pair matrix entirely, then matching all 26 compared fields and STILL producing
+            head enrichment 0.71 (below the random null) where the real builder gives 3.00. Whatever
+            the remaining difference was -- initial condition, water_dipole, a default not in the
+            diff -- reusing the builder removes the entire class of error instead of chasing it.
+
+            The parameters are fig2d.py's, i.e. the four-micelle figure and the dispersed-start
+            emergence result.
+            """
+            from bicelle2d import build as _build2d
+            e = _build2d(s, n_lip=63, bound=11.0, kt=0.02, speed=0.001, repel=12.0, k_bond=30.0,
+                         satt=0.30, plant=(plant_box[0] or False), n_tail=2, attract=1.0,
+                         bond_span=2.0, n_water=250, polarity=0.80, head_q=1.2, hydrophobic=0.6)
+            return e
 
         def make_engine(s):
             # sensible SHOWCASE defaults (base-case identity is defined vs PackEngine's own defaults, so
@@ -358,7 +384,7 @@ def main(argv: list[str] | None = None) -> int:
                                 #  sigma -- so head and tail would have the SAME steric radius and the
                                 #  packing parameter P = v/(a0*l) could not be expressed at all.
                                 **({"aniso": 0.0, "rad_head": 0.0} if args.lipid2d else {}),
-                                repel=(24.0 if args.lipid2d else 12.0 if args.dim3 else 5.00),
+                                repel=(12.0 if args.lipid2d else 12.0 if args.dim3 else 5.00),
                                 attract=(1.00 if args.lipid2d else 0.30),
                                 polarity=0.80, cohesion=0.00, skew=0.00,
                                 morph=0.70, momentum=0.30,
@@ -417,13 +443,27 @@ def main(argv: list[str] | None = None) -> int:
                       "selectivity", "temperature", "momentum", "speed")
         label = ("POLAR PACK 3-D (spherical-harmonic contour · emergent amphiphiles)" if args.dim3
                  else "POLAR PACK (water + amphiphile lipids → membrane self-assembly)")
+    plant_box = [args.plant]      # defined BEFORE the closure that reads it
     server = ThreadingHTTPServer((args.host, args.port), Handler)
-    server.sim = Sim(cfg, seed, args.hz, make_engine, knob_names)
+    server.sim = Sim(cfg, seed, args.hz,
+                     make_engine_lipid2d if args.lipid2d else make_engine, knob_names)
+    # The 3-D showcase auto-pauses past its assembly transient; the 2-D lipid dish must NOT. Its
+    # transients are far longer (micelles ~6k steps, ribbons ~150k), and a 5000-step pause froze it
+    # before anything could form -- the hosted dish showed a still frame of a disordered start,
+    # which is exactly what it looked like.
+    if args.polar:
+        server.sim.autopause = 0 if args.lipid2d else 5000
     if args.polar:
         # auto-pause well past the assembly transient. With substepping the 3-D showcase covers
         # 5000 steps in seconds, and once t exceeds the limit it re-pauses every tick, so a low
         # value made the dish look permanently frozen.
-        server.sim.autopause = 5000
+        #
+        # THE 2-D LIPID DISH NEEDS FAR MORE. Its timestep is 0.001, twenty times smaller than the
+        # 3-D showcase's, and the measured transients are: micelles ~6k steps from a clump and ~20k
+        # from a dispersed start, the ribbon phase ~150k. Autopausing at 5000 froze it BEFORE
+        # anything could form, so the hosted dish showed a still frame of a disordered start and
+        # looked like nothing was happening -- which is exactly what it looked like.
+        server.sim.autopause = 60000 if args.lipid2d else 5000
 
         def _restarter(box, v, lo, hi):
             v = max(lo, min(hi, v))
@@ -433,6 +473,12 @@ def main(argv: list[str] | None = None) -> int:
         server.sim.pseudo = {
             "water": (lambda: water_box[0], lambda v: _restarter(water_box, v, 0.0, 1.0)),   # up to 100% for a pure-water control
         }
+        if args.lipid2d:
+            # 0.001 is a 20x smaller timestep than the 3-D showcase, so without substepping the dish
+            # advances ~27 steps/s and a dispersed start needs ~12 minutes to reach micelles. Four
+            # substeps brings that under 4 minutes. Kept modest because each substep runs holding the
+            # state lock, and a large count starves /state and makes pause/resume feel delayed.
+            server.sim.substeps = 4
         if args.dim3:   # bonded chain lipids replace both the rod and the single-bead amphiphile
             server.sim.substeps = 2        # smaller physical timestep → substep to keep motion
             #   legible. Kept modest on purpose: every substep runs holding the state lock, so a
