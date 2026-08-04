@@ -164,6 +164,71 @@ defects found. 104 tests pass.
 
 ---
 
+## 2026-08-04a — external physics review corrects four of my claims; two architectural defects found by reading the force code
+
+An external research handoff came back and **corrected me on four things**, three of which had been
+load-bearing:
+
+**1. I used 3-D packing thresholds in a strict 2-D model.** The 2-D form is p_2D = A_t/(a0*l), which
+for a circular micelle of outer radius R reduces to **p_2D = 1 - l/(2R)**. So a filled circular
+micelle sits at p_2D ~ 1/2 and a FLAT BILAYER REQUIRES p_2D -> 1 -- the opposite end of the scale
+from where I was reading. Every head-size sweep was scored against the wrong ruler, and the
+bilayer-favouring window in 2-D may be narrower than those scans resolved.
+
+**2. My 2-D closure thermodynamics was wrong.** There is no circular rim in strict 2-D: an open strip
+has TWO ENDPOINTS. Closure removes them and pays a 1-D ring bending cost, giving
+
+    dF_close = pi*kappa_1/R - 2*Gamma_end     and     R_c,2D = pi*kappa_1 / (2*Gamma_end)
+
+not the 3-D R_crit = (4*kappa_c + 2*kappa_bar)/gamma I had been quoting.
+
+**3. My compact-blob hypothesis was wrong**, and I had flagged it as the thing most likely to be. A
+perimeter comparison is not the right one, because micelle and bilayer boundaries have DIFFERENT
+interfacial composition -- both are head-water along their long sides. The decisive quantity is the
+bulk chemical-potential difference mu_bil - mu_mic plus curvature and endpoint terms. If mu_bil >=
+mu_mic then more material and longer runs cannot help, and micelles are a competing EQUILIBRIUM
+phase rather than an intermediate.
+
+**4. Leaflet population imbalance, which I never considered at all.** A curved bilayer requires
+unequal leaflets: N+ - N- = 4*pi*h/a0. In strict 2-D a lipid can only change leaflet by travelling
+around an open ENDPOINT -- so redistribution must happen BEFORE sealing, and a strip that closes too
+early is left with an overcompressed inner leaflet and reopens.
+
+Also corrected: bounded forces are NOT inherently incompatible with membranes -- dissipative particle
+dynamics builds bilayers and vesicles from soft bounded conservative forces. The requirement is a
+stable equation of state, not a divergent kernel.
+
+**Two architectural defects, found by reading our force code against the review:**
+
+  ATTRACTION PEAKS AT ZERO SEPARATION. The envelope is exp(-lambda*d^2), maximal at d=0, so the
+  cohesive force pulls hardest when two beads are already coincident. Physical van der Waals has its
+  minimum at CONTACT. This is a pressure toward overlap built into the kernel, and it should be a
+  contact shell exp(-lambda*(r-r0)^2) with r0 at the tail-tail contact distance.
+
+  THE TWO FORCES SCALE DIFFERENTLY WITH COORDINATION. Repulsion is softmax-normalised (row weights
+  sum to <= 1, so the total is capped at its amplitude) while attraction is an UNNORMALISED sum over
+  neighbours. No constant repulsion amplitude is safe if coordination is unbounded, which is exactly
+  why every "raise repel" sweep bought a higher collapse threshold instead of a fix.
+
+**Measured, and reported honestly: the second defect is present in the architecture but NOT
+demonstrated to dominate at our densities.**
+
+    coordination   sum(repulsion weights)   |F_attract|
+             2-4                   0.0200        2.8948
+             4-6                   0.0349        2.5408
+             6-8                   0.0500        1.0257
+            8-12                   0.0765        0.4000
+
+The repulsion row-sum reaches only 0.165 against its bound of 1.0, so the cap is not binding yet, and
+net attraction FALLS with coordination because neighbour vectors cancel in a well-surrounded
+environment. The right test is compression -- whether pressure rises monotonically with density,
+where a capped repulsion shows up as a plateau -- and a net-force probe cannot see it.
+
+Two earlier probe attempts failed on setup and are worth recording: parking a molecule's partners far
+away stretches its bonds so the bond force (~30, i.e. exactly k_bond) swamps both nonbonded terms;
+and mutating `species` after construction does not rebuild sigma or the contours, so both terms
+silently read zero.
+
 ## 2026-08-03c — a planted 2-D vesicle is STABLE; `encloses` refined to count encapsulated solvent
 
 **A planted 2-D vesicle holds, and improves.** R=4 loop over 20k steps: splay 0.230 -> 0.145 (deeper
