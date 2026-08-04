@@ -190,6 +190,13 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
+        # NEVER cache. The viewer was served with no Cache-Control, no ETag and no Last-Modified, so
+        # browsers and the reverse proxy cached it heuristically -- three rendering fixes were served
+        # correctly by this process and never reached the screen, through repeated hard refreshes,
+        # because the copy in front of it was stale. /state must not be cached either or the dish
+        # appears frozen. The bodies are small and regenerated per request; there is nothing to save.
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.send_header("Pragma", "no-cache")
         self.end_headers()
         self.wfile.write(body)
 
@@ -452,7 +459,10 @@ def main(argv: list[str] | None = None) -> int:
     # before anything could form -- the hosted dish showed a still frame of a disordered start,
     # which is exactly what it looked like.
     if args.polar:
-        server.sim.autopause = 0 if args.lipid2d else 5000
+        # 10000 for the 2-D lipid dish: well PAST the ~6k where micelles form, so it settles on a
+        # frame that shows the result rather than freezing mid-transient. At 5000 it stopped just
+        # short and the hosted view was a still of a disordered start.
+        server.sim.autopause = 10000 if args.lipid2d else 5000
     if args.polar:
         # auto-pause well past the assembly transient. With substepping the 3-D showcase covers
         # 5000 steps in seconds, and once t exceeds the limit it re-pauses every tick, so a low

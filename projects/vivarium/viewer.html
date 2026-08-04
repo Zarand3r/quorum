@@ -435,7 +435,12 @@ function draw(al){
                  -sb*sa*x + cb*y - sb*ca*z,
                  cb*sa*x + sb*y + cb*ca*z ]);  // cz = depth into the screen
     }
-    const order = [...Array(N).keys()].sort((a,b) => cam[b][2] - cam[a][2]);  // far → near
+    // far -> near, but SOLVENT ALWAYS BEHIND. In 2-D every z is identical, so a pure depth sort
+    // degenerates to index order and the 250 water beads paint over the 189 lipid beads they are
+    // meant to sit behind -- the dish then reads as solid solvent with no structure in it.
+    const _sp = s.species || [];
+    const order = [...Array(N).keys()].sort((a,b) =>
+      ((_sp[a]===0) !== (_sp[b]===0)) ? ((_sp[a]===0) ? -1 : 1) : (cam[b][2] - cam[a][2]));
     // 0 water · 2 oil · 3 legacy lipid rod · 4 single-bead amphiphile ·
     // 5 lipid HEAD (hydrophilic, blue) · 6 lipid TAIL (hydrophobic, orange)
     // Water is DIM, heads are BRIGHT. It used to be the other way round -- water [56,189,248] is a
@@ -518,7 +523,11 @@ function draw(al){
         ctx.closePath(); ctx.fill();
       } else {
         // water small; lipid head/tail sized by their dispersion radii so the tails read as bulky
-      const r = (sp===0 ? 0.20 : sp===5 ? 0.24 : 0.30) * sc * persp;
+      // TRUE steric radius, matching the contour branch above: water 0.30, every lipid bead 0.50.
+      // Tails were drawn at 0.30 while heads took the contour branch at 0.50, so heads rendered
+      // ~1.7x oversized and buried the orange tails they are supposed to sit around -- which is why
+      // the dish looked entirely blue with no hydrophobic core visible anywhere.
+      const r = (sp===0 ? 0.30 : 0.50) * sc * persp;
         ctx.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
         ctx.beginPath(); ctx.arc(X3, Y3, r, 0, 7); ctx.fill();
         const h = s.amphi && s.amphi[idx];
