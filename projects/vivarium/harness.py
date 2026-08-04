@@ -323,9 +323,26 @@ def spanning(e):
     return float(len(np.unique((x / L * nbins).astype(int))) / nbins)
 
 
-def encloses(e, cell=0.6):
-    """Does the aggregate PARTITION space? Returns the largest enclosed solvent pocket, as a
-    fraction of the box. 0 means no interior; > 0 means a sealed compartment.
+def encloses(e, cell=0.4):
+    """How much SOLVENT the aggregate seals off: the number of water beads in the largest enclosed
+    pocket. 0 means nothing is encapsulated.
+
+    Counting solvent rather than empty space is what separates a vesicle from a defect. A relaxed
+    membrane carries small VOIDS between its leaflets; those do not wrap the box, so a pure geometric
+    fill counts them as pockets and a flat spanning sheet scored 8.06 where it should score 0. A void
+    between leaflets holds no water. A vesicle, by definition, encapsulates solvent -- so count the
+    solvent.
+
+    KNOWN LIMIT, and the margin is thin. A relaxed membrane traps solvent in small pockets BETWEEN
+    its leaflets, and those do not wrap either, so a flat spanning bilayer reads ~10 against a real
+    vesicle's 18-26. Usable with a threshold near 15, but not comfortable. The physically right
+    discriminator is that a lumen is lined with HEADS while an inter-leaflet void is lined with
+    TAILS; an attempt at that check rejected every real loop and was reverted rather than shipped
+    half-working. Until it exists, read this metric WITH an image.
+
+    A COUNT, not a fraction of the box. A fraction makes the same vesicle read differently in
+    different boxes -- the planted R=4 loop scored 0.0159 while an identical structure in a smaller
+    box would score higher -- so a threshold on it is really a threshold on box size.
 
     This is what a vesicle IS. Closure is topological -- solvent inside is disconnected from solvent
     outside -- and every local proxy for it fails. `edge` (solvent density at the tail tips) cannot
@@ -339,13 +356,12 @@ def encloses(e, cell=0.6):
     the box; any other component is an enclosed pocket. Reporting the largest such pocket makes a
     vesicle read > 0 while a sheet, a ribbon and a droplet all read 0.
 
-    THRESHOLD DETECTOR, NOT AN AREA. Verified resolution-independent from cell 0.6 down to 0.3, but
-    it does NOT track lumen area at small radii: an R=4 loop (lumen radius 1.0) over-reads by ~6x
-    because that lumen is under two cells across and the fill picks up membrane-interior voids with
-    it. At R=7 it is within ~25% of the true fraction. So read it as "is there a partition", and do
-    not quote the value as a lumen size.
-
-    `cell` trades resolution against cost. It must be well under the bead diameter or a wall of beads
+    `cell` defaults to 0.4 rather than 0.6 because the coarse grid could not resolve a small
+    vesicle: a lumen of radius 1.0 spans under two cells at 0.6, and the fill then absorbed
+    membrane-interior voids alongside it, over-reading by ~6x. A planted R=4 loop that is visibly
+    sealed scored BELOW its own detection threshold. Four cells across the smallest lumen worth
+    detecting is the requirement, and it must stay well under the bead diameter or a wall of beads at
+    contact will not close on the grid. It must be well under the bead diameter or a wall of beads
     at contact will not close on the grid, and the metric would then report the exterior leaking in
     through gaps that are not physically there.
     """
@@ -394,9 +410,21 @@ def encloses(e, cell=0.6):
                     if free[t] and not seen[t]:
                         seen[t] = True
                         stack.append(t)
-        if not touches:                          # never wrapped -> enclosed pocket
-            best = max(best, len(comp))
-    return float(best / free.sum()) if free.sum() else 0.0
+        if not touches:                          # never wrapped -> a candidate pocket
+            best = max(best, _waters_in(e, comp, n, L))
+    return float(best)
+
+
+def _waters_in(e, cells, n, L):
+    """How many solvent beads sit inside this set of grid cells."""
+    sp = np.asarray(e.species)
+    wi = np.where(sp == 0)[0]
+    if wi.size == 0:
+        return 0
+    P = np.mod(e.X[wi, : e.pd] + 0.5 * L, L)
+    idx = np.clip((P / L * n).astype(int), 0, n - 1)
+    want = set(cells)
+    return int(sum(1 for row in idx if tuple(row) in want))
 
 
 def head_enrichment(e):

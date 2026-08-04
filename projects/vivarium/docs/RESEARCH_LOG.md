@@ -164,6 +164,45 @@ defects found. 104 tests pass.
 
 ---
 
+## 2026-08-03c — a planted 2-D vesicle is STABLE; `encloses` refined to count encapsulated solvent
+
+**A planted 2-D vesicle holds, and improves.** R=4 loop over 20k steps: splay 0.230 -> 0.145 (deeper
+into the bilayer band), aspect 0.948, packing 0.867. The render shows heads lining both the outer and
+inner surfaces with tails buried between them around a sealed lumen.
+
+So the stage-4 PHASE exists in 2-D, exactly as the stage-3 phase does. **This is not a breakthrough**
+and should not be read as one: the structure was planted by hand and the physics merely failed to
+destroy it. The same pattern already misled once in this project -- the planted SPANNING bilayer is
+also stable, and three kinetic levers then failed to reach it from disorder. Planted stability is a
+necessary precondition, nothing more.
+
+Self-assembly at 50 lipids in a box sized to hold the loop (the count a loop needs is n = 4*pi*R,
+where the ribbons this model makes hold 12-20 -- so closure was never within reach before): encloses
+0.0025 at t=10k and 0.0020 at t=40k, splay 0.72, aspect 0.62. No closure.
+
+**`encloses` refined twice, and the second refinement failed.**
+
+  COUNT ENCAPSULATED SOLVENT, not empty space. A geometric fill counts the small voids a relaxed
+  membrane carries BETWEEN its leaflets, and a flat spanning sheet scored 8.06 where it should score
+  0. A void between leaflets holds no water; a vesicle by definition encapsulates solvent.
+
+  REPORT A COUNT, not a fraction of the box, or the same vesicle reads differently in different
+  boxes and a threshold on it is really a threshold on box size.
+
+  RESOLUTION. cell 0.6 could not resolve a small lumen: a visibly sealed R=4 loop scored BELOW its
+  own detection threshold, because a radius-1.0 lumen spans under two cells and the fill absorbed
+  membrane-interior voids with it. Now 0.4 -- five cells across that lumen. 0.25 resolves better and
+  timed the test suite out at 300s, which is a cost regression I introduced and had to back out.
+
+  THE HEAD-LINED CHECK DOES NOT WORK YET. A lumen is lined with HEADS, an inter-leaflet void with
+  TAILS, and that is the physically right discriminator. Implemented, it rejected every real loop --
+  first because the search reached one grid CELL rather than a physical distance (0.25 units, while a
+  lining head sits ~0.5 out), and still after fixing that. Reverted rather than shipped half-working.
+
+**Where it stands: loops 18-26 encapsulated waters, flat sheet ~10, droplet 1, random 0.** Usable
+with a threshold near 15, but that margin is thin, and the metric must be read WITH an image until
+the head-lined check works.
+
 ## 2026-08-03b — `edge` was measuring nothing. Closure is TOPOLOGICAL, so measure the topology
 
 Checked `edge` against controls whose answer is known by construction, and it failed completely:
