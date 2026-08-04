@@ -20,16 +20,25 @@
   <span class="note">both engines are the same PolarPackEngine; only dimensionality and the
     validated parameter set differ</span>
 </header>
-<!-- Frames are created lazily: an iframe that has never been shown never connects, so the hidden
-     engine does not stream or step in the background and compete for CPU with the visible one. -->
-<iframe id="f2" data-active="1" data-src="http://127.0.0.1:8083/"></iframe>
-<iframe id="f3" data-src="http://127.0.0.1:8082/"></iframe>
+<!-- Sources are RELATIVE, not http://127.0.0.1:PORT. An absolute loopback URL only resolves on the
+     workstation itself, so a remote browser reaching this through the tailnet would load the page and
+     then show two blank frames. Relative paths ride the same proxy that served this page.
+     They are also resolved against location.pathname rather than left as bare relative paths: at
+     /vivarium (no trailing slash) a relative "2d/" resolves to /2d/, which does not exist, so the
+     page loaded correctly and showed a 404 filling the frame. Deriving the base handles the mount
+     point with or without a trailing slash, the same way viewer.html computes its own BASE.
+     Frames are created lazily: a tab never opened never connects, so the hidden engine does not
+     stream or step in the background and compete for CPU with the visible one. -->
+<iframe id="f2" data-active="1" data-src="2d/"></iframe>
+<iframe id="f3" data-src="3d/"></iframe>
 <script>
+  // mount point, trailing slash or not: /vivarium and /vivarium/ both yield "/vivarium"
+  const BASE = location.pathname.replace(/\/+$/, '');
   const show = id => {
     for (const f of document.querySelectorAll('iframe')) {
       const on = f.id === id;
       f.dataset.active = on ? '1' : '0';
-      if (on && !f.src) f.src = f.dataset.src;   // connect only on first view
+      if (on && !f.src) f.src = BASE + '/' + f.dataset.src;   // connect only on first view
     }
     for (const t of document.querySelectorAll('.tab'))
       t.setAttribute('aria-selected', t.dataset.target === id ? 'true' : 'false');
