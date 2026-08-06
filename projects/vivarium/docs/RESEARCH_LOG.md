@@ -63,7 +63,17 @@ dissolves. No vesicle.
     force magnitude          NO EFFECT. Scaling every force with the timestep is a rescaling of
                              TIME; only force-relative-to-kT moves, and lowering effective
                              temperature freezes a glass rather than ordering it.
-    head_q (electrostatic)   UNDER TEST. This is the term that actually sets effective a0.
+    head_q (electrostatic)   TESTED 2026-08-04 (F33), NO EFFECT. Across three seeds head_q=0.6 gives
+                             splay 0.212 +/- 0.023 against a baseline 0.253 -- at the bilayer band
+                             edge, not inside it, and `largest` is unchanged within seed spread.
+    temperature              TESTED 2026-08-04 (F33), NO EFFECT. Fixed kT=0.20 (10x baseline) does
+                             not melt aggregates or drive fusion. Annealing to kT=0.02 moves splay
+                             only at the hottest start (0.284 -> 0.184 at hot=0.25) and nothing
+                             reaches stage3; every run fails `spanning` (best 0.50 vs 0.80).
+    speed                    NOT A PLAYBACK RATE (2026-08-05). Measured RMS ratio 2.12 vs the
+                             predicted sqrt(4)=2.0: at matched physical time `speed` scales thermal
+                             motion as sqrt(speed) in langevin mode. It is an effective-temperature
+                             dial, so every past run that varied it varied kT too.
 
 **Reading protocol, non-negotiable.** A structural claim needs an image AND validated metrics AND the
 reference on the same axes. The ribbon result is why: align 0.73 fits a ribbon AND a dense pile, and
@@ -163,6 +173,228 @@ defects found. 104 tests pass.
    head dispersion were both wrong knobs; head electrostatics was the lever).
 
 ---
+
+## 2026-08-06 — `speed` was a temperature dial; two slider bugs; two confounded density tests (F35)
+
+**Instrument and interface defects found and FIXED.**
+
+`speed` was not a playback rate. The viewer advertised it as "TIME-STEP / playback rate -- NOT physics;
+just how fast you watch the same dynamics." Measured: at matched physical time it scales thermal
+motion as sqrt(speed) -- RMS ratio 2.12 against the predicted sqrt(4)=2.0 -- because the Langevin kick
+is applied per STEP while drift is scaled by `speed`. It was an effective-temperature dial. Any
+historical run that varied `speed` also varied kT without recording it.
+
+Fixed by rescaling the kick against a per-ENGINE reference captured at construction (`speed_ref`), so
+the factor is exactly 1.0 at an engine's configured speed and the correction applies only when speed
+MOVES. Engines are built two orders of magnitude apart (0.001 for the dish, 1.20 for the showcase), so
+a single global reference would have silently rescaled one family's noise. Byte-identity at
+construction speed is now a test, and a third test DOCUMENTS the remaining limitation: two engines
+BUILT at different speeds are still not equivalent.
+
+Two viewer sliders were broken, and neither was visible from Python -- 111 tests passed while both
+shipped, because nothing covered the server knob surface or the viewer ranges:
+
+  * `repel` -- KMAX capped the slider at 0.6 while the 2-D dish runs at 12. An <input type=range>
+    clamps value to max, so the slider DISPLAYED 0.6 for a 12 and the first drag cut excluded volume
+    20x, collapsing the dish.
+  * `speed` -- KMAX 1.5 gives step = max/100 = 0.015 against an operating value of 0.001, so the
+    handle snapped to 0 and one notch was a 15x jump.
+  * `KMAX.temperature` was declared twice; JS keeps the last, so the first was dead config.
+
+Root cause: ONE global KMAX table in viewer.html served three engines whose parameters differ by
+orders of magnitude. Ranges now come from the SERVER, derived once from launch defaults, with hard
+physical bounds respected (momentum <= 0.98, rigidity <= 1) instead of blanket 4x scaling. Tests read
+the SHIPPED viewer.html so the constants cannot drift from the file the browser loads.
+
+**Two confounded tests of the same hypothesis -- both mine, logged so the design error is not repeated.**
+
+The composition is strikingly dense: 439 tokens = 189 lipid beads + 250 water, a 43.1% lipid token
+fraction and a **71.2% bead area fraction** (sigma 0.5 discs in a 22x22 box). Random close packing for
+discs is ~82%. Hydration is **4.0 waters per lipid** where coarse-grained membrane studies use 20-50.
+That is a good reason to suspect steric jamming, which would explain the zero lipid exchange, the
+insensitivity to 10x temperature (a jamming barrier is steric, not energetic), and the reviewer's
+"non-ergodicity" -- jamming IS non-ergodicity.
+
+Test 1, dilution at fixed lipid count (bound 11/14/18/24, area fraction 71/44/27/15%):
+
+    bound  cores  mean  largest  exposed  packing
+    11         6  10.2       18    0.071    0.502
+    14         8   6.8       14    0.175    0.652
+    18         8   5.5       11    0.270    0.810
+    24         9   3.9        6    0.302    0.903
+
+Monotonically worse -- but CONFOUNDED. Enlarging the box at fixed lipid count lowers the lipid
+CONCENTRATION, and aggregation is diffusion-limited, so smaller aggregates at t=20000 may only mean
+the lipids have not met yet. It does not isolate density.
+
+Test 2, raising hydration by removing lipids at fixed water and box:
+
+    n_lip  hydration  cores  largest  align  packing
+    12          20.8      0        0    nan    3.840
+    20          12.5      2        4    nan    0.911
+    32           7.8      4        7  0.877    0.813
+
+DEGENERATE. packing 3.840 is out of range and align is nan: with 12-20 lipids there is not enough
+material to form the aggregates the metrics are defined on. Confounded in the opposite direction.
+
+**Conclusion: hydration cannot be varied independently in a fixed box with fixed water.** The correct
+design holds lipid CONCENTRATION fixed and scales box and water together -- e.g. 63 lipids with 800
+water at bound ~15.5 gives hydration 12.7 at the same lipid concentration, at N=989 and roughly 5x the
+step cost. Untested. The density hypothesis is NOT refuted by either test above; it is untested.
+
+**Throughput note.** The speed fix does NOT buy iteration speed. The stability product
+speed*k_bond/(1-momentum) < 0.05 sits at 0.0429, leaving 1.17x headroom, and that is an overshoot
+limit on the DETERMINISTIC displacement, untouched by the noise correction. Profiling shows 78% of
+step time in `polar_pack._extra_force` and 31% in `_near_face` alone, which evaluates cos(k*ang) and
+sin(k*ang) over an (N,N) float64 array. Chebyshev recurrence plus float32 is the honest 2-3x lever.
+
+## 2026-08-05 — attraction range moves splay and SIZE, but NOT the interface (F34, headline RETRACTED same day)
+
+**Asked.** An external review ranked the normalized-repulsion / unnormalized-attraction asymmetry as
+the top suspect. Testing it pointed instead at the reviewer's hypothesis #2 (irreversible hydrophobic
+collapse), whose named control -- attraction RANGE -- is the key knob in Cooke-Deserno and had never
+been validly tested here.
+
+**First, the reviewer's top hypothesis is REFUTED**, by their own proposed fixture (A2): one centre
+bead displaced by 0.05 inside a ring of z neighbours at fixed radius, force read as vel after one
+step from rest at kT=0.
+
+    z    repel_only   attract_only   ratio A/R
+    0    0.00000e+00  1.71442e-12    control passes
+    1    5.99335e-01  7.61649e-01    1.271
+    2    5.99335e-01  4.43478e-02    0.074
+    4    5.99335e-01  2.94743e-02    0.051
+    8    1.16550e+00  5.92824e-02    0.051
+    16   2.32194e+00  1.18565e-01    0.051
+    32   4.64010e+00  2.37130e-01    0.051
+
+Repulsion is NOT capped -- it grows x7.74 from z=1 to z=32 -- and for z >= 4 the ratio is FLAT at
+0.051: attraction and repulsion scale in lockstep with coordination. There is no compactness bias.
+Together with the already-passing Newton's-third-law test (net momentum < 1e-9), the nonreciprocity
+and coordination-bias concerns are closed. Two contaminated fixtures preceded the valid one (39 unused
+tokens stacked on ONE point, which wraps into the box as an artificial pile; and measuring a HEAD bead,
+where k_tail -- tail-tail cohesion -- is identically zero). The z=0 control caught both.
+
+**The prior attraction-range verdict was VOID.** The log records "attraction range matched to CD
+(satt 0.30 = 2.77 sigma vs CD 2.62) | melts | range was not it" -- run during the era of 07-28c, "the
+planted bilayer never melted; vivarium was exploding". That is the integrator defect that forced
+Finding 23's retraction. Range had never been tested in 2-D self-assembly at all.
+
+**Ran.** satt swept at FIXED INTEGRATED ATTRACTION (2-D Gaussian: integral of A*exp(-lambda r^2) is
+A*pi/lambda, so attract proportional to satt), 63 lipids, dispersed, t=20000.
+
+**Got.**
+
+    satt    cores  mean  largest  exposed  align  splay  packing
+    0.050       3  21.0       26    0.286  0.593  0.231    0.483
+    0.075       4  15.8       25    0.167  0.827  0.112    0.497
+    0.100       4  15.8       23    0.167  0.794  0.125    0.480
+    0.200       6  10.5       15    0.151  0.368  0.225    0.513
+    0.300       6  10.2       18    0.071  0.813  0.253    0.502
+    0.450       7   8.4       18    0.135  0.277  0.322    0.513
+    0.600       9   6.1       13    0.254  0.448  0.445    0.669
+
+splay is monotonic across the five points from 0.10 to 0.60 (0.125, 0.225, 0.253, 0.322, 0.445), and
+aggregate size tracks it. Broader attraction gives flatness AND size together -- the first lever that
+does not trade them off. satt=0.05 overshoots (splay back out of the band, worst exposure), so there
+is a genuine interior optimum near 0.075-0.10 rather than a runaway.
+
+**Replicated at the optimum.** satt=0.10 across seeds 7/11/3: splay 0.125, 0.134, 0.190
+= **0.150 +/- 0.029, every seed INSIDE the bilayer band (0.00-0.21)** against a 0.253 baseline; largest
+aggregate 23/33/25 (mean 27) against 18; cores 4/3/3. This is a real replication, unlike head_q
+(0.212 +/- 0.023, band EDGE) which did not survive seeds.
+
+**Mechanism.** A short deep well freezes tail contacts on first touch; a broad shallow well of equal
+integrated strength permits lateral rearrangement, so lipids re-order instead of arresting. That is
+exactly Cooke-Deserno's "stabilization of the fluid phase based on broad attractive tail potentials",
+and it explains the zero-lipid-exchange observation the review characterised as non-ergodicity.
+
+**RETRACTED 2026-08-06, same day, by the cross-sections.** The structures at satt 0.075 and 0.10 are
+NOT bilayers. Rendered at true bead radius they are large aggregates with heads scattered through and
+around the tail mass instead of forming a closed corona, with wide stretches of tail directly against
+solvent. The baseline satt=0.30 panel shows the contrast: every core wears a clean head shell.
+
+`exposed` (0.167 vs 0.071) was the honest metric and splay was misleading. The reason is visible in
+`align`, which is HIGH at broad range (0.827, 0.794): the lipids are strongly PARALLEL but have no
+head-out interface. That is a nematic oil droplet, and splay -- the median angle to same-leaflet
+neighbours -- reads "flat" for it, because parallel lipids score low whether or not they are organised
+into leaflets.
+
+**Defect #21: splay and align together cannot distinguish a bilayer from a nematic droplet.** Both
+have parallel lipids. The distinguishing feature is the head-out INTERFACE, which only `exposed` and
+`head_enrichment` see. Any future flatness claim must carry an interface metric alongside splay; the
+5-point monotonic dose-response in splay is real as a measurement and does NOT mean what I claimed.
+
+What survives: attraction range is a strong lever on aggregate SIZE and on nematic order (largest 18
+-> 27 at the optimum, replicated across three seeds), and the old "range was not it" verdict is still
+void. What does not survive: any claim that broad attraction produces a bilayer, or that it breaks the
+size/flatness trade-off. It trades interface quality for size instead.
+
+**Original open note, now explained.** `exposed` is WORSE at broad range (0.119-0.167 vs 0.071 at baseline) while splay improves.
+Flatter, larger, better-ordered aggregates that bury tails LESS is not yet explained, and no bilayer
+claim should rest on splay alone until it is. packing 0.46-0.50 across the broad-range runs, well
+above the 0.35 collapse floor, so these are not collapses.
+
+## 2026-08-04c — temperature is not the missing piece, and head_q is now tested (F33)
+
+**Asked.** 08-02c proved the 2-D lamellar phase STABLE when planted, so reaching it from disorder is
+kinetics, not thermodynamics. 08-02d named ANNEALING the remaining untested lever and it had still
+never been run for 2-D self-assembly. Does adding temperature cross the barrier?
+
+**Ran.** (a) `head_q` sweep, the lever the status board listed as UNDER TEST, single tail, t=20000.
+(b) Fixed elevated kT, single tail, t=20000. (c) `anneal()` cooling to kT=0.02 over 60000 steps, with
+hot == cold as the honest control at the SAME run length.
+
+**Got.**
+
+    head_q      cores  mean  largest  exposed  align  splay  packing
+    0.3             6  10.2       18    0.071  0.766  0.321    0.523
+    0.6             7   9.0       15    0.040  0.579  0.185    0.552
+    0.9             6  10.5       17    0.056  0.604  0.231    0.511
+    1.2 (base)      6  10.2       18    0.071  0.813  0.253    0.502
+
+    fixed kT    cores  mean  largest  exposed  align  splay  packing
+    0.02            6  10.2       18    0.071  0.813  0.253    0.502
+    0.05            5  12.6       24    0.095  0.679  0.233    0.514
+    0.10            5  11.8       20    0.071  0.732  0.205    0.483
+    0.20            6  10.5       19    0.079  0.813  0.241    0.481
+
+    anneal      cores  mean  largest  exposed  align  splay  packing  spanning
+    ctrl            5  12.6       20    0.103  0.721  0.284    0.457     0.273
+    hot 0.06        5  12.6       21    0.143  0.723  0.296    0.444     0.273
+    hot 0.12        4  15.8       26    0.111  0.503  0.308    0.417     0.273
+    hot 0.25        5  12.6       18    0.127  0.296  0.184    0.447     0.364
+    hot 0.12 r24    4  11.8       17    0.524  0.448  0.541    0.896     0.500
+
+**head_q is NOT the lever the status board hoped.** Across three seeds head_q=0.6 gives splay 0.212
++/- 0.023 against a baseline 0.253, a marginal move that sits AT the bilayer band edge rather than
+inside it. My first report of "0.185, flattest on record" was the low seed of three and is withdrawn;
+`largest` 15 vs 18 was likewise seed noise (q06 across seeds: 15, 12, 22). Status board updated.
+
+**Fixed temperature does nothing.** At kT=0.20, ten times baseline, aggregates do NOT melt: packing
+holds 0.481, still 6 cores, mean size unchanged. If coarsening were merely thermally blocked, a 10x
+temperature rise should have unfrozen exchange and driven fusion. It did not. The hydrophobic
+attraction is enormous relative to kT across this whole range.
+
+**Annealing gives a real but far-too-small effect, visible only at the top of the range.** Against a
+hot==cold control at the same 60000 steps, hot 0.25 moves splay 0.284 -> 0.184 and spanning
+0.273 -> 0.364; hot 0.06 is indistinguishable from control. NOTHING passes stage3, and every run
+fails on `spanning` by a wide margin (best 0.50 against a required 0.80).
+
+**A degradation I attributed to annealing was run length.** Annealed runs showed worse burial
+(exposed 0.111-0.143 vs 0.071 at t=20000) and lower packing, and I flagged it as annealing damage.
+The hot==cold control shows the same drop (0.103, 0.457), so it is the 3x longer run, not the
+schedule. The control existed only because anneal()'s docstring insists on it.
+
+**Changed.** Temperature joins force magnitude, head_sigma and head_q on the list of levers that do
+not select the phase. Two of the three remaining hypotheses in the 08-02d framing are now closed.
+The unfinished thread is that splay only responded at the HIGHEST hot value tested while the fixed-kT
+sweep proved there is headroom (nothing melted at 0.20), so the trend is truncated rather than flat.
+
+**The repel-24 anomaly is the most informative number here and is unexplained.** packing 0.896 with
+the best spanning measured (0.500), yet exposed 0.524 -- half the tail beads in solvent contact. Dense,
+extended and hydrophobically naked at once. Whatever that structure is, it is not a membrane, and it
+is reached only at the operating point 08-02d identified as correct for assembly.
 
 ## 2026-08-04b — the hosted 2-D dish was NOT the system the 2-D results came from
 
@@ -1872,6 +2104,100 @@ true, but nothing here shows it.
 Notably this is the SAME failure that hit the Cooke-Deserno control, which needed BAOAB integration
 and a displacement-capped minimiser. The difference: the control announced itself with T=1e12, while
 vivarium's bounded kernels produced a quieter blowup that looked exactly like melting.
+
+## 2026-08-04 — the single-tail plateau is the disc cap, and a bare double tail overshoots (F31)
+
+**Asked.** The aggregates arrest at 12-20 lipids while ring closure needs N ~ 4*pi*R/a0 with R above
+the 2.5 half-thickness, i.e. N >= 31 and realistically ~90. Does anything about the molecule set that
+plateau, or is it kinetic arrest?
+
+**Ran.** 2-D self-assembly at fig2d parameters (63 lipids, repel 12, seed 7), single tail versus a
+branched double tail, to t=20000 and t=60000.
+
+**Got.**
+
+    lipid          t   aggs   mean  largest  align  splay
+    single     20000      5   12.2       18  0.813  0.253
+    single     60000      5   12.6       20  0.721  0.284
+    DOUBLE     20000      4   15.2       25  0.358  0.374
+    DOUBLE     60000      4   15.2       25  0.321  0.406
+
+Two things, and they point opposite ways.
+
+The single-tail plateau is the 2-D disc cap, quantitatively. A disc micelle holds at most
+n_max = 2*pi*l/a0 lipids: heads tile the circumference, tails must reach the centre. With l=2 and
+a0~1 that is 12.6, and the measured plateau is 12.2-12.6. The arrest is not mysterious and is not
+(at this size) kinetic -- the aggregates are saturated discs.
+
+The double tail exceeds that cap (15.2 mean, largest 25) with the SAME l and a0, so those aggregates
+are not discs. But the cross-section shows this is not a win. The single-tail cores wear a closed
+blue head shell; the double-tail cores are bigger with a sparse, patchy shell and long stretches of
+tail against water. They are oil droplets, not membrane patches. Both t=20000 and t=60000 give
+identical 15.2/25, so the double tail moved the plateau and then arrested at a new one.
+
+**Cause.** Ours, in the molecule. Doubling tail volume v at fixed head area a0 and length l roughly
+doubles the packing parameter P = v/(a0*l), walking past the bilayer window (1/2 to 1) into the
+oil/inverted regime. A real phospholipid pairs two tails with a BULKY head so a0 rises with v and P
+stays in the window; our head stayed at one bead in both conditions, halving the head-to-tail ratio.
+The metrics agree without needing a "slower ordering" story: splay 0.406 and align 0.321 are what an
+under-protected droplet looks like.
+
+**Changed.** Tail count alone is not the lever, and the earlier planted-bilayer screen (double tail
+retaining 51% of order against the single tail's 28%) does NOT transfer to self-assembly -- planting
+supplies the head coverage that self-assembly has to earn. Added `exposed` (fraction of tail beads
+with solvent inside 1.3x contact) so head coverage is measured rather than read off a figure, since
+that is the quantity the two cross-sections actually differ on. Next: scale head_sigma with tail
+volume and see whether P returns to the window.
+
+## 2026-08-04b — head area is the lever; a percolating network appears at head_sigma 1.8 (F32)
+
+**Asked.** F31 showed the bare double tail overshoots P = v/(a0*l) into the oil regime. Does restoring
+head area alongside tail volume -- the phospholipid geometry -- put it back in the bilayer window?
+
+**Ran.** 2-D self-assembly, 63 lipids, repel 12, seed 7, t=20000, branched double tail, head_sigma in
+{1.0, 1.4, 1.8, 2.2}, against the single tail. New metric `exposed` = fraction of tail beads with a
+solvent bead inside 1.3x contact, so head coverage is measured rather than read off a figure.
+
+**Got.**
+
+    cond       cores   mean  largest  exposed  align  splay
+    single         6   10.2       18    0.071  0.813  0.253
+    dbl_h1.0       4   15.2       25    0.115  0.358  0.374
+    dbl_h1.4       3   19.0       39    0.040  0.093  0.518
+    dbl_h1.8       2   30.5       52    0.032  0.115  0.695
+    dbl_h2.2       4   15.2       32    0.163  0.152  0.701
+
+`exposed` confirms F31's mechanism directly: the bare double tail is the WORST-buried condition
+(0.115), worse than the single tail (0.071), and restoring head area drops it to 0.032 -- better
+burial than the single tail ever achieved. Overshooting to h2.2 breaks it again (0.163). P really was
+the problem and h1.8 sits in the window.
+
+**Two of my own instruments failed on the way, both caught.**
+
+First, a hollow/filled test unwrapped each aggregate about its first tail bead and took a centroid.
+That fails when an aggregate wraps the boundary: it reported R_core 6.68 in an L=11 box, a circle of
+area 140 against a box of 121, so "waters inside R_core" degenerated into "all the water in the box."
+It called h1.4, h1.8 and h2.2 HOLLOW. Those verdicts are VOID. Circular statistics (Rbar per axis,
+no origin required) replace it.
+
+Second, I suspected the 18 -> 52 growth was single-linkage percolation, since two micelles with
+touching coronas leave ~1.6 between their outer tail beads, exactly the cutoff, and raising
+head_sigma crowds the box further -- so the artifact would grow with the scanned parameter. A cutoff
+sweep REFUTED that suspicion: largest-aggregate size is stable from 1.6 down to 1.0 (contact level)
+for single 18, h1.0 25, h1.8 52, h2.2 32. Only h1.4 moved (23 at cutoff <=1.4, 39 at 1.6), so that
+one row WAS a linkage artifact. The corrected trend is 18, 25, 23, 52, 32 -- non-monotonic, peaking
+at h1.8.
+
+**Changed.** Head-to-tail balance, not tail count, is the lever on aggregate size; F31's proposed
+next step is confirmed. At h1.8, 52 of 63 lipids form one genuinely connected structure with the best
+tail burial measured in this project. It is NOT a bilayer: Rbar is low on BOTH axes (0.504, 0.195)
+where a lamellar strip would be spread on one axis and compact on the other, and splay 0.695 with
+align 0.115 says curved everywhere with no global director. The cross-section shows micellar nodes
+joined by tail bridges. Calling it a percolating network is supported; calling it a membrane is not.
+
+**Note on splay.** splay measures CURVATURE, not order. A tight micelle and a random gas both read
+~0.7, so splay alone cannot distinguish them, and its 0.60-0.70 "random null" collides with the
+genuine small-micelle value. Do not read high splay as disorder without a second instrument.
 
 ## 2026-07-28b — the hard-coded control works (F24)
 

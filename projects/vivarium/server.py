@@ -34,6 +34,23 @@ _VIEWER = _HERE / "viewer.html"
 _CONFIG = _HERE / "configs" / "vivarium.yaml"
 
 
+# Slider ranges belong to the ENGINE, not to the client. One hardcoded KMAX table in viewer.html
+# served three engines whose parameters differ by orders of magnitude -- the 3-D showcase runs
+# repel~0.6 while the 2-D lipid dish runs repel=12 -- so the dish's slider clamped a 12 down to 0.6,
+# displayed the wrong value, and cut excluded volume 20x on the first drag. Ranges are derived ONCE
+# from the launch defaults; deriving them from the LIVE value instead would make the axis crawl
+# outward as the user drags.
+_KNOB_HARD_MAX = {"momentum": 0.98, "rigidity": 1.0, "collision": 1.0}
+
+
+def knob_range(name: str, value: float) -> float:
+    """Upper end of a knob's slider: a hard physical bound where one exists, else 4x the default."""
+    hard = _KNOB_HARD_MAX.get(name)
+    if hard is not None:
+        return hard
+    return 4.0 * value if value > 0.0 else 1.0
+
+
 class Sim:
     """Steps an engine in a background thread; publishes the latest snapshot."""
 
@@ -53,7 +70,8 @@ class Sim:
         # pseudo-knobs: name → (getter, setter). Unlike real knobs (a live setattr), these need a
         # restart (e.g. changing the water COUNT re-assigns species). Set after construction.
         self.pseudo: dict = {}
-        self.defaults: dict = {}  # canonical showcase knob values → /reset restores these (never stale)
+        self.defaults: dict = {}
+        self.ranges: dict = {}   # knob -> slider max, sent to the client so it never guesses  # canonical showcase knob values → /reset restores these (never stale)
         self.substeps = 1         # engine steps per displayed frame. A physically-correct timestep
         #   is much smaller than the old capped one, so without substepping the dish would appear to
         #   crawl; this restores the apparent rate of motion at proportional CPU cost.
@@ -144,6 +162,7 @@ class Sim:
         snap["pos_bound"] = self.cfg.pos_bound
         snap["knobs"] = {k: float(getattr(self.engine, k)) for k in self.knob_names
                          if hasattr(self.engine, k)}
+        snap["ranges"] = self.ranges
         for name, (get, _set) in self.pseudo.items():
             snap["knobs"][name] = round(float(get()), 3)
         # live plasticity readout: ‖W_fast‖ shows how much has been learned (0 → grows → plateaus).
@@ -504,6 +523,7 @@ def main(argv: list[str] | None = None) -> int:
                                "water": water_box[0],
                                ("lipid_frac" if args.dim3 else "lipid"):
                                    (chain_box[0] if args.dim3 else lipid_box[0])}
+        server.sim.ranges = {k: knob_range(k, v) for k, v in server.sim.defaults.items()}
     print(f"serving: {label}")
     print(
         f"vivarium viewer on http://{args.host}:{server.server_address[1]}\n"

@@ -1,1 +1,6 @@
 paper/project_context.md
+
+# Saved engine states from experiment probes: binary, regenerable from the probe + seed, and they
+# accumulate fast. The per-run .log files ARE kept -- two batches of results were lost to /tmp
+# cleanup this session, so the text record is the durable one.
+docs/runs/states/

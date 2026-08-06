@@ -82,3 +82,99 @@ def test_periodic_wrap_preserves_relative_geometry():
         d = e.X[:, :e.pd] - shifted.X[:, :e.pd]
         d -= L * np.round(d / L)
         assert float(np.abs(d).max()) < 1e-8, f"{label}: wrapping changed the trajectory"
+
+
+def _free_particle_rms(scale: float, steps: int) -> float:
+    """RMS displacement of non-interacting lipids after `steps`, with `speed` scaled post-build.
+
+    An ensemble statistic, not a trajectory comparison: rng_for() keys the draw on the step index, so
+    two runs of different length never share a noise sequence and their positions are incomparable.
+    """
+    import numpy as np
+
+    from bicelle2d import build
+
+    e = build(3, n_lip=12, bound=8.0, kt=0.05, speed=0.001, repel=12.0, k_bond=30.0, satt=0.30,
+              attract=1.0, bond_span=2.0, n_tail=2, polarity=0.80, head_q=1.2,
+              hydrophobic=0.6, n_water=40, plant=False)
+    e.repel = e.attract = e.polarity = e.k_tail = e.k_hydro = e.k_bond = 0.0
+    e.speed *= scale                       # exactly what the viewer's slider does; speed_ref unchanged
+    e.vel[:] = 0.0
+    start = e.X[:, :e.pd].copy()
+    for _ in range(steps):
+        e.step()
+    d = e.X[:, :e.pd] - start
+    d -= e.L * np.round(d / e.L)
+    return float(np.sqrt((d ** 2).sum(axis=1).mean()))
+
+
+def test_moving_the_speed_slider_does_not_change_thermal_motion() -> None:
+    """Dragging `speed` must not change how much Brownian motion the dish gets.
+
+    The kick is applied per STEP while drift is scaled by `speed`, so at matched physical time
+    (N*speed fixed) the random walk carried a sqrt(speed) bias -- measured RMS ratio 2.12 against the
+    predicted sqrt(4) = 2.0. The viewer advertised `speed` as "playback rate -- NOT physics" while it
+    was in fact an effective-temperature dial.
+
+    Fixed by rescaling the kick against a per-ENGINE reference captured at construction, so the factor
+    is exactly 1 at an engine's configured speed and the correction applies only when speed MOVES.
+    """
+    slow, fast = _free_particle_rms(1.0, 400), _free_particle_rms(4.0, 100)   # same physical time
+    ratio = fast / slow
+    assert 1 / 1.3 <= ratio <= 1.3, (
+        f"`speed` still changes thermal motion at fixed physical time: RMS ratio {ratio:.2f}, "
+        f"expected ~1.0 (2.0 would be the unfixed langevin bias)")
+
+
+def test_construction_speed_stays_bit_for_bit_reproducible() -> None:
+    """The kick rescaling must be a no-op at an engine's own construction speed.
+
+    Every result in this project was produced at a construction speed, so the fix is only admissible
+    if those trajectories are untouched: speed_ref == speed there, making the factor exactly 1.0.
+    """
+    import numpy as np
+
+    from bicelle2d import build
+
+    kw = dict(n_lip=10, bound=8.0, kt=0.05, speed=0.001, repel=12.0, k_bond=30.0, satt=0.30,
+              attract=1.0, bond_span=2.0, n_tail=2, polarity=0.80, head_q=1.2, hydrophobic=0.6,
+              n_water=30, plant=False)
+    a, b = build(5, **kw), build(5, **kw)
+    assert a.speed_ref == a.speed
+    for _ in range(50):
+        a.step()
+        b.step()
+    assert np.array_equal(a.X, b.X), "construction-speed trajectory is not reproducible"
+
+
+def test_speed_fix_is_scoped_to_slider_moves_not_reconfiguration() -> None:
+    """Documents what the fix does NOT do, so the limitation is recorded rather than assumed away.
+
+    Two engines BUILT at different speeds each get speed_ref == their own speed, so each is its own
+    baseline and the sqrt(speed) relationship between them survives. Making those equivalent needs a
+    single global reference, which would rescale the noise of one engine family or the other -- they
+    are constructed two orders of magnitude apart (0.001 here, 1.20 for the showcase). Construction
+    speed is part of a configuration; the slider is not.
+    """
+    import numpy as np
+
+    from bicelle2d import build
+
+    def rms(speed: float, steps: int) -> float:
+        e = build(3, n_lip=12, bound=8.0, kt=0.05, speed=speed, repel=12.0, k_bond=30.0, satt=0.30,
+                  attract=1.0, bond_span=2.0, n_tail=2, polarity=0.80, head_q=1.2,
+                  hydrophobic=0.6, n_water=40, plant=False)
+        e.repel = e.attract = e.polarity = e.k_tail = e.k_hydro = e.k_bond = 0.0
+        e.vel[:] = 0.0
+        start = e.X[:, :e.pd].copy()
+        for _ in range(steps):
+            e.step()
+        d = e.X[:, :e.pd] - start
+        d -= e.L * np.round(d / e.L)
+        return float(np.sqrt((d ** 2).sum(axis=1).mean()))
+
+    ratio = rms(0.004, 100) / rms(0.001, 400)
+    assert ratio > 1.3, (
+        "constructing at a different speed is now speed-invariant too -- if that was intended, "
+        "delete this test; if not, a global speed reference has crept in and one engine family's "
+        "noise has been silently rescaled")

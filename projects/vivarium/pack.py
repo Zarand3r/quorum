@@ -118,6 +118,16 @@ class PackEngine:
         #   RELAXES to a free-energy minimum and STRUCTURES EMERGE. False → old (non-conservative) heads.
         self.momentum = momentum  # position inertia (lower = less zippy; steady speed ≈ force/(1−mom))
         self.speed = speed      # dt-like multiplier on per-step displacement (slow it down to watch)
+        # Thermal motion must not depend on `speed`. The kick is applied per STEP while the drift is
+        # scaled by `speed`, so at matched physical time (N*speed fixed) the random walk picked up a
+        # sqrt(speed) bias -- measured RMS ratio 2.12 against the predicted sqrt(4)=2.0. That made the
+        # viewer's "playback rate, NOT physics" slider an effective-temperature dial.
+        # The reference is per-ENGINE, captured at construction, not a global constant: engines are
+        # built at speeds two orders of magnitude apart (0.001 here, 1.20 for the showcase), so one
+        # shared constant would rescale somebody's noise. At its own construction speed the factor is
+        # exactly 1, so every existing configuration stays byte-identical and only MOVING the slider
+        # applies the correction.
+        self.speed_ref = float(speed) if speed > 0.0 else 1.0
         self.maxvel = maxvel    # cap on per-step displacement — prevents agents zipping/overshooting
         self.cohere_k = min(24, cfg.N - 1)  # cohesion neighbourhood (broader than interaction k)
         self.cohere_lambda = 0.08           # broad distance kernel (long reach → crosses gaps)
@@ -462,7 +472,11 @@ class PackEngine:
             # SATISFIES fluctuation–dissipation, so the same γ that damps also sets the noise. The
             # speed cap is skipped: capping is an external, non-thermal intervention that removes
             # precisely the rare large excursions a nucleation event needs.
-            sig = np.sqrt(max(0.0, 1.0 - self.momentum ** 2) * _LANGEVIN_KT * self.temperature)
+            # sig ~ 1/sqrt(speed): the kick reaches position multiplied by `speed`, so per-step
+            # position noise becomes sig0*sqrt(speed*speed_ref) and over N = T/speed steps the walk
+            # is sig0*sqrt(T*speed_ref) -- independent of speed, as a time step must be.
+            sig = np.sqrt(max(0.0, 1.0 - self.momentum ** 2) * _LANGEVIN_KT * self.temperature
+                          * (self.speed_ref / max(self.speed, 1e-12)))
             if sig > 0.0:
                 self.vel = self.vel + sig * rng_for(self.seed + 4241, self.t).standard_normal(self.vel.shape)
         else:
@@ -474,7 +488,11 @@ class PackEngine:
         # more disorder, melts structure, prevents freezing — the thermodynamically-correct direction
         # (unlike `selectivity`, the softmax τ). The one non-attention op; genuine thermal physics.
         if self.temperature > 0.0 and not self.langevin:
-            p = p + _THERMAL * self.temperature * rng_for(self.seed, self.t).standard_normal(p.shape)
+            # sqrt(speed) here, not 1/sqrt(speed): this branch adds the kick straight to POSITION
+            # with no `speed` factor, so it carried the opposite bias to the langevin path.
+            p = p + (_THERMAL * self.temperature
+                     * np.sqrt(max(self.speed, 0.0) / self.speed_ref)
+                     * rng_for(self.seed, self.t).standard_normal(p.shape))
         if self.wall_axes:
             # HARD WALLS instead of a torus. A periodic membrane interacts with its own images, which
             # is what forced the box-thickness constraint; walls remove that entirely and a slit also

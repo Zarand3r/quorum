@@ -261,7 +261,7 @@ archTog.addEventListener('click', () => {
 // live knobs — built dynamically from whatever the engine exposes
 let knobsBuilt = false;
 const KMAX = {noise:1.5, spin:1.5, nonrecip:3, scale:1, rd:2,
-              repel:0.6, attract:1, cohesion:0.8, temperature:3, skew:2, morph:1.5,
+              repel:0.6, attract:1, cohesion:0.8, skew:2, morph:1.5,
               momentum:0.98, speed:1.5, plasticity:1.0, polarity:1.5, water:1.0, lipid_frac:0.6, attn_sink:5,
               selectivity:3, temperature:1.0, sink_repel:8, sink_attract:8, sink_polarity:4,
               repel_contact:3, collision:1, rigidity:1, k_tail:4, k_hydro:3, lipid:0.9};
@@ -275,7 +275,7 @@ const KDESC = {
   skew:     "GYROSCOPIC / ACTIVE DRIVE (Lorentz–Coriolis-type, non-gradient z·J) — sustains circulation so the dish never freezes. The out-of-equilibrium ‘alive’ term.",
   morph:    "INDUCED FIT / conformational flexibility — how strongly a blob reshapes its contour to fit binding partners.",
   momentum: "INERTIA vs DRAG (damping regime) — low = overdamped/colloidal, high = ballistic; steady speed ≈ force/(1−momentum).",
-  speed:    "TIME-STEP / playback rate — NOT physics; just how fast you watch the same dynamics.",
+  speed:    "TIME-STEP / playback rate — how fast you watch the same dynamics. The thermal kick is rescaled with it (per-engine reference), so at matched physical time the amount of Brownian motion does NOT change. Before 2026-08-05 it did, making this an effective-temperature dial.",
   plasticity: "SYNAPTIC PLASTICITY / learning — Hebbian fast-weights (linear attention) adapt the interaction with activity; decay = homeostasis. 0 = fixed rule.",
   lipid_frac: "LIPID CONTENT — fraction of tokens belonging to 3-bead bonded lipids (1 polar head + 2 neutral cohesive tails). Changing restarts the dish. 0 = pure solvent.",
   water:    "SOLVENT COMPOSITION — fraction of tokens that are polar WATER dipoles (permanent teardrop k=1 shape, free to reorient). Changing restarts the dish. 0 = no water.",
@@ -297,8 +297,11 @@ const KDESC = {
 // each force's decay-range sink is shown nested UNDER that force's strength slider
 const SINK_OF = {repel:'sink_repel', attract:'sink_attract', polarity:'sink_polarity'};
 const SINK_NAMES = new Set(Object.values(SINK_OF));
+let KRANGE = {};   // server-supplied per-knob slider maxima; authoritative over KMAX
 function makeSlider(parent, name, val, cls){
-  const max = KMAX[name] ?? Math.max(1, val*2);
+  // the ENGINE knows its own scale -- KMAX is one global table shared by three engines and cannot
+  // represent all of them (it maxes repel at 0.6 while the 2-D dish runs 12).
+  const max = KRANGE[name] ?? KMAX[name] ?? Math.max(1, val*2);
   const wrap = document.createElement('div'); if(cls) wrap.className = cls;
   wrap.title = KDESC[name] || '';
   const cap = document.createElement('span'); cap.textContent = name; cap.className = 'kcap';
@@ -313,8 +316,9 @@ function makeSlider(parent, name, val, cls){
   wrap.append(cap, inp, b, desc); parent.appendChild(wrap); return wrap;
 }
 let KDEFAULTS = null;
-function buildKnobs(k){
+function buildKnobs(k, ranges){
   if(knobsBuilt || !k) return;
+  if(ranges) KRANGE = ranges;
   KDEFAULTS = {...k};                                   // the server's showcase defaults (for reset)
   const box = document.getElementById('knobs'); box.innerHTML = '';
   for(const [name,val] of Object.entries(k)){
@@ -425,7 +429,7 @@ function draw(al){
   const ae = document.getElementById('alive');
   ae.textContent = (s.aliveness ?? 0).toFixed(3);
   ae.style.color = s.aliveness > 0.02 ? '#34d399' : '#f59e0b';
-  buildKnobs(s.knobs);
+  buildKnobs(s.knobs, s.ranges);
   renderArch(s.dims);
   drawFastWeights(s);
 

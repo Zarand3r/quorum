@@ -1,0 +1,16 @@
+(22:23:29) INFO: Current date is 2026-08-05
+(22:23:29) Computing main repo mapping: 
+(22:23:29) Loading: 
+(22:23:29) Loading: 0 packages loaded
+(22:23:29) Analyzing: target //projects/vivarium:_probe4 (0 packages loaded, 0 targets configured)
+(22:23:29) Analyzing: target //projects/vivarium:_probe4 (0 packages loaded, 0 targets configured)
+
+(22:23:29) INFO: Analyzed target //projects/vivarium:_probe4 (0 packages loaded, 0 targets configured).
+(22:23:29) INFO: Found 1 target...
+Target //projects/vivarium:_probe4 up-to-date:
+  bazel-bin/projects/vivarium/_probe4
+(22:23:29) INFO: Elapsed time: 0.065s, Critical Path: 0.00s
+(22:23:29) INFO: 1 process: 1 internal.
+(22:23:29) INFO: Build completed successfully, 1 total action
+(22:23:29) INFO: Running command line: bazel-bin/projects/vivarium/_probe4 satt020 'dict(n_tail=2,satt=0.20,attract=0.667)'
+RESULT satt020        6    10.5      15      4      31    0.151   0.368   0.225    0.513
