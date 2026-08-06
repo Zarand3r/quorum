@@ -42,12 +42,31 @@ _CONFIG = _HERE / "configs" / "vivarium.yaml"
 # outward as the user drags.
 _KNOB_HARD_MAX = {"momentum": 0.98, "rigidity": 1.0, "collision": 1.0}
 
+# Integrator stability: per-step displacement must stay under DISP_MAX or the run blows up (the
+# failure that was once misread as the membrane melting, 2026-07-28c). `speed` multiplies that
+# displacement directly, so a blanket 4x-of-default range handed the user a slider that reaches
+# 0.004 against a limit near 0.0012 -- three times past blowup.
+_DISP_MAX = 0.05
 
-def knob_range(name: str, value: float) -> float:
+
+def speed_ceiling(engine) -> float:
+    """Largest `speed` that keeps speed * k_bond / (1 - momentum) under DISP_MAX."""
+    k_bond = float(getattr(engine, "k_bond", 0.0) or 0.0)
+    mom = float(getattr(engine, "momentum", 0.0) or 0.0)
+    if k_bond <= 0.0:
+        return 0.0
+    return _DISP_MAX * max(1e-3, 1.0 - mom) / k_bond
+
+
+def knob_range(name: str, value: float, engine=None) -> float:
     """Upper end of a knob's slider: a hard physical bound where one exists, else 4x the default."""
     hard = _KNOB_HARD_MAX.get(name)
     if hard is not None:
         return hard
+    if name == "speed" and engine is not None:
+        ceil = speed_ceiling(engine)
+        if ceil > 0.0:
+            return min(4.0 * value, ceil) if value > 0.0 else ceil
     return 4.0 * value if value > 0.0 else 1.0
 
 
@@ -469,6 +488,11 @@ def main(argv: list[str] | None = None) -> int:
                       "selectivity", "temperature", "momentum", "speed")
         label = ("POLAR PACK 3-D (spherical-harmonic contour · emergent amphiphiles)" if args.dim3
                  else "POLAR PACK (water + amphiphile lipids → membrane self-assembly)")
+    if args.lipid2d and not args.polar:
+        # `make_engine_lipid2d` is defined only inside the `elif args.polar:` branch, so --lipid2d on
+        # its own fell through and died with "UnboundLocalError: cannot access local variable
+        # 'make_engine_lipid2d'" -- 40 lines from the actual mistake. Fail here, where the fix is.
+        raise SystemExit("--lipid2d requires --polar (the 2-D lipid dish is a polar-pack engine)")
     plant_box = [args.plant]      # defined BEFORE the closure that reads it
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     server.sim = Sim(cfg, seed, args.hz,
@@ -523,7 +547,8 @@ def main(argv: list[str] | None = None) -> int:
                                "water": water_box[0],
                                ("lipid_frac" if args.dim3 else "lipid"):
                                    (chain_box[0] if args.dim3 else lipid_box[0])}
-        server.sim.ranges = {k: knob_range(k, v) for k, v in server.sim.defaults.items()}
+        server.sim.ranges = {k: knob_range(k, v, server.sim.engine)
+                             for k, v in server.sim.defaults.items()}
     print(f"serving: {label}")
     print(
         f"vivarium viewer on http://{args.host}:{server.server_address[1]}\n"

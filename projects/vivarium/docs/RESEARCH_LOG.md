@@ -174,6 +174,269 @@ defects found. 104 tests pass.
 
 ---
 
+## 2026-08-06f — THE PACKING PARAMETER DOES SELECT THE PHASE; both regimes emerge (F40)
+
+**Asked** (by the user): is it possible to emerge both bilayers and micelles, or are they separate
+favourable regimes -- and if so, what is the knob?
+
+**Why this could be answered now and not before.** `bilayer_frac` (F39) is the first metric in this
+project that separates the two phases: planted ribbon 0.984, planted micelle 0.000. Every earlier
+phase-selection conclusion was drawn with instruments that could not tell them apart -- `lamellar` and
+`aspect` (both later retracted), `splay` (blind to a nematic droplet), `align` (blind to a micelle).
+2026-07-30b concluded "the packing parameter does not operate in this model" after varying P from 0.24
+to 0.89 by two independent routes. **That conclusion is now overturned: it could not have detected the
+window it was looking for.**
+
+**Ran.** head_sigma sweep at the standing operating point (repel 12, 63 lipids, t=20000, seed 7).
+head_sigma sets a0, hence P = v/(a0*l); the branched double tail raises v.
+
+**Got.**
+
+    cond    head_sigma  tails    largest  splay  bilayer_frac
+    P_h07          0.7  single        21  0.284         0.429
+    P_h10          1.0  single        18  0.253         0.746
+    P_h14          1.4  single        15  0.497         0.127
+    P_d10          1.0  double        25  0.374         0.349
+    P_d18          1.8  double        52  0.695         0.048
+
+`bilayer_frac` peaks sharply at head_sigma 1.0 and falls off in BOTH directions -- an interior
+optimum, i.e. a genuine phase window, with the knob being head area.
+
+**Grounded in images, both sides of the transition** (the reading protocol this session violated three
+times before honouring it). At head_sigma 1.0 the aggregates are elongated with orange tails in the
+middle and blue heads on BOTH long faces -- head-tail-tail-head, a bilayer ribbon. At head_sigma 1.4
+they are round cores inside a radial head corona -- textbook micelles. Same molecule, one parameter.
+This is the first metric claim in the project confirmed visually on both sides of a transition.
+
+**Answer to the question.** Micelles and bilayers ARE separate thermodynamic regimes here, both emerge
+spontaneously, and head_sigma (a0, hence P) slides between them. The classical surfactant picture
+holds after all.
+
+**Why the project kept concluding "no lever works".** head_sigma 1.0 IS the default. Every sweep was
+walking AWAY from an optimum nobody knew they were standing on, so nine independent levers all read as
+no-effect or worse.
+
+**What does not fit.** The double tail raises v, so on P alone the peak should SHIFT, not vanish; it
+flattens instead (0.746 -> 0.349 at matched head_sigma, and 0.048 at head_sigma 1.8). P is the right
+knob but not the whole story -- chain architecture does something P does not capture.
+
+**The one well-posed question left.** The ribbons at the optimum hold 18 lipids and closure needs
+N >= 31. `bilayer_frac > 0.7` AND a single aggregate above 31 lipids have never held together. That
+conjunction is now measurable, and it is the whole remaining problem.
+
+## 2026-08-06e — `bilayer_frac`: the discriminator the project never had (F39)
+
+**Prompted by the user**, looking at the repel-24 sponge: the parts actually IN water look more
+bilayer-like. Every metric to hand was GLOBAL (head_enrich, splay, align average over a whole
+aggregate), so local membrane segments would be washed out. Testing it needed a local instrument, and
+building one exposed two more dead metrics first.
+
+**Two failed attempts, both calibrated against planted references before use.**
+
+`opposed` -- fraction of tail-contacting neighbours with u_i.u_j < -0.5:
+
+    random 2-D null (analytic)   0.333
+    planted ribbon               0.416
+    planted micelle              0.323
+
+An 0.083 discriminating window, and the measured states (0.34-0.43) straddle it -- r24_dbl scored
+0.425, ABOVE the planted bilayer. DEFECT #24: insufficient dynamic range, the same failure that
+retired `edge`.
+
+A stricter leaflet-PAIR test (reversed axes AND heads split across a shared tail core) is worse:
+
+    planted ribbon   0.984
+    planted micelle  1.000
+
+The micelle scores HIGHER. In 2-D a small micelle IS locally two leaflets meeting at a core, so no
+purely local pair test can ever separate them; the difference is curvature, which is global.
+
+**`bilayer_frac` -- the conjunction works.** A bilayer is the only structure that is BOTH paired AND
+locally flat: paired excludes the nematic droplet (defect #21), flat excludes the micelle.
+
+    planted ribbon    0.984
+    planted micelle   0.000
+
+Perfect separation, where every previous attempt gave an 0.08 window or an inverted one.
+
+**Applied, it inverts two conclusions from earlier today.**
+
+    cond                          bilayer_frac  largest agg  wet_frac
+    dil_b11  (repel 12)                  0.746           18     0.170
+    r24_hs18 (repel 24, submerged)       0.317           57     1.000
+    r24_dbl  (repel 24)                  0.206           59     0.780
+    r24_base (repel 24)                  0.175           17     0.562
+
+The repel-12 aggregates are **75% locally bilayer** -- three-quarters of the way to a planted ribbon.
+They ARE bilayer ribbons, which vindicates the 2026-08-01p claim I had been treating sceptically, and
+means the "micelles" language used throughout this session for the repel-12 baseline was wrong.
+Submersion MERGES the aggregates (18 -> 57 lipids, one core) and DESTROYS the local bilayer order
+(0.746 -> 0.317).
+
+**F37 and F38 need qualifying, not retracting.** The measurement stands: at repel 12 the solvent sits
+at 0.43 of contact and ~83% of the box is vacuum. What does not stand is the implication I drew --
+that this was why bilayers never formed. Local bilayer order is BEST in the vacuum regime. The vacuum
+is real and probably still wrong, but it was not what blocked the membrane.
+
+**The target is now sharp and neither end reaches it.** We have big-or-bilayer:
+  * repel 12 -- bilayer_frac 0.746, but aggregates cap at 18 lipids and 83% of the box is vacuum;
+  * repel 24 -- one aggregate of 57 at wet_frac 1.000, but bilayer_frac 0.317.
+A vesicle needs bilayer_frac > 0.7 AND a single aggregate above ~31 lipids, together. That conjunction
+has never been measured in this project and is now measurable.
+
+## 2026-08-06d — submerged assembly gives ONE aggregate, but it is a sponge, not a membrane (F38)
+
+**Ran.** The core levers re-tested at the submerged operating point (repel 24), t=20000, 63 lipids,
+with the new `wet_frac` and `solvent_packing` guards reporting.
+
+**Got.**
+
+    cond        cores  mean  largest  align  splay  packing  wet_frac  head_enrich  encloses
+    r24_base        4  10.8       17  0.443  0.564    0.889     0.562        1.143       0.0
+    r24_hq06        6   8.0       18  0.086  0.292    0.892     0.557        --           --
+    r24_satt        6   9.8       19  0.173  0.436    0.819     0.360        --           --
+    r24_dbl         1  59.0       59  0.181  0.611    0.832     0.780        1.017       2.0
+    r24_hs18        1  57.0       57  0.162  0.424    0.845     1.000        0.965      32.0
+
+Morphology changes qualitatively. The branched double tail, alone and with the large head, produces a
+SINGLE aggregate holding 57-59 of 63 lipids at wet_frac 0.78-1.00, where every run at repel 12 capped
+at 18-20 lipids across 5-6 separate cores. Same molecules, same everything else -- only the operating
+point differs.
+
+**It is not a membrane.** The cross-section shows a bicontinuous, percolating tangle: tails and heads
+intermixed, spanning the box, with no bilayer anywhere in it. `head_enrich` 0.965 -- essentially 1.0,
+meaning heads are distributed evenly with NO interface -- called this correctly.
+
+**`encloses` = 32.0 is an artifact and the claim it suggested is withdrawn before it was made.** The
+metric was calibrated on compact planted loops (18-26 waters for a vesicle, ~10 for a flat sheet, 1
+for a droplet). A percolating network traps solvent pockets throughout its structure and the
+flood-fill counts every one, so a sponge scores ABOVE the vesicle band. `encloses` must be read only
+alongside an interface metric; on its own it cannot distinguish a lumen from a tangle.
+
+**The real finding is a window, and we have been outside it on both sides.** head_enrich is 2.455 at
+repel 12 and 0.96-1.14 at repel 24, consistently across all three repel-24 cases. So:
+
+  * repel 12 -- chemistry wins, head/tail sorting is excellent (head_enrich 2.455), but the box is
+    83% vacuum (F37) and aggregates cap at the disc size;
+  * repel 24 -- sterics win, the box is properly submerged and aggregates merge into one, but
+    excluded volume overwhelms the eps_pair contrasts and chemistry can no longer sort head from tail.
+
+Neither end gives a membrane. A bilayer needs BOTH: enough repulsion for a real liquid solvent, and
+enough chemical contrast that head/tail preference still orders the beads at that repulsion.
+
+**Next.** Scale the chemical contrast WITH the repulsion rather than holding it fixed -- raise
+attract, k_tail, k_hydro and the eps_pair spread proportionally to repel -- and look for a window
+where wet_frac > 0.5 and head_enrich > 2.0 hold together. Neither has ever been satisfied at the same
+time in this project.
+
+## 2026-08-06c — NOTHING IN THIS PROJECT WAS EVER SUBMERGED (F37)
+
+**Asked** (by the user): has the system ever been completely submerged in water? The cross-sections
+show large BLACK regions -- no tokens at all -- which nobody had questioned.
+
+**Ran.** Gridded every saved state; a cell is WET if a water bead lies within one bead diameter of it.
+`wet_frac` is the fraction of non-lipid box area that is wet; full submersion is 1.0. Also measured
+the median nearest-neighbour distance among WATER beads against their contact distance (2*sigma = 1.0).
+
+**Got.**
+
+    state      n_water   box   wet_frac   nn_H2O   nn/contact   nn_lip (`packing`)
+    baseline       250  22.0      0.170    0.430         0.43    0.502
+    hyd8           500  27.6      0.224    0.427         0.43    0.552
+    hyd12          753  32.2      0.280    0.433         0.43    0.810
+    repel 24       250  22.0      0.562    0.893         0.89    0.889
+    repel 36       250  22.0      0.653    0.941         0.94    0.942
+    repel 48       250  22.0      0.699    0.959         0.96    0.962
+
+At the standing operating point (repel 12) **water sits at 43% of its own contact distance** -- beads
+interpenetrate roughly 2x -- so the solvent occupies about a fifth of the area it should and
+**83% of the box is vacuum**. Adding water does not fix it: hydration 12 still gives 0.43 and only
+reaches wet_frac 0.28, because the extra water compresses too. Raising repulsion does fix it: at
+repel 48 water sits at 96% of contact and wet_frac reaches 0.70.
+
+**Consequence.** Every self-assembly result in this project was produced in a near-vacuum. The
+aggregates we have been calling micelles formed by cohesion at a FREE SURFACE, not by hydrophobic
+burial from bulk solvent. The hydrophobic effect -- the entire driving force for membrane assembly --
+was operating on a fifth of the box.
+
+**DEFECT #23: no guard covered the solvent.** `packing` measures lipid-to-lipid distance only and
+`solvation` measures lipid-to-nearest-water. Nothing ever checked water against water, so a solvent
+compressed to 43% of contact was invisible to all 111 tests and to every metric in the harness.
+
+**What this reframes.** The repel-24 state logged on 2026-08-04c as "the most informative number here
+and unexplained" -- packing 0.896, the best `spanning` ever measured (0.500), yet `exposed` 0.524 --
+is not anomalous. It is the first properly submerged run in the project. I dismissed it because of the
+high `exposed`, which defect #22 shows is confounded by solvent density: a properly filled box puts
+water next to every tail bead by construction. **The best structural result so far was discarded on a
+broken metric.**
+
+**Not yet a bilayer.** Submersion alone does not produce one: at repel 24-48 order gets WORSE
+(align 0.813 -> 0.44/0.28/0.11, splay 0.253 -> 0.564/0.600/0.544). That is expected, because every
+other parameter -- attract, k_tail, k_hydro, head_q, satt, and the whole fig2d figure set -- was tuned
+at repel 12, i.e. tuned for the vacuum regime. The parameter landscape has only ever been explored
+under conditions where the solvent could not do its job.
+
+**The program this implies.** Re-tune at a submerged operating point (repel >= 24, wet_frac > 0.5)
+rather than continuing to sweep at repel 12. Every negative result in section 4 of the handoff --
+tail count, head_sigma, head_q, force magnitude, temperature, annealing, attraction range, hydration --
+was collected in near-vacuum and none of them transfer without re-testing.
+
+## 2026-08-06b — hydration refuted; `exposed` is density-confounded; the preferred aggregate IS ~12-20 (F36)
+
+**Asked.** Is the system starved of solvent? Composition is 43.1% lipid tokens, 71.2% bead area
+fraction, and 4.0 waters per lipid where coarse-grained membrane studies use 20-50.
+
+**Design, stated before launching this time.** Hydration, crowding and lipid concentration are linked;
+only two can be fixed. Held CROWDING constant at 71.2% and raised water, which necessarily lowers
+lipid concentration -- and that confound is controlled by the existing dil_b* runs, which sit at nearly
+the same lipid concentration with VACUUM instead of water. The earlier dilution test could never have
+answered the question: it added empty space, not solvent, so hydration stayed at 4.0 throughout.
+
+**Got.**
+
+    run        H2O/lip  crowding  cores  mean  largest  exposed  align  head_enrich(largest)
+    dil_b14        4.0       44%      8   6.8       14    0.175  0.340  --
+    hyd8           7.9       71%      5  10.8       19    0.198  0.506  2.478
+    hyd8 seed 3    7.9       71%      8   7.1       12    0.137  0.696  --
+    hyd12         11.9       71%     10   4.3        7    0.234  0.675  2.333
+    baseline       4.0       71%      6  10.2       18    0.071  0.813  2.455
+
+**Water beats vacuum** at matched lipid concentration (hyd8 vs dil_b14: mean 10.8 vs 6.8, largest 19
+vs 14, align 0.506 vs 0.340), confirming the hydrophobic effect does real work. But **more water per
+lipid does not help**: hydration 8 matches baseline on size and hydration 12 is much worse. The
+hypothesis is refuted for structure, though the size drop stays confounded with lipid concentration.
+
+**DEFECT #22: `exposed` is confounded by solvent density.** It counts tail beads with ANY water inside
+1.3x contact, so raising the water count raises it even when the structure is unchanged. `exposed` ran
+0.071 -> 0.198 -> 0.234 across the hydration scan while `head_enrichment` -- a RATIO normalised by bulk
+head fraction, and therefore density-robust -- stayed FLAT at 2.455 / 2.478 / 2.333. Every cross-run
+`exposed` comparison in the hydration and dilution scans is invalid, and so is the "exposure worsens"
+reading I gave for both. Within a fixed composition it is still usable.
+
+**The synthesis this forces.** head_enrichment sits at 2.33-2.48 out of a derivable maximum of 3.0 in
+every condition tested, and the cross-sections show compact cores wearing closed head shells. These
+are not failed bilayers -- they are WELL-FORMED amphiphile aggregates that stop at 10-20 lipids. Nine
+independent levers now fail to change that: tail count, head_sigma, head_q, force magnitude, fixed
+temperature, annealing, lipid margin, attraction range, hydration. They also neither fuse nor exchange
+lipids.
+
+The theory that fits all of it: **the preferred aggregation number of this molecule is ~12-20, and
+that is the equilibrium.** The planted bilayer's stability is metastability, not preference. Every
+sweep so far has assumed the bilayer is preferred and the path is blocked; that assumption has never
+been tested.
+
+**Decisive test, never run (the review's C1).** Plant bilayer ribbons of N = 8, 12, 16, 24, 32, 48 in a
+bath of free lipids near the exchange temperature and measure growth or shrinkage, plus attachment and
+detachment rates. It separates the three live possibilities directly:
+  * every seed shrinks  -> the molecule is a detergent; NO parameter sweep will produce a bilayer, and
+                           the goal must change (different molecule, or accept micelles);
+  * seeds above N* grow -> a genuine nucleation barrier, with the critical size measured rather than
+                           inferred;
+  * all seeds persist with no exchange -> still glassy, and the dynamics is the problem, not the phase.
+
+This answers the question the project has circled since 2026-07-28 and costs far less than another
+morphology sweep.
+
 ## 2026-08-06 — `speed` was a temperature dial; two slider bugs; two confounded density tests (F35)
 
 **Instrument and interface defects found and FIXED.**

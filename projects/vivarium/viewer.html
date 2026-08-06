@@ -307,10 +307,14 @@ function makeSlider(parent, name, val, cls){
   const cap = document.createElement('span'); cap.textContent = name; cap.className = 'kcap';
   const inp = document.createElement('input');
   inp.type='range'; inp.min=0; inp.max=max; inp.step=max/100; inp.value=val; inp.dataset.knob=name;
-  const b = document.createElement('b'); b.textContent=(+val).toFixed(2);
+  // decimals follow the STEP, not a fixed 2. `speed` runs at 0.001 with a step near 0.00001,
+  // so toFixed(2) rendered every position as "0.00" and the slider looked dead while it was
+  // in fact moving the engine.
+  const dp = Math.min(6, Math.max(2, Math.ceil(-Math.log10(max/100))));
+  const b = document.createElement('b'); b.textContent=(+val).toFixed(dp);
   // push ONLY this slider — never re-send the whole panel, or a stale slider elsewhere (e.g. a
   // weakened repel left over from earlier play) would be silently re-applied on every nudge.
-  inp.addEventListener('input', ()=>{ b.textContent=(+inp.value).toFixed(2);
+  inp.addEventListener('input', ()=>{ b.textContent=(+inp.value).toFixed(dp);
     clearTimeout(inp._t); inp._t=setTimeout(()=>pushKnob(name, inp.value), 80); });
   const desc = document.createElement('div'); desc.className='kdesc'; desc.textContent = KDESC[name]||'';
   wrap.append(cap, inp, b, desc); parent.appendChild(wrap); return wrap;

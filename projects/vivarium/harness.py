@@ -206,6 +206,111 @@ def _pair_dist(e):
     return dist
 
 
+def bilayer_fraction(e):
+    """Fraction of lipids that are in a locally FLAT leaflet pair. The conjunction is the point.
+
+    Neither ingredient works alone, and both failures are measured:
+      * a leaflet-pair test (reversed axes, heads split across a shared tail core) scores planted
+        MICELLE 1.000 against planted ribbon 0.984 -- in 2-D a small micelle IS locally two leaflets
+        meeting at a core, so no purely local pair test can separate them;
+      * splay (curvature) reads the same for a bilayer and a nematic droplet, since both have
+        parallel lipids (defect #21).
+    A bilayer is the only structure that is BOTH paired and locally flat: paired excludes the droplet,
+    flat excludes the micelle.
+
+    Local flatness is measured on the leaflet partner's own neighbours: for lipid i with partner j,
+    the same-leaflet neighbours of i must be nearly parallel to i (|u.u| high), which fails inside a
+    tightly curved micelle where consecutive lipids fan by 2*pi/n.
+    """
+    mol = getattr(e, "_mol", None)
+    if mol is None or len(mol) < 3:
+        return float("nan")
+    P, L, pd = e.X[:, :e.pd], e.L, e.pd
+    heads, tails = mol[:, 0], mol[:, 1:]
+
+    def mic(a, b):
+        d = a[:, None, :] - b[None, :, :]
+        return d - L * np.round(d / L)
+
+    tc = np.stack([P[tails[i]].mean(axis=0) for i in range(len(mol))])
+    u = mic(P[heads], tc)[np.arange(len(mol)), np.arange(len(mol))]
+    u /= np.linalg.norm(u, axis=1, keepdims=True) + 1e-12
+    D = np.linalg.norm(mic(P[tails.ravel()], P[tails.ravel()]), axis=2)
+    adj = (D < 1.6).reshape(len(mol), tails.shape[1], len(mol), tails.shape[1]).any(axis=(1, 3))
+    np.fill_diagonal(adj, False)
+    dots = u @ u.T
+    hh = mic(P[heads], P[heads])
+    proj = np.einsum("ijk,ik->ij", hh, u)
+    paired = ((dots < -0.5) & (proj > 1.0) & adj).any(axis=1)
+    same = adj & (dots > 0.0)                      # same-leaflet neighbours
+    flat = np.array([(dots[i][same[i]] > 0.85).mean() if same[i].any() else 0.0
+                     for i in range(len(mol))])
+    return float((paired & (flat > 0.5)).mean())
+
+
+def solvent_packing(e, _dist=None):
+    """Median nearest water-to-WATER distance as a fraction of contact. The counterpart of `packing`.
+
+    `packing` is LIPID-to-lipid and `solvation` is lipid-to-nearest-water, so nothing in this harness
+    ever looked at the solvent against itself. That blind spot hid a severe defect (F37, 2026-08-06):
+    at the standing operating point water sat at 0.43 of its own contact distance -- beads
+    interpenetrating roughly 2x -- so the solvent occupied about a fifth of the area it should and the
+    box was ~83% vacuum. Every self-assembly result in this project was collected in a near-vacuum,
+    invisible to all 111 tests, because the hydrophobic driving force was measured only where the
+    water happened to be.
+
+    ~1.0 when the solvent is a proper liquid at contact; falling toward 0 as it compresses through
+    itself. Read it beside `wet_fraction`: this says how dense the water is, that says how much of the
+    box it actually reaches.
+    """
+    sig = getattr(e, "sigma", None)
+    contact = float(2.0 * np.median(sig)) if sig is not None else 1.0
+    wat = np.asarray(e.species) == 0
+    if wat.sum() < 2:
+        return float("nan")
+    P = e.X[wat, :e.pd]
+    d = P[:, None, :] - P[None, :, :]
+    d -= e.L * np.round(d / e.L)
+    D = np.linalg.norm(d, axis=2)
+    np.fill_diagonal(D, np.inf)
+    return float(np.median(D.min(axis=1)) / contact)
+
+
+def wet_fraction(e, cell=0.5):
+    """Fraction of the non-lipid box area lying within one bead diameter of a water bead.
+
+    1.0 means fully submerged. Measured because the cross-sections showed large regions with no
+    tokens at all and nobody had asked whether the dish was actually in water: at the standing
+    operating point this reads 0.17, i.e. ~83% of the box is vacuum, and adding water does not fix it
+    (the extra water compresses too) while raising `repel` does (0.70 at repel 48).
+
+    A structural claim about hydrophobic burial is only meaningful where there is water to be buried
+    from, so this gates the interpretation of `exposed`, `solvation` and `head_enrich` alike.
+    """
+    P = e.X[:, :e.pd]
+    lip = np.asarray(e.species) != 0
+    wat = ~lip
+    if not wat.any():
+        return 0.0
+    n = max(4, int(e.L / cell))
+    g = (np.arange(n) + 0.5) * (e.L / n) - e.L / 2
+    grids = np.meshgrid(*([g] * e.pd))
+    C = np.stack([q.ravel() for q in grids], axis=1)
+
+    def near(pts, cut):
+        out = np.zeros(len(C), bool)
+        for i in range(0, len(C), 4096):
+            d = C[i:i + 4096, None, :] - pts[None, :, :]
+            d -= e.L * np.round(d / e.L)
+            out[i:i + 4096] = (np.linalg.norm(d, axis=2) < cut).any(axis=1)
+        return out
+
+    free = ~near(P[lip], 1.0) if lip.any() else np.ones(len(C), bool)
+    if not free.any():
+        return float("nan")
+    return float(near(P[wat], 1.0)[free].mean())
+
+
 def packing(e, _dist=None):
     """Median nearest NON-BONDED neighbour distance, as a fraction of the contact distance.
 
@@ -223,6 +328,13 @@ def packing(e, _dist=None):
     ~1.0 for a properly packed structure, falling toward 0 as an aggregate collapses through itself.
     A median, so a handful of genuinely close pairs cannot condemn a good structure and a collapse
     (which moves every bead at once) cannot hide in a tail.
+
+    ONE-SIDED, AND UNBOUNDED ABOVE (defect #25, 2026-08-06). This is a nearest-neighbour DISTANCE
+    ratio, not an occupancy fraction, so it grows without limit as lipids move apart: 12 lipids in a
+    large box read 7.44, and dilution alone took a run from 0.50 to 0.90 with no change in structural
+    quality. Only the LOW side carries meaning -- that is what MIN_PACKING gates, and that use is
+    sound. Never compare `packing` across runs with different densities, box sizes or lipid counts;
+    for those, compare within a fixed composition or use a genuinely normalised metric.
     """
     sig = getattr(e, "sigma", None)
     contact = float(2.0 * np.median(sig)) if sig is not None else 1.0
@@ -530,6 +642,8 @@ def measure(e, prev_X=None):
            "lamellar": float("nan"), "aspect": float("nan"), "aspect2": float("nan"),
            "cluster_frac": 0.0, "hollow": float("nan"), "edge": float("nan"),
            "align": float("nan"), "thick_mol": float("nan"), "enclosed": float("nan"),
+           "solvent_packing": float("nan"), "wet_frac": float("nan"),
+           "bilayer_frac": float("nan"),
            "packing": float("nan"), "solvation": float("nan"),
            "splay": float("nan"), "head_enrich": float("nan"),
            "spanning": 0.0, "encloses": 0.0}
@@ -542,6 +656,12 @@ def measure(e, prev_X=None):
 
     _dist = _pair_dist(e)                 # one (N,N) matrix, shared by both
     out["packing"] = packing(e, _dist)
+    # solvent guards: `packing` is lipid-to-lipid and `solvation` is lipid-to-water, so nothing
+    # here ever looked at water against water. F37 found the solvent compressed to 0.43 of its
+    # own contact distance with ~83% of the box vacuum, invisible to every test.
+    out["solvent_packing"] = solvent_packing(e)
+    out["wet_frac"] = wet_fraction(e)
+    out["bilayer_frac"] = bilayer_fraction(e)
     out["solvation"] = solvation(e, _dist)
     out["splay"] = splay(e)
     out["head_enrich"] = head_enrichment(e)

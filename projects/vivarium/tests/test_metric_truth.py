@@ -280,3 +280,91 @@ def test_encloses_detects_a_closed_loop_and_nothing_else():
     # NOTE: a flat spanning bilayer reads ~10 here, against a loop's 18-26, because a relaxed
     # membrane traps solvent BETWEEN its leaflets. That margin is thin and is why this metric must be
     # read with an image; the head-lined refinement that would fix it is not yet working.
+
+
+def test_solvent_packing_sees_a_compressed_solvent() -> None:
+    """Water against water must be guarded, or a collapsed solvent stays invisible.
+
+    F37: at the standing operating point the solvent sat at 0.43 of its own contact distance -- beads
+    interpenetrating roughly 2x -- so it occupied about a fifth of the area it should and the box was
+    ~83% vacuum. `packing` is lipid-to-lipid and `solvation` is lipid-to-nearest-water, so nothing in
+    the harness looked at the solvent against itself and all 111 tests passed over it.
+
+    Raising `repel` restores proper exclusion, so the metric must separate the two regimes.
+    """
+    import numpy as np
+
+    from bicelle2d import build
+    from harness import solvent_packing, wet_fraction
+
+    kw = dict(n_lip=20, bound=8.0, kt=0.02, speed=0.001, k_bond=30.0, satt=0.30, attract=1.0,
+              bond_span=2.0, n_tail=2, polarity=0.80, head_q=1.2, hydrophobic=0.6,
+              n_water=120, plant=False)
+    soft, hard = build(4, repel=12.0, **kw), build(4, repel=48.0, **kw)
+    for _ in range(3000):
+        soft.step()
+        hard.step()
+    sp_soft, sp_hard = solvent_packing(soft), solvent_packing(hard)
+    assert sp_hard > sp_soft + 0.15, (
+        f"solvent_packing does not separate a compressed solvent from a proper one: "
+        f"repel 12 -> {sp_soft:.3f}, repel 48 -> {sp_hard:.3f}")
+    assert 0.0 < sp_soft < 1.5 and 0.0 < sp_hard < 1.5, "solvent_packing out of range"
+    assert 0.0 <= wet_fraction(soft) <= 1.0, "wet_fraction must be a fraction"
+
+
+def test_packing_is_one_sided_and_must_not_be_compared_across_densities() -> None:
+    """Pins defect #25 so the metric cannot be silently misused again.
+
+    `packing` is a nearest-neighbour DISTANCE ratio, so it is unbounded above and rises with dilution:
+    12 lipids in a large box read 7.44, and a dilution scan moved it 0.50 -> 0.90 with no structural
+    improvement. It is sound as a COLLAPSE FLOOR (what MIN_PACKING gates) and meaningless as a
+    cross-density comparison. This test asserts the limitation explicitly rather than leaving it to a
+    docstring nobody reads mid-analysis.
+    """
+    import numpy as np
+
+    from bicelle2d import build
+    from harness import packing
+
+    kw = dict(bound=8.0, kt=0.02, speed=0.001, repel=12.0, k_bond=30.0, satt=0.30, attract=1.0,
+              bond_span=2.0, n_tail=2, polarity=0.80, head_q=1.2, hydrophobic=0.6,
+              n_water=40, plant=False)
+    dense = build(3, n_lip=24, **kw)
+    dilute = build(3, n_lip=2, **kw)
+    for _ in range(200):
+        dense.step()
+        dilute.step()
+    assert packing(dilute) > packing(dense), (
+        "packing no longer rises with dilution -- if it was normalised, delete this test and re-read "
+        "every cross-density comparison in the log, which this defect invalidated")
+    assert packing(dilute) > 1.6, "the unbounded-above behaviour this test pins has changed"
+
+
+def test_bilayer_fraction_separates_a_bilayer_from_a_micelle() -> None:
+    """The discriminator this project never had, calibrated against both planted references.
+
+    Every earlier attempt failed on a measured null:
+      * `splay` reads the same for a bilayer and a nematic droplet (defect #21);
+      * `align` cannot separate a bilayer from a micelle reliably;
+      * `opposed` gave planted ribbon 0.416 against a random null of 0.333 -- an 0.083 window, with a
+        measured state scoring 0.425, ABOVE the reference (defect #24);
+      * a strict leaflet-pair test scored planted MICELLE 1.000 against ribbon 0.984, because in 2-D
+        a small micelle IS locally two leaflets meeting at a core.
+
+    `bilayer_fraction` works by conjunction -- paired AND locally flat -- so paired excludes the
+    droplet and flat excludes the micelle. Planted references must stay far apart or every
+    phase-selection conclusion drawn with it is void.
+    """
+    from bicelle2d import build
+    from harness import bilayer_fraction
+
+    kw = dict(n_lip=40, bound=9.0, kt=0.02, speed=0.001, repel=24.0, k_bond=30.0, satt=0.30,
+              attract=1.0, bond_span=2.0, n_tail=2, polarity=0.80, head_q=1.2, hydrophobic=0.6,
+              n_water=0)
+    ribbon = bilayer_fraction(build(7, plant="ribbon", **kw))
+    micelle = bilayer_fraction(build(7, plant="micelle", **kw))
+    assert ribbon > 0.7, f"planted bilayer must score high, got {ribbon:.3f}"
+    assert micelle < 0.2, f"planted micelle must score low, got {micelle:.3f}"
+    assert ribbon - micelle > 0.6, (
+        f"discriminating window collapsed to {ribbon - micelle:.3f}; this is exactly how `opposed` "
+        f"and `edge` failed, and any conclusion drawn from this metric would be unsupported")

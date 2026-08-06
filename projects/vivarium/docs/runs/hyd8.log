@@ -1,0 +1,17 @@
+Starting local Bazel server and connecting to it...
+(09:41:42) INFO: Current date is 2026-08-06
+(09:41:42) Computing main repo mapping: 
+(09:41:42) Loading: 
+(09:41:42) Loading: 0 packages loaded
+(09:41:43) Analyzing: target //projects/vivarium:_probe4 (1 packages loaded, 0 targets configured)
+(09:41:43) Analyzing: target //projects/vivarium:_probe4 (1 packages loaded, 0 targets configured)
+
+(09:41:43) INFO: Analyzed target //projects/vivarium:_probe4 (114 packages loaded, 4262 targets configured).
+(09:41:43) INFO: Found 1 target...
+Target //projects/vivarium:_probe4 up-to-date:
+  bazel-bin/projects/vivarium/_probe4
+(09:41:43) INFO: Elapsed time: 2.155s, Critical Path: 0.02s
+(09:41:43) INFO: 1 process: 1 internal.
+(09:41:43) INFO: Build completed successfully, 1 total action
+(09:41:43) INFO: Running command line: bazel-bin/projects/vivarium/_probe4 hyd8 'dict(n_tail=2,n_lip=63,n_water=500,bound=13.8)'
+RESULT hyd8           5    10.8      19      5      19    0.198   0.506   0.305    0.552

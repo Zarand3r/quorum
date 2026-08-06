@@ -1,0 +1,16 @@
+(09:41:51) INFO: Current date is 2026-08-06
+(09:41:51) Computing main repo mapping: 
+(09:41:51) Loading: 
+(09:41:51) Loading: 0 packages loaded
+(09:41:51) Analyzing: target //projects/vivarium:_probe4 (0 packages loaded, 0 targets configured)
+(09:41:51) Analyzing: target //projects/vivarium:_probe4 (0 packages loaded, 0 targets configured)
+
+(09:41:51) INFO: Analyzed target //projects/vivarium:_probe4 (0 packages loaded, 0 targets configured).
+(09:41:51) INFO: Found 1 target...
+Target //projects/vivarium:_probe4 up-to-date:
+  bazel-bin/projects/vivarium/_probe4
+(09:41:51) INFO: Elapsed time: 0.062s, Critical Path: 0.00s
+(09:41:51) INFO: 1 process: 1 internal.
+(09:41:51) INFO: Build completed successfully, 1 total action
+(09:41:51) INFO: Running command line: bazel-bin/projects/vivarium/_probe4 hyd12 'dict(n_tail=2,n_lip=63,n_water=750,bound=16.1)'
+RESULT hyd12         10     4.3       7      9      10    0.234   0.675   0.265    0.810
