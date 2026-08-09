@@ -64,7 +64,35 @@ def exposed(e):
 
 tag, kw = sys.argv[1], eval(sys.argv[2])
 seed = kw.pop("seed", 7)
+nematic = kw.pop("nematic", None)
+chem = kw.pop("chem_scale", None)
+kw_hold_water = bool(kw.pop("hold_water", False))
+tail_eps = kw.pop("tail_eps", None)
 e = build(seed, **{**BASE, **kw})
+if nematic is not None:
+    e.nematic = float(nematic)
+if chem is not None:
+    # Raising `repel` alone submerges the box (wet_frac 0.17 -> 0.56) but collapses head/tail sorting
+    # (bilayer_frac 0.746 -> 0.175): excluded volume starts overwhelming the eps_pair contrasts that
+    # do the chemistry. Every other parameter was tuned at repel 12. So scale the CHEMICAL terms with
+    # the steric one instead of holding them fixed -- the coordinated move F38 called for.
+    e.attract = e.attract * float(chem)
+    e.k_tail = e.k_tail * float(chem)
+    e.k_hydro = e.k_hydro * float(chem)
+    if kw_hold_water:
+        # `attract` is a global prefactor on eps_pair, so scaling it also amplified WATER-WATER
+        # cohesion -- the term that condenses the solvent and leaves the box 83% vacuum (F37).
+        # Scaling it undid the submersion that raising `repel` had just bought (wet_frac 0.56 ->
+        # 0.13). Divide eps_pair[0,0] back out so the water-water PRODUCT is unchanged and only the
+        # LIPID chemistry scales.
+        e.eps_pair = e.eps_pair.copy()
+        e.eps_pair[0, 0] = e.eps_pair[0, 0] / float(chem)
+if tail_eps is not None:
+    # eps_pair[6,6] is TAIL-TAIL cohesion, hardcoded at 1.0 and the largest entry in the matrix
+    # (head-head 0.10, tail-water 0.02, head-water 0.60). If the tails over-condense they minimise
+    # their own surface, which is a BALL -- a micelle -- rather than a slab. Never swept before.
+    e.eps_pair = e.eps_pair.copy()
+    e.eps_pair[6, 6] = float(tail_eps)
 T = 20000
 while getattr(e, "_t", 0) < T:
     e.step(); e._t = getattr(e, "_t", 0) + 1

@@ -1,0 +1,16 @@
+(12:37:16) INFO: Current date is 2026-08-07
+(12:37:16) Computing main repo mapping: 
+(12:37:16) Loading: 
+(12:37:16) Loading: 0 packages loaded
+(12:37:16) Analyzing: target //projects/vivarium:_probe4 (0 packages loaded, 0 targets configured)
+(12:37:16) Analyzing: target //projects/vivarium:_probe4 (0 packages loaded, 0 targets configured)
+
+(12:37:16) INFO: Analyzed target //projects/vivarium:_probe4 (0 packages loaded, 0 targets configured).
+(12:37:16) INFO: Found 1 target...
+Target //projects/vivarium:_probe4 up-to-date:
+  bazel-bin/projects/vivarium/_probe4
+(12:37:16) INFO: Elapsed time: 0.054s, Critical Path: 0.00s
+(12:37:16) INFO: 1 process: 1 internal.
+(12:37:16) INFO: Build completed successfully, 1 total action
+(12:37:16) INFO: Running command line: bazel-bin/projects/vivarium/_probe4 CL_100 'dict(n_tail=2,n_lip=100,plant='\''clump'\'')'
+RESULT CL_100         4    24.5      37      3      52    0.030   0.105   0.345    0.373    0.186    0.411    0.640

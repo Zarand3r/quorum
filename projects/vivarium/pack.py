@@ -60,6 +60,19 @@ class PackEngine:
         self.sink_repel = attn_sink       # Pauli exclusion  — shortest range (decays fastest)
         self.sink_attract = attn_sink     # van der Waals    — short range
         self.attract_r0 = 0.0
+        # NEMATIC ALIGNMENT (default 0.0 = exactly the historical force).
+        # Every ordered state measured in this project is dry and every wet state is disordered --
+        # 17 conditions, no exceptions -- because `repel` drives solvent contact and lipid order in
+        # OPPOSITE directions and nothing else can separate them. Real membranes are ordered AND
+        # hydrated, so a term is missing: nothing here rewards lipids for being PARALLEL, only for
+        # being close. This adds an alignment weight on the tail-tail attraction:
+        #     w_ij = eps_ij * exp(-lambda d^2) * (1 + nematic * (u_i . u_j)^2)
+        # The squared dot is nematic -- parallel and ANTIparallel score alike -- which is what two
+        # opposing leaflets need, and it does not prescribe a global director.
+        # Transformer-only: (u_i . u_j)^2 is the square of an inner product, itself an inner product
+        # of the outer-product features vec(u u^T), so this is an attention logit under a quadratic
+        # feature map. Bounded, symmetric in i,j, so the force stays conservative.
+        self.nematic = 0.0
         #   Centre of the cohesive shell. 0.0 keeps the historical kernel exp(-lambda*d^2), whose
         #   maximum is at ZERO SEPARATION -- so cohesion pulls hardest when two beads are already
         #   coincident, a pressure toward overlap built into the force. Physical van der Waals has
@@ -238,6 +251,26 @@ class PackEngine:
         amphiphile a head END and a tail END and therefore a real packing parameter."""
         return self.repel_contact
 
+    def _axis_alignment(self):
+        """(N,N) matrix of u_i . u_j, where u is each token's molecular axis (head -> tail centre).
+
+        Water and any unbonded token gets a zero axis, so its alignment term vanishes and its
+        interactions are untouched -- the weight multiplies to 1 + nematic*0 = 1.
+        """
+        mol = getattr(self, "_mol", None)
+        u = np.zeros((self.X.shape[0], self.pd))
+        if mol is not None and len(mol):
+            P = self.X[:, :self.pd]
+            head = P[mol[:, 0]]
+            tailc = P[mol[:, 1:]].mean(axis=1)
+            d = tailc - head
+            d -= self.L * np.round(d / self.L)
+            n = np.linalg.norm(d, axis=1, keepdims=True) + 1e-12
+            axis = d / n
+            for col in range(mol.shape[1]):          # every bead carries its molecule's axis
+                u[mol[:, col]] = axis
+        return u @ u.T
+
     def _attract_env(self, dist, d2):
         """Cohesive envelope. r0 = 0 is exactly the historical exp(-lambda*d^2); r0 > 0 puts the
         attraction maximum at CONTACT instead of at zero separation."""
@@ -353,6 +386,8 @@ class PackEngine:
         # a stale tensor.
         self._basis_slot = None
         self._nf_slot = None            # 2-D counterpart: the contour readout is also step-local
+        self._trig_slot = None          # cos/sin(k*ang) table, shared by _near_face and the
+        #   morph gradient; both built it independently, doubling the transcendental work
         C = self._contour()
         delta, d2 = self._periodic_delta()
         idx = self._neighbors(d2, cfg.n_neighbors)
@@ -413,6 +448,8 @@ class PackEngine:
                 # the force remains conservative.
                 sp = self.species.astype(int)
                 g = self.eps_pair[sp[:, None], sp[None, :]] * self._attract_env(dist, d2)
+                if self.nematic > 0.0:
+                    g = g * (1.0 + self.nematic * self._axis_alignment() ** 2)
             np.fill_diagonal(g, 0.0)
             attract = -np.einsum("ij,ijc->ic", g, dirn)
         else:
@@ -458,6 +495,7 @@ class PackEngine:
         force = force + self._extra_force(delta, d2)   # subclass hook (default 0.0) — e.g. contour-charge force
         self._basis_slot = None                        # never survives the step that built it
         self._nf_slot = None
+        self._trig_slot = None
 
         # OVERDAMPED (Brownian / DPD) integration: a molecule in a viscous solvent has negligible
         # inertia — velocity tracks force (v ≈ μ·F), drag dominates. `momentum` is the small inertial

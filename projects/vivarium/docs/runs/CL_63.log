@@ -1,0 +1,17 @@
+Starting local Bazel server and connecting to it...
+(12:37:08) INFO: Current date is 2026-08-07
+(12:37:08) Computing main repo mapping: 
+(12:37:08) Loading: 
+(12:37:08) Loading: 0 packages loaded
+(12:37:09) Analyzing: target //projects/vivarium:_probe4 (1 packages loaded, 0 targets configured)
+(12:37:09) Analyzing: target //projects/vivarium:_probe4 (1 packages loaded, 0 targets configured)
+
+(12:37:09) INFO: Analyzed target //projects/vivarium:_probe4 (114 packages loaded, 4264 targets configured).
+(12:37:10) INFO: Found 1 target...
+Target //projects/vivarium:_probe4 up-to-date:
+  bazel-bin/projects/vivarium/_probe4
+(12:37:10) INFO: Elapsed time: 2.042s, Critical Path: 0.03s
+(12:37:10) INFO: 1 process: 1 internal.
+(12:37:10) INFO: Build completed successfully, 1 total action
+(12:37:10) INFO: Running command line: bazel-bin/projects/vivarium/_probe4 CL_63 'dict(n_tail=2,plant='\''clump'\'')'
+RESULT CL_63          3    21.0      36      2      56    0.119   0.087   0.397    0.379    0.184    0.414    0.333

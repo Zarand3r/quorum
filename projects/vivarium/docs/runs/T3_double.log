@@ -1,0 +1,17 @@
+(02:21:51) INFO: Current date is 2026-08-08
+(02:21:51) Computing main repo mapping: 
+(02:21:51) Loading: 
+(02:21:51) Loading: 0 packages loaded
+(02:21:51) Analyzing: target //projects/vivarium:_probe3d (0 packages loaded, 0 targets configured)
+(02:21:51) Analyzing: target //projects/vivarium:_probe3d (0 packages loaded, 0 targets configured)
+
+(02:21:51) INFO: Analyzed target //projects/vivarium:_probe3d (0 packages loaded, 0 targets configured).
+(02:21:51) INFO: Found 1 target...
+Target //projects/vivarium:_probe3d up-to-date:
+  bazel-bin/projects/vivarium/_probe3d
+(02:21:51) INFO: Elapsed time: 0.063s, Critical Path: 0.00s
+(02:21:51) INFO: 1 process: 1 internal.
+(02:21:51) INFO: Build completed successfully, 1 total action
+(02:21:51) INFO: Running command line: bazel-bin/projects/vivarium/_probe3d T3_double 'dict(n_lip=40,n_tail=4,branched=True)'
+  T3_double: N=440 tokens, pd=3
+RESULT T3_double   packing=0.370  splay=0.720  wet=0.704  solv=0.904  bilayer_f=0.000  head_enr=1.20  

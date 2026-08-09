@@ -1,0 +1,16 @@
+(13:36:26) INFO: Current date is 2026-08-07
+(13:36:26) Computing main repo mapping: 
+(13:36:26) Loading: 
+(13:36:26) Loading: 0 packages loaded
+(13:36:26) Analyzing: target //projects/vivarium:_probe4 (0 packages loaded, 0 targets configured)
+(13:36:26) Analyzing: target //projects/vivarium:_probe4 (0 packages loaded, 0 targets configured)
+
+(13:36:26) INFO: Analyzed target //projects/vivarium:_probe4 (0 packages loaded, 2 targets configured).
+(13:36:26) INFO: Found 1 target...
+Target //projects/vivarium:_probe4 up-to-date:
+  bazel-bin/projects/vivarium/_probe4
+(13:36:26) INFO: Elapsed time: 0.071s, Critical Path: 0.00s
+(13:36:26) INFO: 1 process: 1 internal.
+(13:36:26) INFO: Build completed successfully, 1 total action
+(13:36:26) INFO: Running command line: bazel-bin/projects/vivarium/_probe4 IMM48 'dict(n_lip=100,n_tail=4,branched=True,head_sigma=2.0,repel=48.0,n_water=800,bound=20.0,plant='\''clump'\'',chem_scale=4.0,hold_water=True)'
+RESULT IMM48          9    10.3      31      7      33    0.174   0.077   0.730    0.493    0.667    0.946    0.030

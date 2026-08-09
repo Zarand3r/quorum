@@ -1,0 +1,18 @@
+Starting local Bazel server and connecting to it...
+(02:21:42) INFO: Current date is 2026-08-08
+(02:21:42) Computing main repo mapping: 
+(02:21:42) Loading: 
+(02:21:42) Loading: 0 packages loaded
+(02:21:43) Analyzing: target //projects/vivarium:_probe3d (1 packages loaded, 0 targets configured)
+(02:21:43) Analyzing: target //projects/vivarium:_probe3d (1 packages loaded, 0 targets configured)
+
+(02:21:43) INFO: Analyzed target //projects/vivarium:_probe3d (114 packages loaded, 4265 targets configured).
+(02:21:43) INFO: Found 1 target...
+Target //projects/vivarium:_probe3d up-to-date:
+  bazel-bin/projects/vivarium/_probe3d
+(02:21:43) INFO: Elapsed time: 2.001s, Critical Path: 0.09s
+(02:21:43) INFO: 5 processes: 5 internal.
+(02:21:43) INFO: Build completed successfully, 5 total actions
+(02:21:43) INFO: Running command line: bazel-bin/projects/vivarium/_probe3d T3_single 'dict(n_lip=40,n_tail=2)'
+  T3_single: N=440 tokens, pd=3
+RESULT T3_single   packing=0.479  splay=0.765  wet=0.856  solv=0.910  bilayer_f=0.000  head_enr=1.55  

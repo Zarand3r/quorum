@@ -368,3 +368,22 @@ def test_bilayer_fraction_separates_a_bilayer_from_a_micelle() -> None:
     assert ribbon - micelle > 0.6, (
         f"discriminating window collapsed to {ribbon - micelle:.3f}; this is exactly how `opposed` "
         f"and `edge` failed, and any conclusion drawn from this metric would be unsupported")
+
+
+def test_bilayer_fraction_refuses_3d_rather_than_lying() -> None:
+    """bilayer_frac has no discriminating power in 3-D and must say so, not return 0.0.
+
+    Defect #26: a PLANTED 3-D bilayer scored 0.000 -- identical to a 3-D dispersed gas -- so two 3-D
+    self-assembly runs were briefly read as "no bilayer" when the metric simply does not work there.
+    Returning nan makes that unmissable in a results table; returning 0.0 made it look like a
+    measurement. In 3-D use `splay`, which is calibrated (planted bilayer 0.000, dispersed 0.852).
+    """
+    import numpy as np
+
+    from bilayer3d import build as build3d
+    from harness import bilayer_fraction, splay
+
+    e = build3d(0, n_lip=40, bound=4.0, kt=0.02, speed=0.001, repel=12.0, k_bond=30.0, satt=0.55,
+                spol=0.90, attract=1.0, polarity=0.80, head_q=1.2, bond_span=2.0, plant=True)
+    assert np.isnan(bilayer_fraction(e)), "bilayer_frac must return nan in 3-D, not a number"
+    assert splay(e) < 0.2, "splay is the 3-D discriminator and must still see a planted bilayer"

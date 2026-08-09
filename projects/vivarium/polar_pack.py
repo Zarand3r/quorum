@@ -577,6 +577,34 @@ class PolarPackEngine(PackEngine):
         self._lip_torque = th
         return F
 
+    def _angle_trig(self, ang):
+        """cos(k*ang) and sin(k*ang) for k = 1..K, computed ONCE per step and shared.
+
+        _near_face built these and then _extra_force's `basis` loop built the SAME arrays again, so
+        every step evaluated 2K transcendentals over an (N,N) matrix twice. Values are unchanged --
+        this is sharing, not a different formula -- so trajectories stay bit-identical.
+        """
+        tg = getattr(self, "_trig_slot", None)
+        if tg is not None:
+            return tg
+        # Chebyshev recurrence: cos((k+1)a) = 2cos(a)cos(ka) - cos((k-1)a), same for sin. Two
+        # transcendental evaluations over the (N,N) bearing matrix instead of 2K, with the rest
+        # multiply-adds. Mathematically exact; differs from np.cos(k*ang) only in rounding.
+        c1, s1 = np.cos(ang), np.sin(ang)
+        tg = [(c1, s1)]
+        if self.cfg.n_harmonics >= 2:
+            two_c = 2.0 * c1
+            ck_prev, sk_prev = np.ones_like(c1), np.zeros_like(s1)   # k = 0
+            ck, sk = c1, s1                                          # k = 1
+            for _ in range(2, self.cfg.n_harmonics + 1):
+                ck_next = two_c * ck - ck_prev
+                sk_next = two_c * sk - sk_prev
+                tg.append((ck_next, sk_next))
+                ck_prev, sk_prev, ck, sk = ck, sk, ck_next, sk_next
+        if hasattr(self, "_trig_slot"):
+            self._trig_slot = tg
+        return tg
+
     def _near_face(self, C, ang):
         """⟨C, basis(ang)⟩ — the contour radius-deviation each token presents along bearing `ang` (N,N).
         >0 a prong faces that way (positive charge), <0 a valley/centre faces it (negative).
@@ -592,10 +620,12 @@ class PolarPackEngine(PackEngine):
         if nf is not None:
             return nf
         K = self.cfg.n_harmonics
+        trig = self._angle_trig(ang)
         nf = np.zeros_like(ang)
         for k in range(1, K + 1):
-            nf = nf + C[:, 2 * (k - 1)][:, None] * np.cos(k * ang) \
-                    + C[:, 2 * (k - 1) + 1][:, None] * np.sin(k * ang)
+            ck, sk = trig[k - 1]
+            nf = nf + C[:, 2 * (k - 1)][:, None] * ck \
+                    + C[:, 2 * (k - 1) + 1][:, None] * sk
         if hasattr(self, "_nf_slot"):
             self._nf_slot = nf
         return nf
@@ -654,14 +684,19 @@ class PolarPackEngine(PackEngine):
         # bounded, attention-weighted sum of relative-bearing basis vectors (RoPE-family, transformer-
         # only). It grows the contour's + charge toward neighbours' − faces → electrostatically-induced
         # fit: the same field that moves a token also RESHAPES it. Stored for _post_morph.
+        # The morph gradient contracts `basis` away immediately, so materialising it was pure waste:
+        # an (N, N, tK) float64 temporary -- 9.3 MB at N=439 -- allocated and traversed every step. It
+        # is now contracted component by component against the SHARED trig table. Same sum, same
+        # order, bit-identical.
+        W = w * (-nf_j)
         if self.pd == 3:
-            basis = b_ij
+            self._pol_morph = np.einsum("ij,ijc->ic", W, b_ij)
         else:
-            basis = np.zeros(d2.shape + (self.tK,))
+            self._pol_morph = np.empty((len(W), self.tK))
             for k in range(1, self.cfg.n_harmonics + 1):
-                basis[:, :, 2 * (k - 1)] = np.cos(k * ang_ij)
-                basis[:, :, 2 * (k - 1) + 1] = np.sin(k * ang_ij)
-        self._pol_morph = np.einsum("ij,ijc->ic", w * (-nf_j), basis)
+                ck, sk = self._angle_trig(ang_ij)[k - 1]
+                self._pol_morph[:, 2 * (k - 1)] = np.einsum("ij,ij->i", W, ck)
+                self._pol_morph[:, 2 * (k - 1) + 1] = np.einsum("ij,ij->i", W, sk)
         return lipf + self.polarity * disp
 
     def _post_morph(self, z2):

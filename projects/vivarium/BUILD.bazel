@@ -213,6 +213,30 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "bench_step",
+    srcs = ["bench_step.py"],
+    main = "bench_step.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "render_state",
+    srcs = ["render_state.py"],
+    main = "render_state.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_probe3d",
+    srcs = ["_probe3d.py"],
+    main = "_probe3d.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "fig2d",
     srcs = ["fig2d.py"],
     main = "fig2d.py",
@@ -263,7 +287,7 @@ py_binary(
 
 py_test(
     name = "test_suite",
-    srcs = glob(["tests/**/*.py"]),
+    srcs = glob(["tests/**/*.py"]) + ["bench_step.py"],
     main = "tests/pytest_main.py",
     data = [
         ":configs",

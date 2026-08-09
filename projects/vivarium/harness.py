@@ -218,6 +218,12 @@ def bilayer_fraction(e):
     A bilayer is the only structure that is BOTH paired and locally flat: paired excludes the droplet,
     flat excludes the micelle.
 
+    TWO-DIMENSIONAL ONLY (defect #26, 2026-08-08). A PLANTED 3-D bilayer scores 0.000, identical to a
+    3-D dispersed gas, so the metric has no discriminating power there and every 3-D reading from it is
+    void. It was validated only against 2-D planted references (ribbon 0.984 / micelle 0.000, holding
+    from 20 to 150 lipids). In 3-D use `splay`, which IS calibrated there: planted bilayer 0.000
+    against dispersed 0.852.
+
     Local flatness is measured on the leaflet partner's own neighbours: for lipid i with partner j,
     the same-leaflet neighbours of i must be nearly parallel to i (|u.u| high), which fails inside a
     tightly curved micelle where consecutive lipids fan by 2*pi/n.
@@ -225,6 +231,9 @@ def bilayer_fraction(e):
     mol = getattr(e, "_mol", None)
     if mol is None or len(mol) < 3:
         return float("nan")
+    if e.pd != 2:
+        return float("nan")   # 2-D only; see defect #26 above. nan, not 0.0, so it cannot read as
+        #                       "no bilayer" in a table beside real 2-D values.
     P, L, pd = e.X[:, :e.pd], e.L, e.pd
     heads, tails = mol[:, 0], mol[:, 1:]
 
@@ -262,6 +271,14 @@ def solvent_packing(e, _dist=None):
     ~1.0 when the solvent is a proper liquid at contact; falling toward 0 as it compresses through
     itself. Read it beside `wet_fraction`: this says how dense the water is, that says how much of the
     box it actually reaches.
+
+    TIME-DEPENDENT -- measure at the END of a run, not after a short relaxation (2026-08-09). At
+    repel 12 the solvent COLLAPSES progressively: median nearest neighbour 0.76 of contact at 4k
+    steps, 0.43 at 20k, with 100% of beads inside 0.8 contact and 40% in bound DIMERS (two beads
+    sharing one well). At repel 24 it holds at 0.89 and at 48 at 0.96. The cause is the
+    transformer-only constraint itself: a bounded repulsion has a finite maximum force, so short-range
+    water-water attraction can exceed it and pairs fall together, where a divergent 1/r^12 core could
+    not be crossed at any pressure.
     """
     sig = getattr(e, "sigma", None)
     contact = float(2.0 * np.median(sig)) if sig is not None else 1.0

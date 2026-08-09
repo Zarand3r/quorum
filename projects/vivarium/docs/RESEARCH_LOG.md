@@ -174,6 +174,237 @@ defects found. 104 tests pass.
 
 ---
 
+## 2026-08-09b — DEFECT #27: the solvent collapses over the run at the standing operating point (F45)
+
+**Asked** (by the user): is water compressing and packing realistically?
+
+**Ran.** Pair statistics on the solvent, at 4k and 20k steps and on saved end-states.
+
+    condition       steps   median nn   inside 0.8*contact   bound dimers
+    repel 12           4k        0.76                  62%            26%
+    repel 12          20k        0.43                 100%            40%
+    repel 24          20k        0.89                   5%             5%
+    repel 48          20k        0.96                   0%             0%
+
+**No.** At repel 12 the solvent progressively COLLAPSES: by the end of a run every water bead has a
+neighbour inside contact, the median separation is 43% of contact, and 40% have fallen into bound
+DIMERS -- two beads sharing one well. That is not a liquid at any density.
+
+**The cause is the transformer-only constraint.** A bounded repulsion has a FINITE maximum force, so
+short-range water-water attraction (hydrophobic 0.6) can exceed it and two beads fall together. A
+divergent 1/r^12 core cannot be crossed at any pressure; a Gaussian one can. Raising repel restores
+the liquid (0.89 at 24, 0.96 at 48) because the bounded repulsion is then large enough that thermal
+energy never reaches the crossing point.
+
+**This is time-dependent, which is why it was missed.** A short relaxation reads 0.76 and looks
+acceptable. `solvent_packing` must be read at the END of a run; the docstring now says so.
+
+**What it reframes.** Every 2-D result at repel 12 -- INCLUDING the best bilayer result,
+bilayer_frac 0.746 -- was collected in a collapsing solvent. Those ribbons may be forming partly
+because the water condenses out and leaves the lipids in effective vacuum, where plain cohesion makes
+elongated aggregates. The "dry ordered regime" may be an artifact of a broken solvent rather than a
+physical phase, and F37's wet_frac 0.17 is the same defect seen from the other side.
+
+It also sharpens F41's order/hydration wall: the regime with good order has a pathological solvent and
+the regime with a real solvent has no order. Those may not be two problems but one.
+
+**Not yet established.** Whether the repel-12 ribbons survive in a non-collapsing solvent is untested;
+that needs repel >= 24 with the force balance restored, which so far costs the order. The claim here
+is only that the solvent at repel 12 is unphysical, which is measured.
+
+## 2026-08-09 — the 3-D box is too small to hold its own membrane (F44)
+
+**Chasing why `bilayer_frac` read 0.000 on a PLANTED 3-D bilayer led to a box bug, not a metric bug.**
+
+The metric's pair test asks whether two heads sit on OPPOSITE faces of a shared tail core, measured as
+proj = (head_i - head_j) . u_i with u = head - tail_centre (outward). The 2-D planted ribbon gives
++5.000 on every cross-leaflet pair. The 3-D planted bilayer gives -3.000 on every one.
+
+Ruled out first, because each was the more interesting explanation: the 3-D planter is NOT inverted
+(mol[:,0] is the head in both engines, 39/39, and in 3-D the heads sit at |z| 2.53 against tails at
+0.56 -- heads correctly on the outer faces).
+
+**The cause is minimum-image wrap.** Head-to-head thickness of the planted 3-D bilayer is 5.0. At
+bound 4.0 the box is L=8, so L/2 = 4.0, and a 5.0 separation wraps to 5.0 - 8.0 = **-3.0** -- exactly
+the observed value. The membrane is thicker than half its own box and interacts with its periodic
+image. Every cross-leaflet measurement there is meaningless.
+
+**This reaches past the metric.** 2026-08-02b concluded "with packing held, the 3-D lamellar phase is
+NOT stable" from runs in this box. A membrane self-interacting through the boundary is not a test of
+phase stability. That conclusion should be treated as unsupported until re-run in a box with
+L/2 > thickness, i.e. bound > 5.0.
+
+**And the fix is expensive.** Enlarging the box makes 40 lipids too sparse to tile a face -- `splay`
+returns nan at bound 6.0 and 8.0 because the planted patch has no in-plane neighbours. A proper 3-D
+bilayer reference at bound 6.0 needs ~330 lipids (2 * 144 / APL with APL = sqrt(3)/2), giving N ~ 1500
+and ~330 ms/step, about 2 hours per 20k-step run. That is the real cost of doing 3-D correctly, and
+every 3-D result in this project predates paying it.
+
+**3-D self-assembly at the small box, for the record** (splay: planted bilayer 0.000, dispersed 0.852):
+
+    run          splay   wet_frac  solv_pk
+    T3_double    0.720      0.704    0.904
+    T3_single    0.765      0.856    0.910
+
+Both far closer to dispersed than to a membrane, and the cross-section shows a single oil droplet with
+a few heads at its edge. The double tail is marginally better -- the direction the 3-D packing argument
+predicts -- but in a box that cannot hold a bilayer, so it is not evidence either way.
+
+## 2026-08-08 — the two-tail requirement tested under the hard spec, and in 3-D (F43)
+
+**The user's two hard requirements are full submersion and TWO TAILS.** I had drifted off both: the
+best result in the project (CL_100, bilayer_frac 0.640) is a DRY SINGLE-TAIL configuration, reached by
+optimising the metric rather than honouring the spec. My 2-D dimensional argument for why one tail
+should suffice is a hypothesis, and it conveniently justified ignoring the constraint. Corrected here.
+
+**Ran the hard spec properly**: clump start (the only thing that ever broke the size cap) WITH two
+tails and full submersion, 100 lipids, 800 water, bound 20.
+
+    cond    repel  chem  cores  largest  splay  packing  wet_frac  solv_pk  bilayer_frac
+    IMM24      24   2.0      5       32  0.591    0.426     0.586    0.879         0.051
+    IMM48      48   4.0      9       31  0.730    0.493     0.667    0.946         0.030
+
+Genuinely submerged with an incompressible solvent, and the render shows about ten TEXTBOOK MICELLES:
+orange cores inside complete head coronas. Under the hard requirements, 2-D vivarium makes micelles.
+
+**MEASURED the molecular geometry instead of assuming it** -- the assumption having already been wrong
+once here (head SPACING assumed equal to head_sigma, measured 1.999 at nominal 1.0):
+
+    molecule           head width   tail width   ratio   shape
+    single tail              1.00         1.14    0.87   rectangle -> flat
+    branched double          1.00         1.91    0.52   wedge
+    matched head_sigma for the branched double: 1.91
+
+So head_sigma 2.0 was essentially correct and the geometry WAS matched -- and it still gave micelles
+(0.111 at 1.9, 0.143 at 2.0, 0.051 submerged). **Width-matching is necessary but not sufficient; the
+branched topology itself makes micelles in 2-D.** The single tail measures as a near-rectangle, which
+is why it is the one molecule here that makes bilayers.
+
+**Why the requirement is right and still fails here.** In 3-D a single tail is a CONE, because head
+AREA scales as r^2 against a fixed tail cross-section -- exactly why nature needs two tails. That
+argument does not survive projection to 2-D, where a linear chain is already a rectangle. This project
+has been testing correct physics in the one geometry where it inverts.
+
+**Tested in 3-D, where the requirement is grounded.** Prediction: the double tail should BEAT the
+single, reversing the 2-D order.
+
+    3-D run              splay   wet_frac  solv_pk
+    planted bilayer      0.000         --       --
+    T3_double            0.720      0.704    0.904
+    T3_single            0.765      0.856    0.910
+    dispersed reference  0.852         --       --
+
+Both are far closer to dispersed than to a bilayer. The double tail is marginally better -- the
+predicted direction -- but 0.720 against 0.765 is far too small to claim.
+
+**DEFECT #26: `bilayer_frac` has no discriminating power in 3-D.** Both 3-D runs returned EXACTLY
+0.000, which prompted a calibration check: a PLANTED 3-D bilayer also scores 0.000, identical to a
+3-D dispersed gas. Every 3-D reading from it is void. It now returns nan for pd != 2 -- not 0.0, which
+would read as "no bilayer" in a table beside real 2-D values -- and a test pins it. `splay` IS
+calibrated in 3-D (planted bilayer 0.000, dispersed 0.852) and is the discriminator to use there.
+
+**Standing.** Under the hard requirements the 2-D result is micelles, measured and rendered. 3-D is
+submerged by construction (wet 0.70-0.86, solvent at 0.90 of contact) and is the geometry where two
+tails are physically motivated, but it needs a working structural metric first.
+
+## 2026-08-07 — clump start breaks the size cap; the best structure yet, still not a vesicle (F42)
+
+**The size cap was the blocker, and it is a NUCLEATION problem, not a growth one.** At the dry optimum
+the largest aggregate is 18 lipids and nothing moves it: matched-concentration scaling to 100 lipids
+gives 19 (and ELEVEN cores of ~9), and 80000 steps gives 20. More material makes more nuclei, not
+bigger ones, and they never fuse -- the same zero-exchange the coexistence run showed. So "can they
+find each other" and "can they order once together" are separable, and only the second is interesting.
+
+**Ran.** Clump starts (all lipids together at t=0), across repulsion.
+
+    cond      lipids  repel  cores  largest  splay  packing  bilayer_frac
+    CL_40         40     12      1       40  0.439    0.307         0.250   <- COLLAPSED (<0.35)
+    CL_63         63     12      3       36  0.397    0.379         0.333
+    CL_100       100     12      4       37  0.345    0.373         0.640   <- best yet
+    CR_r18        63     18      4       28  0.387    0.688         0.302
+    CR_r24        63     24      5       45  0.598    0.855         0.302
+    CR_r30        63     30      3       42  0.803    0.888         0.143
+
+**CL_100 is the closest this project has come.** A 37-lipid aggregate -- above the N >= 31 closure
+threshold -- at bilayer_frac 0.640, with packing 0.373 above the collapse floor. Both structural
+conditions nearly hold at once for the first time; every previous run had one or the other.
+
+**The metric was re-validated across SIZE before believing it.** bilayer_frac thresholds LOCAL
+curvature, which falls as 1/R, so a large enough micelle could be locally flat everywhere and pass a
+test built to exclude micelles -- the same failure family as defect #24 and the leaflet-pair test. The
+render showed round blobs, which is exactly what that artifact would look like. Checked:
+
+    n_lip     20     40     60    100    150
+    ribbon 1.000  1.000  1.000  1.000  1.000
+    micelle 0.000 0.000  0.000  0.000  0.000
+
+The window holds at every size. The suspicion was wrong and 0.640 is real: those aggregates are
+layered internally, not radial.
+
+**Still not a vesicle: `encloses` = 0.0.** No enclosed solvent. It is a compact FOLDED bilayer patch,
+not a closed shell. A blob has no reason to wrap a lumen; closure needs an elongated RIBBON that
+curls, and clump starts give compact aggregates instead. Raising repulsion to prevent the collapse
+that ruins CL_40 makes it worse, not better (0.302 at 24, 0.143 at 30) -- the same order/hydration
+wall as F41.
+
+**Where the target stands.** One aggregate > 31 lipids AND bilayer_frac > 0.7 AND encloses > 10: the
+first is solved, the second is at 0.640, the third is untouched at 0.0. The remaining question is not
+size and not order -- it is ASPECT RATIO. Nothing found so far makes an elongated ribbon at a size
+that can close.
+
+## 2026-08-06g — ORDER AND HYDRATION ARE MUTUALLY EXCLUSIVE across 17 conditions (F41)
+
+**Ran.** Three coordinated moves, after every single-parameter lever was exhausted:
+(a) scale chemistry WITH repulsion (attract, k_tail, k_hydro by repel/12);
+(b) the same, but holding WATER-WATER cohesion fixed;
+(c) an explicit NEMATIC alignment term added to the force law (new, default 0.0).
+
+**(a) directionally right, self-defeating.** Scaling chemistry restores head/tail sorting at high
+repulsion (bilayer_frac 0.175 -> 0.444 at repel 24, 0.556 at repel 48) -- so sterics really were
+drowning the eps_pair contrasts. But wet_frac COLLAPSES 0.562 -> 0.127, because `attract` is a global
+prefactor on eps_pair and scaling it also amplified WATER-WATER cohesion, the term that condenses the
+solvent (F37). The fix amplified the disease.
+
+**(b) submersion restored, order not.** Dividing eps_pair[0,0] back out holds the water-water product
+fixed and recovers wet_frac (0.066 -> 0.511 at repel 36). bilayer_frac stays 0.14-0.27.
+
+**(c) NEMATIC TERM IMPLEMENTED AND REFUTED.** Added to pack.py, default 0.0 so every existing
+configuration stays byte-identical (fingerprint 8895.995739196856 unchanged):
+
+    w_ij = eps_ij * exp(-lambda d^2) * (1 + nematic * (u_i . u_j)^2)
+
+Transformer-only: the squared inner product is an inner product of outer-product features, i.e. an
+attention logit under a quadratic feature map; bounded and symmetric, so the force stays conservative.
+
+    repel   without   nematic=1   nematic=3
+       12     0.746       0.540          --
+       24     0.175       0.111       0.127
+       36        --          --       0.079
+
+Worse everywhere. The reason is exactly the distinction defect #21 drew: a squared dot rewards
+PARALLEL lipids wherever they are, which is the nematic DROPLET that bilayer_frac exists to exclude.
+Rewarding alignment produces alignment, not layering. The review's section 9.3 proposal is closed.
+
+**The finding underneath all three: order and hydration are mutually exclusive here.**
+
+    bilayer_frac > 0.4                     wet_frac > 0.45
+    P_h10   0.746  wet 0.170               W_r24x15  0.270  wet 0.560
+    V_big   0.600  wet 0.208               W_r48     0.159  wet 0.532
+    T_e080  0.556  wet 0.208               W_r36     0.143  wet 0.511
+    C_r48   0.556  wet 0.142               N_r36n3   0.079  wet 0.629
+
+Seventeen conditions spanning head size, tail cohesion, tail count, repulsion, hydration, box size,
+material and the new alignment term. NO point has both. Every ordered state is dry and every wet state
+is disordered, because `repel` drives solvent expansion and lipid order in OPPOSITE directions and
+nothing in the model separates them.
+
+Real membranes are ordered AND hydrated, so this is a property of the model, not of membranes. The
+missing ingredient is not "reward parallel" -- that is now tested and refuted. It is whatever makes a
+LAYERED arrangement favourable at high excluded volume, and this force law does not contain it.
+
+**Status of the target.** bilayer_frac > 0.7 AND wet_frac > 0.5 together remains unachieved, and is
+now known to be unreachable by any single or coordinated parameter move within the current force law.
+
 ## 2026-08-06f — THE PACKING PARAMETER DOES SELECT THE PHASE; both regimes emerge (F40)
 
 **Asked** (by the user): is it possible to emerge both bilayers and micelles, or are they separate
