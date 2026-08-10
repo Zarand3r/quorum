@@ -237,6 +237,38 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_dpd_gate1",
+    srcs = ["_dpd_gate1.py"],
+    main = "_dpd_gate1.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_dpd_gate2",
+    srcs = ["_dpd_gate2.py"],
+    main = "_dpd_gate2.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_dpd_gate3",
+    srcs = ["_dpd_gate3.py"],
+    main = "_dpd_gate3.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_dpd_render",
+    srcs = ["_dpd_render.py"],
+    main = "_dpd_render.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "fig2d",
     srcs = ["fig2d.py"],
     main = "fig2d.py",
