@@ -174,6 +174,227 @@ defects found. 104 tests pass.
 
 ---
 
+## 2026-08-10c — the search completes under the solvent gate: NO bilayer window exists (F49)
+
+**With repulsion and cohesion both decoupled by species, the phase search was re-run honestly for the
+first time.** Every previous search tuned lipid parameters against a vacuum.
+
+First attempt failed for a instructive reason: `attract` is a GLOBAL prefactor on eps_pair, so raising
+lipid cohesion also raised WATER-WATER cohesion and re-collapsed the solvent (solvent_packing 0.972 ->
+0.455 -> 0.318). The same coupling error one level down. `tail_eps` touches only tail-tail.
+
+**Ran.** Healthy solvent held at rp_ww=3.0; tail-tail cohesion scanned alone.
+
+    tail_eps   packing   wet_frac   solvent_packing   bilayer_frac
+         1.0     0.711      0.558             0.931          0.111
+         2.0     0.439      0.512             0.925          0.000
+         4.0     0.262      0.514             0.925          0.000
+         8.0     0.132      0.481             0.923          0.000
+     4.0 clump   0.153      0.486             0.930          0.000
+
+The solvent gate HOLDS throughout (0.92-0.93), so the decoupling works as designed. But there is no
+window: weak cohesion gives no aggregation (bilayer_frac 0.111), and strong cohesion collapses the
+LIPIDS (packing 0.13-0.26, far below the 0.35 floor) without ever producing layered order. Peak
+bilayer_frac under the gate is 0.111, against 0.984 for a planted ribbon.
+
+**Conclusion. In a healthy solvent, this force law does not produce bilayers at any tail cohesion.**
+Together with F48 -- repairing the solvent alone drops bilayer_frac 0.746 -> 0.1-0.25 with the lipid
+chemistry untouched -- the membranes only ever formed in vacuum. The 2-D self-assembly result is
+withdrawn.
+
+**The images make it plain.** At the old operating point: clean head-tail-tail-head ribbons against a
+BLACK background -- no water. Under the gate: the box is full of water (the hexagonal texture) and the
+lipids sit in small disordered clumps with heads and tails intermixed.
+
+**The metric was re-calibrated IN the gated solvent before this negative was accepted**, because
+bilayer_frac's references were all measured with n_water=0 and its adjacency uses an absolute 1.6
+cutoff -- a healthy solvent expands the system (packing 0.502 -> 0.711), so a thinning neighbour graph
+could have produced this drop artifactually.
+
+    reference                  water   rp_ww   bilayer_frac   tail-nn
+    planted ribbon (dry)           0     1.0          0.900      0.88
+    planted micelle (dry)          0     1.0          0.025      0.44
+    planted ribbon + water       250     1.0          0.450      0.76
+    planted ribbon + GATE        250     3.0          0.800      0.80
+    planted micelle + GATE       250     3.0          0.000      0.44
+
+The window survives under the gate (0.800 against 0.000) and tail-nn is 0.80, well inside the 1.6
+cutoff, so no adjacency is lost. Self-assembly scores 0.111 in the same solvent where a planted ribbon
+scores 0.800: the membrane is absent, not mismeasured.
+
+A bonus from the same check: the COLLAPSED solvent degrades even a planted ribbon (0.900 dry -> 0.450
+with collapsed water), independent corroboration that the old operating point was pathological.
+
+**What survives.** The instruments: bilayer_frac (ribbon 0.984 / micelle 0.000, size-validated),
+solvent_packing and wet_frac (which caught this), encloses, the planted references, 28 documented
+defects, and the tooling (bench_step, render_state, the perf and knob-liveness tests). Also the
+decoupled force law itself -- repel_pair and eps_pair now let solvent and membrane be tuned
+independently, which is a precondition for any future search rather than a result.
+
+**What the project should do next, stated plainly.** Not another parameter sweep. The honest options
+are: (a) accept that this bounded, transformer-only force law does not support a lamellar phase in a
+real solvent, and report that as the finding; or (b) change the force law -- the literature route is a
+DPD-style parameterisation where conservative repulsions are fitted to a target compressibility and
+mixture thermodynamics, rather than chosen. Option (b) is a redesign, not a tuning pass.
+
+## 2026-08-10b — THE BILAYER RESULT WAS A SOLVENT-COLLAPSE ARTIFACT (F48)
+
+**The control this project needed for weeks, made possible by decoupling repulsion by species.**
+
+A single global `repel` was doing two incompatible jobs: giving the solvent a sane equation of state,
+and giving lipid beads the packing softness a lamellar phase needs. `repel_pair` (default None =
+byte-identical; entries are symmetric multipliers on the global scale) separates them, exactly as
+`eps_pair` already does for cohesion. Reciprocity is tested with the matrix active: net momentum
+< 1e-9.
+
+**Ran.** Raised WATER-WATER repulsion only. Every lipid interaction byte-identical.
+
+    rp_ww   solvent_packing   wet_frac   packing   bilayer_frac
+      1.0              0.43       0.17     0.502          0.746   <- the project's headline result
+      2.0              0.888      0.510    0.715          0.254
+      3.0              0.931      0.558    0.711          0.111
+      4.0              0.949      0.553    0.708          0.095
+      6.0              0.965      0.565    0.666          0.175
+
+**Repairing the solvent destroys the membrane.** The solvent becomes a genuine liquid (0.43 -> 0.96 of
+contact, wet_frac 0.17 -> 0.57, packing comfortably above the 0.35 floor) and bilayer_frac falls from
+0.746 to 0.095-0.254 with the lipid force law untouched.
+
+**So the spontaneous 2-D bilayer was an artifact.** The ribbons formed because the water condensed out
+and left the lipids in effective vacuum, where ordinary surface tension makes elongated aggregates.
+F47 inferred this from wet_frac 0.06; this measures it directly, with the lipid chemistry held fixed.
+
+**What this invalidates.** Every structural result measured at the standing operating point, which is
+essentially all of them: bilayer_frac 0.746, the head_sigma phase window (F40), the tail-count
+comparisons (F43), the 87-lipid annealed ribbon (F46), the clump-start series, and the 45-lipid
+coalescence ceiling. They describe aggregation at a liquid/vapour interface, not hydrophobic
+self-assembly in a solvent. The 81-lipid vesicle minimum (F42) was also measured in that regime and
+must be remeasured.
+
+**What survives.** The measurement apparatus, which is now the project's real asset: `bilayer_frac`
+with its size-validated calibration, `solvent_packing` and `wet_frac` (which caught this),
+`encloses`, the planted references, and 28 documented defects. The physics conclusion is a clean
+negative, and it is only visible because the instruments were fixed first.
+
+**Caveat, stated rather than buried.** Raising water-water repulsion does not ONLY change the solvent:
+a proper liquid exerts real osmotic pressure on the lipids, which a vapour does not. So this is not a
+perfectly isolated intervention. But that IS the physical point -- under a real solvent's pressure,
+this force law does not make membranes.
+
+**Where the project actually stands.** The open question is no longer "why won't 45 lipids become 81".
+It is: **can this force law make a bilayer at all in a healthy solvent?** Nothing in the log answers
+that. The lipid parameters were all tuned at rp_ww=1, i.e. tuned against vacuum, so the whole
+parameter search should be repeated with the solvent gate (`solvent_packing > 0.85`) enforced as a
+precondition rather than checked afterwards.
+
+## 2026-08-10 — EVERY GOOD RESULT CAME FROM A REGIME WITH NO BULK WATER (F47)
+
+**Asked** (by the user): is the water clumping too much?
+
+**Yes, and in every run that produced a good structure.** Connected-cluster analysis of the solvent:
+
+    state        repel   solv_pk   wet_frac   clusters   largest holds   solvent state
+    dil_b11         12     0.430       0.17          4             34%   droplets in vacuum
+    A_h06           12     0.242       0.06          4             39%   droplets in vacuum
+    W_h12           12     0.318       0.12          7             24%   droplets in vacuum
+    rep24           24     0.893       0.56          3             92%   BULK LIQUID
+    rep36           36     0.941       0.65          3             95%   BULK LIQUID
+    rep48           48     0.959       0.70          5             80%   one mass
+
+**Compression and clumping are one phenomenon, not two.** At contact packing 250 water beads would
+fill ~58% of the box and percolate. Compressed to 0.43 of contact they occupy ~11%, so the solvent
+condenses into droplets and leaves vapour. Raising `repel` removes the compression and the water
+becomes a single connected liquid at 92-95%.
+
+**The consequence is the most important thing in this log.**
+
+    repel 12  -- water is DROPLETS IN VACUUM (34-39% largest, wet_frac down to 0.06)
+                 bilayer_frac up to 0.746, the 87-lipid annealed ribbon, every headline result
+    repel 24+ -- water is a genuine BULK LIQUID (92-95% in one cluster, wet_frac 0.56-0.70)
+                 bilayer_frac 0.175-0.302, no membrane has ever formed here
+
+**Every good structural result in this project comes from the regime where the solvent is wrong.**
+Those membranes assembled at a water/VACUUM interface, driven by ordinary surface tension, not by the
+hydrophobic effect in bulk water. The 87-lipid curved bilayer (F46) formed at wet_frac 0.06 -- 94% of
+its box was vacuum. It is most likely a surface-tension artifact rather than a lipid membrane.
+
+This supersedes the framing of F41 (order and hydration are anti-correlated) and F45 (the solvent
+collapses). They were two views of this: **order has only ever been observed in the absence of a
+solvent**, and the regime with a real solvent has never produced order at all.
+
+**What is now the only honest baseline.** repel 24 is the minimum operating point with bulk water
+(92% single cluster, wet_frac 0.56, solvent at 0.89 of contact). Every structural claim in this
+project that was measured at repel 12 -- including bilayer_frac 0.746, the phase window at
+head_sigma 1.0, the tail-count comparisons and the 87-lipid anneal -- needs re-testing there before it
+can be believed. Whether ANY of them survive is untested and is the single most valuable experiment
+available.
+
+**Not yet established.** That the repel-12 structures are artifacts is an inference from wet_frac 0.06
+and the surface-tension mechanism, not a measurement. The direct test is to re-run the best conditions
+at repel 24 with the force balance restored and see whether bilayer order survives.
+
+## 2026-08-09c — the vesicle minimum is MEASURED at 81 lipids; five dead sliders (F46, defect #28)
+
+**The target number was never measured, only assumed.** Every "N >= 31" figure came from assuming
+R ~ N*a0/(4*pi) with a half thickness of 2.5. Measured properly now, two ways.
+
+**Arc relaxation** -- plant a bilayer arc at radius R and see which way it drifts (1500 steps):
+
+    R planted   R after   drift   behaviour
+          3.0      3.31   +0.22   FLATTENS
+          4.0      4.31   +0.28   FLATTENS
+          5.5      5.56   +0.04   holds
+          7.0      7.01   -0.01   holds
+          9.0      9.02   +0.02   holds
+
+Spontaneous curvature is ZERO -- nothing above R=5 drifts either way, so the membrane never WANTS to
+curve, it only tolerates curvature. Below R~5 it actively unbends. Closure therefore cannot be driven
+by preferred curvature; the aggregate must first be large enough to tolerate bending at all.
+
+**Closed-loop test, which CORRECTED the extrapolation.** From the arc data I predicted N ~ 4*pi*R = 63
+at R=5. Planting actual closed loops:
+
+    R     lipids   encloses t=0 -> t=3000   bilayer_frac   verdict
+    3.0       37              1 ->  6              0.345   opens
+    5.0       63              2 ->  7              0.487   OPENS -- prediction refuted
+    6.5       81              9 -> 17              0.714   LUMEN HOLDS
+
+A closed loop compresses its inner leaflet in a way an open arc cannot show, so 63 is not enough.
+**The measured minimum vesicle is ~81 lipids (R=6.5)**, where the lumen not only survives but GROWS
+(9 -> 17 enclosed waters, inside the 18-26 planted-loop band) at bilayer_frac 0.714. That is the
+vesicle reference this project never had, and the old threshold was low by a factor of 2.6 -- which is
+exactly why 37-lipid aggregates kept looking like they should close.
+
+**The whole remaining gap is now one number: 37-45 emergent against 81 required.**
+
+**Attacked coalescence directly. The cap is kinetic and did not move.** A 2-D ribbon's energy is
+N*mu + 2*Gamma_end, linear in N with NO preferred size, so nothing thermodynamic caps it; domains form
+inside the clump and freeze instead of merging.
+
+    condition (clump start, 120 lipids)   largest   packing   bilayer_frac   admissible
+    hydrophobic 0.6 (default)                  44     0.394          0.200   yes
+    hydrophobic 1.2                            43     0.373          0.408   yes
+    hydrophobic 2.0                            45     0.357          0.525   yes
+    + tail_eps 1.5                             51     0.275          0.350   NO (collapsed)
+    + tail_eps 2.0                             45     0.227          0.250   NO
+    + kT 0.06                                  44     0.264          0.425   NO
+    150 lipids                                 44     0.293          0.356   NO
+
+Raising water-water cohesion improves ORDER strongly (bilayer_frac 0.200 -> 0.525) and leaves SIZE
+untouched (44/43/45), while degrading the solvent further (solvent_packing 0.486 -> 0.212). Every
+attempt to push size past ~45 by raising cohesion drops packing below the 0.35 collapse floor, so
+those rows are inadmissible rather than progress. Best admissible emergent structure: 45 lipids at
+bilayer_frac 0.525, or 37 at 0.640.
+
+**DEFECT #28: FIVE dead sliders shipped in the hosted UI.** k_hydro swept over 1/2/4/8 gave
+byte-identical results. `_lipid_force`, which consumes k_tail and k_hydro, returns early unless the
+ROD-lipid index `_li` is populated, and the 2-D dish builds bonded chains in `_mol`. A liveness test
+(perturb each advertised knob, step 60, require divergence) then found three MORE: `repel_contact`
+(`_contact_distance` uses it only when sigma is None, and the dish always sets sigma), `sink_repel`
+(unused on the contact-repulsion path), and `rigidity` (acts on a shape channel this dish does not
+drive). All five removed from the 2-D knob list; the test now guards the whole surface. Same class as
+the repel/speed slider defects: controls that render, move, and do nothing.
+
 ## 2026-08-09b — DEFECT #27: the solvent collapses over the run at the standing operating point (F45)
 
 **Asked** (by the user): is water compressing and packing realistically?

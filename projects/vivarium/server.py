@@ -483,9 +483,25 @@ def main(argv: list[str] | None = None) -> int:
             e.temperature = 0.02 if (args.dim3 or args.lipid2d) else 0.05
             e.k_tail, e.k_hydro = 1.5, 1.0   # amphiphile: tail cohesion + hydrophobic effect
             return e
-        knob_names = ("repel", "sink_repel", "repel_contact", "attract", "sink_attract",
-                      "polarity", "sink_polarity", "k_tail", "k_hydro", "morph", "rigidity",
-                      "selectivity", "temperature", "momentum", "speed")
+        # k_tail and k_hydro are NOT here for --lipid2d: they feed `_lipid_force`, which returns
+        # early unless the ROD-lipid index `_li` is populated, and the 2-D dish builds bonded chains
+        # in `_mol` instead. Sweeping k_hydro across 1/2/4/8 gave byte-identical results. They shipped
+        # as live sliders that did nothing (defect #28). For this engine the hydrophobic effect lives
+        # in eps_pair: water-water 0.60 against water-tail 0.02.
+        # FIVE knobs were removed here after a liveness test showed they change nothing in this
+        # engine (defect #28) -- perturbing each and stepping 60 times left the state bit-identical:
+        #   k_tail, k_hydro   feed `_lipid_force`, which returns early unless the ROD-lipid index
+        #                     `_li` is populated; the 2-D dish builds bonded chains in `_mol`
+        #   repel_contact     `_contact_distance` uses it ONLY when sigma is None, and the dish
+        #                     always sets per-species sigma
+        #   sink_repel        unused on the contact-repulsion path this engine takes
+        #   rigidity          acts on the shape channel, which this dish does not drive
+        # They shipped as live sliders that did nothing. For this engine the hydrophobic effect is in
+        # eps_pair (water-water 0.60 against water-tail 0.02), not in a k_* term.
+        knob_names = ("repel", "attract", "sink_attract", "polarity", "sink_polarity",
+                      "morph", "selectivity", "temperature", "momentum", "speed")
+        if args.dim3:
+            knob_names = knob_names + ("k_tail", "k_hydro")
         label = ("POLAR PACK 3-D (spherical-harmonic contour · emergent amphiphiles)" if args.dim3
                  else "POLAR PACK (water + amphiphile lipids → membrane self-assembly)")
     if args.lipid2d and not args.polar:

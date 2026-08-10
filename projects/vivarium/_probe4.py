@@ -64,11 +64,25 @@ def exposed(e):
 
 tag, kw = sys.argv[1], eval(sys.argv[2])
 seed = kw.pop("seed", 7)
+rp_ww = kw.pop("rp_ww", None)
+k_hydro = kw.pop("k_hydro", None)
 nematic = kw.pop("nematic", None)
 chem = kw.pop("chem_scale", None)
 kw_hold_water = bool(kw.pop("hold_water", False))
 tail_eps = kw.pop("tail_eps", None)
 e = build(seed, **{**BASE, **kw})
+if rp_ww is not None:
+    # Decouple the two jobs one `repel` was doing. Entries multiply the global scale; symmetric, so
+    # the force stays reciprocal. WATER=0, MOL_HEAD=5, MOL_TAIL=6.
+    import numpy as _np
+    m = _np.ones((7, 7))
+    m[0, 0] = float(rp_ww)                      # stiffen the solvent only
+    e.repel_pair = m
+if k_hydro is not None:
+    # k_hydro is the hydrophobic-effect term: tails pushed from water, heads pulled to it. It sets
+    # the cost of exposed tails at an aggregate RIM, i.e. the edge energy that fixes the preferred
+    # aggregate size. Raising it should give fewer, larger aggregates -- the 37 -> 81 gap. Never swept.
+    e.k_hydro = float(k_hydro)
 if nematic is not None:
     e.nematic = float(nematic)
 if chem is not None:

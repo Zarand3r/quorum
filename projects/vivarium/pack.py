@@ -73,6 +73,16 @@ class PackEngine:
         # of the outer-product features vec(u u^T), so this is an attention logit under a quadratic
         # feature map. Bounded, symmetric in i,j, so the force stays conservative.
         self.nematic = 0.0
+        # SPECIES-PAIR REPULSION (default None = one global scale, byte-identical).
+        # A single `repel` is being asked to do two incompatible coarse-grained jobs: give the solvent
+        # a sane equation of state, and give lipid beads the packing softness a lamellar phase needs.
+        # Measured, those pull opposite ways -- repel 12 gives bilayer_frac 0.746 with a solvent
+        # collapsed to 0.43 of contact, repel 24 gives bulk water (92% one cluster) and no membrane.
+        # Cohesion is already a species-pair matrix (`eps_pair`); this is the same structure for
+        # excluded volume, and no more of a departure from the transformer constraint than that is.
+        # Entries are RELATIVE multipliers on the global `repel`; must be symmetric or the force stops
+        # obeying Newton's third law.
+        self.repel_pair = None
         #   Centre of the cohesive shell. 0.0 keeps the historical kernel exp(-lambda*d^2), whose
         #   maximum is at ZERO SEPARATION -- so cohesion pulls hardest when two beads are already
         #   coincident, a pressure toward overlap built into the force. Physical van der Waals has
@@ -468,6 +478,9 @@ class PackEngine:
             overlap = np.clip(self._contact_distance(C, delta, dist) - dist, 0.0, None)
             np.fill_diagonal(overlap, 0.0)
             drive = np.tanh(self.repel_sharp * overlap) if self.repel_sharp > 0.0 else overlap
+            if self.repel_pair is not None:
+                sp = self.species.astype(int)
+                drive = drive * self.repel_pair[sp[:, None], sp[None, :]]
             repel = np.einsum("ij,ijc->ic", drive, dirn)
         else:
             rscore = np.where(mask, (S_direct - cfg.dist_lambda * d2) / tau, -np.inf)

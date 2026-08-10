@@ -69,10 +69,11 @@ def exposed(e):
     return float((_pd(e, tails, water) < cut).any(axis=1).mean())
 
 tag, kw = sys.argv[1], eval(sys.argv[2])
+hydro_kw = kw.pop("hydrophobic", None)
 seed = kw.pop("seed", 7)
 T = int(kw.pop("steps", 60000))
 hot = float(kw.pop("hot", 0.02))
-e = build(seed, **{**BASE, **kw})
+e = build(seed, **{**BASE, **({"hydrophobic": hydro_kw} if hydro_kw else {}), **kw})
 anneal(e, T, hot=hot, cold=BASE["kt"])
 
 core = [s for s in core_sizes(e) if s >= 3]
@@ -82,7 +83,7 @@ cmean = sum(core) / len(core) if core else 0.0
 print(f"RESULT {tag:<10}{len(core):>6}{cmean:>8.1f}{(max(core) if core else 0):>8}"
       f"{len(allb):>7}{(max(allb) if allb else 0):>8}"
       f"{exposed(e):>9.3f}{m['align']:>8.3f}{m['splay']:>8.3f}"
-      f"{m['packing']:>9.3f}{m['spanning']:>10.3f}"
+      f"{m['packing']:>9.3f}{m['wet_frac']:>9.3f}{m['solvent_packing']:>9.3f}{m['bilayer_frac']:>10.3f}{m['spanning']:>10.3f}"
       f"{('STAGE3' if stage3(m) else '-'):>9}", flush=True)
 np.savez_compressed(f"{ST}/{tag}.npz", X=e.X, sigma=e.sigma, mol=e._mol, L=e.L, pd=e.pd)
 cross_section(e, f"{OUT}/core_{tag}",

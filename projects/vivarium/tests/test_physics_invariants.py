@@ -178,3 +178,40 @@ def test_speed_fix_is_scoped_to_slider_moves_not_reconfiguration() -> None:
         "constructing at a different speed is now speed-invariant too -- if that was intended, "
         "delete this test; if not, a global speed reference has crept in and one engine family's "
         "noise has been silently rescaled")
+
+
+def test_species_pair_repulsion_is_off_by_default_and_stays_reciprocal() -> None:
+    """`repel_pair` must be a no-op when unset, and must not break Newton's third law when set.
+
+    A single global `repel` cannot serve both the solvent and the membrane: repel 12 gives
+    bilayer_frac 0.746 with the solvent collapsed to 0.43 of contact, repel 24 gives bulk water and no
+    membrane. A species-pair matrix decouples them, exactly as `eps_pair` already does for cohesion.
+
+    The matrix must be SYMMETRIC. An asymmetric one would make F_ij != -F_ji, and the whole system
+    would accelerate under its own internal forces -- a failure no structural metric would reveal.
+    """
+    import numpy as np
+
+    from bicelle2d import build
+
+    kw = dict(n_lip=14, bound=8.0, kt=0.0, speed=0.001, repel=12.0, k_bond=30.0, satt=0.30,
+              attract=1.0, bond_span=2.0, n_tail=2, polarity=0.80, head_q=1.2, hydrophobic=0.6,
+              n_water=60, plant=False)
+
+    a, b = build(5, **kw), build(5, **kw)
+    b.repel_pair = np.ones((7, 7))                    # all-ones must reproduce the global scale
+    for _ in range(80):
+        a.step()
+        b.step()
+    assert np.array_equal(a.X, b.X), "repel_pair = ones is not a no-op"
+
+    c = build(5, **kw)
+    m = np.ones((7, 7))
+    m[0, 0] = 2.0                                     # stiffen water-water only
+    c.repel_pair = m
+    assert np.allclose(m, m.T), "the matrix under test must be symmetric"
+    c.temperature = 0.0
+    for _ in range(200):
+        c.step()
+    drift = float(np.linalg.norm(c.vel.sum(axis=0)) / len(c.vel))
+    assert drift < 1e-9, f"species-pair repulsion broke reciprocity: net momentum {drift:.2e}"

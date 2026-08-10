@@ -27,9 +27,8 @@ import server
 VIEWER = pathlib.Path(__file__).resolve().parent.parent / "viewer.html"
 
 # the knob list server.py installs for the --lipid2d dish
-LIPID2D_KNOBS = ("repel", "sink_repel", "repel_contact", "attract", "sink_attract",
-                 "polarity", "sink_polarity", "k_tail", "k_hydro", "morph", "rigidity",
-                 "selectivity", "temperature", "momentum", "speed")
+LIPID2D_KNOBS = ("repel", "attract", "sink_attract", "polarity", "sink_polarity",
+                 "morph", "selectivity", "temperature", "momentum", "speed")
 
 
 def _kmax() -> dict:
@@ -92,3 +91,38 @@ def test_every_live_knob_has_a_tooltip() -> None:
     desc = set(re.findall(r"([a-z_0-9]+)\s*:\s*\"", src[src.index("const KDESC"):]))
     missing = [k for k in LIPID2D_KNOBS if k not in desc]
     assert not missing, f"sliders rendered with no tooltip: {missing}"
+
+
+def test_every_advertised_knob_actually_changes_the_engine() -> None:
+    """A slider that renders and does nothing is worse than no slider.
+
+    Defect #28: `k_tail` and `k_hydro` shipped as live controls for the 2-D dish while doing exactly
+    nothing -- they feed `_lipid_force`, which returns early unless the ROD-lipid index is populated,
+    and the dish builds bonded chains instead. Sweeping k_hydro over 1/2/4/8 produced byte-identical
+    trajectories. Nothing caught it because no test asked whether a knob has any effect at all.
+
+    Perturbs each advertised knob and requires the state to diverge from an untouched twin.
+    """
+    import numpy as np
+
+    from bicelle2d import build
+
+    kw = dict(n_lip=16, bound=8.0, kt=0.02, speed=0.001, repel=12.0, k_bond=30.0, satt=0.30,
+              attract=1.0, bond_span=2.0, n_tail=2, polarity=0.80, head_q=1.2, hydrophobic=0.6,
+              n_water=50, plant=False)
+    dead = []
+    for knob in LIPID2D_KNOBS:
+        base, test = build(3, **kw), build(3, **kw)
+        if not hasattr(test, knob):
+            dead.append(f"{knob} (absent)")
+            continue
+        v = float(getattr(test, knob))
+        setattr(test, knob, v * 2.0 + 0.5)      # a change no physical knob should ignore
+        for _ in range(60):
+            base.step()
+            test.step()
+        if np.allclose(base.X, test.X, atol=0, rtol=0):
+            dead.append(knob)
+    assert not dead, (
+        f"knobs advertised in the viewer that do not affect the 2-D engine at all: {dead}. "
+        f"Remove them from server.knob_names or wire them up; a dead slider misleads whoever moves it.")
