@@ -77,9 +77,17 @@ class DPD:
         counts = np.bincount(flat, minlength=ncell ** D)
         starts = np.concatenate([[0], np.cumsum(counts)])
 
+        # Only the FORWARD half of the 3^D offsets, plus the self cell. Visiting all 27 and then
+        # discarding with an i<j filter does exactly twice the necessary work, and profiling put
+        # _pairs at 63% of step time -- the dominant cost by far, not the force scatter.
+        # Each unordered cell pair {A,B} is produced once, from whichever of the two sees the other
+        # through a forward offset. Valid for ncell >= 3: the reverse offset -d is then a distinct,
+        # non-selected backward offset, so no pair is emitted twice.
         I, J = [], []
         ar = np.arange(n)
         offs = np.array(np.meshgrid(*([(-1, 0, 1)] * D), indexing="ij")).reshape(D, -1).T
+        rank = (offs * (3 ** np.arange(D))).sum(axis=1)
+        offs = offs[rank >= 0]                     # self cell (rank 0) and the forward half
         for off in offs:
             nb = (((cell + off) % ncell) * mult).sum(axis=1)
             cnt = counts[nb]
@@ -89,7 +97,7 @@ class DPD:
             base = np.repeat(starts[nb], cnt)
             within = np.arange(cnt.sum()) - np.repeat(np.cumsum(cnt) - cnt, cnt)
             j_idx = order[base + within]
-            keep = i_idx < j_idx
+            keep = i_idx < j_idx if not off.any() else np.ones(len(i_idx), bool)
             if keep.any():
                 I.append(i_idx[keep]); J.append(j_idx[keep])
         if not I:
@@ -131,7 +139,7 @@ class DPD:
             pair = pair + fd + fr
 
         np.add.at(f, i, pair)
-        np.add.at(f, j, -pair)                                # Newton's third law, exactly
+        np.add.at(f, j, -pair)                            # Newton's third law, exactly
 
         virial = float(np.einsum("ic,ic->", rij, fc))         # conservative part only
         if len(self.angles) and self.k_ang > 0.0:

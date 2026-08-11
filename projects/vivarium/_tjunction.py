@@ -38,11 +38,21 @@ NB, NH = 3, 1                      # 1 head + 2 tails, the 2-D ribbon amphiphile
 ZS = [1.0, 0.5, 0.0]               # head outermost; head-to-head across the bilayer = 2.0
 
 
-def plant(arm_len, da, L, pitch, seed, k_ang=0.0):
+def plant(arm_len, da, L, pitch, seed, k_ang=0.0, phi=0.0):
+    """Plant the ribbon (+arm), plus enough free amphiphiles to hold the target concentration.
+
+    Concentration and box size were coupled in the first version, and that invalidated the da=15 run:
+    a box big enough to stop the arm reaching the ribbon's periodic image left only phi=0.076, below
+    this chemistry's CMC, so the whole planted structure dissolved into scattered small aggregates
+    before any junction physics could occur. Free monomers decouple the two, letting the box be large
+    while the reservoir stays above the CMC.
+    """
     n_span = int(L / pitch)                       # per leaflet, spans the periodic box
     n_arm = max(int(arm_len / pitch), 1)          # per leaflet of the grafted arm
-    n_amph = 2 * (n_span + n_arm)
+    n_struct = 2 * (n_span + n_arm)
     N = int(RHO * L * L)
+    n_free = max(int(phi * N / NB) - n_struct, 0)
+    n_amph = n_struct + n_free
 
     sp = np.zeros(N, int)
     bonds, angles = [], []
@@ -79,6 +89,14 @@ def plant(arm_len, da, L, pitch, seed, k_ang=0.0):
             for t in range(NB):
                 d.x[b + t] = np.array([x0 + sgn * ZS[t], py]) % L
             k += 1
+    for _ in range(n_free):                        # free reservoir, random position and orientation
+        b = k * NB
+        c = d.rng.uniform(0, L, 2)
+        u = d.rng.normal(size=2)
+        u /= np.linalg.norm(u)
+        for t in range(NB):
+            d.x[b + t] = (c + (t - 1) * 0.5 * u) % L
+        k += 1
     return d, n_amph, n_span, n_arm
 
 
@@ -114,12 +132,14 @@ if __name__ == "__main__":
     # L=24 with a 6-long arm it grew to a separation of 9.9 against a maximum possible L/2=12, i.e.
     # it eliminated its free end by wrapping -- an artifact of box size, not healing.
     L = float(sys.argv[4]) if len(sys.argv) > 4 else 40.0
+    phi = float(sys.argv[5]) if len(sys.argv) > 5 else 0.20
     pitch = 0.75
-    d, n_amph, n_span, n_arm = plant(arm, da, L, pitch, seed=1)
+    d, n_amph, n_span, n_arm = plant(arm, da, L, pitch, seed=1, phi=phi)
     idx = (np.arange(0, 2 * n_span), np.arange(2 * n_span, 2 * n_span + 2 * n_arm))
     m0, _, _ = arm_state(d, L, idx)
-    print(f"planted T junction: da={da} arm={arm} L={L} n_amph={n_amph} "
-          f"(span {2*n_span}, arm {2*n_arm}); max possible separation L/2={L/2:.1f}", flush=True)
+    print(f"planted T junction: da={da} arm={arm} L={L} phi={phi} n_amph={n_amph} "
+          f"(span {2*n_span}, arm {2*n_arm}, free {n_amph - 2*(n_span+n_arm)}); "
+          f"max possible separation L/2={L/2:.1f}", flush=True)
     print(f"{'step':>7}{'mean arm dy':>13}{'frac of t=0':>13}{'max dy':>9}{'absorbed':>10}"
           f"{'T':>7}   verdict", flush=True)
     for t in range(steps + 1):

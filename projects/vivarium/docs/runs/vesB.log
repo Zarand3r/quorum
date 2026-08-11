@@ -14,3 +14,14 @@ Target //projects/vivarium:_sl_model up-to-date:
 (01:57:30) INFO: Build completed successfully, 1 total action
 (01:57:30) INFO: Running command line: bazel-bin/projects/vivarium/_sl_model 0.108 100000 75076 1
   step       0  aggs>=3   53  largest    11  lumen     0  T=0.996 homog=0.07
+  step    5000  aggs>=3   87  largest    21  lumen     0  T=1.009 homog=0.02
+  step   10000  aggs>=3   63  largest    58  lumen     0  T=1.009 homog=0.02
+  step   15000  aggs>=3   49  largest    58  lumen     0  T=1.015 homog=0.02
+  step   20000  aggs>=3   46  largest    58  lumen     0  T=1.011 homog=0.02
+  step   25000  aggs>=3   43  largest    58  lumen     0  T=1.010 homog=0.02
+  step   30000  aggs>=3   38  largest    58  lumen     0  T=1.012 homog=0.02
+  step   35000  aggs>=3   35  largest    58  lumen     0  T=1.010 homog=0.02
+  step   40000  aggs>=3   33  largest    62  lumen     0  T=1.018 homog=0.02
+  step   45000  aggs>=3   32  largest    62  lumen     0  T=1.010 homog=0.02
+  step   50000  aggs>=3   32  largest    62  lumen     0  T=1.004 homog=0.02
+  step   55000  aggs>=3   31  largest    62  lumen     0  T=1.008 homog=0.02

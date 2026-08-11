@@ -1,0 +1,29 @@
+Starting local Bazel server and connecting to it...
+(07:48:55) INFO: Current date is 2026-08-11
+(07:48:55) Computing main repo mapping: 
+(07:48:56) Loading: 
+(07:48:56) Loading: 0 packages loaded
+(07:48:56) Analyzing: target //projects/vivarium:_tjunction (1 packages loaded, 0 targets configured)
+(07:48:56) Analyzing: target //projects/vivarium:_tjunction (1 packages loaded, 0 targets configured)
+
+(07:48:57) INFO: Analyzed target //projects/vivarium:_tjunction (114 packages loaded, 4294 targets configured).
+(07:48:57) INFO: Found 1 target...
+Target //projects/vivarium:_tjunction up-to-date:
+  bazel-bin/projects/vivarium/_tjunction
+(07:48:57) INFO: Elapsed time: 2.380s, Critical Path: 0.03s
+(07:48:57) INFO: 1 process: 1 internal.
+(07:48:57) INFO: Build completed successfully, 1 total action
+(07:48:57) INFO: Running command line: bazel-bin/projects/vivarium/_tjunction 30000 15 0 40 0.20
+planted T junction: da=15.0 arm=0.0 L=40.0 phi=0.2 n_amph=320 (span 106, arm 2, free 212); max possible separation L/2=20.0
+   step  mean arm dy  frac of t=0   max dy  absorbed      T   verdict
+      0         2.38         1.00     2.38      0.00  0.972   ARRESTED
+   3000         1.12         0.47     2.03      0.50  1.013   retracting
+   6000         2.16         0.91     2.77      0.50  0.998   ARRESTED
+   9000         4.00         1.68     5.88      0.00  1.027   GROWING
+  12000         4.91         2.07     6.33      0.00  1.013   GROWING
+  15000         7.06         2.97     9.09      0.00  0.995   GROWING
+  18000         7.29         3.07     8.40      0.00  1.041   GROWING
+  21000         9.11         3.83    10.18      0.00  1.015   GROWING
+  24000        10.80         4.55    13.72      0.00  1.028   GROWING
+  27000        13.76         5.79    18.01      0.00  1.023   GROWING (WRAPPED -- box too small, artifact)
+  30000        13.37         5.63    19.38      0.00  1.009   GROWING (WRAPPED -- box too small, artifact)
