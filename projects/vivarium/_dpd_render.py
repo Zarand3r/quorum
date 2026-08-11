@@ -14,7 +14,7 @@ COL = {0: ("#12203a", 2.2), 1: ("#49b0ff", 5.0), 2: ("#ff9a3c", 5.0)}   # water,
 def render(tag, title, sub):
     z = np.load(f"{ST}/{tag}.npz")
     x, sp, L = z["x"], z["species"], float(z["L"])
-    S = 560
+    S = 760
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{S}" height="{S+34}" '
              f'viewBox="0 0 {S} {S+34}"><rect width="{S}" height="{S+34}" fill="#0a0e17"/>']
     for s in (0, 2, 1):                       # water behind, then tails, then heads
@@ -36,10 +36,7 @@ def render(tag, title, sub):
                     f"file://{OUT}/{tag}.svg"], capture_output=True)
     print(f"  {tag}: {len(x)} beads, L={L:.1f} -> {OUT}/{tag}.png")
 
-for phi, note in ((5, "micellar (aspect 1.2, largest 6)"),
-                  (12, "elongated (aspect 2.2, largest 23)"),
-                  (22, "elongated (aspect 2.2, largest 26)"),
-                  (35, "classifier said micellar, aspect 1.4, largest 123 -- verify")):
-    f = f"{ST}/dpd_phi{phi}.npz"
-    if os.path.exists(f):
-        render(f"dpd_phi{phi}", f"DPD amphiphiles, phi={phi/100:.2f}", note)
+import sys
+for tag, title, note in [tuple(a.split("|")) for a in sys.argv[1:]]:
+    if os.path.exists(f"{ST}/{tag}.npz"):
+        render(tag, title, note)

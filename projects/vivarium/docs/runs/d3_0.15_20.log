@@ -1,0 +1,16 @@
+(17:13:39) INFO: Current date is 2026-08-10
+(17:13:39) Computing main repo mapping: 
+(17:13:39) Loading: 
+(17:13:39) Loading: 0 packages loaded
+(17:13:39) Analyzing: target //projects/vivarium:_dpd3d (0 packages loaded, 0 targets configured)
+(17:13:39) Analyzing: target //projects/vivarium:_dpd3d (0 packages loaded, 0 targets configured)
+
+(17:13:39) INFO: Analyzed target //projects/vivarium:_dpd3d (0 packages loaded, 0 targets configured).
+(17:13:39) INFO: Found 1 target...
+Target //projects/vivarium:_dpd3d up-to-date:
+  bazel-bin/projects/vivarium/_dpd3d
+(17:13:39) INFO: Elapsed time: 0.034s, Critical Path: 0.00s
+(17:13:39) INFO: 1 process: 1 internal.
+(17:13:39) INFO: Build completed successfully, 1 total action
+(17:13:39) INFO: Running command line: bazel-bin/projects/vivarium/_dpd3d 0.15 25000 5 2 20 1 9000
+RESULT d3_phi15_5h2_da20_s1    n=270  aggs=5   largest=198  lumen=0    T=1.00 homog=0.07   no lumen

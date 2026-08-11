@@ -154,6 +154,84 @@ extended bands at 0.35, with T within 10% and solvent homogeneity < 0.35.
 "the transformer representation is wrong". Without it, a Stage F failure is uninterpretable — exactly
 the ambiguity that produced the retraction.
 
+---
+
+## D7 — Move the DPD reference to 3-D
+
+**Date:** 2026-08-10
+
+**Context.** Stage D reached micelles, elongated ribbons, branched worms and lamellar bands in 2-D
+with a healthy solvent — but no vesicle. A planted 2-D vesicle also DISSOLVES at almost every
+parameter set tested (8 of 9), so self-assembly was being hunted into a state the force field will not
+hold.
+
+**The likely error: dimension.** Open-source DPD vesicle work is essentially all 3-D. A 2-D "vesicle"
+is a closed RING — a different and much less studied object — and 2-D suffers far stronger
+fluctuations. Staying in 2-D was inherited from Vivarium's geometry, not chosen for this goal.
+
+**Chosen.** Make the DPD reference dimension-generic and run Stage D in 3-D, matching literature
+practice: rho = 3, a = 25, Delta-a ~ 15-25, longer amphiphiles (H2-T3 / H3-T4 rather than H-T-T).
+
+**Rationale.** The stated goal is to emerge vesicles by any well-known open-source method FIRST, then
+transfer the learnings. Reproducing the regime where the literature succeeds is the point of the
+ladder; insisting on 2-D at this rung imports Vivarium's constraint into the reference, which is
+exactly the mistake the reset was meant to avoid.
+
+**Success metric.** A closed vesicle from a disordered start in 3-D: a contiguous interior solvent
+pocket enclosed by one aggregate, persisting over ≥6k steps, reproduced across ≥3 seeds, with the
+solvent gate passing (T within 10%, homogeneity, non-zero diffusion).
+
+**How we would know this was wrong.** If 3-D DPD also fails to make vesicles at literature-like
+parameters, the fault is in my DPD implementation rather than in the dimension, and the next step is
+to check it against published observables (pressure at rho=3/a=25, self-diffusion) rather than to keep
+scanning morphology.
+
+**Note on 2-D.** The 2-D results are kept: they are the geometry Vivarium actually uses, and the
+finding that a planted 2-D vesicle is unstable at these parameters is itself a transferable warning.
+
+---
+
+## D8 — Use web search to get the model right, instead of reconstructing it
+
+**Date:** 2026-08-10 · **Artifacts:** `dpd_reference.py` (bending), `_sl_model.py`, `_eos_check.py`
+
+**Context.** Stage D produced micelles, worms and lamellar bands but no stable bilayer, in 2-D or 3-D.
+Planted bilayers melted at every parameter set I tried. I had been reconstructing DPD membrane
+parameters from background knowledge, and had been wrong three times about "the last missing piece".
+
+**First: validate the engine, so a failure localises.** Groot-Warren give p = rho*kT + alpha*a*rho^2
+with alpha ~ 0.101. Measured p/p_pred = 0.92, 0.93, 0.95, 0.96, 0.99, 0.99 across rho 3-6 and a 25-50,
+converging toward 1 with density exactly as the asymptotic form should, with T on target at every
+timestep from 0.005 to 0.04. **The engine was never the problem.**
+
+**Then: search for the actual published model.** Three errors, all in the model rather than the code:
+
+| | mine | literature |
+|---|---|---|
+| a_tail-water | 40-55 | **80** |
+| a_head-water | 25 | **15** (head MORE compatible with water than water with itself) |
+| architecture | H-T3, 1 head 1 short tail | **H3(C4)2** -- 3 heads, TWO 4-bead tails |
+| chain stiffness | none | **three-body bending, k3 ~ 15** |
+
+The bending term is the one that matters most: fully flexible tails COIL instead of packing into
+leaflets, which is precisely what every amorphous blob looked like.
+
+**Result: a bilayer.** Head/tail segregation for the first time in the project -- a tail core with
+head layers on both faces, verified in a render, not just a metric.
+
+**Success metric for this decision.** A planted or emergent bilayer with segregated leaflets. **MET.**
+Next gate: a closed vesicle (lumen >= 25 cells) from a disordered start, >= 3 seeds.
+
+**Transferable lesson, and the reason this is recorded.** I spent a long stretch reconstructing a
+published model from memory and reading the failures as physics. The engine had been validated all
+along; the model was wrong. When a reference exists, get the reference -- and validate the engine
+against a published NUMBER before interpreting any physics from it.
+
+**Bugs found on the way, each of which alone would have faked "membranes are impossible":**
+thermostat off by exactly 2x (noise drawn twice per step); planted membrane at spacing 1.44 against
+rc = 1.0, so the "bilayer" was rods that never touched; `enclosed` firing on micelles and branched
+tangles; an aspect classifier calling a box-spanning lamella "micellar".
+
 ## Progress ledger
 
 | rung | gate | metric | status |
@@ -161,6 +239,8 @@ the ambiguity that produced the retraction.
 | D1 | solvent EOS | T within 10%, homogeneity < 0.35, MSD > 0.1 | **PASS** (T 1.013, homog 0.12, MSD 16.0) |
 | D2 | species incompatibility | demixing separates from measured null | **PASS** (0.496 null → 0.886) |
 | D3 | amphiphile mesophase | concentration-dependent morphology | **PASS** (micellar → elongated → bands) |
+| D4 | stable BILAYER with segregated leaflets | head/tail layering visible in a render | **PASS** (H3(C4)2 + bending) |
+| D5 | closed vesicle from disordered start | lumen ≥ 25 cells, ≥3 seeds | running |
 | E | exact DPD inside Vivarium | reproduces the phi series | **next** |
 | F | transformerised DPD | reproduces E | pending |
 | G | custom Vivarium chemistry | reproduces the phase family | pending |
@@ -168,3 +248,93 @@ the ambiguity that produced the retraction.
 **Stall policy.** If a rung fails twice with different approaches, re-examine that rung's *metrics*
 before its physics — this project has retracted more conclusions to bad instruments than to bad
 models. If still stuck, stop and escalate rather than sweeping parameters.
+
+---
+
+## D9 — D8's "first real bilayer" is withdrawn as a ranking; the 2-D ribbons are locally better
+
+**Date:** 2026-08-10. **Supersedes the comparative claim in D8** (the SL slab's existence is not in
+question; its superiority is).
+
+### Context
+
+D8 recorded the Shillcock-Lipowsky H3(C4)2 slab (`sl_f28_N12000_s1`) as the project's first real
+bilayer, on the strength of a rendered slice and a transverse head/tail density profile. Asked
+directly whether it was actually better than the earlier 2-D branched ribbons
+(`big_phi20_nb3_da15_s1`), the honest answer required a measure that scores both fairly.
+
+### The measurement problem
+
+The transverse profile needs ONE membrane normal. A branched ribbon network has none, so projecting
+it onto a global axis smears every leaflet orientation together. It scored the ribbons at -0.15 tail
+excess, which is a geometry artifact, not a structural finding. Any ranking built on that profile is
+void.
+
+`harness.bilayer_fraction` encodes the correct local test but is 2-D only (defect #26). So the
+comparison needed a dimension-generic rebuild: `_pairing.py`.
+
+### Three failed versions, each caught by planted controls
+
+1. Tail-CENTROID proximity read **0.000 on a planted bilayer** in both dimensions. The two leaflets'
+   centroids sit ~1.8 apart because each is pulled back toward its own head; the beads that actually
+   touch at the midplane are the terminal tail beads. Fixed by gating on tips.
+2. Pairing alone then read **1.000 on a planted bilayer AND 1.000 on a planted micelle** -- a
+   micelle's antipodal molecules are anti-aligned with tips meeting at the centre, satisfying every
+   pair criterion. This independently reproduces the 1.000-vs-0.984 collision already recorded in
+   `harness.bilayer_fraction`'s docstring. Fixed by conjoining local flatness.
+3. The micelle pole was initially planted at an arbitrary 40 molecules, which over-packs it and makes
+   it spuriously flat. Fixed by sizing it physically: tips meet at the centre, so the radius is one
+   molecule length, which fixes M at 13 (2-D) and 56 (3-D).
+
+Only the paired-AND-flat conjunction with a physically-sized micelle separates the poles:
+
+| pole | bilayer_frac | paired | flat |
+|---|---|---|---|
+| 2-D planted bilayer | 0.967 | 1.000 | 0.967 |
+| 2-D planted micelle (M=13) | **0.000** | 1.000 | 0.000 |
+| 3-D planted bilayer | 1.000 | 1.000 | 1.000 |
+| 3-D planted micelle (M=56) | **0.000** | 1.000 | 0.000 |
+
+### Dimensional-bias control
+
+`flat` thresholds a mean dot product, and a 3-D leaflet tilts in two transverse directions where a
+2-D one tilts in one, so the threshold could penalise 3-D at equal membrane quality. Measured by
+perturbing planted bilayers with matched angular sigma: the bias runs the OTHER way, 3-D scoring
+1.03-1.39x HIGHER than 2-D across sigma 0.0-0.5 rad. The ribbons' lead below is therefore not a
+dimensional artifact, and is if anything understated.
+
+### Result
+
+| state | dim | n | whole-box | largest-agg | paired | flat |
+|---|---|---|---|---|---|---|
+| `big_phi20_nb3_da15_s1` (2-D ribbons) | 2 | 400 | **0.315** | **0.310** (n=113) | 0.950 | 0.330 |
+| `sl_f28_N12000_s1` (3-D SL slab) | 3 | 305 | 0.184 | 0.184 (n=305) | 0.787 | 0.210 |
+| `sa_phi15_N12000_s1` | 3 | 450 | 0.089 | 0.089 (n=380) | 0.829 | 0.109 |
+| `sl_f18_N12000_s1` | 3 | 196 | 0.046 | 0.050 (n=180) | 0.638 | 0.066 |
+
+**The branched 2-D ribbons have ~1.7x better local bilayer structure than the SL slab.** Restricting
+to the largest aggregate changes neither (the ribbons' bilayer-like molecules outnumber their largest
+aggregate, so they are spread across many small well-ordered patches; the slab is one large poorly
+ordered object).
+
+### What each one actually has
+
+- **Ribbons:** better local leaflet order, and genuine EDGES -- the thing a vesicle must close. They
+  branch instead of closing.
+- **SL slab:** a correct transverse head-tail-head profile (tail excess +0.74, head signal on both
+  faces 0.94) across one connected 305-molecule membrane, in 3-D where the vesicle literature lives.
+  It spans the periodic box, so it has no edges to close.
+
+Neither is a vesicle; both have lumen 0. These are two different failure modes, not a ladder.
+
+### Success metric
+
+`bilayer_frac` (paired AND flat, this module) > 0.5 within the largest aggregate, with that aggregate
+finite (not box-spanning) and a non-zero lumen. Nothing measured to date exceeds 0.32.
+
+### How we would know this was wrong
+
+If the flat threshold (0.90) is simply too strict for a thermally fluctuating membrane at kT=1, both
+absolute numbers are depressed and only the ratio is meaningful. The planted-pole controls bound
+this: at sigma=0.2 rad a planted bilayer still reads 0.93/0.97, so a genuinely well-ordered
+fluctuating membrane should clear 0.5. Reading 0.18 is a real deficit, not a threshold artifact.

@@ -1,0 +1,16 @@
+(15:10:19) INFO: Current date is 2026-08-10
+(15:10:19) Computing main repo mapping: 
+(15:10:19) Loading: 
+(15:10:19) Loading: 0 packages loaded
+(15:10:19) Analyzing: target //projects/vivarium:_dpd_big (0 packages loaded, 0 targets configured)
+(15:10:19) Analyzing: target //projects/vivarium:_dpd_big (0 packages loaded, 0 targets configured)
+
+(15:10:19) INFO: Analyzed target //projects/vivarium:_dpd_big (0 packages loaded, 0 targets configured).
+(15:10:19) INFO: Found 1 target...
+Target //projects/vivarium:_dpd_big up-to-date:
+  bazel-bin/projects/vivarium/_dpd_big
+(15:10:19) INFO: Elapsed time: 0.036s, Critical Path: 0.00s
+(15:10:19) INFO: 1 process: 1 internal.
+(15:10:19) INFO: Build completed successfully, 1 total action
+(15:10:19) INFO: Running command line: bazel-bin/projects/vivarium/_dpd_big 0.20 40000 3 15 1
+RESULT big_phi20_nb3_da15_s1     n_amph=400  aggs=12  largest=91   enclosed=19   T=1.00   LUMEN

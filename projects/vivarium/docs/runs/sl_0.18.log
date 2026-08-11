@@ -1,0 +1,16 @@
+(22:03:26) INFO: Current date is 2026-08-10
+(22:03:26) Computing main repo mapping: 
+(22:03:26) Loading: 
+(22:03:26) Loading: 0 packages loaded
+(22:03:26) Analyzing: target //projects/vivarium:_sl_model (0 packages loaded, 0 targets configured)
+(22:03:26) Analyzing: target //projects/vivarium:_sl_model (0 packages loaded, 0 targets configured)
+
+(22:03:26) INFO: Analyzed target //projects/vivarium:_sl_model (0 packages loaded, 0 targets configured).
+(22:03:26) INFO: Found 1 target...
+Target //projects/vivarium:_sl_model up-to-date:
+  bazel-bin/projects/vivarium/_sl_model
+(22:03:26) INFO: Elapsed time: 0.034s, Critical Path: 0.00s
+(22:03:26) INFO: 1 process: 1 internal.
+(22:03:26) INFO: Build completed successfully, 1 total action
+(22:03:26) INFO: Running command line: bazel-bin/projects/vivarium/_sl_model 0.18 30000 12000 1
+RESULT sl_f18_N12000_s1    n=196 aggs=6   largest=92   lumen=0    T=1.01 homog=0.06   no lumen

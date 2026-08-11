@@ -215,3 +215,87 @@ def test_species_pair_repulsion_is_off_by_default_and_stays_reciprocal() -> None
         c.step()
     drift = float(np.linalg.norm(c.vel.sum(axis=0)) / len(c.vel))
     assert drift < 1e-9, f"species-pair repulsion broke reciprocity: net momentum {drift:.2e}"
+
+
+def test_dpd_cell_list_matches_bruteforce() -> None:
+    """The cell list must find exactly the pairs the O(N^2) search finds.
+
+    A missed pair is a silently weaker force law, and at the densities used here it would look like a
+    softer fluid rather than a bug -- precisely the kind of error this project keeps paying for.
+    """
+    import numpy as np
+
+    from dpd_reference import DPD
+
+    d = DPD(300, 8.7, kT=1.0, a=25.0, seed=7)
+    for _ in range(20):
+        d.step()
+    i, j, _, _ = d._pairs()
+    bi, bj = d.pairs_bruteforce()
+    got = {(min(a, b), max(a, b)) for a, b in zip(i.tolist(), j.tolist())}
+    want = {(min(a, b), max(a, b)) for a, b in zip(bi.tolist(), bj.tolist())}
+    assert got == want, (
+        f"cell list disagrees with brute force: {len(want - got)} missed, {len(got - want)} spurious")
+
+
+def test_dpd_3d_cell_list_and_thermostat() -> None:
+    """The 3-D path must find the same pairs as brute force and hold the target temperature.
+
+    3-D is where the open-source DPD vesicle literature lives (DECISIONS.md D7). A missed pair or a
+    mis-scaled thermostat in 3-D would look like "vesicles do not form here" rather than like a bug --
+    the exact confusion this project has paid for repeatedly.
+    """
+    import numpy as np
+
+    from dpd_reference import DPD
+
+    d = DPD(400, 5.2, kT=1.0, a=25.0, seed=3, dim=3)
+    for _ in range(30):
+        d.step()
+    i, j, _, _ = d._pairs()
+    bi, bj = d.pairs_bruteforce()
+    got = {(min(a, b), max(a, b)) for a, b in zip(i.tolist(), j.tolist())}
+    want = {(min(a, b), max(a, b)) for a, b in zip(bi.tolist(), bj.tolist())}
+    assert got == want, f"3-D cell list disagrees: {len(want - got)} missed, {len(got - want)} spurious"
+    for _ in range(400):
+        d.step()
+    T = d.temperature()
+    assert abs(T - 1.0) < 0.12, f"3-D thermostat off target: T={T:.3f} vs 1.0"
+
+
+def test_dpd_bending_conserves_momentum_and_straightens_chains() -> None:
+    """The three-body bending term must be internal (zero net force) and prefer straight chains.
+
+    Published DPD membrane models stiffen the tails with an angle potential; without it, fully
+    flexible chains coil rather than pack into leaflets. A bending term that leaked net force would
+    accelerate the whole system, which no structural metric would catch.
+    """
+    import numpy as np
+
+    from dpd_reference import DPD
+
+    # a=0 and kT=0: ONLY the bending term acts. An earlier version of this test left repulsion and
+    # 57 other beads switched on, so the angle moved for reasons that had nothing to do with bending.
+    # a=0, kT=0, and BONDED: only bending plus the backbone acts. Without bonds three free beads
+    # under an angle force alone are unconstrained and drift, which made an earlier version of this
+    # test unreadable.
+    d = DPD(3, 20.0, kT=0.0, a=0.0, seed=1, dim=3,
+            bonds=np.array([[0, 1], [1, 2]]), k_bond=100.0, r0=1.0)
+    d.angles = np.array([[0, 1, 2]])
+    d.k_ang = 15.0
+    d.x[0] = [2.0, 3.0, 3.0]
+    d.x[1] = [3.0, 3.0, 3.0]
+    d.x[2] = [3.6, 3.8, 3.0]            # bent
+    f, _ = d.forces(with_dissipative=False)
+    net = np.abs(f.sum(axis=0)).max()
+    assert net < 1e-9, f"bending leaks net force: {net:.2e}"
+
+    def angle(e):
+        r1 = e.x[0] - e.x[1]; r2 = e.x[2] - e.x[1]
+        c = float(r1 @ r2 / (np.linalg.norm(r1) * np.linalg.norm(r2)))
+        return np.degrees(np.arccos(np.clip(c, -1, 1)))
+
+    before = angle(d)
+    for _ in range(300):
+        d.step()
+    assert angle(d) > before, f"bending did not straighten the chain: {before:.0f} -> {angle(d):.0f} deg"

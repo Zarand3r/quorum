@@ -1,0 +1,16 @@
+(20:36:17) INFO: Current date is 2026-08-10
+(20:36:17) Computing main repo mapping: 
+(20:36:17) Loading: 
+(20:36:17) Loading: 0 packages loaded
+(20:36:17) Analyzing: target //projects/vivarium:_selfassm (1 packages loaded, 0 targets configured)
+(20:36:17) Analyzing: target //projects/vivarium:_selfassm (1 packages loaded, 0 targets configured)
+
+(20:36:17) INFO: Analyzed target //projects/vivarium:_selfassm (1 packages loaded, 67 targets configured).
+(20:36:17) INFO: Found 1 target...
+Target //projects/vivarium:_selfassm up-to-date:
+  bazel-bin/projects/vivarium/_selfassm
+(20:36:17) INFO: Elapsed time: 0.125s, Critical Path: 0.05s
+(20:36:17) INFO: 5 processes: 5 internal.
+(20:36:17) INFO: Build completed successfully, 5 total actions
+(20:36:17) INFO: Running command line: bazel-bin/projects/vivarium/_selfassm 0.05 40000 12000 1
+RESULT sa_phi5_N12000_s1     n=150  aggs=6   largest=71   lumen=0    T=1.01 homog=0.06   no lumen

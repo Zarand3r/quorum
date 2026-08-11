@@ -269,6 +269,126 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_dpd_vesicle",
+    srcs = ["_dpd_vesicle.py"],
+    main = "_dpd_vesicle.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_bd",
+    srcs = ["_bd.py"],
+    main = "_bd.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_dpd_big",
+    srcs = ["_dpd_big.py"],
+    main = "_dpd_big.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_lumen",
+    srcs = ["_lumen.py"],
+    main = "_lumen.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_dpd3d",
+    srcs = ["_dpd3d.py"],
+    main = "_dpd3d.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_v2d",
+    srcs = ["_v2d.py"],
+    main = "_v2d.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_bilayer_dpd",
+    srcs = ["_bilayer_dpd.py"],
+    main = "_bilayer_dpd.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_slice",
+    srcs = ["_slice.py"],
+    main = "_slice.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_lit_dpd",
+    srcs = ["_lit_dpd.py"],
+    main = "_lit_dpd.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_tchk",
+    srcs = ["_tchk.py"],
+    main = "_tchk.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_eos_check",
+    srcs = ["_eos_check.py"],
+    main = "_eos_check.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_selfassm",
+    srcs = ["_selfassm.py"],
+    main = "_selfassm.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_sl_model",
+    srcs = ["_sl_model.py"],
+    main = "_sl_model.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_pairing",
+    srcs = ["_pairing.py"],
+    main = "_pairing.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_profile",
+    srcs = ["_profile.py"],
+    main = "_profile.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "fig2d",
     srcs = ["fig2d.py"],
     main = "fig2d.py",
