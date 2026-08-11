@@ -1,0 +1,34 @@
+# Yuan-Li-Zhang solvent-free membrane model, stock LAMMPS pair_style ylz.
+# Parameters are the ones given in the LAMMPS documentation example, unmodified:
+#   pair_coeff * * eps sigma zeta mu beta rc  ->  1.0 1.0 4 3 0.0 2.6
+# Particle count is chosen so a closed vesicle is the natural finite structure: with an area per
+# particle of ~1.5 sigma^2, 600 particles make a shell of radius sqrt(600*1.5/(4 pi)) ~ 8.5 sigma,
+# which fits inside a 30-sigma box with clearance.
+units           lj
+dimension       3
+atom_style      ellipsoid
+boundary        p p p
+
+region          box block 0 30 0 30 0 30
+create_box      1 box
+create_atoms    1 random 600 87287 NULL overlap 0.9 maxtry 500
+
+# ellipsoid atoms take mass from shape x density, not from a per-type mass command
+set             type 1 shape 1 1 1
+set             type 1 density 1.0
+set             type 1 quat/random 18238
+
+pair_style      ylz 2.6
+pair_coeff      * * 1.0 1.0 4 3 0.0 2.6
+
+velocity        all create 0.23 12345 rot yes mom yes dist gaussian
+neighbor        0.5 bin
+neigh_modify    every 1 delay 0 check yes
+
+fix             1 all nvt/asphere temp 0.23 0.23 1.0
+timestep        0.01
+
+thermo          20000
+dump            1 all custom 20000 dump.ylz id type x y z
+run             400000
+write_data      data.ylz

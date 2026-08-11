@@ -129,7 +129,9 @@ if __name__ == "__main__":
         x, b0, M = _plant_micelle(dim)
         row(f"{dim}-D planted MICELLE (M={M})", x % 20.0, 20.0, b0, 4, 1)
     print("-- real states " + "-" * 56)
-    for tag, label in (("flat_therm_t0", "planted flat bilayer t=0"),
+    for tag, label in (("lmp_micelle_500k", "LAMMPS micelle 500k (reference)"),
+                       ("lmp_micelle_t0", "LAMMPS micelle t=25k (early)"),
+                       ("flat_therm_t0", "planted flat bilayer t=0"),
                        ("flat_therm_t6000", "planted flat bilayer THERMALIZED"),
                        ("ves_planted_R9", "planted R=9 vesicle THERMALIZED"),
                        ("ves_planted_R7.5", "planted R=7.5 vesicle THERMALIZED"),
