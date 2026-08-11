@@ -55,7 +55,7 @@ COL = {0: ("#16213a", 1.9), 1: ("#4db5ff", 4.4), 2: ("#ff9840", 4.4)}
 RGB = {0: (30, 42, 72), 1: (77, 181, 255), 2: (255, 152, 64)}
 
 
-def render(tag, title, sub, slab=4.0, view="xy", out=None):
+def render(tag, title, sub, slab=4.0, view="xy", out=None, crop=None):
     """`view` names the two plotted axes; the third is the slice normal.
 
     A membrane must be viewed EDGE-ON to show anything. Slicing along the membrane normal and
@@ -81,6 +81,17 @@ def render(tag, title, sub, slab=4.0, view="xy", out=None):
     else:
         ax_i, ax_j = 0, 1
         note = "full 2-D box"
+
+    # optional zoom: crop = (cx, cy, half_width) in simulation units, centred with periodic unwrap
+    if crop is not None:
+        cx, cy, hw = crop
+        rel = x[:, [ax_i, ax_j]] - np.array([cx, cy])
+        rel -= L * np.round(rel / L)
+        keep = np.all(np.abs(rel) <= hw, axis=1)
+        x = np.column_stack([rel[keep, 0] + hw, rel[keep, 1] + hw])
+        sp = sp[keep]
+        ax_i, ax_j, L = 0, 1, 2 * hw
+        note += f"; zoom {2*hw:.0f} rc around ({cx:.1f}, {cy:.1f})"
 
     S = 780
     P = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{S}" height="{S + 52}" '
@@ -123,4 +134,5 @@ if __name__ == "__main__":
                parts[2] if len(parts) > 2 else "",
                float(parts[3]) if len(parts) > 3 else 4.0,
                parts[4] if len(parts) > 4 else "xy",
-               parts[5] if len(parts) > 5 else None)
+               None,
+               tuple(float(v) for v in parts[5].split(",")) if len(parts) > 5 else None)

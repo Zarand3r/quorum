@@ -400,3 +400,76 @@ R=9 is the only vesicle behaving like one: sealed lumen 52 cells, intact 0.87, p
 If a thermalized planted MICELLE also reads paired ~0.75-0.9, then `paired` alone cannot discriminate
 and the conjunction is irreplaceable, making a robust `flat` mandatory rather than optional. That
 measurement is queued and is the single most important one outstanding.
+
+---
+
+## D11 — A calibrated vesicle metric, after five failed versions
+
+**Date:** 2026-08-11. Replaces every earlier lumen/enclosure measure.
+
+### Why
+
+`lumen` (flood fill requiring enclosed water) survived one false positive -- voids inside the bilayer's
+own tail core -- but not the next: it scored a sealed pocket on the 2-D branched aggregate, where the
+render shows a gap BETWEEN three or four ribbon arms rather than the inside of a closed shell. Locally
+the two are identical, because a ribbon face bounding a gap is head-lined exactly as a vesicle's inner
+leaflet is. The difference is global.
+
+### Five versions, each killed by a planted control
+
+1. Local per-aggregate grid, unwrapped by minimum image around one bead. Silently folds any structure
+   wider than L/2; the planted R=9 vesicle spans ~23 rc in a box of 24.7 and read lumen 0.
+2. Grid at res=0.6, finer than the bead spacing, so a real membrane is not watertight on it and the
+   exterior flood fill leaks through. Same control read 1 cell instead of ~43.
+3. Dilated occupancy, whole-box grid. R=9 recovered but the deformed R=7.5 sealed off 461 cells,
+   several times more than its lumen can physically hold.
+4. Largest CONTIGUOUS pocket with a calibrated floor. Intersecting with water cell-by-cell leaves the
+   lumen speckled (not every cell holds a bead centre at rho=3), fragmenting it; R=9 failed again.
+5. Pocket connectivity on free space with water required per pocket. Still hostage to whether the
+   shell is watertight at grid resolution: R=9, having lost 30% of its amphiphiles, read 0.
+
+Flood fill was abandoned. It asks "is the shell airtight", which is not the question.
+
+### The metric
+
+Per aggregate, gated by a PERCOLATION test (BFS along the contact graph accumulating periodic
+offsets; if an edge disagrees with the accumulated positions by a box vector, the cluster touches its
+own image, is not finite, and "inside" is undefined for it):
+
+  * `shell_cv`  std/mean of molecular distance from the aggregate centroid. A shell is ~0.15; a flat
+    disc is 0.354 analytically.
+  * `inward`    fraction of the molecules LINING the lumen (innermost 20% by radius, not the inner
+    half by count -- a vesicle is leaflet-asymmetric, 616 outer against 121 inner at R=9, so a median
+    split lands inside the outer leaflet) whose head points at the centre.
+  * `filling`   solvent inside 0.55*R_shell against what bulk density would put there. Independent of
+    whether the shell has a hole, which is exactly what broke flood fill.
+
+score = filling * max(0, 1 - cv/0.45) * inward
+
+### Calibration
+
+| structure | shellCV | inward | filling | score | |
+|---|---|---|---|---|---|
+| planted R=9 vesicle | 0.146 | 0.97 | 0.95 | **0.620** | positive control passes |
+| planted R=7.5 (inner leaflet too sparse) | 0.335 | 0.08 | 0.45 | 0.010 | correctly demoted |
+| thermalized flat bilayer | - | - | - | excluded | percolates |
+| emergent micelles (single-tail pole) | 0.217 | 0.00 | 0.00 | 0.000 | rejected |
+| 2-D branched ribbons | 0.399 | 0.48 | 0.28 | 0.015 | false positive removed |
+
+The percolation guard is load-bearing: without it the box-spanning `sl_f18` aggregate ranked as the
+best emergent vesicle candidate, because material wrapping the box sits at similar distance from a
+centroid that lands in empty solvent -- low CV, filling ~1, and the render shows scattered fragments.
+
+### Result of scanning all 163 saved states
+
+Best EMERGENT structure: `ves_phi26_12000`, 83 molecules, score **0.187** against 0.620 for a real
+vesicle (shellCV 0.326, inward 0.65, filling 1.05, paired 0.90). The render shows a curved open
+bilayer sheet with proper leaflets -- partway to closure, not closed.
+
+**No emergent vesicle exists in any saved state.**
+
+### How we would know this was wrong
+
+If a structure the renders show as clearly closed scores below ~0.3, the conjunction is too strict.
+Conversely `filling` alone is fooled by any non-compact aggregate, so it must never be reported
+without `shell_cv` and the percolation guard beside it.
