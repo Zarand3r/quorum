@@ -373,6 +373,14 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_thermal_ref",
+    srcs = ["_thermal_ref.py"],
+    main = "_thermal_ref.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_shot",
     srcs = ["_shot.py"],
     main = "_shot.py",

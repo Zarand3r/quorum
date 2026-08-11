@@ -338,3 +338,65 @@ If the flat threshold (0.90) is simply too strict for a thermally fluctuating me
 absolute numbers are depressed and only the ratio is meaningful. The planted-pole controls bound
 this: at sigma=0.2 rad a planted bilayer still reads 0.93/0.97, so a genuinely well-ordered
 fluctuating membrane should clear 0.5. Reading 0.18 is a real deficit, not a threshold artifact.
+
+---
+
+## D10 — The `bilayer_frac` success target is void; D9's ranking is retracted
+
+**Date:** 2026-08-11. **Retracts D9's comparative ranking and the ">0.5" target set in D9.**
+
+### Context
+
+External review required calibrating `bilayer_frac` on planted, thermalized vesicles of the target
+radii rather than on flat bilayers and micelles alone. Doing that exposed a deeper problem than a
+mis-set threshold.
+
+### The measurement
+
+A planted FLAT bilayer -- a phase independently believed stable for this chemistry (box-spanning slab
+exists, T=1.00, laterally fluid, intact 1.00 throughout) -- thermalized for 6000 steps:
+
+| step | bilayer_frac | paired | flat | intact |
+|---|---|---|---|---|
+| 0 | 1.000 | 1.000 | 1.000 | 0.12 (lattice artifact) |
+| 1500 | 0.117 | 0.875 | 0.125 | 1.00 |
+| 3750 | 0.312 | 0.930 | 0.320 | 1.00 |
+| 6000 | 0.125 | 0.922 | 0.125 | 1.00 |
+
+A healthy, intact, fluid flat bilayer reads **0.117-0.312 at kT=1**. Every structure this project has
+measured lies inside that band: 2-D ribbons 0.310, SL slab 0.184, planted R=9 vesicle 0.307, planted
+R=7.5 vesicle 0.179.
+
+### Consequences
+
+1. The ">0.5 within a finite aggregate" target is unreachable by any thermalized membrane. It was
+   calibrated on t=0 lattices at effectively zero orientational noise.
+2. **D9's ranking is retracted.** "Ribbons 0.310 beat the slab 0.184 by 1.7x" compares two points
+   inside a band whose reference oscillates 0.117 -> 0.312 -> 0.125 between consecutive snapshots of
+   an unchanging membrane. That is sampling noise, not a difference. The dimensional-bias control in
+   D9 was sound; it was simply answering a question that the thermal noise floor makes moot.
+3. "Planted vesicles are unstable" is NOT established. The R=7.5 and R=9 decays match what a healthy
+   flat bilayer does over the same interval.
+
+### Which half broke
+
+`paired` is robust under thermalization (flat slab 0.875-0.938) and orders structures by leaflet
+population (flat > R=9 0.756 > R=7.5 0.411 > R=6 0.196). `flat` collapses 1.000 -> ~0.15 on an
+unchanged membrane, because it thresholds a PER-MOLECULE dot product at 0.90 (25.8 deg) and
+single-molecule thermal tilt at kT=1 is comparable to that. It was never a curvature measure at kT>0.
+
+This is not the curvature failure the reviewer anticipated: the `s < 0.451R` bound is satisfied at
+every radius tested (neighbour window 1.6 rc against a 2.7 rc bound at R=6), and `flat` reads 0.975 on
+a planted R=6 vesicle at t=0. Thermal noise, not curvature, destroys it.
+
+### Success metric (replacing D9's)
+
+Until a robust flatness estimator exists, structural claims rest on `paired`, sealed lumen (water-
+containing, flood-filled), intactness, and shell radius -- not on `bilayer_frac`. On those, planted
+R=9 is the only vesicle behaving like one: sealed lumen 52 cells, intact 0.87, paired 0.756.
+
+### How we would know this was wrong
+
+If a thermalized planted MICELLE also reads paired ~0.75-0.9, then `paired` alone cannot discriminate
+and the conjunction is irreplaceable, making a robust `flat` mandatory rather than optional. That
+measurement is queued and is the single most important one outstanding.
