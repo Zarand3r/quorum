@@ -55,22 +55,31 @@ COL = {0: ("#16213a", 1.9), 1: ("#4db5ff", 4.4), 2: ("#ff9840", 4.4)}
 RGB = {0: (30, 42, 72), 1: (77, 181, 255), 2: (255, 152, 64)}
 
 
-def render(tag, title, sub, slab=4.0, out=None):
+def render(tag, title, sub, slab=4.0, view="xy", out=None):
+    """`view` names the two plotted axes; the third is the slice normal.
+
+    A membrane must be viewed EDGE-ON to show anything. Slicing along the membrane normal and
+    plotting the other two axes gives a face-on view, which looks like a uniform sheet of heads
+    whether or not a bilayer exists underneath. For a slab whose normal is z, use view="xz".
+    """
     z = np.load(f"{ST}/{tag}.npz")
     x, sp, L = z["x"], z["species"], float(z["L"])
     dim = x.shape[1]
 
+    ax_i, ax_j = "xyz".index(view[0]), "xyz".index(view[1])
     if dim == 3:
+        ax_k = 3 - ax_i - ax_j
         # slice through the centre of mass of the amphiphiles, not the box: an aggregate that has
         # drifted off-centre would otherwise be cut off-axis and look like a fragment
         lip = x[sp != 0]
         c = lip.mean(axis=0)
-        rel = x[:, 2] - c[2]
+        rel = x[:, ax_k] - c[ax_k]
         rel -= L * np.round(rel / L)
         keep = np.abs(rel) < slab / 2
         x, sp = x[keep], sp[keep]
-        note = f"slab {slab:.1f} rc through the aggregate centre"
+        note = f"{view} plane, slab {slab:.1f} rc along {'xyz'[ax_k]}"
     else:
+        ax_i, ax_j = 0, 1
         note = "full 2-D box"
 
     S = 780
@@ -81,7 +90,7 @@ def render(tag, title, sub, slab=4.0, out=None):
         op = 0.45 if s == 0 else 0.96
         pts = x[sp == s]
         for p in pts:
-            cx, cy = p[0] / L * S, S - p[1] / L * S
+            cx, cy = p[ax_i] / L * S, S - p[ax_j] / L * S
             P.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{r}" fill="{col}" fill-opacity="{op}"/>')
     P.append(f'<text x="12" y="{S + 20}" fill="#e8eef7" font-family="monospace" '
              f'font-size="15">{title}</text>')
@@ -99,7 +108,7 @@ def render(tag, title, sub, slab=4.0, out=None):
         rad = COL[s_][1] * 0.85
         alpha = 0.5 if s_ == 0 else 0.95
         for p in x[sp == s_]:
-            disc(img, p[0] / L * S, S - p[1] / L * S, rad, rgb, alpha)
+            disc(img, p[ax_i] / L * S, S - p[ax_j] / L * S, rad, rgb, alpha)
     png = f"{OUT}/{out or tag}.png"
     write_png(png, img)
     print(png)
@@ -112,4 +121,6 @@ if __name__ == "__main__":
         parts = spec.split("~")
         render(parts[0], parts[1] if len(parts) > 1 else parts[0],
                parts[2] if len(parts) > 2 else "",
-               float(parts[3]) if len(parts) > 3 else 4.0)
+               float(parts[3]) if len(parts) > 3 else 4.0,
+               parts[4] if len(parts) > 4 else "xy",
+               parts[5] if len(parts) > 5 else None)

@@ -1,0 +1,26 @@
+(01:08:18) INFO: Current date is 2026-08-11
+(01:08:18) Computing main repo mapping: 
+(01:08:18) Loading: 
+(01:08:18) Loading: 0 packages loaded
+(01:08:18) Analyzing: target //projects/vivarium:_thermal_ref (0 packages loaded, 0 targets configured)
+(01:08:18) Analyzing: target //projects/vivarium:_thermal_ref (0 packages loaded, 0 targets configured)
+
+(01:08:18) INFO: Analyzed target //projects/vivarium:_thermal_ref (0 packages loaded, 0 targets configured).
+(01:08:18) INFO: Found 1 target...
+Target //projects/vivarium:_thermal_ref up-to-date:
+  bazel-bin/projects/vivarium/_thermal_ref
+(01:08:18) INFO: Elapsed time: 0.043s, Critical Path: 0.00s
+(01:08:18) INFO: 1 process: 1 internal.
+(01:08:18) INFO: Build completed successfully, 1 total action
+(01:08:18) INFO: Running command line: bazel-bin/projects/vivarium/_thermal_ref 6000
+planted FLAT bilayer, n_amph=128, L=10.28, k_ang=15.0
+   step  bil_frac  paired   flat  intact      T
+      0     1.000   1.000  1.000    0.12  0.976
+    750     0.242   0.891  0.258    1.00  1.013
+   1500     0.117   0.875  0.125    1.00  1.036
+   2250     0.141   0.883  0.148    1.00  1.023
+   3000     0.164   0.938  0.164    1.00  0.999
+   3750     0.312   0.930  0.320    1.00  0.992
+   4500     0.188   0.906  0.195    1.00  0.999
+   5250     0.242   0.906  0.258    1.00  1.025
+   6000     0.125   0.922  0.125    1.00  1.000

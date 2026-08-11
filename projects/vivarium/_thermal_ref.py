@@ -35,6 +35,11 @@ def run(steps, n_per_leaf=64, k_ang=15.0, seed=1):
             f, pa, fl = bilayer_frac(d.x, d.L, b0, NB, NH)
             print(f"{t:>7}{f:>10.3f}{pa:>8.3f}{fl:>7.3f}{intact(d, n_amph):>8.2f}"
                   f"{d.temperature():>7.3f}", flush=True)
+            if t in (0, steps):
+                np.savez_compressed(
+                    f"/home/rbao/quorum-thermolife/projects/vivarium/docs/runs/states/"
+                    f"flat_therm_t{t}.npz",
+                    x=d.x, species=d.species, L=d.L, n_amph=n_amph, nb=NB, nh=NH)
         d.step()
 
 
