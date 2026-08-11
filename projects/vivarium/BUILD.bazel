@@ -373,6 +373,30 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_fluidity",
+    srcs = ["_fluidity.py"],
+    main = "_fluidity.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_disk_closure",
+    srcs = ["_disk_closure.py"],
+    main = "_disk_closure.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_geom",
+    srcs = ["_geom.py"],
+    main = "_geom.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_pairing",
     srcs = ["_pairing.py"],
     main = "_pairing.py",

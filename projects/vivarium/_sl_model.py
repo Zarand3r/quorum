@@ -111,17 +111,18 @@ def lumen(d, cell=0.8, min_cells=25):
         best = max(best, c)
     return best if best >= min_cells else 0
 
-frac, steps, N, seed = float(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
-n_amph = int(frac * N / NB)
-d = build(n_amph, N, seed)
-for _ in range(steps):
-    d.step()
-cl = [c for c in clusters(d, n_amph) if len(c) >= 3]
-lu = lumen(d)
-tag = f"sl_f{int(frac*100)}_N{N}_s{seed}"
-print(f"RESULT {tag:<20}n={n_amph:<4}aggs={len(cl):<4}largest={len(cl[0]) if cl else 0:<5}"
-      f"lumen={lu:<5}T={d.temperature():.2f} homog={d.density_homogeneity():.2f}   "
-      f"{'*** VESICLE ***' if lu >= 25 else 'no lumen'}", flush=True)
-np.savez_compressed(
-    f"/home/rbao/quorum-thermolife/projects/vivarium/docs/runs/states/{tag}.npz",
-    x=d.x, species=d.species, L=d.L, n_amph=n_amph, nb=NB, nh=NH)
+if __name__ == "__main__":
+    frac, steps, N, seed = float(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
+    n_amph = int(frac * N / NB)
+    d = build(n_amph, N, seed)
+    for _ in range(steps):
+        d.step()
+    cl = [c for c in clusters(d, n_amph) if len(c) >= 3]
+    lu = lumen(d)
+    tag = f"sl_f{int(frac*100)}_N{N}_s{seed}"
+    print(f"RESULT {tag:<20}n={n_amph:<4}aggs={len(cl):<4}largest={len(cl[0]) if cl else 0:<5}"
+          f"lumen={lu:<5}T={d.temperature():.2f} homog={d.density_homogeneity():.2f}   "
+          f"{'*** VESICLE ***' if lu >= 25 else 'no lumen'}", flush=True)
+    np.savez_compressed(
+        f"/home/rbao/quorum-thermolife/projects/vivarium/docs/runs/states/{tag}.npz",
+        x=d.x, species=d.species, L=d.L, n_amph=n_amph, nb=NB, nh=NH)
