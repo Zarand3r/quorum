@@ -115,7 +115,21 @@ if __name__ == "__main__":
     frac, steps, N, seed = float(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
     n_amph = int(frac * N / NB)
     d = build(n_amph, N, seed)
-    for _ in range(steps):
+    tag_ = f"sl_f{int(frac*100)}_N{N}_s{seed}"
+    # A multi-hour self-assembly run that prints only at the end is unmonitorable: a stalled or
+    # wrongly-sized run looks identical to a working one. Report the aggregation state periodically
+    # and checkpoint, so the trajectory can be measured with the corrected metrics without waiting.
+    every = max(steps // 20, 1)
+    for it in range(steps):
+        if it % every == 0:
+            cl_ = sorted((len(c) for c in clusters(d, n_amph) if len(c) >= 3), reverse=True)
+            print(f"  step {it:>7}  aggs>=3 {len(cl_):>4}  largest {cl_[0] if cl_ else 0:>5}  "
+                  f"lumen {lumen(d):>5}  T={d.temperature():.3f} "
+                  f"homog={d.density_homogeneity():.2f}", flush=True)
+            np.savez_compressed(
+                "/home/rbao/quorum-thermolife/projects/vivarium/docs/runs/states/"
+                f"{tag_}_ck.npz",
+                x=d.x, species=d.species, L=d.L, n_amph=n_amph, nb=NB, nh=NH)
         d.step()
     cl = [c for c in clusters(d, n_amph) if len(c) >= 3]
     lu = lumen(d)

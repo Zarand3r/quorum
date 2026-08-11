@@ -13,3 +13,4 @@ Target //projects/vivarium:_sl_model up-to-date:
 (22:31:04) INFO: 1 process: 1 internal.
 (22:31:04) INFO: Build completed successfully, 1 total action
 (22:31:04) INFO: Running command line: bazel-bin/projects/vivarium/_sl_model 0.08 45000 40000 1
+RESULT sl_f8_N40000_s1     n=290 aggs=15  largest=40   lumen=0    T=1.01 homog=0.03   no lumen

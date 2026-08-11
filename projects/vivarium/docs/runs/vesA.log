@@ -1,0 +1,16 @@
+(01:57:27) INFO: Current date is 2026-08-11
+(01:57:27) Computing main repo mapping: 
+(01:57:27) Loading: 
+(01:57:27) Loading: 0 packages loaded
+(01:57:27) Analyzing: target //projects/vivarium:_sl_model (1 packages loaded, 0 targets configured)
+(01:57:27) Analyzing: target //projects/vivarium:_sl_model (1 packages loaded, 0 targets configured)
+
+(01:57:27) INFO: Analyzed target //projects/vivarium:_sl_model (1 packages loaded, 78 targets configured).
+(01:57:27) INFO: Found 1 target...
+Target //projects/vivarium:_sl_model up-to-date:
+  bazel-bin/projects/vivarium/_sl_model
+(01:57:27) INFO: Elapsed time: 0.237s, Critical Path: 0.17s
+(01:57:27) INFO: 4 processes: 4 internal.
+(01:57:27) INFO: Build completed successfully, 4 total actions
+(01:57:27) INFO: Running command line: bazel-bin/projects/vivarium/_sl_model 0.1373 100000 59049 1
+  step       0  aggs>=3   72  largest     9  lumen     0  T=0.997 homog=0.08
