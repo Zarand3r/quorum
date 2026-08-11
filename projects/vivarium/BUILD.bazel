@@ -373,6 +373,14 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_tjunction",
+    srcs = ["_tjunction.py"],
+    main = "_tjunction.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_micelle_pole",
     srcs = ["_micelle_pole.py"],
     main = "_micelle_pole.py",

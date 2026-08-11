@@ -17,3 +17,6 @@ single-tail H3(C4), n_amph=171, N=12000, L=15.87
   step      0  aggregates>=3:    5  largest  132  median(>=3)    5  T=1.000
   step   3000  aggregates>=3:   10  largest   47  median(>=3)   12  T=1.003
   step   6000  aggregates>=3:   10  largest   70  median(>=3)    9  T=1.020
+  step   9000  aggregates>=3:   12  largest   32  median(>=3)   11  T=1.020
+  step  12000  aggregates>=3:    9  largest  102  median(>=3)    7  T=1.008
+  step  15000  aggregates>=3:    7  largest   44  median(>=3)   24  T=1.009

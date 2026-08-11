@@ -29,7 +29,7 @@ Engine validated against the published Groot–Warren EOS at `p/p_pred = 0.92–
 | claim | status |
 |---|---|
 | stable flat bilayer (planted, thermalized) | **yes**, intact 1.00 over 6000 steps, rendered edge-on |
-| stable vesicle (planted, R=9, thermalized) | **yes**, plateaus; caveat in §5 |
+| vesicle (planted, R=9, thermalized) | **hollow bilayer shell survives 6000 steps; equilibrium stability UNPROVEN** — intactness 0.70, lumen still falling, ~30% of amphiphiles have left the shell (§5) |
 | emergent bilayer, 2-D | **yes**, branched ribbons |
 | emergent bilayer, 3-D | partial — patchy thick blobs, visibly worse than planted |
 | **emergent vesicle** | **no** — runs launched, ETA 17–20 h |
@@ -76,8 +76,10 @@ artifact — `flat` reads 0.975 on a planted R=6 vesicle at t=0.
    0.824–0.885. **But it saturates at 0.951–0.982 on every real structure**, so it is a micelle guard,
    not a quality measure. Reported honestly rather than presented as a fix.
 2. *Hydrophobic burial* — fraction of tail beads with no water within 1.0 rc. A density measure, so
-   angular noise cannot touch it, and physically it **is** the edge energy (a line-tension proxy).
-   This is the one that reproduces what the renders show:
+   angular noise cannot touch it. It is a **proxy for hydrophobic exposure, one contributor to edge
+   free energy** — NOT the line tension itself, which is a free energy per unit edge length and also
+   contains packing, entropy, solvent and headgroup terms. Γ must be measured directly, not
+   substituted for. This is the one that reproduces what the renders show:
 
    | structure | tail buried | paired | flat_smooth |
    |---|---|---|---|
@@ -88,6 +90,13 @@ artifact — `flat` reads 0.975 on a planted R=6 vesicle at t=0.
    | emergent 2-D ribbons | 0.402 | 0.950 | 0.967 |
 
    Head burial is 0.000 everywhere, confirming correct amphiphile orientation.
+   **This table does not rank membrane quality.** Raw burial is strongly size-confounded: exposure is
+   concentrated at the rim, so `N_exposed/N_lipid ~ L_edge/A ~ 1/R`, and burial improves with patch
+   size at identical local quality. Size, curvature, dimensionality and edge length all vary across
+   these rows at once, so the 2-D-vs-3-D comparison in particular is meaningless. Raw burial is kept
+   as a descriptive observable only; ranking requires either exposure per unit free edge,
+   `lambda_expose = N_contacts / L_edge`, or excess exposure against a matched planted reference at
+   the same N, curvature and concentration.
 3. *Thermalized micelle pole* — a spherical micelle of the two-tailed lipid is physically impossible
    (packing parameter is in the bilayer regime), so the pole keeps the chemistry and **removes one
    tail**, then lets the model assemble its own. Running: largest aggregate 47–70 against a
@@ -110,11 +119,12 @@ Vesicles planted with the correct leaflet asymmetry, thermalized 6000 steps:
 | 7.5 | 428:47 | 0.640 → 0.411 | 333 → 19 | 0.69 | 5.58 → 6.63 (+19%) |
 | 9.0 | 616:121 | 0.878 → **0.757** | 537 → **43** | 0.70 | 6.99 → 7.80 (+14%) |
 
-**R=9 holds.** Over steps 1500→6000 paired runs 0.701→0.756→0.745→0.757 and radius 7.72→7.80: a
-plateau, not decay. The render shows a hollow shell with heads on both outer and inner faces.
-
-Caveats: `intact` falls to 0.70, so ~30% of amphiphiles have left the shell, and the lumen is slowly
-shrinking (58→43). Longer runs are needed before calling it equilibrated rather than slowly bleeding.
+**R=9 survives 6000 steps as a hollow bilayer shell. Equilibrium stability is UNPROVEN.** Pairing and
+radius do plateau (paired 0.701→0.756→0.745→0.757, radius 7.72→7.80) and the render shows a hollow
+shell with heads on both outer and inner faces. But `intact` falls to 0.70, so ~30% of amphiphiles
+have left the shell, and the lumen is still falling (58→43) at the end of the run. That is too much
+ongoing evolution to call the structure stable; it may be slowly bleeding to a different end state.
+Resolving this needs a run several times longer, not a re-reading of these numbers.
 R=6 collapses to a filled blob. **All three swell**, monotonically with decreasing R — I suspect an
 osmotic artifact of planting lumen water at bulk density.
 
@@ -123,8 +133,11 @@ osmotic artifact of planting lumen water at bulk density.
 ## 6. Running now: the emergent-vesicle attempt
 
 Sized from the measurements for the first time. R=9 needs 737 amphiphiles; at L=3R a box-spanning
-lamella needs 884, so the vesicle is favoured by 20%. That margin is why earlier runs (174–305
-amphiphiles, boxes too small) could not have worked.
+lamella needs 884. **This is mass balance, not thermodynamics:** it makes a normal-density
+box-spanning lamella inaccessible at this amphiphile count. It does NOT establish a free-energy
+preference for a vesicle, and it does not exclude two or three smaller vesicles, multiple disks,
+cylindrical aggregates, perforated lamellae, branched networks, or one large disk that never closes.
+Earlier runs (174–305 amphiphiles, boxes too small) failed this test outright.
 
 - **vesA**: N=59 049, L=27.0, 737 amphiphiles, φ=0.137, lamella margin 1.20
 - **vesB**: N=75 076, L=29.2, 737 amphiphiles, φ=0.108, lamella margin 1.41
@@ -148,9 +161,11 @@ whether the largest aggregate climbs toward ~737 or stalls at 100–300, where e
    is osmotic, what is the standard way to plant a DPD vesicle at balance — adjust lumen water to match
    exterior chemical potential, equilibrate through a temporarily permeable membrane, or measure area
    per lipid after relaxation instead of imposing it?
-4. **Is 737 amphiphiles at φ=0.137 the right self-assembly target**, or does the mass-balance margin of
-   1.20 leave too many competing morphologies (cylinders, perforated lamellae, multiple small vesicles)
-   accessible? Would you push to L=3.5R and accept ~30 h?
+4. *(answered — vesA vs vesB IS the experiment; do not jump to L=3.5R until their trajectories say
+   which regime we are in. Classify on `M_max(t)`, `N_clusters(t)`, `L_edge(t)`, percolation: if vesA
+   slabs and vesB does not, the box matters; if both stall at many small aggregates, a bigger box only
+   dilutes the same 737 amphiphiles and slows coarsening; if both make one large finite aggregate that
+   refuses to close, it is membrane mechanics.)*
 5. **Untested from your previous review:** the planted T/Y-junction healing test (whether branched
    networks are a kinetic intermediate or a competing equilibrium), the neighbour-persistence
    correlator `C_nn(t)` as opposed to bare MSD, and direct measurement of κ from the height-fluctuation
