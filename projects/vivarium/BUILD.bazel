@@ -373,6 +373,22 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_shot",
+    srcs = ["_shot.py"],
+    main = "_shot.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_vesicle_calib",
+    srcs = ["_vesicle_calib.py"],
+    main = "_vesicle_calib.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_fluidity",
     srcs = ["_fluidity.py"],
     main = "_fluidity.py",

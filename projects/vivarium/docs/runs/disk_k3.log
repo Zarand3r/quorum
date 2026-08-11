@@ -1,17 +1,17 @@
-(00:06:54) INFO: Current date is 2026-08-11
-(00:06:54) Computing main repo mapping: 
-(00:06:54) Loading: 
-(00:06:54) Loading: 0 packages loaded
-(00:06:54) Analyzing: target //projects/vivarium:_disk_closure (0 packages loaded, 0 targets configured)
-(00:06:54) Analyzing: target //projects/vivarium:_disk_closure (0 packages loaded, 0 targets configured)
+(00:19:41) INFO: Current date is 2026-08-11
+(00:19:41) Computing main repo mapping: 
+(00:19:41) Loading: 
+(00:19:41) Loading: 0 packages loaded
+(00:19:41) Analyzing: target //projects/vivarium:_disk_closure (0 packages loaded, 0 targets configured)
+(00:19:41) Analyzing: target //projects/vivarium:_disk_closure (0 packages loaded, 0 targets configured)
 
-(00:06:54) INFO: Analyzed target //projects/vivarium:_disk_closure (0 packages loaded, 0 targets configured).
-(00:06:54) INFO: Found 1 target...
+(00:19:41) INFO: Analyzed target //projects/vivarium:_disk_closure (0 packages loaded, 0 targets configured).
+(00:19:41) INFO: Found 1 target...
 Target //projects/vivarium:_disk_closure up-to-date:
   bazel-bin/projects/vivarium/_disk_closure
-(00:06:54) INFO: Elapsed time: 0.040s, Critical Path: 0.00s
-(00:06:54) INFO: 1 process: 1 internal.
-(00:06:54) INFO: Build completed successfully, 1 total action
-(00:06:54) INFO: Running command line: bazel-bin/projects/vivarium/_disk_closure 6 29800 12000 3
+(00:19:41) INFO: Elapsed time: 0.034s, Critical Path: 0.00s
+(00:19:41) INFO: 1 process: 1 internal.
+(00:19:41) INFO: Build completed successfully, 1 total action
+(00:19:41) INFO: Running command line: bazel-bin/projects/vivarium/_disk_closure 6 29800 12000 3
  k_ang  n_amph  R_disk      L    step  asphere  lumen      T   note
    3.0     281    8.57   21.5       0    0.084      0  1.000   flat

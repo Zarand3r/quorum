@@ -200,6 +200,13 @@ hypothesis is not supported.
   `k_ang ∈ {0, 3, 8, 15}` for 12 000 steps. This tests `R_c = 2κ/Γ` **directly** by moving κ at fixed
   chemistry, and removes aggregation kinetics entirely — if a disk with `R > R_c` exists, closure is
   downhill and fast. Readouts: gyration asphericity (0 = flat disk, 1 = sphere) and flood-fill lumen.
+
+  **Defect found and fixed mid-run.** The first version flood-filled merely-*unoccupied* cells and
+  reported `lumen = 51–68` on disks that were still provably flat (asphericity 0.08). It was counting
+  voids inside the bilayer's own tail core — the same false positive that retired the old `enclosed`
+  metric. A lumen now only counts if the enclosed pocket **actually contains water**, which reads 0 on
+  a flat disk as it must. Any lumen number produced by this project before 2026-08-11 should be
+  checked for this.
 - **Fluidity re-run** with the intactness control.
 - One marginal legacy vesicle run (290 amphiphiles, L = 23.7).
 

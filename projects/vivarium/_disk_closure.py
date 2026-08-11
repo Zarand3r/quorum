@@ -102,9 +102,15 @@ def shape_and_lumen(d, n_amph, cells=26):
     ev = np.sort(np.linalg.eigvalsh(np.cov(q.T)))[::-1]
     flat = float(ev[2] / ev[0])                       # ~0 for a disk, ~1 for a sphere
 
+    # A lumen must contain WATER. Flood-filling merely-unoccupied cells counts the voids inside
+    # the bilayer's own tail core, which read 51-68 on disks that were still provably flat
+    # (asphericity 0.08) -- the same false positive that retired the old `enclosed` metric.
     occ = np.zeros((cells,) * 3, bool)
     idx = (d.x[lip] / d.L * cells).astype(int) % cells
     occ[idx[:, 0], idx[:, 1], idx[:, 2]] = True
+    wat = np.zeros((cells,) * 3, bool)
+    widx = (d.x[~lip] / d.L * cells).astype(int) % cells
+    wat[widx[:, 0], widx[:, 1], widx[:, 2]] = True
     free = ~occ
     seen = np.zeros_like(free)
     stack = [(i, j, k) for i in range(cells) for j in range(cells) for k in range(cells)
@@ -118,7 +124,7 @@ def shape_and_lumen(d, n_amph, cells=26):
             if 0 <= a < cells and 0 <= b_ < cells and 0 <= cc < cells and free[a, b_, cc] and not seen[a, b_, cc]:
                 seen[a, b_, cc] = True
                 stack.append((a, b_, cc))
-    lumen = int((free & ~seen).sum())
+    lumen = int((free & ~seen & wat).sum())      # enclosed AND actually holding water
     return flat, lumen
 
 

@@ -18,3 +18,25 @@ SL as-run           a_TW=80  k_ang=15.0  n_amph=128  L=10.28  pitch=1.28
     step   MSD_par  sqrt/pitch      T  intact   interpretation
     2000     4.504        1.65  0.994    1.00   FLUID (neighbours exchange)
     4000     6.357        1.96  1.000    1.00   FLUID (neighbours exchange)
+    6000    10.379        2.51  1.023    1.00   FLUID (neighbours exchange)
+    8000    14.359        2.95  1.011    1.00   FLUID (neighbours exchange)
+   10000    19.075        3.40  1.009    1.00   FLUID (neighbours exchange)
+   12000    23.710        3.79  1.014    1.00   FLUID (neighbours exchange)
+
+weaker hydrophobic  a_TW=40  k_ang=15.0  n_amph=128  L=10.28  pitch=1.28
+    step   MSD_par  sqrt/pitch      T  intact   interpretation
+    2000     4.582        1.67  1.004    1.00   FLUID (neighbours exchange)
+    4000     9.521        2.40  1.017    1.00   FLUID (neighbours exchange)
+    6000    15.358        3.05  1.038    1.00   FLUID (neighbours exchange)
+    8000    19.889        3.47  1.015    1.00   FLUID (neighbours exchange)
+   10000    24.777        3.87  1.002    1.00   FLUID (neighbours exchange)
+   12000    28.478        4.15  1.019    1.00   FLUID (neighbours exchange)
+
+flexible tails      a_TW=80  k_ang=0.0  n_amph=128  L=10.28  pitch=1.28
+    step   MSD_par  sqrt/pitch      T  intact   interpretation
+    2000     5.473        1.82  1.017    1.00   FLUID (neighbours exchange)
+    4000    10.532        2.53  0.977    1.00   FLUID (neighbours exchange)
+    6000    14.648        2.98  1.018    1.00   FLUID (neighbours exchange)
+    8000    18.286        3.33  0.994    1.00   FLUID (neighbours exchange)
+   10000    20.527        3.53  1.015    1.00   FLUID (neighbours exchange)
+   12000    25.140        3.90  1.018    1.00   FLUID (neighbours exchange)
