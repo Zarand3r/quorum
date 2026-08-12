@@ -1,4 +1,24 @@
-# Handoff: our engine reproduces the YLZ *potential* exactly but not its *morphology*
+# RESOLVED -- our engine DOES reproduce the vesicle; this handoff is superseded
+
+**Resolution, 2026-08-12.** The premise below is wrong. Our engine produces a closed vesicle at
+1.05M steps and holds it through 1.5M: largest cluster 94 particles, R = 2.62 +/- 0.12 (radial
+spread 0.045), ZERO particles inside 0.5R, gyration spectrum e2/e1 = 0.90-0.95 and e3/e1 = 0.85-0.90,
+stable across four consecutive checkpoints. Confirmed by render: a thin slice is a clean ring.
+
+The document was written from a trajectory truncated at 450k steps, where the state was still a flat
+sheet. Closure happened between 450k and 1.05M. There was no dynamical discrepancy to explain: the
+inertia mismatch, the Langevin-versus-Nose-Hoover difference and the first-order orientation update
+are all real differences, but none of them prevented vesiculation. The run simply had not finished.
+
+The one durable result from this investigation is section 2.1: our energy function agrees with
+LAMMPS to ~6 significant figures on identical configurations, with the orientation vector read as
+the particle's body X-axis. That verification stands and is worth keeping.
+
+Original text follows, retained for the record.
+
+---
+
+# (superseded) Handoff: our engine reproduces the YLZ *potential* exactly but not its *morphology*
 
 **Date:** 2026-08-12. **Worktree:** `/home/rbao/quorum-thermolife`, branch `quorum-asal-boids-reproduction`.
 Self-contained. Prior context in `docs/ROADMAP_V2.md`; not required to answer the question below.
