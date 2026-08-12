@@ -373,6 +373,22 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_ylz_run",
+    srcs = ["_ylz_run.py"],
+    main = "_ylz_run.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "ylz",
+    srcs = ["ylz.py"],
+    main = "ylz.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_lammps_import",
     srcs = ["_lammps_import.py"],
     main = "_lammps_import.py",
