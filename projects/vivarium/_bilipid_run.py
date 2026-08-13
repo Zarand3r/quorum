@@ -20,6 +20,50 @@ from _ylz_run import shape
 ST = "/home/rbao/quorum-thermolife/projects/vivarium/docs/runs/states"
 
 
+def all_clusters(c, L, cut=1.8, min_size=20):
+    """Every cluster above min_size, unwrapped, largest first.
+
+    Reporting only the LARGEST cluster is misleading: at 1M steps an 84-molecule vesicle was still
+    present and unchanged, but an 85-molecule sheet had overtaken it by one molecule, so the run log
+    printed "flat sheet/disc" and the vesicle was invisible. Structure and size are different
+    questions and the driver must not conflate them.
+    """
+    from collections import deque
+    n = len(c)
+    d = c[:, None, :] - c[None, :, :]
+    d -= L * np.round(d / L)
+    adj = np.linalg.norm(d, axis=2) < cut
+    np.fill_diagonal(adj, False)
+    lab = -np.ones(n, int)
+    k = 0
+    for s0 in range(n):
+        if lab[s0] >= 0:
+            continue
+        q = deque([s0]); lab[s0] = k
+        while q:
+            i = q.popleft()
+            for j in np.flatnonzero(adj[i]):
+                if lab[j] < 0:
+                    lab[j] = k; q.append(j)
+        k += 1
+    out = []
+    for cid in np.argsort(-np.bincount(lab)):
+        sel = np.flatnonzero(lab == cid)
+        if len(sel) < min_size:
+            continue
+        pos = np.full((n, 3), np.nan)
+        root = sel[0]; pos[root] = c[root]
+        q = deque([root])
+        while q:
+            i = q.popleft()
+            for j in np.flatnonzero(adj[i]):
+                if np.isnan(pos[j, 0]):
+                    o = c[j] - c[i]; o -= L * np.round(o / L)
+                    pos[j] = pos[i] + o; q.append(j)
+        out.append((sel, pos[sel]))
+    return out, int(lab.max()) + 1
+
+
 def largest_cluster(c, L, cut=1.8):
     """Indices AND unwrapped positions of the largest cluster, from a single traversal.
 
@@ -89,17 +133,24 @@ if __name__ == "__main__":
     for t in range(steps + 1):
         if t % every == 0:
             c, u, _ = s.frame()
-            sel, P, nc = largest_cluster(c, s.L)
-            nb = len(sel)
-            if nb >= 8:
+            groups, nc = all_clusters(c, s.L)
+            best = None          # report the most vesicle-like cluster, not merely the biggest
+            for sel, P in groups:
                 R, cv, ho, e2, e3, sh = shape(P)
-                ho_frac = head_outward(s, P, u[sel], P.mean(axis=0))
+                hf = head_outward(s, P, u[sel], P.mean(axis=0))
+                score = (sh == "VESICLE (hollow sphere)", len(sel))
+                if best is None or score > best[0]:
+                    best = (score, len(sel), R, cv, ho, e2, e3, hf, sh)
+            if best is None:
+                print(f"{t:>9}{s.energy()/s.n_mol:>10.3f}{s.temperature():>7.3f}{nc:>6}"
+                      f"{0:>9}{0.0:>7.2f}{0.0:>9.3f}{0.0:>8.3f}{0.0:>6.2f}{0.0:>6.2f}"
+                      f"{float('nan'):>9.2f}   dispersed", flush=True)
             else:
-                R = cv = ho = e2 = e3 = 0.0
-                sh, ho_frac = "dispersed", float("nan")
-            print(f"{t:>9}{s.energy()/s.n_mol:>10.3f}{s.temperature():>7.3f}{nc:>6}{nb:>9}"
-                  f"{R:>7.2f}{cv:>9.3f}{ho:>8.3f}{e2:>6.2f}{e3:>6.2f}{ho_frac:>9.2f}   {sh}",
-                  flush=True)
+                _, nb, R, cv, ho, e2, e3, hf, sh = best
+                nves = sum(1 for sel, P in groups if shape(P)[5] == "VESICLE (hollow sphere)")
+                print(f"{t:>9}{s.energy()/s.n_mol:>10.3f}{s.temperature():>7.3f}{nc:>6}"
+                      f"{nb:>9}{R:>7.2f}{cv:>9.3f}{ho:>8.3f}{e2:>6.2f}{e3:>6.2f}{hf:>9.2f}   "
+                      f"{sh}  [vesicles: {nves}]", flush=True)
             x, sp = s.positions_species()
             np.savez_compressed(f"{ST}/{tag}.npz", x=x, species=sp, L=s.L,
                                 n_amph=s.n_mol, nb=2, nh=1)
