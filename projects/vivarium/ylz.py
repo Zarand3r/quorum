@@ -91,11 +91,20 @@ class YLZ:
     """
 
     def __init__(self, n_part, L, kT=0.1724, eps=1.0, sigma=1.0, zeta=4.5, mu=3.0, beta=0.1,
-                 rc=2.6, dt=0.01, gamma=1.0, seed=0):
+                 rc=2.6, dt=0.01, gamma=1.0, seed=0, bounded_core=False):
         self.rng = np.random.default_rng(seed)
         self.n, self.L, self.dt, self.kT, self.gamma = n_part, float(L), dt, kT, gamma
         self.eps, self.zeta, self.mu, self.beta, self.rc = eps, zeta, mu, beta, rc
         self.rmin = 2.0 ** (1.0 / 6.0) * sigma
+        # M3 of ROADMAP_V2. Published YLZ uses u_R = eps[(rmin/r)^4 - 2(rmin/r)^2], which DIVERGES
+        # as r^-4 at contact (u_R(0.01) ~ 1.6e8). Vivarium forbids divergent kernels, so the core
+        # must be replaced by a bounded one. The harmonic below is matched to the original in value,
+        # slope and curvature at rmin -- u_R(rmin) = -eps, u_R'(rmin) = 0 (rmin is the minimum), and
+        # u_R''(rmin) = 8 eps/rmin^2 -- so k = 4 eps/rmin^2 and the contact energy is a finite 3 eps.
+        # Everything else about the model is untouched, so a change in outcome is attributable to
+        # this substitution alone.
+        self.bounded_core = bool(bounded_core)
+        self.k_core = 4.0 * eps / self.rmin ** 2
         self.x = self.rng.uniform(0, L, (n_part, 3))
         self.v = self.rng.normal(0.0, np.sqrt(kT), (n_part, 3))
         self.v -= self.v.mean(axis=0)
@@ -131,11 +140,21 @@ class YLZ:
         cj = np.einsum("ic,ic->i", nj, rhat)
         a = np.einsum("ic,ic->i", ni, nj) - ci * cj + self.beta * (ci - cj) - self.beta ** 2
         phi = 1.0 + self.mu * (a - 1.0)
-        uR = self.eps * ((self.rmin / r) ** 4 - 2.0 * (self.rmin / r) ** 2)
+        uR = self._u_rep(r)
         arg = 0.5 * np.pi * (r - self.rmin) / (self.rc - self.rmin)
         uA = -self.eps * np.cos(arg) ** (2 * self.zeta)
         near = r < self.rmin
         return float(np.where(near, uR + (1.0 - phi) * self.eps, uA * phi).sum())
+
+    def _u_rep(self, r):
+        if self.bounded_core:
+            return -self.eps + self.k_core * (self.rmin - r) ** 2
+        return self.eps * ((self.rmin / r) ** 4 - 2.0 * (self.rmin / r) ** 2)
+
+    def _du_rep(self, r):
+        if self.bounded_core:
+            return -2.0 * self.k_core * (self.rmin - r)
+        return self.eps * (-4.0 * self.rmin ** 4 / r ** 5 + 4.0 * self.rmin ** 2 / r ** 3)
 
     def forces_torques(self):
         """Analytic dU/dx and dU/dn, converted to force and torque. Verified in check_gradients()."""
@@ -161,7 +180,7 @@ class YLZ:
         uA = -self.eps * cosa ** (2 * self.zeta)
         # d uA/dr = -eps * 2 zeta cos^(2zeta-1) * (-sin) * (pi/2w) = eps zeta pi/w cos^(2zeta-1) sin
         duA = self.eps * self.zeta * np.pi / w * cosa ** (2 * self.zeta - 1) * np.sin(arg)
-        duR = self.eps * (-4.0 * self.rmin ** 4 / r ** 5 + 4.0 * self.rmin ** 2 / r ** 3)
+        duR = self._du_rep(r)
 
         dU_dr = np.where(near, duR, duA * phi)          # radial part at fixed orientation
         dU_dphi = np.where(near, -self.eps, uA)

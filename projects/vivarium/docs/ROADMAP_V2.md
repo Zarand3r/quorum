@@ -19,8 +19,9 @@ failure then localises to the step that caused it.
 |---|---|---|
 | **M0** | stock LAMMPS `pair_style ylz`, unmodified | **DONE** — vesicles, 129-particle shells, R=3.08+/-0.16 |
 | **M0b** | stock LAMMPS `examples/micelle`, unmodified, 2-D | **DONE** — bilayer strips, NO closure |
-| M1 | YLZ physics reimplemented in our engine | next |
-| M2 | M1 with one interaction replaced by a transformer-expressible form | |
+| M1 | YLZ physics reimplemented in our engine | **DONE** -- vesicle, 94 particles, R=2.62+/-0.12, stable 1.05M-1.5M |
+| M2 | YLZ written as one attention layer | **DONE** -- exact identity, 1.6e-16 relative |
+| M3 | bounded repulsive core (Vivarium forbids divergent kernels) | **FAILS at 3 eps** -- collapse, see below |
 | M3.. | continue substituting, one at a time | |
 | G | strict-2-D closure | open research question |
 
@@ -54,8 +55,10 @@ against 20 hours.
 
 This was not obvious and is the main strategic finding.
 
-* **Bounded and finite.** The YLZ pair potential has no divergent core, which is the property
-  Vivarium requires and the reason DPD was chosen in the first place. YLZ has it too.
+* **CORRECTION (2026-08-12).** An earlier version of this document claimed the YLZ pair potential
+  has no divergent core. That is WRONG. Its repulsion is `eps[(rmin/r)^4 - 2(rmin/r)^2]`, which
+  diverges as r^-4: u_R(0.01) ~ 1.6e8. It is softer than Lennard-Jones r^-12 but not bounded, so it
+  violates Vivarium's no-divergent-kernel requirement and must be replaced. See M3 below.
 * **One particle per lipid patch.** A fixed particle count with no solvent maps directly onto a fixed
   token count, which is Vivarium's hard constraint. Our 11-bead-plus-solvent model does not.
 * **The interaction is already dot-product algebra.** Each particle carries a unit orientation
@@ -94,3 +97,27 @@ cd projects/vivarium/lammps
 lmp -in in.b0.1        # self-assembling vesicles, beta = 0.1, ~3 minutes
 lmp -in in.long        # 2-D bilayer strips, examples/micelle model unmodified
 ```
+
+
+## M3 result: a bounded core matched to YLZ's curvature COLLAPSES the membrane
+
+Vivarium forbids divergent kernels, so the `r^-4` core has to go. The first replacement was a
+harmonic matched to the original in value, slope and curvature at r_min (u = -eps + k(rmin-r)^2 with
+k = 4 eps/rmin^2), giving a finite contact energy of 3 eps. Gradient checks still pass (1.8e-8).
+Everything else in the model is untouched.
+
+| step | divergent r^-4 core | bounded core, 3 eps contact |
+|---|---|---|
+| 150k | E/particle -1.84, R 2.27 | -3.50, R **0.81** |
+| 300k | E/particle -2.14, R 2.63 | **-5.96**, R **0.82** |
+
+R ~ 0.8 with 50 particles in the cluster is roughly 12x denser than close packing: the particles have
+collapsed into each other. Energy falling steeply while radius stays fixed is the signature.
+
+**What this does and does not establish.** It shows that THIS bounded core is too soft, not that
+bounded cores cannot work. The contact energy of 3 eps against kT = 0.1724 is only ~17 kT, and with
+many simultaneous neighbours that barrier is surmountable. The obvious next experiment is a scan over
+contact energy (say 10, 30, 100, 300 eps) asking whether any value both prevents collapse and
+preserves vesiculation. If a window exists, Vivarium's constraint is satisfiable. If none does, the
+no-divergent-kernel requirement and membrane self-assembly are in genuine tension, which would be a
+real architectural result and the most valuable output of this ladder so far.

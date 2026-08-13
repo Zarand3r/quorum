@@ -373,6 +373,14 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "attention_ylz",
+    srcs = ["attention_ylz.py"],
+    main = "attention_ylz.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_ylz_run",
     srcs = ["_ylz_run.py"],
     main = "_ylz_run.py",
