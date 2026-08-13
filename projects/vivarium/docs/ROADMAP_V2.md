@@ -22,7 +22,8 @@ failure then localises to the step that caused it.
 | M1 | YLZ physics reimplemented in our engine | **DONE** -- vesicle, 94 particles, R=2.62+/-0.12, stable 1.05M-1.5M |
 | M2 | YLZ written as one attention layer | **DONE** -- exact identity, 1.6e-16 relative |
 | M3 | bounded repulsive core (Vivarium forbids divergent kernels) | **DONE** -- vesicles at 30-100 eps contact; window found |
-| M3.. | continue substituting, one at a time | |
+| M4 | TWO-SPECIES amphiphile (Vivarium's head/tail representation) | **DONE** -- 84-molecule vesicle, heads outward 1.000 |
+| M5.. | softmax normalisation, weight tying, local learning rule | next |
 | G | strict-2-D closure | open research question |
 
 The first rung where vesiculation disappears is the answer to the project's actual question.

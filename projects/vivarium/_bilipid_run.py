@@ -15,9 +15,49 @@ import sys
 import numpy as np
 
 from bilipid import BiLipid
-from _ylz_run import clusters_unwrapped, shape
+from _ylz_run import shape
 
 ST = "/home/rbao/quorum-thermolife/projects/vivarium/docs/runs/states"
+
+
+def largest_cluster(c, L, cut=1.8):
+    """Indices AND unwrapped positions of the largest cluster, from a single traversal.
+
+    Returning both from one BFS is the point. An earlier version clustered twice -- once for
+    positions, once for orientations -- and paired index k of one with index k of the other. The
+    orderings differ, so the head-orientation check compared unrelated molecules and reported
+    exactly 0.5, which reads as "chemically ambivalent" when the true value is 1.000.
+    """
+    from collections import deque
+    n = len(c)
+    d = c[:, None, :] - c[None, :, :]
+    d -= L * np.round(d / L)
+    adj = np.linalg.norm(d, axis=2) < cut
+    np.fill_diagonal(adj, False)
+    lab = -np.ones(n, int)
+    k = 0
+    for s0 in range(n):
+        if lab[s0] >= 0:
+            continue
+        q = deque([s0]); lab[s0] = k
+        while q:
+            i = q.popleft()
+            for j in np.flatnonzero(adj[i]):
+                if lab[j] < 0:
+                    lab[j] = k; q.append(j)
+        k += 1
+    sizes = np.bincount(lab)
+    sel = np.flatnonzero(lab == sizes.argmax())
+    pos = np.full((n, 3), np.nan)
+    root = sel[0]; pos[root] = c[root]
+    q = deque([root])
+    while q:
+        i = q.popleft()
+        for j in np.flatnonzero(adj[i]):
+            if np.isnan(pos[j, 0]):
+                o = c[j] - c[i]; o -= L * np.round(o / L)
+                pos[j] = pos[i] + o; q.append(j)
+    return sel, pos[sel], len(sizes)
 
 
 def head_outward(s, sel_centres, u_sel, ctr):
@@ -49,31 +89,10 @@ if __name__ == "__main__":
     for t in range(steps + 1):
         if t % every == 0:
             c, u, _ = s.frame()
-            P, nb, nc = clusters_unwrapped(c, s.L, cut=1.8)
+            sel, P, nc = largest_cluster(c, s.L)
+            nb = len(sel)
             if nb >= 8:
                 R, cv, ho, e2, e3, sh = shape(P)
-                # recover which molecules are in that cluster, for the head-orientation check
-                d = c[:, None, :] - c[None, :, :]
-                d -= s.L * np.round(d / s.L)
-                adj = np.linalg.norm(d, axis=2) < 1.8
-                np.fill_diagonal(adj, False)
-                seen = np.zeros(len(c), bool)
-                best = None
-                for k in range(len(c)):
-                    if seen[k]:
-                        continue
-                    stack, comp = [k], []
-                    seen[k] = True
-                    while stack:
-                        q = stack.pop()
-                        comp.append(q)
-                        for m in np.flatnonzero(adj[q]):
-                            if not seen[m]:
-                                seen[m] = True
-                                stack.append(m)
-                    if best is None or len(comp) > len(best):
-                        best = comp
-                sel = np.array(best)
                 ho_frac = head_outward(s, P, u[sel], P.mean(axis=0))
             else:
                 R = cv = ho = e2 = e3 = 0.0

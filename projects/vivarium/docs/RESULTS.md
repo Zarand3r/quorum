@@ -17,6 +17,7 @@ satisfied simultaneously by a model that self-assembles the target structure.
 | emergent vesicle, **our engine** | 94 particles, R = 2.62 ± 0.12, zero inside 0.5R | stable over 1.05M–1.5M steps |
 | energy is **exactly** one attention layer | rel. error 1.6e-16 (r^-4 core), 2.1e-16 (bounded) | `attention_ylz.check_identity` |
 | vesicles with **no divergent kernel** | 10, 100, 300 eps contact all close | 1.5M-step scan |
+| vesicle from **two species** (head/tail) | 84 molecules, heads outward 1.000 | `bilipid`, closed at 750k |
 
 ## 2. The mechanism we were missing
 
@@ -108,8 +109,48 @@ bazel test //projects/vivarium:test_suite
 ## 7. Open
 
 * **Softmax normalisation** -- untested, and the substitution most likely to break vesiculation.
-* **Two-species closure** (M4) -- a head/tail dimer carrying a derived orientation; assembling and
-  curving at 500k steps, not yet closed.
+* ~~Two-species closure (M4)~~ -- **DONE**, see below.
 * **The "one clock" spec** -- weight-tied per-tick block with a local learning rule: untouched.
 * **Strict 2-D closure** -- unsolved, and the open-source 2-D reference does not solve it either, so
   it is a genuine research question rather than a defect.
+
+
+## 8. M4: the two-species vesicle
+
+Vivarium represents lipids as head/tail beads, so the single-species YLZ result had to be carried
+back to that representation. `bilipid.py` does it by DERIVING the orientation instead of storing one:
+
+    molecule = head h (species 1) + tail t (species 2), bonded
+    centre   c = (h + t)/2
+    axis     u = (h - t)/|h - t|
+
+Nothing beyond bead positions is stored -- no quaternion, no angular velocity. Molecular torque
+emerges as a force couple on the two beads through the chain rule `dc/dh = I/2`,
+`du/dh = (I - u u^T)/|d|`, verified against numerical gradients at 1.2e-8.
+
+Result at 750k steps, 300 molecules in L=25, beta=0.1, bounded core at 30 eps:
+
+| quantity | value |
+|---|---|
+| largest cluster | 84 molecules |
+| radius | 2.81 +/- 0.15 |
+| shell CV | 0.052 |
+| molecules inside 0.5R | 0 |
+| gyration spectrum e2/e1, e3/e1 | 0.89, 0.81 |
+| **heads pointing outward** | **1.000** |
+| axis-radial alignment `<abs(cos)>` | 0.983 |
+
+So the head/tail representation closes, and closes correctly: every head faces the solvent and the
+molecules stand normal to the shell.
+
+**Why two species were never the obstacle.** Spontaneous curvature is `beta (u_i - u_j) . r_hat`,
+which is odd under `u -> -u` and therefore requires a SIGNED molecular axis. The head/tail labels are
+exactly what supply that sign. Our earlier DPD amphiphile failed not because it had two species but
+because every interaction was isotropic between beads, so no term in the model referred to the
+molecular axis at all.
+
+**One measurement bug worth recording.** The first head-orientation readout returned exactly 0.51,
+which reads as "geometrically closed but chemically ambivalent". It was an index mismatch: positions
+came from one clustering pass and orientations from a second one with a different ordering, so the
+check compared unrelated molecules. Pairing them from a single traversal gives 1.000. Exactly-random
+values in a structural metric should be treated as suspected index errors, not findings.

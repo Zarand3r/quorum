@@ -18,3 +18,4 @@ TWO-SPECIES amphiphile: N=300 molecules (600 beads) L=25.0 beta=0.1 contact=30 e
         0     0.485  0.169   237        6   0.00    0.000   0.000  0.00  0.00      nan   dispersed
    250000    -1.089  0.171   104       32   2.34    0.313   0.094  0.86  0.04     0.62   flat sheet/disc
    500000    -1.465  0.173    65       80   3.26    0.179   0.000  0.87  0.33     0.45   flat sheet/disc
+   750000    -1.643  0.181    48       84   2.81    0.052   0.000  0.89  0.81     0.51   VESICLE (hollow sphere)
