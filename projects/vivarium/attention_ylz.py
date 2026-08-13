@@ -64,7 +64,7 @@ class AttentionYLZ:
         """A(r), B(r): the distance penalty. Everything orientation-dependent lives in B's partner."""
         s = self.ref
         rmin, rc, eps, mu, zeta = s.rmin, s.rc, s.eps, s.mu, s.zeta
-        uR = eps * ((rmin / r) ** 4 - 2.0 * (rmin / r) ** 2)
+        uR = self.ref._u_rep(r)          # honours the bounded-core switch
         arg = 0.5 * np.pi * (r - rmin) / (rc - rmin)
         uA = -eps * np.cos(arg) ** (2 * zeta)
         near = r < rmin
@@ -103,20 +103,27 @@ class AttentionYLZ:
         return float((A + B * a).sum())
 
 
-def check_identity(seed=0, n_part=200, L=12.0, trials=5):
-    """Attention-form energy against the direct YLZ energy. Must agree to machine precision."""
+def check_identity(seed=0, n_part=200, L=12.0, trials=5, bounded=False, contact=30.0):
+    """Attention-form energy against the direct YLZ energy. Must agree to machine precision.
+
+    Checked for BOTH cores. The published r^-4 core proves the algebraic identity; the bounded core
+    is the one Vivarium actually permits, so the attention form has to reproduce that variant too or
+    the M2 result does not apply to the configuration that produced the M3 vesicle.
+    """
     worst = 0.0
     for t in range(trials):
-        s = YLZ(n_part, L, seed=seed + t, beta=0.1 + 0.05 * t)
+        s = YLZ(n_part, L, seed=seed + t, beta=0.1 + 0.05 * t,
+                bounded_core=bounded, contact=contact)
         att = AttentionYLZ(s)
         e_direct, e_attn = s.energy(), att.energy()
-        denom = max(abs(e_direct), 1e-12)
-        worst = max(worst, abs(e_direct - e_attn) / denom)
+        worst = max(worst, abs(e_direct - e_attn) / max(abs(e_direct), 1e-12))
     return worst
 
 
 if __name__ == "__main__":
-    rel = check_identity()
-    print(f"max relative |E_attention - E_ylz| over 5 random systems = {rel:.3e}")
-    print("PASS: YLZ is exactly one unnormalized distance-penalized attention layer"
-          if rel < 1e-12 else "*** IDENTITY FAILED ***")
+    a = check_identity(bounded=False)
+    b = check_identity(bounded=True, contact=30.0)
+    print(f"divergent r^-4 core : max relative |E_attn - E_ylz| = {a:.3e}")
+    print(f"bounded core @30 eps: max relative |E_attn - E_ylz| = {b:.3e}")
+    print("PASS: both cores are exactly one unnormalized distance-penalized attention layer"
+          if max(a, b) < 1e-12 else "*** IDENTITY FAILED ***")
