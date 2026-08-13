@@ -389,6 +389,38 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_viv_hunt",
+    srcs = ["_viv_hunt.py"],
+    main = "_viv_hunt.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_prof",
+    srcs = ["_prof.py"],
+    main = "_prof.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_perf",
+    srcs = ["_perf.py"],
+    main = "_perf.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_viv_water",
+    srcs = ["_viv_water.py"],
+    main = "_viv_water.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_viv_morph",
     srcs = ["_viv_morph.py"],
     main = "_viv_morph.py",

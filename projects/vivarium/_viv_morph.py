@@ -39,7 +39,9 @@ if __name__ == "__main__":
         (1.0, 0.00, "MICELLES  attract 1.0, curvature 0", "vivm_micelle"),
         (1.5, 0.00, "BILAYER   attract 1.5, curvature 0", "vivm_bilayer"),
         (1.5, 0.15, "attract 1.5, curvature 0.15", "vivm_cv015"),
-        (1.5, 0.30, "attract 1.5, curvature 0.30", "vivm_cv030"),
+        (1.5, 0.30, "attract 1.5, curvature +0.30", "vivm_cv030"),
+        (1.5, -0.15, "attract 1.5, curvature -0.15  (sign flipped)", "vivm_cvm015"),
+        (1.5, -0.30, "attract 1.5, curvature -0.30  (sign flipped)", "vivm_cvm030"),
     ]
     for at, cv, label, name in cases:
         e = build(0, plant="clump", attract=at, **BASE)
