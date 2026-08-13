@@ -1,0 +1,20 @@
+(21:53:23) INFO: Current date is 2026-08-12
+(21:53:23) Computing main repo mapping: 
+(21:53:23) Loading: 
+(21:53:23) Loading: 0 packages loaded
+(21:53:23) Analyzing: target //projects/vivarium:_bilipid_run (1 packages loaded, 0 targets configured)
+(21:53:23) Analyzing: target //projects/vivarium:_bilipid_run (1 packages loaded, 0 targets configured)
+
+(21:53:23) INFO: Analyzed target //projects/vivarium:_bilipid_run (1 packages loaded, 86 targets configured).
+(21:53:23) INFO: Found 1 target...
+Target //projects/vivarium:_bilipid_run up-to-date:
+  bazel-bin/projects/vivarium/_bilipid_run
+(21:53:23) INFO: Elapsed time: 0.176s, Critical Path: 0.07s
+(21:53:23) INFO: 5 processes: 5 internal.
+(21:53:23) INFO: Build completed successfully, 5 total actions
+(21:53:23) INFO: Running command line: bazel-bin/projects/vivarium/_bilipid_run 300 25 3000000 0.1 bilipid_m4
+TWO-SPECIES amphiphile: N=300 molecules (600 beads) L=25.0 beta=0.1 contact=30 eps  (sheet needs 417, tube needs 367)
+     step     E/mol      T  clus  largest      R  shellCV  hollow    e2    e3  headOut   shape
+        0     0.485  0.169   237        6   0.00    0.000   0.000  0.00  0.00      nan   dispersed
+   250000    -1.089  0.171   104       32   2.34    0.313   0.094  0.86  0.04     0.62   flat sheet/disc
+   500000    -1.465  0.173    65       80   3.26    0.179   0.000  0.87  0.33     0.45   flat sheet/disc

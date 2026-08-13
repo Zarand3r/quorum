@@ -373,6 +373,22 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_bilipid_run",
+    srcs = ["_bilipid_run.py"],
+    main = "_bilipid_run.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "bilipid",
+    srcs = ["bilipid.py"],
+    main = "bilipid.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "attention_ylz",
     srcs = ["attention_ylz.py"],
     main = "attention_ylz.py",
