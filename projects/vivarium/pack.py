@@ -327,13 +327,24 @@ class PackEngine:
         return u
 
     def _curvature_weight(self, dirn):
-        """1 + curvature * (u_i - u_j) . r_hat_ij, the odd-in-u factor that lets a sheet close."""
+        """1 + curvature * (u_i - u_j) . r_hat_ij on LIPID-LIPID pairs only.
+
+        Restricting to pairs where BOTH tokens have an axis is not a detail. Water has a zero axis,
+        so an unrestricted form leaves (0 - u_lipid).r_hat on every water-lipid pair, i.e. it
+        modulates the water-lipid attraction by up to +/- 2*curvature. Measured: at curvature 0.15
+        and 0.30 that perturbs the eps_pair hydrophobic balance enough to collapse the solvent into
+        dense clumps -- the documented solvent-collapse failure -- instead of producing vesicles.
+        The form was validated in models with NO solvent at all, where every pair is lipid-lipid, so
+        confining it there is what the evidence actually supports.
+        """
         u = self._axis_signed()
+        has = (np.linalg.norm(u, axis=1) > 0.0)
+        both = has[:, None] & has[None, :]
         # dirn[i, j] points from j toward i, so the pair direction used here is -dirn to keep the
         # convention (u_i - u_j) . r_hat_{i->j}; either choice is symmetric, this one makes a
         # positive `curvature` mean heads outward.
         proj = np.einsum("ic,ijc->ij", u, -dirn) - np.einsum("jc,ijc->ij", u, -dirn)
-        return 1.0 + self.curvature * proj
+        return 1.0 + self.curvature * np.where(both, proj, 0.0)
 
     def _attract_env(self, dist, d2):
         """Cohesive envelope. r0 = 0 is exactly the historical exp(-lambda*d^2); r0 > 0 puts the

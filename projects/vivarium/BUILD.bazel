@@ -381,6 +381,22 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_solvent_check",
+    srcs = ["_solvent_check.py"],
+    main = "_solvent_check.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_viv_morph",
+    srcs = ["_viv_morph.py"],
+    main = "_viv_morph.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "bilipid",
     srcs = ["bilipid.py"],
     main = "bilipid.py",

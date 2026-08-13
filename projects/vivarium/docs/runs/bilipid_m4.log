@@ -25,3 +25,6 @@ TWO-SPECIES amphiphile: N=300 molecules (600 beads) L=25.0 beta=0.1 contact=30 e
   1750000    -1.935  0.166    25       86   2.86    0.049   0.000  0.92  0.86     0.50   VESICLE (hollow sphere)
   2000000    -1.887  0.175    31       86   2.87    0.063   0.000  0.91  0.73     0.53   VESICLE (hollow sphere)
   2250000    -1.849  0.168    37       86   2.86    0.047   0.000  0.92  0.79     0.47   VESICLE (hollow sphere)
+  2500000    -1.820  0.186    38       86   2.86    0.055   0.000  0.85  0.77     0.48   VESICLE (hollow sphere)
+  2750000    -1.945  0.169    25       86   2.88    0.054   0.000  0.89  0.81     0.47   VESICLE (hollow sphere)
+  3000000    -1.987  0.180    18       86   2.85    0.079   0.000  0.90  0.72     0.55   VESICLE (hollow sphere)

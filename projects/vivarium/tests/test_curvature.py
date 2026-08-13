@@ -84,3 +84,23 @@ def test_axis_sign_points_toward_the_head():
     expect /= np.linalg.norm(expect)
     got = e._axis_signed()[e._mol[0, 0]]
     assert float(got @ expect) > 0.99, "axis does not point from the tail centre toward the head"
+
+
+def test_curvature_does_not_touch_water_lipid_pairs():
+    """Water has a zero axis; an unrestricted form still modulates every water-lipid pair.
+
+    Measured before the restriction: curvature 0.15 and 0.30 collapsed the solvent into dense clumps
+    rather than producing vesicles, because the term was perturbing the water-lipid attraction that
+    eps_pair balances. The weight must be exactly 1 wherever either partner lacks an axis.
+    """
+    e = _molecular(0.3)
+    e.step()
+    u = e._axis_signed()
+    has = np.linalg.norm(u, axis=1) > 0.0
+    assert has.any() and (~has).any(), "need both lipid and non-lipid tokens for this test"
+    delta = e.X[:, :e.pd][:, None, :] - e.X[:, :e.pd][None, :, :]
+    delta -= e.L * np.round(delta / e.L)
+    dist = np.sqrt((delta ** 2).sum(-1) + 1e-12)
+    w = e._curvature_weight(delta / dist[..., None])
+    cross = (~has)[:, None] | (~has)[None, :]
+    assert np.allclose(w[cross], 1.0), "curvature is modulating pairs involving a token with no axis"
