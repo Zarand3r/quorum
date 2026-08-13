@@ -73,6 +73,29 @@ class PackEngine:
         # of the outer-product features vec(u u^T), so this is an attention logit under a quadratic
         # feature map. Bounded, symmetric in i,j, so the force stays conservative.
         self.nematic = 0.0
+        # SPONTANEOUS CURVATURE (default 0.0 = the historical force, byte-identical).
+        #
+        # This is the term whose absence prevented every earlier membrane here from closing. The
+        # nematic weight above uses (u_i . u_j)^2, which is deliberately director-free: parallel and
+        # antiparallel score alike, so it can align leaflets but cannot prefer one side of the
+        # membrane over the other. Closure requires a term that is ODD under u -> -u:
+        #
+        #     w_ij *= 1 + curvature * (u_i - u_j) . r_hat_ij
+        #
+        # With u pointing from the tail centre toward the HEAD, a positive value rewards
+        # configurations in which neighbouring heads splay apart along the line joining them, i.e. a
+        # convex sheet with heads outward. Established externally: in the same functional form the
+        # value 0 leaves a finite patch as an open flat disc, while 0.1 closes it into a vesicle.
+        #
+        # Symmetry: swapping i and j sends u_i - u_j -> -(u_i - u_j) AND r_hat -> -r_hat, so the
+        # product is unchanged. The weight matrix stays symmetric, so Newton's third law and momentum
+        # conservation are preserved exactly, as they are for the nematic term.
+        #
+        # Transformer-only: it is an inner product between a per-token vector difference and the pair
+        # direction -- the same class of operation as the existing attention logits, and bounded
+        # because u is a unit vector and r_hat is a unit vector, so the factor lies in
+        # [1 - 2*curvature, 1 + 2*curvature].
+        self.curvature = 0.0
         # SPECIES-PAIR REPULSION (default None = one global scale, byte-identical).
         # A single `repel` is being asked to do two incompatible coarse-grained jobs: give the solvent
         # a sane equation of state, and give lipid beads the packing softness a lamellar phase needs.
@@ -281,6 +304,37 @@ class PackEngine:
                 u[mol[:, col]] = axis
         return u @ u.T
 
+    def _axis_signed(self):
+        """(N, pd) unit axis per token, pointing from the tail centre toward the HEAD.
+
+        Note the sign is OPPOSITE to `_axis_alignment`, which uses head -> tail. That matters here
+        and not there: the nematic term squares the dot product so the sign cancels, whereas
+        spontaneous curvature is odd in u and the sign chooses which face of the membrane the heads
+        end up on. Water and any unbonded token gets a zero axis, so its curvature factor is exactly
+        1 and its interactions are untouched.
+        """
+        mol = getattr(self, "_mol", None)
+        u = np.zeros((self.X.shape[0], self.pd))
+        if mol is not None and len(mol):
+            P = self.X[:, :self.pd]
+            head = P[mol[:, 0]]
+            tailc = P[mol[:, 1:]].mean(axis=1)
+            d = head - tailc
+            d -= self.L * np.round(d / self.L)
+            d /= np.linalg.norm(d, axis=1, keepdims=True) + 1e-12
+            for col in range(mol.shape[1]):
+                u[mol[:, col]] = d
+        return u
+
+    def _curvature_weight(self, dirn):
+        """1 + curvature * (u_i - u_j) . r_hat_ij, the odd-in-u factor that lets a sheet close."""
+        u = self._axis_signed()
+        # dirn[i, j] points from j toward i, so the pair direction used here is -dirn to keep the
+        # convention (u_i - u_j) . r_hat_{i->j}; either choice is symmetric, this one makes a
+        # positive `curvature` mean heads outward.
+        proj = np.einsum("ic,ijc->ij", u, -dirn) - np.einsum("jc,ijc->ij", u, -dirn)
+        return 1.0 + self.curvature * proj
+
     def _attract_env(self, dist, d2):
         """Cohesive envelope. r0 = 0 is exactly the historical exp(-lambda*d^2); r0 > 0 puts the
         attraction maximum at CONTACT instead of at zero separation."""
@@ -458,8 +512,15 @@ class PackEngine:
                 # the force remains conservative.
                 sp = self.species.astype(int)
                 g = self.eps_pair[sp[:, None], sp[None, :]] * self._attract_env(dist, d2)
-                if self.nematic > 0.0:
-                    g = g * (1.0 + self.nematic * self._axis_alignment() ** 2)
+            # Orientation weights apply to the attraction regardless of how the well depths were
+            # obtained. Nesting them inside the eps_pair branch made `curvature` a DEAD KNOB in the
+            # default configuration -- cv=0 and cv=0.2 gave byte-identical trajectories -- which is
+            # the same defect class as the five dead sliders removed earlier. `nematic` was nested
+            # the same way and is hoisted with it.
+            if self.nematic > 0.0:
+                g = g * (1.0 + self.nematic * self._axis_alignment() ** 2)
+            if self.curvature != 0.0:
+                g = g * self._curvature_weight(dirn)
             np.fill_diagonal(g, 0.0)
             attract = -np.einsum("ij,ijc->ic", g, dirn)
         else:
