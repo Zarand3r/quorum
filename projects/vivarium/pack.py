@@ -96,6 +96,10 @@ class PackEngine:
         # because u is a unit vector and r_hat is a unit vector, so the factor lies in
         # [1 - 2*curvature, 1 + 2*curvature].
         self.curvature = 0.0
+        # `bend` is YLZ's mu: how strongly relative orientation modulates the attraction. It scales
+        # the whole angular deviation, so it sets bending rigidity without touching the location of
+        # the optimum, which `curvature` alone controls. Only consulted when curvature != 0.
+        self.bend = 1.0
         # SPECIES-PAIR REPULSION (default None = one global scale, byte-identical).
         # A single `repel` is being asked to do two incompatible coarse-grained jobs: give the solvent
         # a sane equation of state, and give lipid beads the packing softness a lamellar phase needs.
@@ -327,24 +331,41 @@ class PackEngine:
         return u
 
     def _curvature_weight(self, dirn):
-        """1 + curvature * (u_i - u_j) . r_hat_ij on LIPID-LIPID pairs only.
+        """YLZ angular weight: shifts the PREFERRED splay without deepening the well.
 
-        Restricting to pairs where BOTH tokens have an axis is not a detail. Water has a zero axis,
-        so an unrestricted form leaves (0 - u_lipid).r_hat on every water-lipid pair, i.e. it
-        modulates the water-lipid attraction by up to +/- 2*curvature. Measured: at curvature 0.15
-        and 0.30 that perturbs the eps_pair hydrophobic balance enough to collapse the solvent into
-        dense clumps -- the documented solvent-collapse failure -- instead of producing vesicles.
-        The form was validated in models with NO solvent at all, where every pair is lipid-lipid, so
-        confining it there is what the evidence actually supports.
+            q   = u_i.u_j - (u_i.r_hat)(u_j.r_hat)      even, the alignment term
+            p   = (u_i - u_j).r_hat                     odd, the splay term
+            a   = q + beta*p - beta^2
+            w   = 1 + bend*(a - 1)
+
+        The `- beta^2` is the whole point and the first implementation omitted it. In the symmetric
+        splay geometry this reduces to `a = 1 - (sin(theta) + beta)^2`, so
+
+            max_theta a = 1  for EVERY beta,   attained at  sin(theta) = -beta.
+
+        Spontaneous curvature therefore moves the OPTIMUM without changing the weight it attains. The
+        earlier form was `1 + curvature*p` with no even term and no compensation: its maximum grew as
+        1 + 2*curvature (1.30 at curvature 0.15) and its optimum was pinned at 90 degrees, i.e.
+        maximal splay. That is not a preferred curvature, it is a licence to build stronger contacts,
+        and it collapsed the aggregate -- all 63 lipids in one cluster with non-bonded beads at 0.18
+        of contact distance.
+
+        Because a <= 1, the weight is at most 1: orientation can only PENALISE a contact relative to
+        the isotropic value, never reward it beyond one. That is what keeps total cohesion fixed.
+
+        Applied on lipid-lipid pairs only; water has no axis and its weight is exactly 1.
         """
         u = self._axis_signed()
         has = (np.linalg.norm(u, axis=1) > 0.0)
         both = has[:, None] & has[None, :]
-        # dirn[i, j] points from j toward i, so the pair direction used here is -dirn to keep the
-        # convention (u_i - u_j) . r_hat_{i->j}; either choice is symmetric, this one makes a
-        # positive `curvature` mean heads outward.
-        proj = np.einsum("ic,ijc->ij", u, -dirn) - np.einsum("jc,ijc->ij", u, -dirn)
-        return 1.0 + self.curvature * np.where(both, proj, 0.0)
+        rh = -dirn                                   # unit vector from i toward j
+        ci = np.einsum("ic,ijc->ij", u, rh)          # u_i . r_hat
+        cj = np.einsum("jc,ijc->ij", u, rh)          # u_j . r_hat
+        q = (u @ u.T) - ci * cj
+        p = ci - cj
+        a = q + self.curvature * p - self.curvature ** 2
+        w = 1.0 + self.bend * (a - 1.0)
+        return np.where(both, w, 1.0)
 
     def _attract_env(self, dist, d2):
         """Cohesive envelope. r0 = 0 is exactly the historical exp(-lambda*d^2); r0 > 0 puts the

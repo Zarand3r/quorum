@@ -104,3 +104,40 @@ def test_curvature_does_not_touch_water_lipid_pairs():
     w = e._curvature_weight(delta / dist[..., None])
     cross = (~has)[:, None] | (~has)[None, :]
     assert np.allclose(w[cross], 1.0), "curvature is modulating pairs involving a token with no axis"
+
+
+def test_curvature_shifts_the_optimum_without_deepening_the_well():
+    """The defining property of spontaneous curvature, and what the first implementation lacked.
+
+    For every beta the maximum angular weight must be the SAME, while the angle attaining it moves.
+    The original form `1 + curvature*p` failed both halves: its maximum grew as 1 + 2*curvature and
+    its optimum stayed pinned at maximal splay, which is why it collapsed the aggregate rather than
+    curving it.
+    """
+    e = _molecular(0.0)
+    th = np.linspace(-np.pi / 2, np.pi / 2, 4001)
+    maxima, argmax = [], []
+    for beta in (0.0, 0.05, 0.10, 0.15):
+        # symmetric splay about r_hat = x_hat, evaluated directly on the angular form
+        s_, c_ = np.sin(th), np.cos(th)
+        q = c_ * c_
+        p = -2.0 * s_
+        a = q + beta * p - beta ** 2
+        maxima.append(a.max())
+        argmax.append(th[a.argmax()])
+    assert max(maxima) - min(maxima) < 1e-6, f"well depth changes with beta: {maxima}"
+    assert argmax[0] == pytest.approx(0.0, abs=1e-3), "beta=0 optimum should be flat"
+    for beta, t in zip((0.05, 0.10, 0.15), argmax[1:]):
+        assert t == pytest.approx(np.arcsin(-beta), abs=2e-3), "optimum did not move to arcsin(-beta)"
+
+
+def test_engine_weight_never_exceeds_one():
+    """a <= 1 by construction, so the weight can only penalise a contact, never reward it beyond
+    the isotropic value. This is the property that keeps total cohesion fixed."""
+    e = _molecular(0.15)
+    e.step()
+    delta = e.X[:, :e.pd][:, None, :] - e.X[:, :e.pd][None, :, :]
+    delta -= e.L * np.round(delta / e.L)
+    dist = np.sqrt((delta ** 2).sum(-1) + 1e-12)
+    w = e._curvature_weight(delta / dist[..., None])
+    assert w.max() <= 1.0 + 1e-9, f"weight exceeds 1 ({w.max():.4f}); cohesion can grow"
