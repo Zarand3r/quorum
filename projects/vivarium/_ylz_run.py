@@ -88,11 +88,12 @@ if __name__ == "__main__":
     steps = int(sys.argv[3]) if len(sys.argv) > 3 else 400000
     beta = float(sys.argv[4]) if len(sys.argv) > 4 else 0.1
     tag = sys.argv[5] if len(sys.argv) > 5 else f"ourylz_N{N}_b{beta}"
-    bounded = len(sys.argv) > 6 and sys.argv[6] == "bounded"
+    bounded = len(sys.argv) > 6 and sys.argv[6] != "div"
+    contact = float(sys.argv[6]) if bounded else 3.0
 
-    s = YLZ(N, L, beta=beta, seed=1, bounded_core=bounded)
+    s = YLZ(N, L, beta=beta, seed=1, bounded_core=bounded, contact=contact)
     a = 1.50
-    print(f"our-engine YLZ: N={N} L={L} beta={beta} core={'BOUNDED' if bounded else 'r^-4'}  "
+    print(f"our-engine YLZ: N={N} L={L} beta={beta} core={f'bounded@{contact:g}eps' if bounded else 'r^-4'}  "
           f"(sheet needs {L*L/a:.0f}, tube needs {2*np.pi*3.5*L/a:.0f})", flush=True)
     print(f"{'step':>8}{'E/particle':>12}{'T':>7}{'clus':>6}{'largest':>9}{'R':>7}"
           f"{'shellCV':>9}{'hollow':>8}{'e2':>6}{'e3':>6}   shape", flush=True)

@@ -1,0 +1,19 @@
+(17:17:29) INFO: Current date is 2026-08-12
+(17:17:29) Computing main repo mapping: 
+(17:17:29) Loading: 
+(17:17:29) Loading: 0 packages loaded
+(17:17:29) Analyzing: target //projects/vivarium:_ylz_run (0 packages loaded, 0 targets configured)
+(17:17:29) Analyzing: target //projects/vivarium:_ylz_run (0 packages loaded, 0 targets configured)
+
+(17:17:29) INFO: Analyzed target //projects/vivarium:_ylz_run (0 packages loaded, 0 targets configured).
+(17:17:29) INFO: Found 1 target...
+Target //projects/vivarium:_ylz_run up-to-date:
+  bazel-bin/projects/vivarium/_ylz_run
+(17:17:29) INFO: Elapsed time: 0.073s, Critical Path: 0.00s
+(17:17:29) INFO: 1 process: 1 internal.
+(17:17:29) INFO: Build completed successfully, 1 total action
+(17:17:29) INFO: Running command line: bazel-bin/projects/vivarium/_ylz_run 300 25 1500000 0.1 ourylz_c10 10
+our-engine YLZ: N=300 L=25.0 beta=0.1 core=bounded@10eps  (sheet needs 417, tube needs 367)
+    step  E/particle      T  clus  largest      R  shellCV  hollow    e2    e3   shape
+       0       0.316  0.186   253        4   0.00    0.000   0.000  0.00  0.00   dispersed
+  150000      -1.763  0.178    44       82   2.85    0.328   0.073  0.90  0.10   flat sheet/disc

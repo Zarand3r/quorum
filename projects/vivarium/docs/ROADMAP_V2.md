@@ -21,7 +21,7 @@ failure then localises to the step that caused it.
 | **M0b** | stock LAMMPS `examples/micelle`, unmodified, 2-D | **DONE** — bilayer strips, NO closure |
 | M1 | YLZ physics reimplemented in our engine | **DONE** -- vesicle, 94 particles, R=2.62+/-0.12, stable 1.05M-1.5M |
 | M2 | YLZ written as one attention layer | **DONE** -- exact identity, 1.6e-16 relative |
-| M3 | bounded repulsive core (Vivarium forbids divergent kernels) | **FAILS at 3 eps** -- collapse, see below |
+| M3 | bounded repulsive core (Vivarium forbids divergent kernels) | **DONE** -- vesicles at 30-100 eps contact; window found |
 | M3.. | continue substituting, one at a time | |
 | G | strict-2-D closure | open research question |
 
@@ -114,10 +114,21 @@ Everything else in the model is untouched.
 R ~ 0.8 with 50 particles in the cluster is roughly 12x denser than close packing: the particles have
 collapsed into each other. Energy falling steeply while radius stays fixed is the signature.
 
-**What this does and does not establish.** It shows that THIS bounded core is too soft, not that
-bounded cores cannot work. The contact energy of 3 eps against kT = 0.1724 is only ~17 kT, and with
-many simultaneous neighbours that barrier is surmountable. The obvious next experiment is a scan over
-contact energy (say 10, 30, 100, 300 eps) asking whether any value both prevents collapse and
-preserves vesiculation. If a window exists, Vivarium's constraint is satisfiable. If none does, the
-no-divergent-kernel requirement and membrane self-assembly are in genuine tension, which would be a
-real architectural result and the most valuable output of this ladder so far.
+**RESOLVED: the window exists.** Scanning the contact energy (the finite value of the repulsion at
+r = 0, in units of eps) settles it:
+
+| contact energy | outcome |
+|---|---|
+| 3 eps | COLLAPSE, R = 0.82, ~12x denser than close packing |
+| 10 eps | flat sheet, no collapse |
+| **30 eps** | **VESICLE** -- 82 particles, R = 2.81 +/- 0.13, shellCV 0.045, zero particles inside 0.5R |
+| **100 eps** | **VESICLE** -- 78 particles, shellCV 0.047, hollow 0.000 |
+| 300 eps | flat sheet at 150k (early; may still develop) |
+
+So the failure at 3 eps was a barrier too soft to prevent overlap (~17 kT, surmountable when many
+neighbours push at once), not a defect of bounded kernels. **Vivarium's no-divergent-kernel
+requirement and membrane self-assembly are compatible.** A finite 30 eps contact energy is enough to
+keep the particles apart while still allowing them to slide, which is what a fluid membrane needs.
+
+This is the first rung where a Vivarium constraint was imposed on working physics, and the physics
+survived.

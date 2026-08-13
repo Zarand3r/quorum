@@ -91,7 +91,7 @@ class YLZ:
     """
 
     def __init__(self, n_part, L, kT=0.1724, eps=1.0, sigma=1.0, zeta=4.5, mu=3.0, beta=0.1,
-                 rc=2.6, dt=0.01, gamma=1.0, seed=0, bounded_core=False):
+                 rc=2.6, dt=0.01, gamma=1.0, seed=0, bounded_core=False, contact=3.0):
         self.rng = np.random.default_rng(seed)
         self.n, self.L, self.dt, self.kT, self.gamma = n_part, float(L), dt, kT, gamma
         self.eps, self.zeta, self.mu, self.beta, self.rc = eps, zeta, mu, beta, rc
@@ -103,8 +103,13 @@ class YLZ:
         # u_R''(rmin) = 8 eps/rmin^2 -- so k = 4 eps/rmin^2 and the contact energy is a finite 3 eps.
         # Everything else about the model is untouched, so a change in outcome is attributable to
         # this substitution alone.
+        # `contact` is the finite energy at r=0 in units of eps. u(0) = -eps + k rmin^2, so
+        # k = (contact + eps)/rmin^2. contact=3 reproduces the curvature-matched harmonic, which
+        # collapses; the scan asks whether a stiffer bounded barrier both prevents collapse and
+        # preserves vesiculation.
         self.bounded_core = bool(bounded_core)
-        self.k_core = 4.0 * eps / self.rmin ** 2
+        self.contact = float(contact)
+        self.k_core = (self.contact + eps) / self.rmin ** 2
         self.x = self.rng.uniform(0, L, (n_part, 3))
         self.v = self.rng.normal(0.0, np.sqrt(kT), (n_part, 3))
         self.v -= self.v.mean(axis=0)

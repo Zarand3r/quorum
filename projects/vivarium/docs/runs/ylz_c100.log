@@ -1,0 +1,20 @@
+(17:17:35) INFO: Current date is 2026-08-12
+(17:17:35) Computing main repo mapping: 
+(17:17:35) Loading: 
+(17:17:35) Loading: 0 packages loaded
+(17:17:35) Analyzing: target //projects/vivarium:_ylz_run (0 packages loaded, 0 targets configured)
+(17:17:35) Analyzing: target //projects/vivarium:_ylz_run (0 packages loaded, 0 targets configured)
+
+(17:17:35) INFO: Analyzed target //projects/vivarium:_ylz_run (0 packages loaded, 0 targets configured).
+(17:17:35) INFO: Found 1 target...
+Target //projects/vivarium:_ylz_run up-to-date:
+  bazel-bin/projects/vivarium/_ylz_run
+(17:17:35) INFO: Elapsed time: 0.056s, Critical Path: 0.00s
+(17:17:35) INFO: 1 process: 1 internal.
+(17:17:35) INFO: Build completed successfully, 1 total action
+(17:17:35) INFO: Running command line: bazel-bin/projects/vivarium/_ylz_run 300 25 1500000 0.1 ourylz_c100 100
+our-engine YLZ: N=300 L=25.0 beta=0.1 core=bounded@100eps  (sheet needs 417, tube needs 367)
+    step  E/particle      T  clus  largest      R  shellCV  hollow    e2    e3   shape
+       0       0.917  0.186   253        4   0.00    0.000   0.000  0.00  0.00   dispersed
+  150000      -1.271  0.183    98       72   3.24    0.215   0.000  0.94  0.25   flat sheet/disc
+  300000      -1.504  0.172    78       78   2.82    0.047   0.000  0.85  0.80   VESICLE (hollow sphere)
