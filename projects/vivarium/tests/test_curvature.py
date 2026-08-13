@@ -141,3 +141,38 @@ def test_engine_weight_never_exceeds_one():
     dist = np.sqrt((delta ** 2).sum(-1) + 1e-12)
     w = e._curvature_weight(delta / dist[..., None])
     assert w.max() <= 1.0 + 1e-9, f"weight exceeds 1 ({w.max():.4f}); cohesion can grow"
+
+
+def test_positive_curvature_prefers_heads_splayed_outward():
+    """Sign convention, tested by BEHAVIOUR rather than by reading the source.
+
+    A negated r_hat still yields a strong bilayer signature -- align 0.904 was measured -- but with
+    the leaflets INVERTED: heads meeting in the middle, tails facing the solvent. The alignment
+    metric cannot tell those apart, so the sign needs its own assertion.
+
+    Two lipids side by side along x. SPLAYED means each head tilts away from the other (the convex
+    arrangement a vesicle's outer leaflet has); CONVERGENT means each head tilts toward the other.
+    A positive curvature must score the splayed pair higher.
+    """
+    e = _molecular(0.25)
+    pd = e.pd
+    a, b = e._mol[0], e._mol[1]
+
+    def weight(tilt):
+        P = e.X[:, :pd]
+        for mol, cx, sgn in ((a, -1.0, -1.0), (b, +1.0, +1.0)):
+            axis = np.zeros(pd)
+            axis[0] = sgn * np.sin(tilt)
+            axis[1] = np.cos(tilt)
+            P[mol[0]] = np.array([cx, 0.0])[:pd] + 0.5 * axis
+            for k in mol[1:]:
+                P[k] = np.array([cx, 0.0])[:pd] - 0.5 * axis
+        delta = P[:, None, :] - P[None, :, :]
+        delta -= e.L * np.round(delta / e.L)
+        dist = np.sqrt((delta ** 2).sum(-1) + 1e-12)
+        return e._curvature_weight(delta / dist[..., None])[a[0], b[0]]
+
+    splayed, convergent = weight(+0.5), weight(-0.5)
+    assert splayed > convergent, (
+        f"positive curvature must favour heads splayed outward "
+        f"(splayed {splayed:.4f} vs convergent {convergent:.4f}); the r_hat sign is inverted")

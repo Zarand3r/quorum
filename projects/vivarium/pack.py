@@ -358,7 +358,12 @@ class PackEngine:
         u = self._axis_signed()
         has = (np.linalg.norm(u, axis=1) > 0.0)
         both = has[:, None] & has[None, :]
-        rh = -dirn                                   # unit vector from i toward j
+        # `dirn` is (p_i - p_j)/|.|, which is ALREADY YLZ's r_hat_ij = (r_i - r_j)/r and matches the
+        # convention under which beta = +0.1 gave heads outward in the two-species reference.
+        # Negating it here inverted the sign of the odd term and produced an INVERTED bilayer:
+        # align 0.904 (strongly bilayer-like) but with heads meeting in the middle and tails facing
+        # the water, which is a reverse bilayer, not a membrane in solvent.
+        rh = dirn
         ci = np.einsum("ic,ijc->ij", u, rh)          # u_i . r_hat
         cj = np.einsum("jc,ijc->ij", u, rh)          # u_j . r_hat
         q = (u @ u.T) - ci * cj
