@@ -439,7 +439,11 @@ class PackEngine:
         a = (u @ u.T) - ci * cj + self.curvature * (ci - cj) - self.curvature ** 2
         env = np.exp(-self.sink_attract * r2) if self.sink_attract > 0.0 else np.exp(-r2)
         np.fill_diagonal(env, 0.0)
-        w = self.bend * env
+        # NEGATIVE bend: a <= 1, so (a - 1) <= 0. With w = +bend*env the term is <= 0 everywhere,
+        # i.e. MISALIGNED pairs get extra attraction and the optimum gets none -- inverted, and it
+        # collapsed the aggregate (heads outward 1.00, largest 54/63, but non-bonded beads inside
+        # contact). Misalignment must COST: U = bend*env*(1 - a) >= 0, zero at the preferred splay.
+        w = -self.bend * env
         pot = float(0.5 * (w * (a - 1.0)).sum())
 
         # dU/dc: the pair sum with the 1/2 already cancels against each pair being counted twice,
@@ -452,7 +456,7 @@ class PackEngine:
         radial = np.einsum("ijc,ijc->ij", da_drh, rh)
         proj = da_drh - radial[..., None] * rh
         denv = -2.0 * lam * env
-        pair_c = (self.bend * denv * (a - 1.0))[..., None] * d + (w / r)[..., None] * proj
+        pair_c = (-self.bend * denv * (a - 1.0))[..., None] * d + (w / r)[..., None] * proj
         g_c = pair_c.sum(axis=1)
 
         # dU/du_i = sum_j w_ij * (u_j - (u_j.r_hat) r_hat + curvature * r_hat)
