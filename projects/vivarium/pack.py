@@ -391,6 +391,87 @@ class PackEngine:
         w[np.ix_(mol.ravel(), mol.ravel())] = wm[np.ix_(mi, mi)]
         return np.where(both, w, 1.0)
 
+    def _curvature_energy_and_force(self):
+        """Spontaneous curvature as a DIFFERENTIATED pair term: returns (energy, per-bead force).
+
+        The previous version multiplied the attraction weight by an orientation factor. That cannot
+        work, and the failure is structural rather than a matter of sign or magnitude. Vivarium
+        assembles attraction as `force_i = -sum_j g_ij * dirn_ij`, treating g as a constant
+        coefficient, so an orientation-dependent g changes how strongly pairs attract but exerts NO
+        torque and no tangential force. Measured in vacuum: at curvature 0 the aggregate already has
+        heads outward 1.000 from head-head electrostatics, and switching the weight on in EITHER sign
+        degraded it to 0.44-0.60. It scrambled an ordering other terms had produced.
+
+        This term instead defines its own scalar contribution over MOLECULE pairs
+
+            U = sum_{i<j} env(r_ij) * bend * (a_ij - 1),
+            a_ij = q_ij + curvature * p_ij - curvature^2
+            q_ij = u_i.u_j - (u_i.r_hat)(u_j.r_hat),   p_ij = (u_i - u_j).r_hat
+
+        and returns -dU/dx on the BEADS. Because a depends on r_hat and on the axes, and each axis is
+        u = normalize(head - tail_centre), the chain rule produces a tangential force AND a couple on
+        each molecule's beads -- which is what rotates a molecule toward the preferred splay. `a <= 1`
+        with the maximum independent of curvature, so the depth is fixed and only the preferred angle
+        moves: sin(theta*) = -curvature.
+
+        The same computation is implemented and numerically gradient-checked in ylz.py and bilipid.py.
+        """
+        mol = getattr(self, "_mol", None)
+        if mol is None or not len(mol) or self.curvature == 0.0:
+            return 0.0, np.zeros((self.X.shape[0], self.pd))
+
+        P = self.X[:, :self.pd]
+        head, tail = P[mol[:, 0]], P[mol[:, 1:]].mean(axis=1)
+        dv = head - tail
+        dv -= self.L * np.round(dv / self.L)
+        nd = np.linalg.norm(dv, axis=1, keepdims=True) + 1e-12
+        u = dv / nd
+        cen = P[mol].mean(axis=1)
+
+        d = cen[:, None, :] - cen[None, :, :]
+        d -= self.L * np.round(d / self.L)
+        r2 = (d ** 2).sum(-1)
+        r = np.sqrt(r2 + 1e-12)
+        rh = d / r[..., None]
+
+        ci = np.einsum("ic,ijc->ij", u, rh)
+        cj = np.einsum("jc,ijc->ij", u, rh)
+        a = (u @ u.T) - ci * cj + self.curvature * (ci - cj) - self.curvature ** 2
+        env = np.exp(-self.sink_attract * r2) if self.sink_attract > 0.0 else np.exp(-r2)
+        np.fill_diagonal(env, 0.0)
+        w = self.bend * env
+        energy = float(0.5 * (w * (a - 1.0)).sum())
+
+        # dU/dc: the pair sum with the 1/2 already cancels against each pair being counted twice,
+        # so summing the k-side derivative over j is the whole gradient. Subtracting the transpose
+        # (the first attempt) double-counts and was one of three errors that made the gradient check
+        # fail at 2.5 instead of 1e-8.
+        lam = self.sink_attract if self.sink_attract > 0.0 else 1.0
+        da_drh = -(cj[..., None] * u[:, None, :] + ci[..., None] * u[None, :, :]) \
+                 + self.curvature * (u[:, None, :] - u[None, :, :])
+        radial = np.einsum("ijc,ijc->ij", da_drh, rh)
+        proj = da_drh - radial[..., None] * rh
+        denv = -2.0 * lam * env
+        pair_c = (self.bend * denv * (a - 1.0))[..., None] * d + (w / r)[..., None] * proj
+        g_c = pair_c.sum(axis=1)
+
+        # dU/du_i = sum_j w_ij * (u_j - (u_j.r_hat) r_hat + curvature * r_hat)
+        g_u = (w[..., None] * (u[None, :, :] - cj[..., None] * rh
+                               + self.curvature * rh)).sum(axis=1)
+
+        # chain onto the beads. The centre is the mean over ALL nb beads, so each bead takes g_c/nb
+        # -- not the 1/2 used for a two-bead molecule. The axis is normalize(head - tail_centre), so
+        # the head takes +perp/|dv| and each of the nt tails -perp/(|dv| nt).
+        nb = mol.shape[1]
+        nt = nb - 1
+        perp = g_u - (np.einsum("ic,ic->i", g_u, u))[:, None] * u
+        share = perp / nd
+        f = np.zeros((self.X.shape[0], self.pd))
+        np.add.at(f, mol[:, 0], -(g_c / nb + share))
+        for k in range(1, nb):
+            np.add.at(f, mol[:, k], -(g_c / nb - share / nt))
+        return energy, f
+
     def _attract_env(self, dist, d2):
         """Cohesive envelope. r0 = 0 is exactly the historical exp(-lambda*d^2); r0 > 0 puts the
         attraction maximum at CONTACT instead of at zero separation."""
@@ -575,8 +656,6 @@ class PackEngine:
             # the same way and is hoisted with it.
             if self.nematic > 0.0:
                 g = g * (1.0 + self.nematic * self._axis_alignment() ** 2)
-            if self.curvature != 0.0:
-                g = g * self._curvature_weight(dirn)
             np.fill_diagonal(g, 0.0)
             attract = -np.einsum("ij,ijc->ic", g, dirn)
         else:
@@ -622,6 +701,8 @@ class PackEngine:
             cohere = -np.einsum("ij,ijc->ic", A_coh, delta)   # toward the neighbourhood centroid
             force = force + self.cohesion * cohere
 
+        if self.curvature != 0.0:
+            force = force + self._curvature_energy_and_force()[1]
         force = force + self._extra_force(delta, d2)   # subclass hook (default 0.0) — e.g. contour-charge force
         self._basis_slot = None                        # never survives the step that built it
         self._nf_slot = None

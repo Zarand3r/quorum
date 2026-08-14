@@ -389,6 +389,14 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_cgrad",
+    srcs = ["_cgrad.py"],
+    main = "_cgrad.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_viv_vacuum",
     srcs = ["_viv_vacuum.py"],
     main = "_viv_vacuum.py",
