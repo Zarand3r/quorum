@@ -389,6 +389,14 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_viv_vacuum",
+    srcs = ["_viv_vacuum.py"],
+    main = "_viv_vacuum.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_viv_hunt",
     srcs = ["_viv_hunt.py"],
     main = "_viv_hunt.py",

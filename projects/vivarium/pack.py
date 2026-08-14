@@ -358,18 +358,37 @@ class PackEngine:
         u = self._axis_signed()
         has = (np.linalg.norm(u, axis=1) > 0.0)
         both = has[:, None] & has[None, :]
-        # `dirn` is (p_i - p_j)/|.|, which is ALREADY YLZ's r_hat_ij = (r_i - r_j)/r and matches the
-        # convention under which beta = +0.1 gave heads outward in the two-species reference.
-        # Negating it here inverted the sign of the odd term and produced an INVERTED bilayer:
-        # align 0.904 (strongly bilayer-like) but with heads meeting in the middle and tails facing
-        # the water, which is a reverse bilayer, not a membrane in solvent.
-        rh = dirn
-        ci = np.einsum("ic,ijc->ij", u, rh)          # u_i . r_hat
-        cj = np.einsum("jc,ijc->ij", u, rh)          # u_j . r_hat
-        q = (u @ u.T) - ci * cj
+
+        # Evaluate the angular term between MOLECULAR CENTRES, then expand it back to the beads of
+        # each molecule pair. Applying it bead-wise -- which is what `dirn` gives -- makes r_hat run
+        # head-to-tail ACROSS two molecules for most pairs, a different geometry from centre-to-
+        # centre, and it scrambles orientation rather than organising it. Measured in vacuum: at
+        # curvature 0 the aggregate has heads outward 1.00 from head-head electrostatics alone, and
+        # switching curvature on in EITHER sign degrades that to ~0.57. The reference models (YLZ,
+        # bilipid) both evaluate this between centres.
+        mol = getattr(self, "_mol", None)
+        if mol is None or not len(mol):
+            return np.ones(dirn.shape[:2])
+        P = self.X[:, :self.pd]
+        cen = P[mol].mean(axis=1)                       # (M, pd) molecular centres
+        d = cen[:, None, :] - cen[None, :, :]
+        d -= self.L * np.round(d / self.L)
+        r = np.sqrt((d ** 2).sum(-1) + 1e-12)
+        rh = d / r[..., None]                           # r_hat_ij between molecule centres
+        um = u[mol[:, 0]]                               # one axis per molecule
+        ci = np.einsum("ic,ijc->ij", um, rh)
+        cj = np.einsum("jc,ijc->ij", um, rh)
+        q = (um @ um.T) - ci * cj
         p = ci - cj
         a = q + self.curvature * p - self.curvature ** 2
-        w = 1.0 + self.bend * (a - 1.0)
+        wm = 1.0 + self.bend * (a - 1.0)                # (M, M) molecule-pair weight
+
+        w = np.ones(dirn.shape[:2])
+        rows = np.repeat(mol.ravel(), mol.shape[1])
+        cols = np.tile(mol, (1, mol.shape[1])).ravel()
+        # every bead of molecule i against every bead of molecule j carries that pair's weight
+        mi = np.repeat(np.arange(len(mol)), mol.shape[1])
+        w[np.ix_(mol.ravel(), mol.ravel())] = wm[np.ix_(mi, mi)]
         return np.where(both, w, 1.0)
 
     def _attract_env(self, dist, d2):
