@@ -389,6 +389,22 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_ring_sweep",
+    srcs = ["_ring_sweep.py"],
+    main = "_ring_sweep.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_solvent_gate",
+    srcs = ["_solvent_gate.py"],
+    main = "_solvent_gate.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_cgrad",
     srcs = ["_cgrad.py"],
     main = "_cgrad.py",
