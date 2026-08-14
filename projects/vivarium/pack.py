@@ -391,8 +391,8 @@ class PackEngine:
         w[np.ix_(mol.ravel(), mol.ravel())] = wm[np.ix_(mi, mi)]
         return np.where(both, w, 1.0)
 
-    def _curvature_energy_and_force(self):
-        """Spontaneous curvature as a DIFFERENTIATED pair term: returns (energy, per-bead force).
+    def _curvature_pot_and_force(self):
+        """Spontaneous curvature as a DIFFERENTIATED pair term: returns (scalar, per-bead force).
 
         The previous version multiplied the attraction weight by an orientation factor. That cannot
         work, and the failure is structural rather than a matter of sign or magnitude. Vivarium
@@ -440,7 +440,7 @@ class PackEngine:
         env = np.exp(-self.sink_attract * r2) if self.sink_attract > 0.0 else np.exp(-r2)
         np.fill_diagonal(env, 0.0)
         w = self.bend * env
-        energy = float(0.5 * (w * (a - 1.0)).sum())
+        pot = float(0.5 * (w * (a - 1.0)).sum())
 
         # dU/dc: the pair sum with the 1/2 already cancels against each pair being counted twice,
         # so summing the k-side derivative over j is the whole gradient. Subtracting the transpose
@@ -470,7 +470,7 @@ class PackEngine:
         np.add.at(f, mol[:, 0], -(g_c / nb + share))
         for k in range(1, nb):
             np.add.at(f, mol[:, k], -(g_c / nb - share / nt))
-        return energy, f
+        return pot, f
 
     def _attract_env(self, dist, d2):
         """Cohesive envelope. r0 = 0 is exactly the historical exp(-lambda*d^2); r0 > 0 puts the
@@ -702,7 +702,7 @@ class PackEngine:
             force = force + self.cohesion * cohere
 
         if self.curvature != 0.0:
-            force = force + self._curvature_energy_and_force()[1]
+            force = force + self._curvature_pot_and_force()[1]
         force = force + self._extra_force(delta, d2)   # subclass hook (default 0.0) — e.g. contour-charge force
         self._basis_slot = None                        # never survives the step that built it
         self._nf_slot = None

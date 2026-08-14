@@ -7,13 +7,13 @@ e = build(0, plant="clump", attract=1.5, n_water=0, n_lip=20, bound=6.0, kt=0.02
           polarity=0.80, head_q=1.2, hydrophobic=0.6)
 e.curvature = 0.20
 e.bend = 1.0
-U0, F = e._curvature_energy_and_force()
+U0, F = e._curvature_pot_and_force()
 h = 1e-6
 worst = 0.0
 for k in range(8):
     for c in range(e.pd):
-        e.X[k, c] += h; up = e._curvature_energy_and_force()[0]
-        e.X[k, c] -= 2 * h; dn = e._curvature_energy_and_force()[0]
+        e.X[k, c] += h; up = e._curvature_pot_and_force()[0]
+        e.X[k, c] -= 2 * h; dn = e._curvature_pot_and_force()[0]
         e.X[k, c] += h
         worst = max(worst, abs((-(up - dn) / (2 * h)) - F[k, c]))
 print(f"U = {U0:.6f}")
