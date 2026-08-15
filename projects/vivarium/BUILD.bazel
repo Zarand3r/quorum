@@ -389,6 +389,14 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_rescale",
+    srcs = ["_rescale.py"],
+    main = "_rescale.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_anneal",
     srcs = ["_anneal.py"],
     main = "_anneal.py",
