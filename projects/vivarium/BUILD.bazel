@@ -389,6 +389,22 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_edge_close",
+    srcs = ["_edge_close.py"],
+    main = "_edge_close.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_patch_close",
+    srcs = ["_patch_close.py"],
+    main = "_patch_close.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_steric",
     srcs = ["_steric.py"],
     main = "_steric.py",
