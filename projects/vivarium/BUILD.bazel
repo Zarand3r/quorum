@@ -389,6 +389,22 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_ring_sweep2",
+    srcs = ["_ring_sweep2.py"],
+    main = "_ring_sweep2.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "ring_assay",
+    srcs = ["ring_assay.py"],
+    main = "ring_assay.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_curl_cal",
     srcs = ["_curl_cal.py"],
     main = "_curl_cal.py",
