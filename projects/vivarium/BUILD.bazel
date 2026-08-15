@@ -389,6 +389,21 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_field_run",
+    srcs = ["_field_run.py"],
+    main = "_field_run.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_field",
+    srcs = ["field.py"],
+    main = "field.py",
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_rescale",
     srcs = ["_rescale.py"],
     main = "_rescale.py",
