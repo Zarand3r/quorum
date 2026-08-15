@@ -28,6 +28,17 @@ def test_neighbour_list_matches_dense_exactly():
     assert check_neighbor_list() < 1e-10
 
 
+def test_field_is_dimension_agnostic():
+    """The energy and its gradient are written over (n, d), so 3-D costs a builder, not a rewrite.
+
+    This matters for the project's open question: 2-D closure of a symmetric bilayer may not be a
+    stable phase at all, and both vesicle oracles work in 3-D. Moving there must not require touching
+    the force field.
+    """
+    assert check_gradients(n=30, d=3, L=9.0) < 1e-4
+    assert check_neighbor_list(n=100, d=3, L=10.0) < 1e-10
+
+
 def test_asymmetric_chi_is_rejected():
     """U_ij and U_ji are the same pair; an asymmetric chi is a corrupt model, not a fallback."""
     chi = default_chi()
