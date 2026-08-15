@@ -389,6 +389,30 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_steric",
+    srcs = ["_steric.py"],
+    main = "_steric.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_packing",
+    srcs = ["_packing.py"],
+    main = "_packing.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_solvent_significance",
+    srcs = ["_solvent_significance.py"],
+    main = "_solvent_significance.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_ring_sweep2",
     srcs = ["_ring_sweep2.py"],
     main = "_ring_sweep2.py",
