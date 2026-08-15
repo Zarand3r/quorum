@@ -8,6 +8,23 @@ accurate, so the failure to transfer needs an explanation that is not "one of th
 
 Four causes are now measured. They are ordered by how much they explain.
 
+## 0. The decisive measurement: the oracle's vesicle is bought, not emergent
+
+Cause 1 below was a suspicion when this document was written. It is now measured. Same N, L, seed and
+integrator, 1.5 million steps, with only `beta` differing:
+
+| beta | outcome at 1.5M | headOut | shell CV |
+|---|---|---|---|
+| 0.00 | **0 vesicles at every checkpoint**, flat sheet/disc | 0.42 | 0.367 |
+| 0.15 | first vesicle by 625k, **3-4 sustained** | 1.00 | 0.045 |
+
+`beta` is the spontaneous curvature: the YLZ angular term reaches its optimum at `sin(theta*) = -beta`.
+Set it to zero and the same potential, the same code and the same run length produce flat sheets.
+
+So porting the oracle's angular term into Vivarium would have imported the answer rather than the
+physics. That settles the question this document exists to answer, and it is why the replacement force
+field described below contains **no orientation term at all**, with a test pinning that.
+
 ## 1. The two models sit at different levels of description
 
 The oracle's YLZ potential is a **top-down coarse-grained effective potential**. Its angular term
@@ -109,11 +126,49 @@ this project has now withdrawn eight results, five of them measurement artefacts
   historical ADMISSIBLE verdict was measured against a floor calibrated to the broken steric physics.
   The threshold should rise once the working steric value is fixed.
 
+## The resolution: one scalar energy, differentiated
+
+Causes 2, 3 and 4 are all symptoms of one structural defect -- forces assembled by hand from seven
+independent multipliers with no shared length scale. `field.py` replaces it:
+
+    U_ij = eps * [ core(r/sigma) + well(r/sigma) * chi_ij ]
+
+One energy scale, one length scale, and a dimensionless symmetric 3x3 chemistry matrix over
+(head, tail, water). Forces are `-dU/dX`, so they cannot disagree with any energy. `chi` factors as
+`chi_ij = q_i . k_j` through its eigendecomposition, so the content term is a query-key inner product
+and the whole energy is one unnormalized distance-penalized attention layer, verified at 6.7e-16. The
+coupling problem disappears because `eps` and `sigma` rescale the model coherently instead of
+unbalancing it.
+
+Verified, all gated in `tests/test_field.py`:
+
+| gate | result |
+|---|---|
+| forces vs numerical `dU/dx` | 1.5e-07 |
+| `chi` as an inner product | 6.7e-16 |
+| neighbour list vs dense | **0.0** (exact, not approximate) |
+| isolated pair settles at contact | within 0.02 sigma |
+| rotation/translation invariance, zero net force, asymmetric `chi` rejected | pass |
+
+What it produces: median non-bonded separation **0.95-0.99 of contact**, against 0.15 historically.
+Head/tail segregation **emerges** with no polarity knob and no orientation term, headOut 0.95-1.00. A
+1-head/2-tail lipid gives micelles, matching its packing parameter; four tails raise `P` into the
+bilayer band and give a branched bilayer network -- the phenotype LAMMPS's own 2-D reference produces.
+
+Two further constants inherited from the broken physics were corrected: the box density (430/13^2 puts
+unit-diameter beads above 2-D close packing, forcing overlap before any force acts) and the core shape
+(a quartic is too soft near contact; the quadratic DPD form holds).
+
 ## What follows
 
-1. Calibrate `repel` on condensed geometry, not on a planted flat sheet, and raise `MIN_PACKING` to
-   match.
-2. Test the edge-tension closure criterion by sweeping patch size at fixed density, since the theory
-   predicts closure appears above a critical size rather than at a critical parameter value.
-3. Delete the curvature term. It was added to import the oracle's `beta`, cause 1 says that imports the
-   answer, and cause 4 removed the only emergent substitute it was standing in for.
+1. **2-D closure is now the open question, and the evidence says it needs curvature.** The oracle
+   closes only at `beta != 0`; no open-source 2-D reference we found closes a ring; ours produces
+   branched networks. Either 2-D closure requires spontaneous curvature -- in which case it must come
+   from molecular geometry, since importing `beta` imports the answer -- or the milestone belongs in
+   3-D, where both oracles work.
+2. **Raise `MIN_PACKING`.** At 0.35 it admits membranes at 35% of contact, codifying the defect.
+3. **Delete the curvature term in `pack.py`.** It existed to import `beta`; section 0 shows what that
+   would mean, and the cone-shape substitute is falsified.
+4. **`ring_assay` needs a fourth gate.** Its three gates use compact aggregates, so a spanning
+   percolating network is outside its calibration domain and a pore can read as a lumen. It reported
+   HOLLOW on exactly that; the render caught it.
