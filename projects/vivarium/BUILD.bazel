@@ -389,6 +389,22 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_anneal",
+    srcs = ["_anneal.py"],
+    main = "_anneal.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_rebalance",
+    srcs = ["_rebalance.py"],
+    main = "_rebalance.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_edge_close",
     srcs = ["_edge_close.py"],
     main = "_edge_close.py",
