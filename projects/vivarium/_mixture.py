@@ -42,14 +42,21 @@ from field import Field, HEAD, TAIL, WATER
 W, H = 760, 560
 
 
-def shot(X, species, L, tag):
-    """A structural claim in this project is not allowed without looking at the picture."""
+def shot(X, species, L, tag, slab=3.0):
+    """A structural claim in this project is not allowed without looking at the picture.
+
+    A 3-D box drawn as a flat projection is a solid wall of beads that hides everything inside it, so
+    3-D states are cut to a slab through the centre thick enough to show one membrane cross-section.
+    The thickness is stamped in the filename: a slab too thick manufactures apparent density, one too
+    thin manufactures apparent holes.
+    """
     img = np.zeros((H, W, 3), dtype=np.uint8)
     img[:, :] = (14, 16, 22)
     scale = min(W, H) * 0.92 / L
+    keep = np.ones(len(X), bool) if X.shape[1] < 3 else (np.abs(X[:, 2]) < slab)
     for sp, rgb, rad in ((WATER, (46, 72, 92), 1.7), (TAIL, (232, 150, 62), 3.0),
                          (HEAD, (86, 160, 240), 3.6)):
-        for x, y in X[species == sp][:, :2]:
+        for x, y in X[keep & (species == sp)][:, :2]:
             disc(img, W * 0.5 + x * scale, H * 0.5 - y * scale, rad, rgb, 1.0)
     root = os.environ.get("BUILD_WORKSPACE_DIRECTORY", ".")
     out = os.path.join(root, "projects", "vivarium", "docs", "images", f"{tag}.png")
@@ -91,6 +98,8 @@ def build(n_short, n_long, n_water, L, d, tails=(2, 4), seed=0, plant="random"):
         k += 1 + t
     if plant == "ring":
         _plant_ring(X, mols, np.array(chains), d)
+    elif plant == "sphere":
+        _plant_sphere(X, mols, np.array(chains), d)
     elif plant.startswith("arc"):
         # `arc0.75` plants three quarters of a ring: a bilayer with TWO EXPOSED ENDS at the same
         # curvature the closed state prefers. The question is whether edge tension pulls the ends
@@ -102,6 +111,43 @@ def build(n_short, n_long, n_water, L, d, tails=(2, 4), seed=0, plant="random"):
     X[wi] = rng.uniform(-L / 2, L / 2, size=(n_water, d))
     X -= L * np.round(X / L)
     return X, species, np.array(bonds), mols, wi, np.array(chains)
+
+
+def _plant_sphere(X, mols, chains, d):
+    """A 3-D vesicle: two concentric leaflets, heads out on the outside and in on the inside.
+
+    The 3-D analogue of the planted ring, and for the same reason. Self-assembly in 3-D coarsens far
+    too slowly to reach a vesicle in an affordable run -- after 200000 steps the largest aggregate is
+    50 of 300 lipids, many small micelles that have not ripened -- while the reference model needed
+    625k to 1M steps at this size with implicit solvent. Planting separates STABILITY, which is cheap
+    to test, from REACHABILITY, which is not. In 2-D that separation is what showed the ring phase
+    exists at all.
+
+    Points are placed by the Fibonacci sphere so both leaflets are evenly covered without the pole
+    crowding a latitude-longitude grid produces.
+    """
+    if d != 3:
+        raise ValueError("sphere planting is 3-D")
+    n = len(mols)
+    lip = float(chains.mean())
+    # area per lipid measured on a spanning slab in the reference model
+    a = 1.5
+    R_mid = float(np.sqrt(n * a / (4.0 * np.pi)))
+    R_out, R_in = R_mid + lip / 2, max(R_mid - lip / 2, 0.8)
+    n_out = int(round(n * (R_out ** 2) / (R_out ** 2 + R_in ** 2)))
+    k = 0
+    for count, R_head, sgn in ((n_out, R_out, +1.0), (n - n_out, R_in, -1.0)):
+        if count <= 0:
+            continue
+        i = np.arange(count) + 0.5
+        phi = np.arccos(1.0 - 2.0 * i / count)
+        theta = np.pi * (1.0 + 5.0 ** 0.5) * i
+        u = np.stack([np.cos(theta) * np.sin(phi), np.sin(theta) * np.sin(phi), np.cos(phi)], axis=1)
+        for j in range(count):
+            idx = mols[k + j]
+            for b in range(len(idx)):
+                X[idx[b]] = u[j] * (R_head - sgn * b)
+        k += count
 
 
 def _plant_ring(X, mols, chains, d, span=1.0):
@@ -241,7 +287,7 @@ if __name__ == "__main__":
           "0 = no partitioning", flush=True)
     print(f"{'step':>8}{'E/lip':>9}{'largest':>9}{'R_mid':>7}{'shellCV':>9}{'lumen':>7}"
           f"{'lumenW':>8}{'shortOUT':>10}{'shortIN':>9}   enrichment", flush=True)
-    every = max(steps // 10, 1)
+    every = max(steps // 20, 1)
     for t in range(steps + 1):
         X += (f.forces(X) / gamma) * dt + amp * rng.normal(size=X.shape)
         X -= L * np.round(X / L)
@@ -251,5 +297,4 @@ if __name__ == "__main__":
             print(f"{t:>8}{f.energy(X) / n_lip:>9.2f}{largest_cluster(X, mols, L):>9}"
                   f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['lumen']:>7.2f}{g['lumen_w']:>8}"
                   f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)
-            if d == 2:
-                shot(X, species, L, f"mix_{plant}_N{n_lip}_s{t:07d}")
+            shot(X, species, L, f"mix{d}d_{plant}_N{n_lip}_s{t:07d}")
