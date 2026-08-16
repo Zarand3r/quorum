@@ -75,31 +75,25 @@ class PackEngine:
         self.nematic = 0.0
         # SPONTANEOUS CURVATURE (default 0.0 = the historical force, byte-identical).
         #
-        # This is the term whose absence prevented every earlier membrane here from closing. The
-        # nematic weight above uses (u_i . u_j)^2, which is deliberately director-free: parallel and
-        # antiparallel score alike, so it can align leaflets but cannot prefer one side of the
-        # membrane over the other. Closure requires a term that is ODD under u -> -u:
+        # SPONTANEOUS CURVATURE WAS REMOVED HERE, deliberately.
         #
-        #     w_ij *= 1 + curvature * (u_i - u_j) . r_hat_ij
+        # An orientation term `w_ij *= 1 + curvature * (u_i - u_j).r_hat` was added to close membranes,
+        # on the strength of an external result that 0 leaves a patch open while 0.1 closes it into a
+        # vesicle. That result was then reproduced directly: in the YLZ reference, at matched N, box,
+        # seed and 1.5M steps, beta=0 gives 0 vesicles and flat sheets while beta=0.15 gives 3-4
+        # sustained vesicles with heads outward 1.00.
         #
-        # With u pointing from the tail centre toward the HEAD, a positive value rewards
-        # configurations in which neighbouring heads splay apart along the line joining them, i.e. a
-        # convex sheet with heads outward. Established externally: in the same functional form the
-        # value 0 leaves a finite patch as an open flat disc, while 0.1 closes it into a vesicle.
+        # That is the problem, not the justification. beta IS the spontaneous curvature -- the angular
+        # optimum sits at sin(theta*) = -beta -- so a model that closes only because beta was supplied
+        # has had the answer given to it. Vivarium is bottom-up, so curvature has to come out of shape
+        # and packing or not at all. The emergent substitutes were tested and falsified: cone-shaped
+        # lipids disorder and then tear a symmetric bilayer (alignment 0.856 -> 0.117 as the head
+        # grows), and leaflet compositional asymmetry never develops because flip-flop is forbidden.
         #
-        # Symmetry: swapping i and j sends u_i - u_j -> -(u_i - u_j) AND r_hat -> -r_hat, so the
-        # product is unchanged. The weight matrix stays symmetric, so Newton's third law and momentum
-        # conservation are preserved exactly, as they are for the nematic term.
-        #
-        # Transformer-only: it is an inner product between a per-token vector difference and the pair
-        # direction -- the same class of operation as the existing attention logits, and bounded
-        # because u is a unit vector and r_hat is a unit vector, so the factor lies in
-        # [1 - 2*curvature, 1 + 2*curvature].
-        self.curvature = 0.0
-        # `bend` is YLZ's mu: how strongly relative orientation modulates the attraction. It scales
-        # the whole angular deviation, so it sets bending rigidity without touching the location of
-        # the optimum, which `curvature` alone controls. Only consulted when curvature != 0.
-        self.bend = 1.0
+        # See docs/WHY_THE_ORACLE_DOES_NOT_TRANSFER.md. The replacement is field.py, whose energy is a
+        # single scalar with one length scale, whose forces are -dU/dX, and which has no orientation
+        # term at all -- with a test pinning that. Under it a planted 2-D bilayer ring is stable for
+        # 200000 steps with a water-filled lumen, which no configuration of this engine achieved.
         # SPECIES-PAIR REPULSION (default None = one global scale, byte-identical).
         # A single `repel` is being asked to do two incompatible coarse-grained jobs: give the solvent
         # a sane equation of state, and give lipid beads the packing softness a lamellar phase needs.
@@ -308,174 +302,6 @@ class PackEngine:
                 u[mol[:, col]] = axis
         return u @ u.T
 
-    def _axis_signed(self):
-        """(N, pd) unit axis per token, pointing from the tail centre toward the HEAD.
-
-        Note the sign is OPPOSITE to `_axis_alignment`, which uses head -> tail. That matters here
-        and not there: the nematic term squares the dot product so the sign cancels, whereas
-        spontaneous curvature is odd in u and the sign chooses which face of the membrane the heads
-        end up on. Water and any unbonded token gets a zero axis, so its curvature factor is exactly
-        1 and its interactions are untouched.
-        """
-        mol = getattr(self, "_mol", None)
-        u = np.zeros((self.X.shape[0], self.pd))
-        if mol is not None and len(mol):
-            P = self.X[:, :self.pd]
-            head = P[mol[:, 0]]
-            tailc = P[mol[:, 1:]].mean(axis=1)
-            d = head - tailc
-            d -= self.L * np.round(d / self.L)
-            d /= np.linalg.norm(d, axis=1, keepdims=True) + 1e-12
-            for col in range(mol.shape[1]):
-                u[mol[:, col]] = d
-        return u
-
-    def _curvature_weight(self, dirn):
-        """YLZ angular weight: shifts the PREFERRED splay without deepening the well.
-
-            q   = u_i.u_j - (u_i.r_hat)(u_j.r_hat)      even, the alignment term
-            p   = (u_i - u_j).r_hat                     odd, the splay term
-            a   = q + beta*p - beta^2
-            w   = 1 + bend*(a - 1)
-
-        The `- beta^2` is the whole point and the first implementation omitted it. In the symmetric
-        splay geometry this reduces to `a = 1 - (sin(theta) + beta)^2`, so
-
-            max_theta a = 1  for EVERY beta,   attained at  sin(theta) = -beta.
-
-        Spontaneous curvature therefore moves the OPTIMUM without changing the weight it attains. The
-        earlier form was `1 + curvature*p` with no even term and no compensation: its maximum grew as
-        1 + 2*curvature (1.30 at curvature 0.15) and its optimum was pinned at 90 degrees, i.e.
-        maximal splay. That is not a preferred curvature, it is a licence to build stronger contacts,
-        and it collapsed the aggregate -- all 63 lipids in one cluster with non-bonded beads at 0.18
-        of contact distance.
-
-        Because a <= 1, the weight is at most 1: orientation can only PENALISE a contact relative to
-        the isotropic value, never reward it beyond one. That is what keeps total cohesion fixed.
-
-        Applied on lipid-lipid pairs only; water has no axis and its weight is exactly 1.
-        """
-        u = self._axis_signed()
-        has = (np.linalg.norm(u, axis=1) > 0.0)
-        both = has[:, None] & has[None, :]
-
-        # Evaluate the angular term between MOLECULAR CENTRES, then expand it back to the beads of
-        # each molecule pair. Applying it bead-wise -- which is what `dirn` gives -- makes r_hat run
-        # head-to-tail ACROSS two molecules for most pairs, a different geometry from centre-to-
-        # centre, and it scrambles orientation rather than organising it. Measured in vacuum: at
-        # curvature 0 the aggregate has heads outward 1.00 from head-head electrostatics alone, and
-        # switching curvature on in EITHER sign degrades that to ~0.57. The reference models (YLZ,
-        # bilipid) both evaluate this between centres.
-        mol = getattr(self, "_mol", None)
-        if mol is None or not len(mol):
-            return np.ones(dirn.shape[:2])
-        P = self.X[:, :self.pd]
-        cen = P[mol].mean(axis=1)                       # (M, pd) molecular centres
-        d = cen[:, None, :] - cen[None, :, :]
-        d -= self.L * np.round(d / self.L)
-        r = np.sqrt((d ** 2).sum(-1) + 1e-12)
-        rh = d / r[..., None]                           # r_hat_ij between molecule centres
-        um = u[mol[:, 0]]                               # one axis per molecule
-        ci = np.einsum("ic,ijc->ij", um, rh)
-        cj = np.einsum("jc,ijc->ij", um, rh)
-        q = (um @ um.T) - ci * cj
-        p = ci - cj
-        a = q + self.curvature * p - self.curvature ** 2
-        wm = 1.0 + self.bend * (a - 1.0)                # (M, M) molecule-pair weight
-
-        w = np.ones(dirn.shape[:2])
-        rows = np.repeat(mol.ravel(), mol.shape[1])
-        cols = np.tile(mol, (1, mol.shape[1])).ravel()
-        # every bead of molecule i against every bead of molecule j carries that pair's weight
-        mi = np.repeat(np.arange(len(mol)), mol.shape[1])
-        w[np.ix_(mol.ravel(), mol.ravel())] = wm[np.ix_(mi, mi)]
-        return np.where(both, w, 1.0)
-
-    def _curvature_pot_and_force(self):
-        """Spontaneous curvature as a DIFFERENTIATED pair term: returns (scalar, per-bead force).
-
-        The previous version multiplied the attraction weight by an orientation factor. That cannot
-        work, and the failure is structural rather than a matter of sign or magnitude. Vivarium
-        assembles attraction as `force_i = -sum_j g_ij * dirn_ij`, treating g as a constant
-        coefficient, so an orientation-dependent g changes how strongly pairs attract but exerts NO
-        torque and no tangential force. Measured in vacuum: at curvature 0 the aggregate already has
-        heads outward 1.000 from head-head electrostatics, and switching the weight on in EITHER sign
-        degraded it to 0.44-0.60. It scrambled an ordering other terms had produced.
-
-        This term instead defines its own scalar contribution over MOLECULE pairs
-
-            U = sum_{i<j} env(r_ij) * bend * (a_ij - 1),
-            a_ij = q_ij + curvature * p_ij - curvature^2
-            q_ij = u_i.u_j - (u_i.r_hat)(u_j.r_hat),   p_ij = (u_i - u_j).r_hat
-
-        and returns -dU/dx on the BEADS. Because a depends on r_hat and on the axes, and each axis is
-        u = normalize(head - tail_centre), the chain rule produces a tangential force AND a couple on
-        each molecule's beads -- which is what rotates a molecule toward the preferred splay. `a <= 1`
-        with the maximum independent of curvature, so the depth is fixed and only the preferred angle
-        moves: sin(theta*) = -curvature.
-
-        The same computation is implemented and numerically gradient-checked in ylz.py and bilipid.py.
-        """
-        mol = getattr(self, "_mol", None)
-        if mol is None or not len(mol) or self.curvature == 0.0:
-            return 0.0, np.zeros((self.X.shape[0], self.pd))
-
-        P = self.X[:, :self.pd]
-        head, tail = P[mol[:, 0]], P[mol[:, 1:]].mean(axis=1)
-        dv = head - tail
-        dv -= self.L * np.round(dv / self.L)
-        nd = np.linalg.norm(dv, axis=1, keepdims=True) + 1e-12
-        u = dv / nd
-        cen = P[mol].mean(axis=1)
-
-        d = cen[:, None, :] - cen[None, :, :]
-        d -= self.L * np.round(d / self.L)
-        r2 = (d ** 2).sum(-1)
-        r = np.sqrt(r2 + 1e-12)
-        rh = d / r[..., None]
-
-        ci = np.einsum("ic,ijc->ij", u, rh)
-        cj = np.einsum("jc,ijc->ij", u, rh)
-        a = (u @ u.T) - ci * cj + self.curvature * (ci - cj) - self.curvature ** 2
-        env = np.exp(-self.sink_attract * r2) if self.sink_attract > 0.0 else np.exp(-r2)
-        np.fill_diagonal(env, 0.0)
-        # NEGATIVE bend: a <= 1, so (a - 1) <= 0. With w = +bend*env the term is <= 0 everywhere,
-        # i.e. MISALIGNED pairs get extra attraction and the optimum gets none -- inverted, and it
-        # collapsed the aggregate (heads outward 1.00, largest 54/63, but non-bonded beads inside
-        # contact). Misalignment must COST: U = bend*env*(1 - a) >= 0, zero at the preferred splay.
-        w = -self.bend * env
-        pot = float(0.5 * (w * (a - 1.0)).sum())
-
-        # dU/dc: the pair sum with the 1/2 already cancels against each pair being counted twice,
-        # so summing the k-side derivative over j is the whole gradient. Subtracting the transpose
-        # (the first attempt) double-counts and was one of three errors that made the gradient check
-        # fail at 2.5 instead of 1e-8.
-        lam = self.sink_attract if self.sink_attract > 0.0 else 1.0
-        da_drh = -(cj[..., None] * u[:, None, :] + ci[..., None] * u[None, :, :]) \
-                 + self.curvature * (u[:, None, :] - u[None, :, :])
-        radial = np.einsum("ijc,ijc->ij", da_drh, rh)
-        proj = da_drh - radial[..., None] * rh
-        denv = -2.0 * lam * env
-        pair_c = (-self.bend * denv * (a - 1.0))[..., None] * d + (w / r)[..., None] * proj
-        g_c = pair_c.sum(axis=1)
-
-        # dU/du_i = sum_j w_ij * (u_j - (u_j.r_hat) r_hat + curvature * r_hat)
-        g_u = (w[..., None] * (u[None, :, :] - cj[..., None] * rh
-                               + self.curvature * rh)).sum(axis=1)
-
-        # chain onto the beads. The centre is the mean over ALL nb beads, so each bead takes g_c/nb
-        # -- not the 1/2 used for a two-bead molecule. The axis is normalize(head - tail_centre), so
-        # the head takes +perp/|dv| and each of the nt tails -perp/(|dv| nt).
-        nb = mol.shape[1]
-        nt = nb - 1
-        perp = g_u - (np.einsum("ic,ic->i", g_u, u))[:, None] * u
-        share = perp / nd
-        f = np.zeros((self.X.shape[0], self.pd))
-        np.add.at(f, mol[:, 0], -(g_c / nb + share))
-        for k in range(1, nb):
-            np.add.at(f, mol[:, k], -(g_c / nb - share / nt))
-        return pot, f
-
     def _attract_env(self, dist, d2):
         """Cohesive envelope. r0 = 0 is exactly the historical exp(-lambda*d^2); r0 > 0 puts the
         attraction maximum at CONTACT instead of at zero separation."""
@@ -654,10 +480,10 @@ class PackEngine:
                 sp = self.species.astype(int)
                 g = self.eps_pair[sp[:, None], sp[None, :]] * self._attract_env(dist, d2)
             # Orientation weights apply to the attraction regardless of how the well depths were
-            # obtained. Nesting them inside the eps_pair branch made `curvature` a DEAD KNOB in the
-            # default configuration -- cv=0 and cv=0.2 gave byte-identical trajectories -- which is
-            # the same defect class as the five dead sliders removed earlier. `nematic` was nested
-            # the same way and is hoisted with it.
+            # obtained. Nesting them inside the eps_pair branch once made an orientation knob DEAD in
+            # the default configuration -- two different values gave byte-identical trajectories --
+            # which is the same defect class as the five dead sliders removed earlier. `nematic` is
+            # hoisted out for that reason.
             if self.nematic > 0.0:
                 g = g * (1.0 + self.nematic * self._axis_alignment() ** 2)
             np.fill_diagonal(g, 0.0)
@@ -705,8 +531,6 @@ class PackEngine:
             cohere = -np.einsum("ij,ijc->ic", A_coh, delta)   # toward the neighbourhood centroid
             force = force + self.cohesion * cohere
 
-        if self.curvature != 0.0:
-            force = force + self._curvature_pot_and_force()[1]
         force = force + self._extra_force(delta, d2)   # subclass hook (default 0.0) — e.g. contour-charge force
         self._basis_slot = None                        # never survives the step that built it
         self._nf_slot = None

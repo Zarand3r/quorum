@@ -14,11 +14,15 @@ WHAT IS MEASURED
     depend on any scalar order parameter -- `align` reads 0.000 on a correctly planted ring, and a
     centroid-based lumen radius reads positive on a filled micelle.
 
-THE THREE GATES (see `self_test`)
+THE FOUR GATES (see `self_test`)
     positive     a planted hollow ring            -> must be called HOLLOW
     negative     a planted filled micelle          -> must NOT be called HOLLOW
     adversarial  two separated aggregates whose centroid lies between them, so the inter-fragment
                  solvent sits exactly where a lumen would be -> must NOT be called HOLLOW
+    spanning     a membrane that percolates the box and therefore has no centre -> must NOT be called
+                 HOLLOW. Added after a spanning branched network was called HOLLOW when the render
+                 showed a pore; the other three gates all use compact aggregates, so none of them
+                 tested what a centroid-radial profile does to a structure with no centre.
 
 The adversarial gate is the one that matters: it is the exact configuration that produced four false
 HOLLOW verdicts at N = 65, 80, 100 and 120.
@@ -174,6 +178,26 @@ def plant_micelle(e, R=4.0):
         e.X[mol[:, bead], :2] = rh * (R - bead * BOND_REST)
 
 
+def plant_spanning_stripe(e):
+    """A bilayer stripe spanning the periodic box: heads out along +/-y, tails meeting at y=0.
+
+    The FOURTH gate, added after `classify` returned HOLLOW on a spanning branched network whose
+    render showed a pore rather than a lumen. The first three gates all use COMPACT aggregates, so
+    nothing tested what a radial profile about a centroid does to a structure that has no centre. A
+    spanning membrane is exactly that case: it percolates, its centroid is arbitrary, and water lying
+    beyond it in any direction can occupy the radii where a lumen would be.
+    """
+    mol, nb = e._mol, e._mol.shape[1]
+    per = len(mol) // 2
+    xs = (np.arange(per) - (per - 1) / 2.0) * (e.L / per)
+    for leaf, sgn in ((0, +1.0), (1, -1.0)):
+        idx = mol[leaf * per:(leaf + 1) * per]
+        for bead in range(nb):
+            off = 0.5 + (nb - 1 - bead) * BOND_REST
+            e.X[idx[:len(idx), bead], 0] = xs[:len(idx)]
+            e.X[idx[:len(idx), bead], 1] = sgn * off
+
+
 def plant_two_fragments(e, sep=9.0, R=3.0):
     """The adversarial case: two micelles whose CENTROID lies between them, in solvent."""
     mol, nb = e._mol, e._mol.shape[1]
@@ -201,6 +225,11 @@ def self_test(verbose=True):
     plant_two_fragments(e)
     v, d = classify(e)
     results.append(("adversarial: two fragments, centroid between", v != "HOLLOW", v, d))
+
+    e = _mk()
+    plant_spanning_stripe(e)
+    v, d = classify(e)
+    results.append(("adversarial: spanning stripe, no centre at all", v != "HOLLOW", v, d))
 
     if verbose:
         for name, ok, v, d in results:

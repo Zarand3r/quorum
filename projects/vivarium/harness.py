@@ -78,7 +78,14 @@ import numpy as np
 BOND_REST = 1.0
 BOND_MAX = 1.25          # beyond this the molecule is deformed and nothing structural is admissible
 DISP_MAX = 0.05          # per-step displacement above which the integrator is overshooting
-MIN_PACKING = 0.35       # median nearest non-bonded LIPID neighbour, as a fraction of contact.
+MIN_PACKING = 0.85       # median nearest non-bonded LIPID neighbour, as a fraction of contact.
+#   RAISED from 0.35 on 2026-08-15. At 0.35 this floor ADMITTED the defect it exists to catch: the
+#   historical configuration scores align 0.837 -- a textbook bilayer by eye -- with its beads at 0.15
+#   of contact, i.e. 85% inside one another, and the pre-fix engine sat at 0.36. Those are collapsed
+#   piles with correct geometry and no excluded volume, and they passed. A membrane whose beads
+#   interpenetrate has no thickness and cannot hold a lumen, which is why every planted ring collapsed
+#   at every size. 0.85 is below what a real membrane reaches here (field.py gives 0.95-0.99) and far
+#   above what a collapsed pile can fake.
 #   Matter has to occupy space, and nothing else here checks that it does: `bond_stats` reads
 #   INTRAMOLECULAR distances, so molecules stacked on one point each report a perfect bond of 1.0,
 #   while `lamellar` and `align` come from DIRECTIONS, which stay well defined at any density, and a

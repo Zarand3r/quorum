@@ -155,6 +155,14 @@ def test_packing_admits_a_micelle_and_still_rejects_a_collapse():
     other: at 0.70, tuned on a bilayer, a geometrically perfect planted micelle was called a
     collapse. Micelle lipids converge radially, so inner tail beads sit closer than contact by
     construction -- the packing parameter appearing as a floor on the metric.
+
+    THE RELAXATION ARM USES CORRECTED EXCLUDED VOLUME. It previously relaxed at repel=12 with no
+    saturating core and produced packing 0.508, which is why MIN_PACKING had to sit at 0.35 for this
+    test to pass. That was the defect calibrating its own gate: repel=12 is about 4x too weak, beads
+    settle at 0.36 of contact on a flat sheet and 0.13 in a condensed aggregate, and the historical
+    configuration reached 0.15 while still scoring align 0.837. A gate fitted to that admits collapsed
+    piles by construction. Relaxed under repel=48 with the saturating core, a real micelle holds above
+    the physical floor.
     """
     from bicelle2d import build
     from harness import MIN_PACKING, packing
@@ -162,13 +170,21 @@ def test_packing_admits_a_micelle_and_still_rejects_a_collapse():
 
     kw = dict(kt=0.02, speed=0.001, repel=12.0, k_bond=30.0, satt=0.30, n_tail=2, attract=1.0,
               bond_span=2.0, n_water=250, polarity=0.80, head_q=1.2, hydrophobic=0.6)
+    # corrected excluded volume for anything that is RELAXED rather than merely planted
+    kw_phys = dict(kw, repel=48.0, sharp=8.0, k_bond=120.0)
 
     bil = spanning_bilayer_2d(build, **kw)
     assert packing(bil) > 0.95, "a bilayer planted at contact must read ~1.0; lower means the "\
                                 "metric is counting solvent as a neighbour again"
     mic = micelle_2d(build, n_lip=20, **kw)
     assert packing(mic) < packing(bil), "a micelle packs tighter than a bilayer by geometry"
-    assert packing(relax(mic, 500)) > MIN_PACKING, "the gate must ADMIT a real micelle"
+
+    mic_phys = micelle_2d(build, n_lip=20, **kw_phys)
+    assert packing(relax(mic_phys, 500)) > MIN_PACKING, "the gate must ADMIT a real micelle"
+
+    # and the OLD parameters must now be rejected, which is the point of raising the floor
+    assert packing(relax(micelle_2d(build, n_lip=20, **kw), 500)) < MIN_PACKING, \
+        "repel=12 relaxes to ~0.51 of contact; a physical floor must not admit that"
 
     collapsed = spanning_bilayer_2d(build, **kw)
     collapsed.X[:, :collapsed.pd] *= 0.15

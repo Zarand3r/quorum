@@ -40,11 +40,7 @@ _CONFIG = _HERE / "configs" / "vivarium.yaml"
 # displayed the wrong value, and cut excluded volume 20x on the first drag. Ranges are derived ONCE
 # from the launch defaults; deriving them from the LIVE value instead would make the axis crawl
 # outward as the user drags.
-# `curvature` has a genuine physical bound, not merely a taste one. The weight it multiplies is
-# 1 + curvature * (u_i - u_j).r_hat, and that projection lies in [-2, 2] because both vectors are
-# unit, so any value above 0.5 lets the factor go NEGATIVE -- attraction silently inverting into
-# repulsion for some pairs. 0.5 is where the force changes sign, so that is the slider's ceiling.
-_KNOB_HARD_MAX = {"momentum": 0.98, "rigidity": 1.0, "collision": 1.0, "curvature": 0.5}
+_KNOB_HARD_MAX = {"momentum": 0.98, "rigidity": 1.0, "collision": 1.0}
 
 # Integrator stability: per-step displacement must stay under DISP_MAX or the run blows up (the
 # failure that was once misread as the membrane melting, 2026-07-28c). `speed` multiplies that
@@ -502,12 +498,12 @@ def main(argv: list[str] | None = None) -> int:
         #   rigidity          acts on the shape channel, which this dish does not drive
         # They shipped as live sliders that did nothing. For this engine the hydrophobic effect is in
         # eps_pair (water-water 0.60 against water-tail 0.02), not in a k_* term.
-        # `curvature` is the spontaneous-curvature term (pack.PackEngine.curvature). It is the
-        # only knob here that can make a finite membrane patch CLOSE rather than stay an open disc,
-        # so it belongs on the panel beside the other membrane controls. Default 0.0 leaves the
-        # engine byte-identical, so exposing it cannot disturb the base case.
+        # A `curvature` slider was exposed here as "the only knob that can make a finite patch
+        # CLOSE". It has been removed with the term itself: closing because a spontaneous-curvature
+        # parameter was supplied is importing the answer, not emerging it. See
+        # docs/WHY_THE_ORACLE_DOES_NOT_TRANSFER.md.
         knob_names = ("repel", "attract", "sink_attract", "polarity", "sink_polarity",
-                      "morph", "selectivity", "temperature", "momentum", "speed", "curvature")
+                      "morph", "selectivity", "temperature", "momentum", "speed")
         if args.dim3:
             knob_names = knob_names + ("k_tail", "k_hydro")
         label = ("POLAR PACK 3-D (spherical-harmonic contour · emergent amphiphiles)" if args.dim3
