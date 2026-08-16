@@ -42,13 +42,16 @@ from field import Field, HEAD, TAIL, WATER
 W, H = 760, 560
 
 
-def shot(X, species, L, tag, slab=3.0):
+def shot(X, species, L, tag, slab=1.2):
     """A structural claim in this project is not allowed without looking at the picture.
 
     A 3-D box drawn as a flat projection is a solid wall of beads that hides everything inside it, so
     3-D states are cut to a slab through the centre thick enough to show one membrane cross-section.
-    The thickness is stamped in the filename: a slab too thick manufactures apparent density, one too
-    thin manufactures apparent holes.
+    A slab too thick manufactures apparent density and one too thin manufactures apparent holes, and
+    the first attempt here demonstrated the former: at slab = 3.0 through a vesicle of R = 4.35 the cut
+    contained most of the sphere, so the front and back caps projected into the middle and a hollow
+    shell rendered as a filled ball. 1.2 is thinner than the bilayer itself, so the cross-section of a
+    vesicle is a genuine ring.
     """
     img = np.zeros((H, W, 3), dtype=np.uint8)
     img[:, :] = (14, 16, 22)
