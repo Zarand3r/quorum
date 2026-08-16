@@ -172,17 +172,32 @@ class Field:
     # with the dense one.
 
     SKIN = 0.6
+    CHUNK = 512
 
     def _rebuild(self, X):
-        d = X[:, None, :] - X[None, :, :]
-        d -= self.L * np.round(d / self.L)
-        r2 = np.einsum("ijc,ijc->ij", d, d)
+        """Candidate pairs within rc + skin, built in row blocks so memory is bounded.
+
+        The whole-array form allocates (n, n, d) doubles -- 864 MB at n = 6000 in 3-D -- which caps
+        the system size far below what a 3-D vesicle needs. Blocking makes the cost O(n^2) in time but
+        O(CHUNK * n) in memory. Rebuilds are rare: a bead must diffuse skin/2 before the list can go
+        stale, which at these settings is several hundred steps.
+        """
+        n = len(X)
         cut = (self.rc * self.sigma + self.SKIN) ** 2
-        iu = np.triu_indices(len(X), k=1)
-        near = r2[iu] < cut
-        self._pi, self._pj = iu[0][near], iu[1][near]
+        pis, pjs = [], []
+        for lo in range(0, n, self.CHUNK):
+            hi = min(lo + self.CHUNK, n)
+            d = X[lo:hi, None, :] - X[None, :, :]
+            d -= self.L * np.round(d / self.L)
+            r2 = np.einsum("ijc,ijc->ij", d, d)
+            rows, cols = np.nonzero(r2 < cut)
+            rows = rows + lo
+            keep = rows < cols                      # upper triangle only, so each pair appears once
+            pis.append(rows[keep])
+            pjs.append(cols[keep])
+        self._pi = np.concatenate(pis) if pis else np.zeros(0, int)
+        self._pj = np.concatenate(pjs) if pjs else np.zeros(0, int)
         self._anchor = X.copy()
-        self._moved = 0.0
 
     def _pairs(self, X):
         need = not hasattr(self, "_pi") or len(self._anchor) != len(X)

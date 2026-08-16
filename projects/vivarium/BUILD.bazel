@@ -397,6 +397,14 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_mixture",
+    srcs = ["_mixture.py"],
+    main = "_mixture.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_field",
     srcs = ["field.py"],
     main = "field.py",
