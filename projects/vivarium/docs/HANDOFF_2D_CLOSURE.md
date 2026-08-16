@@ -82,6 +82,43 @@ retracted earlier claims of our own.
   with the strongest forces giving the worst result; rescaling every interaction coherently by 4x
   moves it 0.577 -> 0.631, not to the 0.8+ predicted.
 
+## 3b. Since writing §3 we have largely answered our own question
+
+Three experiments run after the sections above, all under the force field of §1.
+
+**The closed ring is a stable phase.** A planted two-leaflet ring of 70 lipids holds for 200 000 steps,
+and its shell CV TIGHTENS rather than decays:
+
+| component | largest | R_mid | shell CV start -> end | lumen water | lumen/bulk |
+|---|---|---|---|---|---|
+| mixed 2-tail + 4-tail | 70/70 | 8.07 | 0.277 -> 0.211 | 50 | 1.18 |
+| single component, 4-tail | 70/70 | 8.90 | 0.284 -> 0.204 | 56 | 1.54 |
+
+The render shows a closed annulus with heads on both the outer surface and the lumen boundary and
+water inside. Every planted ring before this collapsed to a filled micelle at every size. So option (1)
+in §4 -- excluded in principle -- appears to be **false**: the phase exists and is at least metastable.
+
+**Leaflet compositional asymmetry does not happen.** In the mixture, enrichment stays pinned at its
+t = 0 random value (+0.081, +0.081, +0.039, never drifting) through 200 000 steps. The species do not
+exchange between leaflets because that requires flip-flop, and flip-flop is kinetically forbidden here
+as it is in real membranes, where it takes hours and is enzyme-catalysed. Cells build leaflet asymmetry
+with flippases, not by equilibration. The single-component control confirms the mixture was irrelevant
+to the ring's stability.
+
+**An open arc does not close.** Planted at three quarters of a ring, at the same radius the closed
+state prefers, it stays a C for 250 000 steps with a persistent gap, both ends capped by head groups.
+
+**Our reading, which is what we would most like checked.** In 2-D a bilayer edge is a POINT; in 3-D it
+is a LINE. Closing a 3-D vesicle removes an edge cost proportional to the perimeter, a driving force
+that grows with the aggregate. Closing a 2-D ring removes only two point-like ends, each costing O(1),
+and those ends are cheaply capped by a few heads. So the thermodynamic drive for 2-D closure does not
+scale with size, while the kinetic barrier does not shrink -- which would explain why both oracles work
+in 3-D, why LAMMPS's own 2-D example produces branched strips with stable ends, and why our arc sits
+open next to a ring we know is stable.
+
+If that argument is right, 2-D closure is not excluded, merely never driven, and the milestone should
+move to 3-D rather than be pursued with better sampling.
+
 ## 4. The question
 
 **In strictly two dimensions, is a closed ring a thermodynamically stable phase for a SYMMETRIC
@@ -90,16 +127,15 @@ principle?**
 
 Concretely, we would like to know which of these is true:
 
-1. **Excluded in principle.** In 2-D the bilayer's two leaflets are two lines, closure is a competition
-   between a bending energy that scales as `kappa/L` and a fixed edge cost `2*lambda`, and for a
-   symmetric bilayer the preferred curvature is exactly zero, so the ring is at best marginally stable
-   and never a free-energy minimum. If so, no isotropic 2-D model will close, and we should stop.
-2. **Reachable, but not by any mechanism we tried.** If so, we would value the mechanism more than the
-   verdict. The one route we have not yet tested is **leaflet compositional asymmetry**: two lipid
-   species of different geometry that partition unevenly between the inner and outer leaflet, so
-   curvature emerges from partitioning rather than from a per-molecule parameter. This is how cells do
-   it, and unlike the cone-shape test it is not symmetric across the leaflets by construction. We are
-   running it now. Is it the right candidate, and are there others?
+1. **Excluded in principle.** ~~In 2-D the bilayer's two leaflets are two lines...~~ **We now believe
+   this is false** -- see §3b, where a planted ring is stable for 200 000 steps and tightening. We leave
+   the option here because a reviewer may read our ring as long-lived-but-not-stable, and we would like
+   to know how to tell the difference on a timescale we can afford.
+2. **Reachable, but never driven.** This is now our own reading (§3b): the closed state is stable, the
+   open state is also stable, and nothing carries the system from one to the other because a 2-D edge
+   costs O(1) rather than scaling with perimeter. If you agree, the honest move is 3-D. If you
+   disagree, what supplies the drive in 2-D? Leaflet compositional asymmetry was our candidate and it
+   is falsified as an equilibrium mechanism, since flip-flop does not occur.
 3. **The question is malformed.** For example, if "spontaneous curvature" is not separable from
    "orientation-dependent interaction" in a coarse-grained model -- i.e. if any model that closes must
    have an orientation term somewhere, whether written as `beta` or emergent from composition -- then

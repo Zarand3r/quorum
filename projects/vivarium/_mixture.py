@@ -91,6 +91,12 @@ def build(n_short, n_long, n_water, L, d, tails=(2, 4), seed=0, plant="random"):
         k += 1 + t
     if plant == "ring":
         _plant_ring(X, mols, np.array(chains), d)
+    elif plant.startswith("arc"):
+        # `arc0.75` plants three quarters of a ring: a bilayer with TWO EXPOSED ENDS at the same
+        # curvature the closed state prefers. The question is whether edge tension pulls the ends
+        # together. This is only meaningful now that the closed ring is known to be stable -- run
+        # before that, a failure to close could not be distinguished from the target not existing.
+        _plant_ring(X, mols, np.array(chains), d, span=float(plant[3:] or 0.75))
     wi = np.arange(k, n)
     species[wi] = WATER
     X[wi] = rng.uniform(-L / 2, L / 2, size=(n_water, d))
@@ -98,7 +104,7 @@ def build(n_short, n_long, n_water, L, d, tails=(2, 4), seed=0, plant="random"):
     return X, species, np.array(bonds), mols, wi, np.array(chains)
 
 
-def _plant_ring(X, mols, chains, d):
+def _plant_ring(X, mols, chains, d, span=1.0):
     """Two leaflets sharing a tail core. Heads out on the outside, heads in on the inside.
 
     The mid-surface radius is set so both leaflets sit at roughly one bead of arc per lipid, and the
@@ -115,7 +121,10 @@ def _plant_ring(X, mols, chains, d):
     for count, R_head, sgn in ((n_out, R_out, +1.0), (n - n_out, R_in, -1.0)):
         if count <= 0:
             continue
-        th = (np.arange(count) + 0.5) / count * 2 * np.pi
+        # the arc keeps the SAME arc spacing as the closed ring, so a shorter span means a smaller
+        # subtended angle at the same radius, not a stretched membrane
+        th = (np.arange(count) + 0.5) / max(count / span, 1e-9) * 2 * np.pi / (2 * np.pi) * 2 * np.pi
+        th = (np.arange(count) + 0.5) / count * 2 * np.pi * span
         rhat = np.stack([np.cos(th), np.sin(th)], axis=1)
         for j in range(count):
             idx = mols[k + j]
