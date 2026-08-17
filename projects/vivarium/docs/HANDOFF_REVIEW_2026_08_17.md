@@ -113,7 +113,19 @@ about 2 * CORE_HEIGHT = 120, so F*dt = 0.024, far below a bead diameter.
    removed the orientation term on principle, since its `beta` IS the spontaneous curvature. Is that
    principled distinction real, or does any model that closes need orientation coupling somewhere --
    in which case our "emergent vs imported" framing is confused and we would like to be told so?
-5. **Is a stable PLANTED vesicle the right target at all?** Simulated vesicles are long-lived
+5. **Have we REGRESSED against our own starting point, and how would we tell?** The pre-oracle engine
+   (tag `vivarium-pre-oracle`, commit `3a70fce`) produced clean-looking micelles and bilayers -- 35/63
+   and 38/63, alignment 0.837. Those are now known to be interpenetrating piles: `packing` 0.36 on a
+   planted sheet and 0.13-0.15 condensed, against this project's own scorecard bands of bilayer
+   0.71-1.00 and **collapse below 0.35**. Alignment stayed high because it is computed from
+   DIRECTIONS, which remain well defined at any density. The new field is at 0.95-0.99 -- correct
+   packing -- but its emergent morphology is a percolating tail network rather than clean micelles or
+   bilayers. We cannot presently say whether that is a regression, because the new runs differ from
+   the old in sampling (0.26 box crossings), lipid (stiff 2-tail vs floppy 3-bead) and temperature all
+   at once. What is the right matched comparison, and is "correct packing, messier morphology" the
+   expected trade when a too-soft core is fixed?
+
+6. **Is a stable PLANTED vesicle the right target at all?** Simulated vesicles are long-lived
    metastable states, and we have been treating planted-stability as a requirement. Would a
    defensible criterion be emergence plus persistence over a stated window, and if so what window?
 
