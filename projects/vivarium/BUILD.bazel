@@ -397,6 +397,13 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_sizing3d",
+    srcs = ["_sizing3d.py"],
+    main = "_sizing3d.py",
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_mixture",
     srcs = ["_mixture.py"],
     main = "_mixture.py",

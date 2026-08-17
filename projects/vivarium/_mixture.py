@@ -133,11 +133,24 @@ def _plant_sphere(X, mols, chains, d):
         raise ValueError("sphere planting is 3-D")
     n = len(mols)
     lip = float(chains.mean())
-    # area per lipid measured on a spanning slab in the reference model
-    a = 1.5
+    # area per lipid, MEASURED for this force field on a planted flat 3-D bilayer relaxed 30000 steps
+    # (_sizing3d.py): 1.400 for a 2-tail lipid, 1.364 for 4-tail, against the reference model's 1.50.
+    # The planted radius follows from it, so the vesicle starts at the size the lipid actually wants
+    # rather than at a borrowed constant.
+    a = 1.364 if chains.mean() >= 3 else 1.400
     R_mid = float(np.sqrt(n * a / (4.0 * np.pi)))
     R_out, R_in = R_mid + lip / 2, max(R_mid - lip / 2, 0.8)
-    n_out = int(round(n * (R_out ** 2) / (R_out ** 2 + R_in ** 2)))
+    # CONSTANT VOLUME PER LIPID, not constant area. Splitting the leaflets by the AREA of each head
+    # surface (R_out^2 : R_in^2) is the standard packing mistake: vesicle-building work reports that
+    # constant-volume packing is markedly more stable than constant-area, ESPECIALLY FOR SMALL
+    # vesicles, and that an improper leaflet split produces stress-induced instability, pore formation
+    # and collapse during equilibration. A preassembled vesicle should not need flip-flop to relax --
+    # and flip-flop is measured as forbidden here (enrichment never drifts off its planted value), so
+    # a mis-split vesicle has no route to the right ratio except to collapse. Each leaflet gets the
+    # lipids its own SHELL VOLUME can hold.
+    v_out = R_out ** 3 - R_mid ** 3
+    v_in = R_mid ** 3 - max(R_in - lip, 0.0) ** 3
+    n_out = int(round(n * v_out / (v_out + v_in)))
     k = 0
     for count, R_head, sgn in ((n_out, R_out, +1.0), (n - n_out, R_in, -1.0)):
         if count <= 0:
