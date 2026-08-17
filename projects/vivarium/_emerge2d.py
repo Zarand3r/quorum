@@ -43,7 +43,8 @@ if __name__ == "__main__":
     n_lip = int(sys.argv[2]) if len(sys.argv) > 2 else 70
     L = float(sys.argv[3]) if len(sys.argv) > 3 else 28.0
     kT = float(sys.argv[4]) if len(sys.argv) > 4 else 0.35
-    phi, d, n_tail = 0.55, 2, 4
+    n_tail = int(sys.argv[5]) if len(sys.argv) > 5 else 2
+    phi, d = 0.55, 2
 
     n_water = int(round(phi * L ** 2 / (np.pi * 0.25))) - (1 + n_tail) * n_lip
     if n_water < 0:
