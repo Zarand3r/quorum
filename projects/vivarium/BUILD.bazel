@@ -397,6 +397,14 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_emerge2d",
+    srcs = ["_emerge2d.py"],
+    main = "_emerge2d.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_sizing3d",
     srcs = ["_sizing3d.py"],
     main = "_sizing3d.py",

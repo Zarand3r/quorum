@@ -112,8 +112,46 @@ def build(n_short, n_long, n_water, L, d, tails=(2, 4), seed=0, plant="random"):
     wi = np.arange(k, n)
     species[wi] = WATER
     X[wi] = rng.uniform(-L / 2, L / 2, size=(n_water, d))
+    if plant in ("ring", "sphere"):
+        # FILL THE LUMEN AT BULK DENSITY. Water placed uniformly at random almost never lands inside a
+        # planted vesicle: in 3-D at packing fraction 0.10 a lumen of radius 3.7 should hold ~16 waters
+        # and caught 4, so the interior was under-pressurised and the shell was crushed from outside --
+        # lumen 4 -> 0 within 7500 steps. Real vesicle-construction protocols solvate the interior
+        # explicitly for this reason. This also explains the 2-D/3-D contrast seen here: the 2-D runs
+        # used packing fraction 0.55, where the lumen caught ~50 waters by chance and was properly
+        # filled, while the 3-D runs used 0.10 and were not.
+        _fill_lumen(X, wi, mols, np.array(chains), L, d, rng)
     X -= L * np.round(X / L)
     return X, species, np.array(bonds), mols, wi, np.array(chains)
+
+
+def _fill_lumen(X, wi, mols, chains, L, d, rng):
+    """Move enough water inside the planted shell that the lumen sits at the BULK number density.
+
+    Waters are taken from the ones currently furthest from the centre, so the bulk is thinned evenly
+    rather than a hole being cut in it. If the lumen already holds its share, nothing moves.
+    """
+    lipid_beads = np.concatenate(mols)
+    cen = X[lipid_beads].mean(axis=0)
+    rt = np.linalg.norm(_wrap(X[lipid_beads] - cen, L), axis=1)
+    lip = float(chains.mean())
+    r_in = float(np.median(rt)) - lip
+    if r_in <= 1.0:
+        return 0
+    bulk = len(wi) / L ** d
+    want = int(round(bulk * C_D[d] * r_in ** d))
+    rw = np.linalg.norm(_wrap(X[wi] - cen, L), axis=1)
+    have = int((rw < r_in).sum())
+    need = want - have
+    if need <= 0:
+        return 0
+    outer = wi[np.argsort(rw)[::-1][:need]]
+    # uniform in the ball: radius scales as u^(1/d) so density is flat, not centre-heavy
+    u = rng.random(need) ** (1.0 / d)
+    v = rng.normal(size=(need, d))
+    v /= np.linalg.norm(v, axis=1, keepdims=True)
+    X[outer] = cen + v * (u * (r_in - 0.5))[:, None]
+    return need
 
 
 def _plant_sphere(X, mols, chains, d):
