@@ -60,14 +60,22 @@ N_SPECIES = 3
 def default_chi():
     """Dimensionless pair affinities. Positive = attract, zero = no attraction beyond the core.
 
-    Only the amphiphile's defining asymmetry is encoded: tails attract tails and avoid water, heads
-    are comfortable in water. These are ratios to `eps`, so they stay balanced when `eps` moves.
+    These are ratios to `eps`, so they stay balanced when `eps` moves.
+
+    WATER is the MOST cohesive species. The hydrophobic effect is driven by water's self-attraction
+    squeezing oil out, not by oil being sticky, and real coarse-grained force fields order it that way
+    (MARTINI water-water sits above alkane-alkane). An earlier version of this table had
+    tail-tail 1.00 against water-water 0.40, which still demixes but gives a weakly cohesive solvent
+    that exerts little lateral pressure on a membrane and little osmotic support to a lumen. That is
+    the same inversion `pack.py` documents as the reason its cores stayed wet.
+
+    Demixing still requires chi_TW below the mean of the self terms, which holds: 0 < (1.0+0.7)/2.
     """
     chi = np.zeros((N_SPECIES, N_SPECIES))
-    chi[TAIL, TAIL] = 1.00                       # the hydrophobic driving force
+    chi[WATER, WATER] = 1.00                     # strongest: water coheres and expels the tail
+    chi[TAIL, TAIL] = 0.70                       # dispersion between alkane-like tails
     chi[HEAD, HEAD] = 0.20
-    chi[WATER, WATER] = 0.40
-    chi[HEAD, WATER] = chi[WATER, HEAD] = 0.60   # heads are solvated
+    chi[HEAD, WATER] = chi[WATER, HEAD] = 0.75   # heads are solvated, comparable to bulk water
     chi[HEAD, TAIL] = chi[TAIL, HEAD] = 0.20
     chi[TAIL, WATER] = chi[WATER, TAIL] = 0.00   # tails gain nothing from water
     return chi
@@ -137,16 +145,54 @@ class Field:
     """
 
     def __init__(self, species, bonds, L, eps=1.0, sigma=1.0, rc=2.5, k_bond=200.0,
-                 r_bond=1.0, chi=None):
+                 r_bond=1.0, chi=None, bend_frac=1.0, angles=None):
         self.species = np.asarray(species, dtype=np.int64)
         self.bonds = np.asarray(bonds, dtype=np.int64).reshape(-1, 2)
         self.L = float(L)
         self.eps, self.sigma, self.rc = float(eps), float(sigma), float(rc)
         self.k_bond, self.r_bond = float(k_bond), float(r_bond)
+        # CHAIN STIFFNESS as 1-3 harmonic bonds at twice the rest length, i.e. a straight chain is the
+        # minimum. Without this the tail is a FREELY JOINTED chain with zero persistence length, and a
+        # membrane's bending rigidity comes from only two places -- chain stiffness and
+        # orientation-dependent interactions. This model deliberately has no orientation term, so
+        # without 1-3 bonds its bending rigidity is essentially zero and a curved membrane crumples.
+        # Every coarse-grained lipid force field (Cooke-Deserno, MARTINI, and the pre-oracle engine
+        # here via polar_pack's bend_frac) includes one. Unlike a spontaneous-curvature parameter this
+        # is a property of the MOLECULE and carries no preferred membrane curvature.
+        self.bend_frac = float(bend_frac)
+        self.angles = (self._infer_13() if angles is None else
+                       np.asarray(angles, dtype=np.int64).reshape(-1, 2))
         self.chi = default_chi() if chi is None else np.asarray(chi, dtype=float)
         if not np.allclose(self.chi, self.chi.T):
             raise ValueError("chi must be symmetric: U_ij and U_ji are the same pair")
         self.q, self.k = qk_factors(self.chi)
+        # EXCLUSIONS. A bonded pair's interaction is already represented by the bond, so counting the
+        # non-bonded well on top double-counts it and shortens the chain in an uncontrolled way.
+        # Standard practice excludes 1-2 and 1-3 neighbours; both are excluded here since both are
+        # bonded terms in this model.
+        ex = np.concatenate([self.bonds, self.angles]) if len(self.angles) else self.bonds
+        if len(ex):
+            lo, hi = np.minimum(ex[:, 0], ex[:, 1]), np.maximum(ex[:, 0], ex[:, 1])
+            self._excl = np.unique(lo.astype(np.int64) * (1 << 32) + hi.astype(np.int64))
+        else:
+            self._excl = np.zeros(0, dtype=np.int64)
+
+    def _infer_13(self):
+        """1-3 pairs implied by the 1-2 bond list: i-j and j-k present means i-k is an angle."""
+        if not len(self.bonds):
+            return np.zeros((0, 2), dtype=np.int64)
+        nbr = {}
+        for a, b in self.bonds:
+            nbr.setdefault(int(a), []).append(int(b))
+            nbr.setdefault(int(b), []).append(int(a))
+        out = set()
+        for mid, ends in nbr.items():
+            for x in range(len(ends)):
+                for y in range(x + 1, len(ends)):
+                    i, k = sorted((ends[x], ends[y]))
+                    out.add((i, k))
+        return (np.array(sorted(out), dtype=np.int64) if out
+                else np.zeros((0, 2), dtype=np.int64))
 
     # ---- the attention view -------------------------------------------------
 
@@ -195,8 +241,13 @@ class Field:
             keep = rows < cols                      # upper triangle only, so each pair appears once
             pis.append(rows[keep])
             pjs.append(cols[keep])
-        self._pi = np.concatenate(pis) if pis else np.zeros(0, int)
-        self._pj = np.concatenate(pjs) if pjs else np.zeros(0, int)
+        pi = np.concatenate(pis) if pis else np.zeros(0, np.int64)
+        pj = np.concatenate(pjs) if pjs else np.zeros(0, np.int64)
+        if len(self._excl) and len(pi):
+            key = pi.astype(np.int64) * (1 << 32) + pj.astype(np.int64)   # pi < pj by construction
+            keep = ~np.isin(key, self._excl)
+            pi, pj = pi[keep], pj[keep]
+        self._pi, self._pj = pi, pj
         self._anchor = X.copy()
 
     def _pairs(self, X):
@@ -213,11 +264,23 @@ class Field:
         return d, r, (self._pi, self._pj)
 
     def _dense_pairs(self, X):
+        """Reference implementation. Applies the SAME exclusions as the sparse path.
+
+        It did not, originally, and `check_neighbor_list` still passed -- because that check ran with
+        an empty bond list, so there were no exclusions to disagree about. A reference path that is
+        only correct on the case the test happens to use is not a reference path.
+        """
         d = X[:, None, :] - X[None, :, :]
         d -= self.L * np.round(d / self.L)
         r = np.linalg.norm(d, axis=2)
         iu = np.triu_indices(len(X), k=1)
-        return d[iu], r[iu], iu
+        pi, pj = iu
+        dd, rr = d[iu], r[iu]
+        if len(self._excl):
+            key = pi.astype(np.int64) * (1 << 32) + pj.astype(np.int64)
+            keep = ~np.isin(key, self._excl)
+            pi, pj, dd, rr = pi[keep], pj[keep], dd[keep], rr[keep]
+        return dd, rr, (pi, pj)
 
     def energy(self, X):
         d, r, iu = self._pairs(X)
@@ -227,12 +290,19 @@ class Field:
         chi = self.content()[iu]
         u = self.eps * (uc + uw * chi)
         e = float(u[r < self.rc * self.sigma].sum())
-        if len(self.bonds):
-            bd = X[self.bonds[:, 0]] - X[self.bonds[:, 1]]
+        for pairs, k, r0 in self._springs():
+            bd = X[pairs[:, 0]] - X[pairs[:, 1]]
             bd -= self.L * np.round(bd / self.L)
             br = np.linalg.norm(bd, axis=1)
-            e += float((0.5 * self.k_bond * (br - self.r_bond) ** 2).sum())
+            e += float((0.5 * k * (br - r0) ** 2).sum())
         return e
+
+    def _springs(self):
+        """(pairs, k, rest) for every harmonic term: the 1-2 backbone and the 1-3 stiffener."""
+        out = [(self.bonds, self.k_bond, self.r_bond)]
+        if len(self.angles) and self.bend_frac > 0.0:
+            out.append((self.angles, self.k_bond * self.bend_frac, 2.0 * self.r_bond))
+        return [(p, k, r) for p, k, r in out if len(p)]
 
     def forces(self, X):
         """-dU/dX, analytic. Verified against finite differences by `check_gradients`."""
@@ -251,14 +321,14 @@ class Field:
         F = np.zeros_like(X)
         np.add.at(F, iu[0], pf)
         np.add.at(F, iu[1], -pf)
-        if len(self.bonds):
-            bd = X[self.bonds[:, 0]] - X[self.bonds[:, 1]]
+        for pairs, k, r0 in self._springs():
+            bd = X[pairs[:, 0]] - X[pairs[:, 1]]
             bd -= self.L * np.round(bd / self.L)
             br = np.linalg.norm(bd, axis=1)
             bsafe = np.maximum(br, 1e-12)
-            bf = (-self.k_bond * (br - self.r_bond) / bsafe)[:, None] * bd
-            np.add.at(F, self.bonds[:, 0], bf)
-            np.add.at(F, self.bonds[:, 1], -bf)
+            bf = (-k * (br - r0) / bsafe)[:, None] * bd
+            np.add.at(F, pairs[:, 0], bf)
+            np.add.at(F, pairs[:, 1], -bf)
         return F
 
 
@@ -267,14 +337,18 @@ def check_neighbor_list(seed=0, n=120, d=2, L=12.0):
     rng = np.random.default_rng(seed)
     X = rng.uniform(0.0, L, size=(n, d))
     species = rng.integers(0, N_SPECIES, size=n)
-    f = Field(species, np.zeros((0, 2), int), L)
+    # WITH bonds, so the exclusion path is exercised. Chains of three over the first third of the
+    # tokens give both 1-2 and inferred 1-3 exclusions.
+    bonds = np.array([[i, i + 1] for i in range(0, n // 3, 3)]
+                     + [[i + 1, i + 2] for i in range(0, n // 3, 3)])
+    f = Field(species, bonds, L)
     e_sparse, F_sparse = f.energy(X), f.forces(X)
 
     class Dense(Field):
         def _pairs(self, X):
             return self._dense_pairs(X)
 
-    g = Dense(species, np.zeros((0, 2), int), L)
+    g = Dense(species, bonds, L)
     return max(abs(e_sparse - g.energy(X)), float(np.abs(F_sparse - g.forces(X)).max()))
 
 

@@ -39,6 +39,50 @@ def test_field_is_dimension_agnostic():
     assert check_neighbor_list(n=100, d=3, L=10.0) < 1e-10
 
 
+def test_chain_has_bending_stiffness():
+    """A straight chain must be the bond network's minimum, i.e. bending it costs energy.
+
+    Without 1-3 terms the tail is a FREELY JOINTED chain with zero persistence length, and since this
+    model deliberately has no orientation term, chain stiffness is its ONLY source of membrane bending
+    rigidity. A membrane with no bending rigidity crumples rather than holding a curved shape.
+    """
+    L = 40.0
+    species = np.array([HEAD, TAIL, TAIL])
+    bonds = np.array([[0, 1], [1, 2]])
+    f = Field(species, bonds, L)
+    straight = np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]])
+    bent = np.array([[0.0, 0.0], [1.0, 0.0], [1.0, 1.0]])
+    assert f.energy(bent) > f.energy(straight) + 1e-6
+    # and the 1-3 pair must have been inferred from the 1-2 bonds
+    assert any(tuple(a) == (0, 2) for a in f.angles)
+
+
+def test_bonded_pairs_are_excluded_from_the_nonbonded_term():
+    """A bonded pair's interaction is the bond; counting the well on top double-counts it."""
+    L = 40.0
+    species = np.array([TAIL, TAIL])
+    X = np.array([[0.0, 0.0], [1.0, 0.0]])
+    free = Field(species, np.zeros((0, 2), int), L)
+    bonded = Field(species, np.array([[0, 1]]), L)
+    # at the bond rest length the harmonic term contributes exactly zero, so any difference is the
+    # non-bonded well that the bonded model must NOT be counting
+    assert abs(bonded.energy(X)) < 1e-12
+    assert free.energy(X) < -1e-6
+
+
+def test_water_is_the_most_cohesive_species():
+    """The hydrophobic effect is water squeezing oil out, not oil being sticky.
+
+    Real coarse-grained force fields order it this way (MARTINI water-water above alkane-alkane). The
+    inverted ordering still demixes, but gives a solvent too weak to press on a membrane or support a
+    lumen -- the failure `pack.py` documents as its cores staying wet.
+    """
+    chi = default_chi()
+    assert chi[WATER, WATER] > chi[TAIL, TAIL] > chi[HEAD, HEAD]
+    # and demixing must survive the reordering
+    assert chi[TAIL, WATER] < 0.5 * (chi[TAIL, TAIL] + chi[WATER, WATER])
+
+
 def test_asymmetric_chi_is_rejected():
     """U_ij and U_ji are the same pair; an asymmetric chi is a corrupt model, not a fallback."""
     chi = default_chi()
