@@ -424,6 +424,13 @@ py_binary(
     deps = [":legacy"],
 )
 py_binary(
+    name = "_integrate",
+    srcs = ["integrate.py"],
+    main = "integrate.py",
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_clusterdiff",
     srcs = ["_clusterdiff.py"],
     main = "_clusterdiff.py",
