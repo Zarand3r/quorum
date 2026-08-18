@@ -1,0 +1,67 @@
+"""Self-assembly measured through the validated harness. Every number here is admissible or refused.
+
+Intact molecules (bond_span=2.0 keeps bonds at 1.01-1.02), minimum image applied at one chokepoint,
+both controls printed, and any sample with a deformed molecule or an overshooting integrator is
+DISQUALIFIED rather than interpreted.
+"""
+import argparse
+
+from bilayer3d import build
+from harness import header, line, measure
+
+
+def main(argv=None):
+    p = argparse.ArgumentParser()
+    p.add_argument("--steps", type=int, default=30000)
+    p.add_argument("--every", type=int, default=6000)
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--lipids", type=int, default=231)
+    p.add_argument("--bound", type=float, default=5.0)
+    p.add_argument("--tails", type=int, default=4)
+    p.add_argument("--speed", type=float, default=0.002)
+    p.add_argument("--repel", type=float, default=12.0)
+    p.add_argument("--satt", type=float, default=0.30)
+    p.add_argument("--attract", type=float, default=0.30)
+    p.add_argument("--kbond", type=float, default=40.0)
+    p.add_argument("--span", type=float, default=2.0)
+    p.add_argument("--headsigma", type=float, default=1.0)
+    p.add_argument("--kt", type=float, default=0.02)
+    p.add_argument("--water", action="store_true",
+                   help="EXPLICIT SOLVENT. A vesicle is a shell ENCLOSING WATER, and the force that "
+                        "bends a bicelle into a cup is tail-water contact at the rim. Solvent-free "
+                        "removes both, which is why a droplet was the only outcome.")
+    p.add_argument("--branched", action="store_true", help="two tails from one head")
+    p.add_argument("--headq", type=float, default=0.0, help="head charge; needed to hydrate a head")
+    p.add_argument("--polarity", type=float, default=0.0)
+    p.add_argument("--slit", action="store_true")
+    p.add_argument("--plant", action="store_true")
+    a = p.parse_args(argv)
+
+    kw = dict(n_lip=a.lipids, bound=a.bound, kt=a.kt, speed=a.speed, repel=a.repel,
+              k_bond=a.kbond, satt=a.satt, spol=0.90, n_tail=a.tails, head_q=a.headq,
+              rad_head=0.0, no_water=not a.water, aniso=0.0, polarity=a.polarity,
+              attract=a.attract, bond_span=a.span, head_sigma=a.headsigma, branched=a.branched,
+              wall_axes=(2,) if a.slit else ())
+    for tag, pl in (("planted", True), ("random ", False)):
+        m = measure(build(seed=a.seed, plant=pl, **kw))
+        print(f"  CONTROL {tag}: align={m['align']:.3f} hollow={m['hollow']:.2f} "
+              f"lamellar={m['lamellar']:.3f} bond={m['bond_mean']:.2f}")
+    e = build(seed=a.seed, plant=a.plant, **kw)
+    print(f"  N={e.cfg.N} lipids={len(e._mol)} tails={a.tails} box={2*a.bound:.0f} "
+          f"{'SLIT' if a.slit else 'periodic'} {'PLANTED' if a.plant else 'DISORDERED'}")
+    print(header())
+    for t in range(0, a.steps + 1, a.every):
+        # displacement must be measured over ONE step. Sampling it across the checkpoint interval
+        # compares 6000 steps of motion against a per-step threshold and disqualifies every healthy
+        # run -- which it did on the first attempt.
+        prev = e.X.copy()
+        e.step()
+        print(line(t, measure(e, prev_X=prev)), flush=True)
+        if t < a.steps:
+            for _ in range(a.every - 1):
+                e.step()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

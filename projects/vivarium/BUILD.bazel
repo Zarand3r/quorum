@@ -17,6 +17,17 @@ filegroup(
 )
 
 py_library(
+    name = "legacy",
+    srcs = glob(["legacy/*.py"], allow_empty = True),
+    data = [":configs"],
+    imports = ["legacy"],  # legacy modules import each other by bare name, as they did at the tag
+    deps = [
+        requirement("numpy"),
+        requirement("pyyaml"),
+    ],
+)
+
+py_library(
     name = "vivarium",
     srcs = glob(["*.py"], allow_empty = True),
     data = [":configs"],
@@ -403,6 +414,14 @@ py_binary(
     data = [":configs"],
     imports = ["."],
     deps = [":vivarium"],
+)
+py_binary(
+    name = "_legacy_run",
+    srcs = ["_legacy_run.py"],
+    main = "_legacy_run.py",
+    data = [":configs"],
+    imports = ["legacy"],
+    deps = [":legacy"],
 )
 py_binary(
     name = "_clusterdiff",

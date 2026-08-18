@@ -1,0 +1,659 @@
+"""Boundaries + induced-fit packing (transformer-only).
+
+Everything is driven by the GROUNDED overlap of the drawn contours (Parseval: the attention
+dock score IS the contour overlap), so agents pack like puzzle pieces:
+
+  * repel head  — a bounded REPULSIVE ATTENTION (softmax over direct-clash ⟨C_i,C_j⟩ − λ·d²):
+    attend to close/clashing neighbours, move away from that weighted set. Row-stochastic ⇒
+    bounded (soft excluded volume), a genuine attention op — NOT a divergent 1/d² kernel
+    (strict transformer-only, see design/HARD_REQUIREMENT.md).
+  * attract head — softmax attention on *complementary* overlap ⟨C_i, C_j·M⟩ (lock-and-key) → agents
+    pull toward neighbours they can interlock with.
+  * induced-fit morph — the block updates the shape channels via the complementarity attention +
+    MLP, so an agent deforms its contour to fit its binding partners.
+
+Periodic (toroidal) domain → no walls, no corner-piling. Fixed-rule, transformer-only (attention +
+MLP + LayerNorm), no energy ledger, no variable N.
+
+    bazel run //projects/vivarium:pack -- --probe
+"""
+
+from __future__ import annotations
+
+import argparse
+
+import numpy as np
+
+from aliveness import evaluate
+from config import DEFAULTS, VivariumConfig
+from rng import base_rng, rng_for
+
+_LN_EPS = 1e-5
+_MLP_H = 2
+_DIR_EPS = 1e-4  # softening for the unit-direction normalisation (not a force kernel)
+_WALL_W = 0.15            # wall kernel width; bounded tanh, never divergent
+_THERMAL = 0.15  # Langevin kick per unit temperature (kT → Brownian displacement)
+_LANGEVIN_KT = 0.08   # velocity-noise scale for the FDT thermostat (see step())
+_SHAPE_THERMAL = 0.02  # the same thermostat acting on CONFORMATION (kT → shape fluctuation). Real
+#   molecules deform because thermal energy pays the elastic cost, so flexibility must EMERGE from
+#   the ratio kT/k, not be dialled in. Calibrated so the equilibrium variance is exactly
+#   _SHAPE_THERMAL·kT/k per mode (equipartition) — see _apply_stiffness and tests/test_stiffness.py.
+
+
+def _ln(X):
+    mu = X.mean(1, keepdims=True)
+    var = X.var(1, keepdims=True)
+    return (X - mu) / np.sqrt(var + _LN_EPS)
+
+
+class PackEngine:
+    def __init__(self, cfg, seed, ablate="none", repel=0.15, attract=0.45, skew=1.2, morph=0.7,
+                 momentum=0.85, speed=1.5, maxvel=0.25, cohesion=0.08, attn_sink=0.0):
+        self.cfg = cfg
+        self.seed = seed
+        self.ablate = ablate
+        self.pd = cfg.pos_dim   # 2 = flat dish, 3 = volumetric dish (all geometry below is N-D)
+        # PER-FORCE decay range (NULL attention sink; higher = faster decay = shorter range). Real
+        # forces have very different ranges, so each head gets its OWN sink: Pauli repulsion is the
+        # shortest-ranged, van der Waals short, electrostatics the longest. Default = the shared
+        # attn_sink (0 → plain softmax = the previous engine exactly, base case preserved).
+        self.sink_repel = attn_sink       # Pauli exclusion  — shortest range (decays fastest)
+        self.sink_attract = attn_sink     # van der Waals    — short range
+        self.attract_r0 = 0.0
+        # NEMATIC ALIGNMENT (default 0.0 = exactly the historical force).
+        # Every ordered state measured in this project is dry and every wet state is disordered --
+        # 17 conditions, no exceptions -- because `repel` drives solvent contact and lipid order in
+        # OPPOSITE directions and nothing else can separate them. Real membranes are ordered AND
+        # hydrated, so a term is missing: nothing here rewards lipids for being PARALLEL, only for
+        # being close. This adds an alignment weight on the tail-tail attraction:
+        #     w_ij = eps_ij * exp(-lambda d^2) * (1 + nematic * (u_i . u_j)^2)
+        # The squared dot is nematic -- parallel and ANTIparallel score alike -- which is what two
+        # opposing leaflets need, and it does not prescribe a global director.
+        # Transformer-only: (u_i . u_j)^2 is the square of an inner product, itself an inner product
+        # of the outer-product features vec(u u^T), so this is an attention logit under a quadratic
+        # feature map. Bounded, symmetric in i,j, so the force stays conservative.
+        self.nematic = 0.0
+        # SPECIES-PAIR REPULSION (default None = one global scale, byte-identical).
+        # A single `repel` is being asked to do two incompatible coarse-grained jobs: give the solvent
+        # a sane equation of state, and give lipid beads the packing softness a lamellar phase needs.
+        # Measured, those pull opposite ways -- repel 12 gives bilayer_frac 0.746 with a solvent
+        # collapsed to 0.43 of contact, repel 24 gives bulk water (92% one cluster) and no membrane.
+        # Cohesion is already a species-pair matrix (`eps_pair`); this is the same structure for
+        # excluded volume, and no more of a departure from the transformer constraint than that is.
+        # Entries are RELATIVE multipliers on the global `repel`; must be symmetric or the force stops
+        # obeying Newton's third law.
+        self.repel_pair = None
+        #   Centre of the cohesive shell. 0.0 keeps the historical kernel exp(-lambda*d^2), whose
+        #   maximum is at ZERO SEPARATION -- so cohesion pulls hardest when two beads are already
+        #   coincident, a pressure toward overlap built into the force. Physical van der Waals has
+        #   its minimum at CONTACT. Setting r0 to the tail-tail contact distance gives
+        #   exp(-lambda*(r - r0)^2), which attracts toward touching rather than toward merging.
+        self.sink_cohesion = attn_sink    # cohesion shortcut (surface-tension; being deprecated)
+        self.repel = repel      # bounded repulsive-attention strength (soft excluded volume)
+        self.attract = attract  # complementary-fit attraction (interlocking)
+        self.cohesion = cohesion  # surface tension: broad attention → pull toward neighbourhood
+        #                           centroid; merges fragments into ONE droplet (M1). 0 = off.
+        self.skew = skew        # non-settling shape rotation
+        self.morph = morph      # induced-fit FLEXIBILITY: how strongly a token reshapes to fit partners
+        # PER-MODE, PER-SPECIES ELASTIC STIFFNESS (the physical flexibility model).
+        #   stiff[i, c] ∈ [0,1] = how strongly channel c of token i is pulled back to its REST shape
+        #   c_rest[i, c] each step. This is a per-token DIAGONAL linear map on the shape channels —
+        #   a structured linear op, so it stays inside the transformer-only requirement.
+        # Real molecules are stiff in some modes and floppy in others (bond stretch ≫ angle bend ≫
+        # dihedral torsion), so stiffness is per HARMONIC ORDER, not per molecule. Both default to
+        # None ⇒ the whole mechanism is skipped ⇒ base case byte-identical.
+        self.langevin = False   # True → proper inertial LANGEVIN dynamics: the thermal kick goes on
+        #   VELOCITY with the amplitude the fluctuation–dissipation theorem requires for the given
+        #   damping, and the per-particle speed cap is disabled. Every coarse-grained lipid model
+        #   that demonstrably NUCLEATES uses an FDT-satisfying thermostat with no velocity cap;
+        #   velocity-capped overdamped relaxation has no precedent in that literature. Default False
+        #   keeps the base case byte-identical.
+        self.sigma = None       # per-token STERIC radius (N,). None → every token is
+        #   repel_contact/2. Distinct from the `rad` channel, which is a dispersion well depth.
+        self.vdw_scale = 0.25   # saturation scale of the per-token dispersion well depth
+        self.eps_pair = None    # (n_species, n_species) well depths. None -> geometric mixing, which
+        #   cannot produce hydrophobicity (see the attract head). Set it to give water strong
+        #   SELF-attraction and weak coupling to tails, the combination a mixing rule forbids.
+        self.stiff = None
+        self.c_rest = None
+        self.rigidity = 0.0     # ELASTIC STIFFNESS: restoring pull of the contour toward its ROUND rest
+        #   shape each step (C_rest=0). 0 = no restoring (base case); 1 = snaps rigid/round. The true
+        #   rigidity ↔ flexibility (morph) tension: morph grows prongs, rigidity relaxes them back.
+        self.repel_sharp = 0.0    # if >0, the overlap force saturates as tanh(sharp*overlap) instead
+        #   of rising linearly with depth. BOUNDED either way (tanh is an activation, and the linear
+        #   ramp is itself bounded by the contact distance), but the linear ramp is the SOFTEST
+        #   possible core: beads interpenetrate freely, so a short chain of them is nearly isotropic
+        #   and rung 0 needs four tail beads to see any orientation preference. A saturating core is
+        #   sharp near contact while its PEAK force is still 1, so it does not tighten the timestep
+        #   the way simply raising `repel` would. Symmetric in i,j, so momentum is still conserved.
+        # Which axes are CONFINED by walls; the rest stay periodic. () = fully periodic torus.
+        # (2,) is the standard membrane slit: no periodic self-interaction across the membrane
+        # NORMAL, while the sheet stays infinite laterally so it has no edges to curl at. A
+        # fully walled box is worse than either: lipids simply coat all six faces.
+        self.wall_axes = ()
+        self.wall_sigma = 0.5     # how far from a face the wall kernel starts acting
+        self.wall_k = 2.0         # bounded wall amplitude
+        self.repel_contact = 0.0  # if >0, repel is a SYMMETRIC overlap force: it acts ONLY when two
+        #   agents interpenetrate (d < repel_contact), ∝ overlap depth, zero otherwise (real excluded
+        #   volume). Being symmetric (F_ij=−F_ji), it also CONSERVES momentum. 0 → old softmax repel.
+        self.conservative = False  # if True, attract & polarity use SYMMETRIC bounded kernels (F_ij=−F_ji)
+        #   instead of row-normalised softmax → every force is a gradient of an energy, so the system
+        #   RELAXES to a free-energy minimum and STRUCTURES EMERGE. False → old (non-conservative) heads.
+        self.momentum = momentum  # position inertia (lower = less zippy; steady speed ≈ force/(1−mom))
+        self.speed = speed      # dt-like multiplier on per-step displacement (slow it down to watch)
+        # Thermal motion must not depend on `speed`. The kick is applied per STEP while the drift is
+        # scaled by `speed`, so at matched physical time (N*speed fixed) the random walk picked up a
+        # sqrt(speed) bias -- measured RMS ratio 2.12 against the predicted sqrt(4)=2.0. That made the
+        # viewer's "playback rate, NOT physics" slider an effective-temperature dial.
+        # The reference is per-ENGINE, captured at construction, not a global constant: engines are
+        # built at speeds two orders of magnitude apart (0.001 here, 1.20 for the showcase), so one
+        # shared constant would rescale somebody's noise. At its own construction speed the factor is
+        # exactly 1, so every existing configuration stays byte-identical and only MOVING the slider
+        # applies the correction.
+        self.speed_ref = float(speed) if speed > 0.0 else 1.0
+        self.maxvel = maxvel    # cap on per-step displacement — prevents agents zipping/overshooting
+        self.cohere_k = min(24, cfg.N - 1)  # cohesion neighbourhood (broader than interaction k)
+        self.cohere_lambda = 0.08           # broad distance kernel (long reach → crosses gaps)
+        self.edge_radius = 0.6              # render: draw an edge only between agents this close
+        #                                    (small → only touching pairs, not a dense mesh)
+        self.selectivity = 0.0             # softmax τ (guarded to 1e-2). NOT thermodynamic temperature:
+        #   low = sharp near-argmax → discrete lock-and-key bonds; high = uniform mean-field →
+        #   consensus/synchrony/collapse. This is a selectivity dial, not kT (see self.temperature).
+        self.temperature = 0.0             # REAL temperature = thermal (Langevin) noise amplitude:
+        #   higher → more random Brownian jitter → more DISORDER (melts structure), as kT should. 0=off.
+        self.vel = np.zeros((cfg.N, self.pd))
+        self.L = 2.0 * cfg.pos_bound
+        rng = base_rng(seed + 1)
+        d, twoK, h = cfg.d, cfg.shape_dim, _MLP_H * (cfg.d - self.pd)
+        self.tK = twoK
+        # complementarity mirror: alternate the sign per harmonic order (bump ↔ pocket). 2-D has 2
+        # coefficients per order k; 3-D has (2l+1) per order l — same rule, one dimension up.
+        if self.pd == 2:
+            signs = [(-1.0) ** (k + 1) for k in range(cfg.n_harmonics) for _ in range(2)]
+        else:
+            signs = [(-1.0) ** l for l in range(1, cfg.n_harmonics + 1) for _ in range(2 * l + 1)]
+        self.M = np.diag(np.array(signs))
+        # k=0 RADIUS channel: the token's physical SIZE (→ vdW contact area / polarizability), held in
+        # the first hidden channel rather than inside the contour vector so the other engines, which
+        # assume shape_dim = 2K, are untouched. k≥1 (the contour) stays the shape DEVIATION → charge.
+        self.rad_idx = self.pd + cfg.shape_dim
+        zdim = d - self.pd
+        self.W_v = rng.standard_normal((zdim, zdim)) / np.sqrt(zdim)
+        self.W1 = rng.standard_normal((zdim, h)) / np.sqrt(zdim)
+        self.b1 = np.zeros(h)
+        self.W2 = rng.standard_normal((h, zdim)) / np.sqrt(h)
+        self.b2 = np.zeros(zdim)
+        Jr = rng.standard_normal((zdim, zdim)) / np.sqrt(zdim)
+        self.J = Jr - Jr.T
+        # --- plasticity: fast weights = Hebbian linear-attention memory (weights that learn while
+        #     alive). W_v/W1/W2/M/J above are the FIXED "slow" weights (the physics/laws). W_fast is
+        #     a plastic (z×z) memory that accumulates Hebbian outer products of activity each tick
+        #     (= a linear-attention write) with decay (homeostasis), and is read to modulate the
+        #     message. Slow weights = fixed laws; fast weights = plastic synapses. Default off. ---
+        self.W_k = rng.standard_normal((zdim, zdim)) / np.sqrt(zdim)  # key projection (fixed)
+        self.W_val = rng.standard_normal((zdim, zdim)) / np.sqrt(zdim)  # value projection (fixed)
+        self.W_fast = np.zeros((zdim, zdim))  # the plastic memory — starts empty, learns while alive
+        self.plasticity = 0.0    # read gain (0 = off → identical to the fixed-rule sim)
+        self.plast_decay = 0.98  # γ: forgetting / homeostasis (gated linear attention)
+        self.plast_lr = 0.05     # η: Hebbian write rate
+        r = base_rng(seed)
+        X = np.zeros((cfg.N, d))
+        X[:, :self.pd] = r.uniform(-cfg.pos_bound, cfg.pos_bound, (cfg.N, self.pd))
+        X[:, self.pd:] = r.standard_normal((cfg.N, zdim)) * 0.5
+        self.X = X
+        self.t = 0
+
+    def mode_orders(self):
+        """Harmonic order of each shape channel — (tK,) ints. 2-D: (a_k,b_k) → k. 3-D: the
+        (2l+1)-wide l-block → l. Lets stiffness be assigned per MODE (low modes soft, high modes
+        stiff), which is how real elastic bodies and real molecules behave."""
+        if self.pd == 2:
+            return np.repeat(np.arange(1, self.cfg.n_harmonics + 1), 2)
+        return np.concatenate([np.full(2 * l + 1, l)
+                               for l in range(1, self.cfg.n_harmonics + 1)])
+
+    def _apply_stiffness(self, z2):
+        """Pull each shape channel toward its rest value with per-mode stiffness, then let the
+        thermostat excite it. Overdamped update  C ← C_rest + (1−k)·(C−C_rest) + σ·ξ  has stationary
+        variance σ²/(2k−k²); choosing σ² = S·kT·(2−k) makes that exactly **S·kT/k** — equipartition.
+        So a stiff mode barely moves and a soft mode fluctuates a lot, from ONE temperature."""
+        if self.stiff is None:
+            return z2
+        rest = 0.0 if self.c_rest is None else self.c_rest
+        C = z2[:, :self.tK]
+        C = rest + (1.0 - self.stiff) * (C - rest)
+        if self.temperature > 0.0:
+            # a mode with NO restoring force has no equilibrium to fluctuate about (the variance
+            # would diverge), so it is left purely attention-driven and gets no thermal kick.
+            sig = np.where(self.stiff > 0.0,
+                           np.sqrt(_SHAPE_THERMAL * self.temperature * (2.0 - self.stiff)), 0.0)
+            C = C + sig * rng_for(self.seed + 991, self.t).standard_normal(C.shape)
+        z2[:, :self.tK] = C
+        return z2
+
+    def packing_fraction(self):
+        """Volume fraction occupied by the tokens. Random close packing is ~0.64 in 3-D and ~0.82 in
+        2-D; above that a configuration cannot physically exist and the dish is jammed, so nothing
+        can rearrange. Worth checking after ANY change to a bead radius or the box size."""
+        r = self.sigma if self.sigma is not None else np.full(self.cfg.N, 0.5 * max(self.repel_contact, 1e-9))
+        if self.pd == 3:
+            occ = float((4.0 / 3.0 * np.pi * r ** 3).sum())
+        else:
+            occ = float((np.pi * r ** 2).sum())
+        return occ / (self.L ** self.pd)
+
+    def min_image_margin(self):
+        """Worst force-kernel value at HALF the box length. Periodic boundaries are only valid under
+        the minimum-image convention, which assumes every interaction is negligible at L/2 —
+        otherwise a molecule interacts with its own periodic image and the wrap-around becomes a
+        physical artefact. Real MD escapes this with Ewald/PME, which is a global lattice sum and
+        therefore not available to us, so the box must simply be large enough. < 0.01 is safe."""
+        half = 0.5 * self.L
+        return float(max(np.exp(-lam * half * half)
+                         for lam in (self.sink_repel, self.sink_attract,
+                                     getattr(self, "sink_polarity", 0.0))))
+
+    def _contact_distance(self, C, delta, dist):
+        """Centre-to-centre distance at which two tokens touch: sigma_i + sigma_j, so species can
+        differ in SIZE. Default: every token has sigma = repel_contact/2, i.e. the old single
+        diameter, so nothing changes unless a subclass assigns per-species radii. PolarPackEngine overrides this to read the contour at
+        the relative bearing, making molecules non-spherical (Gay-Berne-like), which is what gives an
+        amphiphile a head END and a tail END and therefore a real packing parameter."""
+        return self.repel_contact
+
+    def _axis_alignment(self):
+        """(N,N) matrix of u_i . u_j, where u is each token's molecular axis (head -> tail centre).
+
+        Water and any unbonded token gets a zero axis, so its alignment term vanishes and its
+        interactions are untouched -- the weight multiplies to 1 + nematic*0 = 1.
+        """
+        mol = getattr(self, "_mol", None)
+        u = np.zeros((self.X.shape[0], self.pd))
+        if mol is not None and len(mol):
+            P = self.X[:, :self.pd]
+            head = P[mol[:, 0]]
+            tailc = P[mol[:, 1:]].mean(axis=1)
+            d = tailc - head
+            d -= self.L * np.round(d / self.L)
+            n = np.linalg.norm(d, axis=1, keepdims=True) + 1e-12
+            axis = d / n
+            for col in range(mol.shape[1]):          # every bead carries its molecule's axis
+                u[mol[:, col]] = axis
+        return u @ u.T
+
+    def _attract_env(self, dist, d2):
+        """Cohesive envelope. r0 = 0 is exactly the historical exp(-lambda*d^2); r0 > 0 puts the
+        attraction maximum at CONTACT instead of at zero separation."""
+        if self.attract_r0 <= 0.0:
+            return np.exp(-self.sink_attract * d2)
+        return np.exp(-self.sink_attract * (dist - self.attract_r0) ** 2)
+
+    def _contour(self):
+        return self.X[:, self.pd:self.pd + self.tK]  # grounded contour = shape channels
+
+    def _attn(self, score, mask, sink):
+        """Bounded attention weights with a per-force NULL sink. score is (N,N) with −inf off-mask.
+        denom = Σ_j exp(score−m) + sink·exp(−m): when a row's best neighbour is far/weak, the sink
+        dominates and the weights → 0, so the force DECAYS with distance. HIGHER sink = FASTER decay =
+        SHORTER range. sink=0 → plain row-stochastic softmax (identical to the previous engine)."""
+        m = np.max(score, axis=1, keepdims=True)
+        m = np.where(np.isfinite(m), m, 0.0)
+        e = np.exp(score - m) * mask
+        denom = e.sum(1, keepdims=True) + sink * np.exp(-m)
+        return np.where(denom > 0, e / np.where(denom > 0, denom, 1.0), 0.0)
+
+    def _periodic_delta(self):
+        # Deliberately NOT cached. A cache keyed on (t, id(X)) goes stale whenever positions are
+        # written in place at an unchanged t — which callers do — and a stale pair tensor silently
+        # yields forces computed from the wrong geometry. step() computes this once and passes it
+        # down instead; that gets the same saving with no invalidation hazard.
+        p = self.X[:, :self.pd]
+        delta = p[:, None, :] - p[None, :, :]          # (N, N, 2)
+        # minimum image only along PERIODIC axes. `wall_axes` names the confined ones.
+        if self.wall_axes:
+            free = np.array([a not in self.wall_axes for a in range(self.pd)])
+            delta[..., free] -= self.L * np.round(delta[..., free] / self.L)
+        else:
+            delta = delta - self.L * np.round(delta / self.L)
+        d2 = np.einsum("ijc,ijc->ij", delta, delta)
+        return delta, d2
+
+    def _neighbors(self, d2, k):
+        # Only the SET of k nearest matters — the result is used to build a boolean mask, never
+        # in order — so a full O(N log N) sort is wasted work. argpartition is O(N) per row and was
+        # the single largest cost in the step loop.
+        if k >= d2.shape[1]:
+            return np.argsort(d2, axis=1, kind="stable")[:, :k]
+        return np.argpartition(d2, k - 1, axis=1)[:, :k]
+
+    def fork(self):
+        import copy
+        return copy.deepcopy(self)
+
+    def _binding_edges(self):
+        """The REAL interaction the transformer computes: each agent's strongest complementary-fit
+        attention (A_fit) partner, with the attention weight. This is the honest 'who is binding to
+        whom' graph — not a proximity heuristic. Returns [[i, j, weight], ...] for meaningful bonds."""
+        C = self._contour()
+        delta, d2 = self._periodic_delta()
+        idx = self._neighbors(d2, self.cfg.n_neighbors)
+        mask = np.zeros_like(d2, dtype=bool)
+        np.put_along_axis(mask, idx, True, axis=1)
+        np.fill_diagonal(mask, False)
+        S_comp = (C @ (C @ self.M).T) / np.sqrt(self.tK)
+        tau = max(1e-2, self.selectivity)
+        score = np.where(mask, (S_comp - self.cfg.dist_lambda * d2) / tau, -np.inf)
+        m = np.max(score, axis=1, keepdims=True)
+        m = np.where(np.isfinite(m), m, 0.0)
+        A = np.exp(score - m) * mask
+        den = A.sum(1, keepdims=True)
+        A = np.where(den > 0, A / np.where(den > 0, den, 1.0), 0.0)
+        top = np.argmax(A, axis=1)
+        edges = []
+        for i in range(self.cfg.N):
+            w = float(A[i, top[i]])
+            if w > 0.25:                     # only the meaningful bonds
+                edges.append([int(i), int(top[i]), round(w, 2)])
+        return edges
+
+    def snapshot(self, with_edges=True):
+        pos = self.X[:, :self.pd]
+        C = self._contour()
+        # in 3-D also ship z so the viewer can render DEPTH (near = bigger/brighter). The dish is
+        # simulated volumetrically and drawn as a projection; z is ignored by the 2-D viewer path.
+        if self.pd == 3:
+            # ROUND before serialising. float64 repr costs ~18 chars per number ("1.8792029149216027"),
+            # so a 380-token frame was 108 KB of JSON, and the browser pays that in JSON.parse on every
+            # poll. Three decimals is far below one screen pixel at any zoom the viewer allows, and it
+            # cuts the payload roughly 4x. Purely a wire format change; the simulation is untouched.
+            # Round in NUMPY, not Python. A per-value round() over 380 tokens x 11 numbers cost
+            # ~3000 interpreter calls and pushed /state latency to 57 ms, which is worse for the
+            # viewer than the large payload was. np.round is one vectorised pass.
+            pr = np.round(pos, 3).tolist()
+            cr = np.round(C, 2).tolist()   # contour drives a silhouette, 2 dp is sub-pixel
+            tokens = [{"x": pr[i][0], "y": pr[i][1], "z": pr[i][2], "c": cr[i]}
+                      for i in range(self.cfg.N)]
+        else:
+            pr = np.round(pos, 3).tolist()
+            cr = np.round(C, 2).tolist()   # contour drives a silhouette, 2 dp is sub-pixel
+            tokens = [{"x": pr[i][0], "y": pr[i][1], "c": cr[i]}
+                      for i in range(self.cfg.N)]
+        return {"status": "running", "tick": self.t, "n": self.cfg.N,
+                "tokens": tokens, "edges": self._binding_edges() if with_edges else None,
+                "dims": {"d": self.cfg.d, "pos": self.pd, "shape": self.cfg.shape_dim,
+                         "hidden": self.cfg.hidden_dim, "z": self.cfg.z_dim,
+                         "h": _MLP_H * self.cfg.z_dim, "N": self.cfg.N,
+                         "k": self.cfg.n_neighbors}}
+
+    def step(self):
+        cfg = self.cfg
+        tau = max(1e-2, self.selectivity)    # softmax selectivity τ (NOT kT — see self.temperature)
+        # Per-step slot for the pair basis. `delta` and `dist` are fixed for the whole step, and the
+        # 3-D spherical-harmonic basis over them was being built TWICE from identical inputs -- once
+        # via _contact_distance and once in _extra_force -- at ~25% of step time. Same discipline as
+        # _periodic_delta: compute once, reuse within the step, and hold nothing across steps. The
+        # slot is cleared on BOTH ends so any caller outside step() always recomputes and cannot read
+        # a stale tensor.
+        self._basis_slot = None
+        self._nf_slot = None            # 2-D counterpart: the contour readout is also step-local
+        self._trig_slot = None          # cos/sin(k*ang) table, shared by _near_face and the
+        #   morph gradient; both built it independently, doubling the transcendental work
+        C = self._contour()
+        delta, d2 = self._periodic_delta()
+        idx = self._neighbors(d2, cfg.n_neighbors)
+        mask = np.zeros_like(d2, dtype=bool)
+        np.put_along_axis(mask, idx, True, axis=1)
+        np.fill_diagonal(mask, False)                  # neighbours, excluding self
+
+        # grounded overlaps (Parseval)
+        S_direct = (C @ C.T) / np.sqrt(self.tK)          # clash: same space, same orientation
+        S_comp = (C @ (C @ self.M).T) / np.sqrt(self.tK)  # fit: bump-meets-pocket
+
+        if self.ablate == "identity":
+            mask = np.zeros_like(mask)                  # no neighbours → no forces (P6 control)
+
+        dist = np.sqrt(d2 + _DIR_EPS)
+        dirn = delta / dist[..., None]                    # unit direction i away from j
+
+        # attract head. A_fit (softmax over complementary fit) always drives the induced-fit MORPH.
+        # The attractive FORCE is either the CONSERVATIVE van der Waals kernel (symmetric ⇒ relaxes to
+        # an energy minimum) or the old non-conservative −Σ A_fit·Δp (centroid pull).
+        score = np.where(mask, (S_comp - cfg.dist_lambda * d2) / tau, -np.inf)
+        A_fit = self._attn(score, mask, self.sink_attract)
+        if self.conservative:
+            # g_ij = sigmoid(S_comp/τ)·exp(−λ_a·d²): symmetric (S_comp, d symmetric), bounded, decaying
+            # (a soft vdW well). force = −Σ_j g·dirn = pull toward j; F_ij=−F_ji ⇒ conservative. All
+            # pairs (NOT the asymmetric k-NN mask), diagonal zeroed.
+            # van der WAALS = London dispersion: proportional to CONTACT AREA / polarizability (the
+            # k=0 radius channel) and INDEPENDENT OF CHARGE — which is exactly why neutral alkanes and
+            # oils cohere. The old sigmoid(S_comp) read complementary FIT (lock-and-key): a specific
+            # binding term, not dispersion, and sigmoid(0)=0.5 made featureless tokens sticky. Bounded
+            # (tanh), symmetric, decaying ⇒ still conservative and still transformer-only.
+            rad = np.maximum(self.X[:, self.rad_idx], 0.0)             # k=0 coefficient = size ≥ 0
+            # Bound each token's well depth FIRST, then combine by the exact geometric
+            # (Lorentz–Berthelot) rule. tanh(r_i·r_j/S) applied to the product is not a mixing rule:
+            # it violated eps_ij² = eps_ii·eps_jj, which is what guarantees a positive mixing energy
+            # ΔE ∝ (√eps_ii − √eps_jj)² — i.e. the hydrophobic driving force itself. Bounding
+            # per-token keeps the kernel finite while making the mixing rule exact by construction;
+            # like-like interactions are unchanged, only the cross term is corrected (and it moves
+            # in the hydrophobic direction).
+            eps = np.tanh(rad * rad / self.vdw_scale)
+            if self.eps_pair is None:
+                g = np.sqrt(eps[:, None] * eps[None, :]) * self._attract_env(dist, d2)
+            else:
+                # SPECIES-PAIR INTERACTION MATRIX instead of a mixing rule.
+                #
+                # Geometric (Lorentz-Berthelot) mixing CANNOT express hydrophobicity. The contrast
+                # (eps_ii + eps_jj)/2 - sqrt(eps_ii * eps_jj) is >= 0 by AM-GM and is LARGEST when one
+                # species is weak, so the only demixing it offers is "oil is sticky" -- tails clump
+                # while water, having little self-attraction, freely permeates them. The real
+                # hydrophobic effect is the opposite: water coheres strongly and SQUEEZES tails out,
+                # which needs eps_tw BELOW the geometric mean. A mixing rule forbids that by
+                # construction, which is why `edge` stayed at 1.00 (wet cores) through every sweep.
+                #
+                # MARTINI and every coarse-grained lipid force field use a per-species-pair matrix for
+                # exactly this reason. It stays inside the transformer-only requirement: a
+                # species-pair coefficient is a bilinear form on species embeddings, i.e. a structured
+                # linear op of the same shape as an attention bias. Still bounded, still symmetric, so
+                # the force remains conservative.
+                sp = self.species.astype(int)
+                g = self.eps_pair[sp[:, None], sp[None, :]] * self._attract_env(dist, d2)
+                if self.nematic > 0.0:
+                    g = g * (1.0 + self.nematic * self._axis_alignment() ** 2)
+            np.fill_diagonal(g, 0.0)
+            attract = -np.einsum("ij,ijc->ic", g, dirn)
+        else:
+            attract = -np.einsum("ij,ijc->ic", A_fit, delta)
+
+        # repel head. Two modes:
+        #  (a) repel_contact>0 → SYMMETRIC OVERLAP force: acts ONLY when agents interpenetrate
+        #      (d < repel_contact), magnitude ∝ overlap depth, zero otherwise = real soft excluded
+        #      volume. relu(depth) is bounded and →0 at contact, and overlap_ij=overlap_ji ⇒ symmetric.
+        #  (b) else → the previous bounded repulsive ATTENTION (softmax over clash − λ·d²).
+        overlap = None
+        if self.repel_contact > 0.0:
+            # SYMMETRIC overlap over ALL pairs (NOT the asymmetric k-NN mask — that would break
+            # symmetry and momentum). overlap_ij = overlap_ji since d is symmetric; contact is short-
+            # ranged so this stays local anyway. Zero the diagonal (no self-overlap).
+            overlap = np.clip(self._contact_distance(C, delta, dist) - dist, 0.0, None)
+            np.fill_diagonal(overlap, 0.0)
+            drive = np.tanh(self.repel_sharp * overlap) if self.repel_sharp > 0.0 else overlap
+            if self.repel_pair is not None:
+                sp = self.species.astype(int)
+                drive = drive * self.repel_pair[sp[:, None], sp[None, :]]
+            repel = np.einsum("ij,ijc->ic", drive, dirn)
+        else:
+            rscore = np.where(mask, (S_direct - cfg.dist_lambda * d2) / tau, -np.inf)
+            A_repel = self._attn(rscore, mask, self.sink_repel)
+            repel = np.einsum("ij,ijc->ic", A_repel, dirn)
+
+        force = self.attract * attract + self.repel * repel
+
+        # cohesion head (surface tension, M1): a BROAD attention over a larger neighbourhood pulls
+        # each agent toward its distance-weighted neighbourhood centroid → fragments coalesce into
+        # one droplet. Pure attention (a smoothing/consensus head). Broad kernel reaches across gaps.
+        if self.cohesion > 0.0:
+            ck = self.cohere_k
+            cidx = self._neighbors(d2, ck)
+            cmask = np.zeros_like(d2, dtype=bool)
+            np.put_along_axis(cmask, cidx, True, axis=1)
+            np.fill_diagonal(cmask, False)
+            if self.ablate == "identity":
+                cmask = np.zeros_like(cmask)
+            cscore = np.where(cmask, (-self.cohere_lambda * d2) / tau, -np.inf)
+            A_coh = self._attn(cscore, cmask, self.sink_cohesion)
+            cohere = -np.einsum("ij,ijc->ic", A_coh, delta)   # toward the neighbourhood centroid
+            force = force + self.cohesion * cohere
+
+        force = force + self._extra_force(delta, d2)   # subclass hook (default 0.0) — e.g. contour-charge force
+        self._basis_slot = None                        # never survives the step that built it
+        self._nf_slot = None
+        self._trig_slot = None
+
+        # OVERDAMPED (Brownian / DPD) integration: a molecule in a viscous solvent has negligible
+        # inertia — velocity tracks force (v ≈ μ·F), drag dominates. `momentum` is the small inertial
+        # memory (0 = fully overdamped, the physical limit for a dish; >0 adds glide for viewing).
+        # Momentum-transfer-on-collision is NOT a separate law: it EMERGES from the symmetric repulsive
+        # force + this inertia (and in the true overdamped limit the solvent absorbs momentum anyway).
+        self.vel = self.momentum * self.vel + force
+
+        if self.langevin:
+            # Discrete Ornstein–Uhlenbeck velocity update: v ← γv + F + σξ with σ² = (1−γ²)·kT.
+            # That choice is exactly what makes the stationary variance ⟨v²⟩ = kT — i.e. it
+            # SATISFIES fluctuation–dissipation, so the same γ that damps also sets the noise. The
+            # speed cap is skipped: capping is an external, non-thermal intervention that removes
+            # precisely the rare large excursions a nucleation event needs.
+            # sig ~ 1/sqrt(speed): the kick reaches position multiplied by `speed`, so per-step
+            # position noise becomes sig0*sqrt(speed*speed_ref) and over N = T/speed steps the walk
+            # is sig0*sqrt(T*speed_ref) -- independent of speed, as a time step must be.
+            sig = np.sqrt(max(0.0, 1.0 - self.momentum ** 2) * _LANGEVIN_KT * self.temperature
+                          * (self.speed_ref / max(self.speed, 1e-12)))
+            if sig > 0.0:
+                self.vel = self.vel + sig * rng_for(self.seed + 4241, self.t).standard_normal(self.vel.shape)
+        else:
+            # cap per-step displacement so nothing zips across the dish (overshoot control)
+            sp = np.linalg.norm(self.vel, axis=1, keepdims=True)
+            self.vel = np.where(sp > self.maxvel, self.vel * self.maxvel / (sp + 1e-9), self.vel)
+        p = self.X[:, :self.pd] + self.speed * self.vel
+        # REAL TEMPERATURE = thermal (Langevin) noise: seeded Brownian kicks ∝ temperature. Higher →
+        # more disorder, melts structure, prevents freezing — the thermodynamically-correct direction
+        # (unlike `selectivity`, the softmax τ). The one non-attention op; genuine thermal physics.
+        if self.temperature > 0.0 and not self.langevin:
+            # sqrt(speed) here, not 1/sqrt(speed): this branch adds the kick straight to POSITION
+            # with no `speed` factor, so it carried the opposite bias to the langevin path.
+            p = p + (_THERMAL * self.temperature
+                     * np.sqrt(max(self.speed, 0.0) / self.speed_ref)
+                     * rng_for(self.seed, self.t).standard_normal(p.shape))
+        if self.wall_axes:
+            # HARD WALLS instead of a torus. A periodic membrane interacts with its own images, which
+            # is what forced the box-thickness constraint; walls remove that entirely and a slit also
+            # templates a flat bilayer. This is a BOUNDARY CONDITION, exactly like PBC is, not a new
+            # interaction: the kernel is a bounded tanh, no distance in a denominator, no energy
+            # ledger, token count unchanged.
+            B = cfg.pos_bound
+            conf = np.zeros(self.pd, dtype=bool)
+            conf[list(self.wall_axes)] = True
+            over_hi = np.where(conf, np.clip(p - (B - self.wall_sigma), 0.0, None), 0.0)
+            over_lo = np.where(conf, np.clip((-B + self.wall_sigma) - p, 0.0, None), 0.0)
+            push = np.tanh(over_lo / _WALL_W) - np.tanh(over_hi / _WALL_W)
+            self.vel = self.vel + self.wall_k * push
+            p = p + self.speed * self.wall_k * push
+            p = np.where(conf, np.clip(p, -B, B), ((p + B) % self.L) - B)   # confined vs wrapped
+        else:
+            p = ((p + cfg.pos_bound) % self.L) - cfg.pos_bound  # wrap to the torus
+
+        # induced-fit morph: block updates shape/hidden, coupled through the fit attention
+        z = self.X[:, self.pd:]
+        msg = A_fit @ (z @ self.W_v)
+
+        # PLASTICITY (weights that learn while alive) — a gated Hebbian fast-weight memory, i.e. the
+        # fast-weight form of linear attention. Write: W_fast ← γ·W_fast + η·(kᵀv) (Hebbian outer
+        # product = linear-attention memory write) with decay γ (homeostasis). Read: add z·W_fast to
+        # the message → the interaction adapts with the history of activity. Slow weights stay fixed
+        # (the laws); only these fast weights learn. Default plasticity=0 → skipped entirely.
+        if self.plasticity > 0.0:
+            k = z @ self.W_k
+            v = z @ self.W_val
+            if self.ablate != "freeze_plasticity":         # ablation: stop learning, keep reading
+                self.W_fast = self.plast_decay * self.W_fast + self.plast_lr * (k.T @ v) / z.shape[0]
+            msg = msg + self.plasticity * (z @ self.W_fast)
+
+        spin = self.skew * (z @ self.J) if self.skew > 0 else 0.0
+        z1 = _ln(z + self.morph * msg + spin)
+        z2 = _ln(z1 + np.tanh(z1 @ self.W1 + self.b1) @ self.W2 + self.b2)
+        # RIGIDITY: elastic restoring of the contour toward its round rest shape (C_rest=0). A stiff
+        # molecule relaxes its induced deformation back each step; morph is the flexibility that fights it.
+        if self.rigidity > 0.0:
+            z2[:, :self.tK] = z2[:, :self.tK] * (1.0 - self.rigidity)
+        z2 = self._post_morph(z2)
+        z2 = self._apply_stiffness(z2)   # elastic restoring + conformational thermostat
+
+        self.X = np.concatenate([p, z2], axis=1)
+        self.t += 1
+
+    # --- extension hooks: default to NO-OP so PackEngine behaviour is unchanged (base case). A
+    #     subclass adds contour-charge forces / a frozen water species purely additively. ---
+    def _extra_force(self, delta=None, d2=None):
+        return 0.0
+
+    def _post_morph(self, z2):
+        return z2
+
+
+def _cfg(**over):
+    return VivariumConfig(**{**DEFAULTS, **over})
+
+
+def probe(seed, ablate, repel, attract, skew, morph, momentum, cohesion=0.0, plasticity=0.0):
+    e = PackEngine(_cfg(), seed, ablate=ablate, repel=repel, attract=attract, skew=skew,
+                   morph=morph, momentum=momentum, cohesion=cohesion)
+    e.plasticity = plasticity
+    print(" tick  alive  spread  motion  cohere  struct  deform  minsep")
+    for _ in range(0, 2001, 400):
+        r = evaluate(e, 40)
+        # min pairwise separation: near 0 ⇒ clumping/overlap; larger ⇒ packed with spacing
+        _, d2 = e._periodic_delta()
+        np.fill_diagonal(d2, np.inf)
+        minsep = float(np.sqrt(d2.min(1).mean()))
+        print(f"{e.t:5d}  {r['aliveness']:.3f}  {r['spread']:.3f}  {r['motion']:.4f}   "
+              f"{r['coherence']:.3f}   {r['structure']:.3f}   {r['deformation']:.3f}  {minsep:.3f}")
+        for _ in range(400):
+            e.step()
+
+
+def measure_gas_or_droplet(seed, cohesion=0.0):
+    from metrics_pack import measure
+    print(f"=== is the packing engine a DROPLET / ONE cluster?  (cohesion={cohesion}) ===")
+    for scale, lab in ((1.0, "1x box"), (2.0, "2x box")):
+        cfg = _cfg(pos_bound=DEFAULTS["pos_bound"] * scale)
+        e = PackEngine(cfg, seed, cohesion=cohesion)
+        for _ in range(600):
+            e.step()
+        m = measure(e.X[:, :e.pd], e.L, radius=1.0)
+        print(f"{lab:8s} occupancy={m['occupancy']:.2f}  largest_cluster={m['largest_frac']:.2f}  "
+              f"n_clusters={m['n_clusters']:2d}  Rg={m['rg']:.2f}  Rg/box={m['rg_over_box']:.2f}")
+    print("ONE droplet: largest_cluster→1, n_clusters→1, occupancy<1, Rg box-independent.")
+
+
+def main(argv=None):
+    p = argparse.ArgumentParser()
+    p.add_argument("--measure", action="store_true")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--ablate", choices=["none", "identity", "freeze_plasticity"], default="none")
+    p.add_argument("--repel", type=float, default=0.15)
+    p.add_argument("--attract", type=float, default=0.45)
+    p.add_argument("--skew", type=float, default=1.2)
+    p.add_argument("--morph", type=float, default=0.7)
+    p.add_argument("--mom", type=float, default=0.85)
+    p.add_argument("--cohesion", type=float, default=0.0)
+    p.add_argument("--plasticity", type=float, default=0.0)
+    a = p.parse_args(argv)
+    if a.measure:
+        measure_gas_or_droplet(a.seed, a.cohesion)
+    else:
+        probe(a.seed, a.ablate, a.repel, a.attract, a.skew, a.morph, a.mom, a.cohesion, a.plasticity)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

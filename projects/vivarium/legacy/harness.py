@@ -1,0 +1,823 @@
+"""One validated measurement chokepoint. Nothing else should compute geometry on a periodic system.
+
+Seven measurement defects in this project came from geometry computed on raw coordinates. The worst
+were: an order parameter that correlated with itself (null +0.669 where 0 was assumed), and bond
+lengths measured without minimum image, which reported 13.3 in a box of 10 and sent three separate
+diagnoses down the wrong path. The engine's own forces were always right; only the measurements were
+wrong.
+
+So every quantity here goes through two rules:
+
+  1. UNWRAP FIRST. On a periodic axis, a raw difference is meaningless: an aggregate straddling the
+     boundary yields a covariance, a midplane and a bond length that are all garbage. `unwrap()` is
+     the only place a periodic difference is taken.
+  2. DISQUALIFY, DO NOT INTERPRET. If the molecule is deformed or the integrator is overshooting, the
+     structural numbers describe nothing, so `measure()` returns `ok=False` and the caller must throw
+     the sample away rather than read `aspect` off a broken configuration.
+
+Every metric here has been calibrated against BOTH controls -- a planted structure must score high AND
+a random configuration must score at the null. A positive control alone cannot catch a self-correlated
+statistic, which is how three micelle claims survived for a day.
+
+    lamellar  fraction of lipids whose HEAD lies farther from the aggregate midplane than its OWN
+              tails. Planted bilayer ~1.0, random ~0.5. NOTE it reads 1.0 on a collapsed droplet too,
+              so it is necessary and NOT sufficient -- always read it with `aspect`.
+    aspect    L1/L3 of the largest cluster's covariance, unwrapped. A slab or ribbon is thin in one
+              axis (low); a droplet is round (~0.8+). A droplet cannot fake it, but a FRAGMENT can,
+              so it is only admissible when the cluster holds most of the system (MIN_CLUSTER_FRAC).
+    edge      LOCAL SOLVENT DENSITY at the tail tips, RELATIVE TO BULK: the exposed rim, i.e. L_edge
+              in G_edge = 2*pi*R*gamma. 0 = tails fully buried (sealed membrane or closed vesicle),
+              1 = as wet as free in bulk, a rim in between. This is what separates the stages of the vesicle pathway, which
+              `aspect` and `hollow` cannot do on their own:
+
+                  stage 2  BICELLE   flat (aspect low) WITH a rim   -> encloses = 0, splay low
+                  stage 3  CUP       curving, rim shrinking          -> encloses = 0, aspect rising
+                  stage 4  VESICLE   sealed, no boundary at all      -> encloses > 0
+
+              THE STAGING WAS ORIGINALLY DEFINED ON `edge` AND THAT WAS UNSOUND. Measured against
+              controls, `edge` gave the SAME value for a rimless spanning bilayer, a closed loop and
+              a random gas, so no stage boundary defined by it could ever have been detected. Stage 4
+              is now `encloses`, which measures the partition itself. `edge` is retained as a
+              diagnostic and must never carry a stage claim alone.
+
+              A flat patch and a sealed vesicle are both "ordered", so without this the pathway is
+              invisible: the whole thermodynamic story is edge energy being traded for bending energy,
+              and edge length is the quantity actually being traded.
+    align     nematic order S of the lipid axes: S = (3<(u.n)^2> - 1)/2 against the director n.
+              A BILAYER puts every lipid along +/-n, so S -> 1. A MICELLE or VESICLE points its lipids
+              radially in all directions, so S -> 0. This is the metric that actually separates
+              lamellar from radial order, and `lamellar` never did: on a planted sphere `lamellar`
+              reads 0.967, because "head farther out than its own tails" is true of any heads-out
+              structure, and the sphere's covariance eigenvalues are near-degenerate so its "thin
+              axis" is arbitrary noise.
+    enclosed  water density INSIDE the aggregate's shell, relative to the bulk water density. ~1
+              means the lumen is filled with solvent at normal density (a sealed vesicle); 0 means no
+              solvent inside (a filled micelle). Defined as a DENSITY RATIO, not a fraction of all
+              water: a vesicle lumen is a tiny share of the box (~0.2%), so a fraction reads 0.000
+              even for a perfectly water-filled vesicle. This is what makes a
+              vesicle a vesicle rather than a hollow shell in vacuum, and it is the stage-4 signature:
+              a sealed shell traps solvent. A filled micelle has tails in the middle and encloses
+              nothing; a bicelle is open on both faces so its "interior" is continuous with the bulk.
+              Requires explicit solvent, like `edge`; NaN without it.
+    hollow    tail density at the CORE divided by tail density in the shell. ONLY DEFINED FOR A
+              ROUGHLY SPHERICAL aggregate: "core versus shell" is a radial decomposition, so on a slab
+              it is nonsense (a planted bilayer scored 22.27). Returns NaN unless the shape is round,
+              which is exactly the regime where it is needed -- separating a filled micelle from a
+              sealed vesicle, the one pair `align` and `lamellar` cannot tell apart. A VESICLE is closed, so
+              its centre is empty and this goes to ~0; a filled droplet keeps tails all the way in and
+              it stays near 1. This is the one structure `aspect` is blind to: a vesicle is spherical,
+              so aspect ~1 and lamellar high -- exactly a droplet's signature. Searching on aspect
+              alone would have DISCARDED a vesicle as a droplet, and a vesicle is what a finite amount
+              of lipid actually forms, since unlike a bicelle it has no rim to pay for.
+"""
+
+from __future__ import annotations
+
+import numpy as np
+
+BOND_REST = 1.0
+BOND_MAX = 1.25          # beyond this the molecule is deformed and nothing structural is admissible
+DISP_MAX = 0.05          # per-step displacement above which the integrator is overshooting
+MIN_PACKING = 0.35       # median nearest non-bonded LIPID neighbour, as a fraction of contact.
+#   Matter has to occupy space, and nothing else here checks that it does: `bond_stats` reads
+#   INTRAMOLECULAR distances, so molecules stacked on one point each report a perfect bond of 1.0,
+#   while `lamellar` and `align` come from DIRECTIONS, which stay well defined at any density, and a
+#   collapsed pile is maximally connected so `cluster_frac` reads its BEST value.
+#
+#   The threshold is DERIVED from planted references measured in the solvated regime, not chosen:
+#
+#       spanning bilayer, planted at contact   1.000
+#       spanning bilayer, relaxed              0.713
+#       MICELLE, planted                       0.683
+#       MICELLE, relaxed                       0.436   <- tightest LEGITIMATE structure
+#       genuine collapse                       0.150
+#
+#   A micelle cannot reach a bilayer's packing by geometry: its lipids converge radially, so the
+#   inner tail beads sit closer than contact by construction. That is the packing parameter showing
+#   up as a floor on the metric. An earlier gate of 0.70, calibrated on the bilayer alone, therefore
+#   rejected real micelles -- and did reject one, which is how a correct result was called a
+#   collapse. 0.35 sits below the tightest legitimate structure and well above true collapse.
+MIN_CLUSTER_FRAC = 0.60  # the largest cluster must hold this share of all lipids, or `aspect`
+#   describes a FRAGMENT rather than the system. A search minimising aspect will otherwise win by
+#   shattering the aggregate: 23 lipids out of 120 scored 0.189, beating a planted bilayer's 0.231,
+#   while looking nothing like a membrane. Guarding the molecule and the integrator was not enough --
+#   the objective also has to be denied its cheapest degenerate route.
+
+
+def _periodic_axes(e):
+    walls = tuple(getattr(e, "wall_axes", ()) or ())
+    return np.array([ax not in walls for ax in range(e.pd)])
+
+
+def delta(e, a, b):
+    """The ONLY place a periodic difference is taken. Minimum image on periodic axes only."""
+    d = e.X[a, :e.pd] - e.X[b, :e.pd]
+    free = _periodic_axes(e)
+    d[:, free] -= e.L * np.round(d[:, free] / e.L)
+    return d
+
+
+def unwrap(e, idx, ref=None):
+    """Positions of `idx` made contiguous, by BFS over the molecule graph.
+
+    Unwrapping every bead against ONE reference is only valid when the whole structure lies within
+    L/2 of it. A real aggregate is routinely wider than that, and the far side then folds onto the
+    near side: measured directly, a rod of true span 8.0 in a box of 10 reported 9.79, a hollow
+    vesicle read as filled, and a flat bilayer read as round. Walking the connectivity graph and
+    unwrapping each molecule against an ALREADY-UNWRAPPED neighbour has no size limit.
+    """
+    idx = np.asarray(idx)
+    mol = e._mol
+    free = _periodic_axes(e)
+    if mol.size == 0:
+        return e.X[idx, :e.pd].copy()
+    nb = mol.shape[1]
+    # which molecule each requested bead belongs to
+    owner = np.full(e.cfg.N, -1, dtype=int)
+    owner[mol.ravel()] = np.repeat(np.arange(len(mol)), nb)
+
+    cen = e.X[mol[:, nb // 2], :e.pd]
+    d = cen[:, None, :] - cen[None, :, :]
+    d[..., free] -= e.L * np.round(d[..., free] / e.L)
+    near = np.einsum("ijc,ijc->ij", d, d) < (2.6 * BOND_REST) ** 2
+    np.fill_diagonal(near, False)
+
+    start = owner[idx[0]] if owner[idx[0]] >= 0 else 0
+    shift = np.zeros((len(mol), e.pd))
+    seen = np.zeros(len(mol), dtype=bool)
+    seen[start] = True
+    stack = [start]
+    while stack:
+        a = stack.pop()
+        for b in np.where(near[a] & ~seen)[0]:
+            dd = cen[b] - (cen[a] + shift[a])
+            dd[free] -= e.L * np.round(dd[free] / e.L)
+            shift[b] = cen[a] + shift[a] + dd - cen[b]
+            seen[b] = True
+            stack.append(b)
+    # anything not reached by the graph falls back to a single-reference shift
+    if not seen.all():
+        dd = cen[~seen] - cen[start]
+        dd[:, free] -= e.L * np.round(dd[:, free] / e.L)
+        shift[~seen] = cen[start] + dd - cen[~seen]
+
+    out = e.X[idx, :e.pd].copy()
+    own = owner[idx]
+    ok = own >= 0
+    out[ok] += shift[own[ok]]
+    return out
+
+
+def bond_stats(e):
+    """(mean, max, fraction stretched) over the engine's ACTUAL backbone bonds, with minimum image.
+
+    Read the bond list, never infer it from column order. The previous version walked
+    mol[:,k] -> mol[:,k+1], which is only the topology of a LINEAR chain: on a BRANCHED lipid that
+    steps from arm 1's tip to arm 2's base, two beads that are not bonded and sit far apart, and it
+    reported 25% of bonds broken at t=0 on a perfectly built molecule. Measuring only the first bond
+    hid a different problem earlier, since bonds stretch unevenly along a chain.
+    """
+    if not e._mol.size or not getattr(e, "_bond_i", np.zeros(0)).size:
+        return 0.0, 0.0, 0.0
+    backbone = np.isclose(e._bond_r0, BOND_REST)      # exclude the 1-3 straighteners
+    if not backbone.any():
+        return 0.0, 0.0, 0.0
+    d = np.linalg.norm(delta(e, e._bond_i[backbone], e._bond_j[backbone]), axis=1)
+    return float(d.mean()), float(d.max()), float((d > BOND_MAX).mean())
+
+
+def _pair_dist(e):
+    """Minimum-image distance between every pair, with self and BONDED pairs set to inf.
+
+    Built once and shared: `packing` and `solvation` each constructed this same (N,N) matrix, ~9 MB
+    apiece at N=626, and `measure()` called both. Bonded pairs are excluded because a bond
+    legitimately holds beads inside contact; a lipid and a water are never bonded, so the lipid-water
+    block `solvation` reads is identical either way.
+    """
+    d = e.X[:, : e.pd][:, None, :] - e.X[:, : e.pd][None, :, :]
+    free = _periodic_axes(e)
+    d[:, :, free] -= e.L * np.round(d[:, :, free] / e.L)
+    dist = np.linalg.norm(d, axis=2)
+    np.fill_diagonal(dist, np.inf)
+    bi, bj = getattr(e, "_bond_i", None), getattr(e, "_bond_j", None)
+    if bi is not None and len(bi):
+        dist[bi, bj] = np.inf
+        dist[bj, bi] = np.inf
+    return dist
+
+
+def bilayer_fraction(e):
+    """Fraction of lipids that are in a locally FLAT leaflet pair. The conjunction is the point.
+
+    Neither ingredient works alone, and both failures are measured:
+      * a leaflet-pair test (reversed axes, heads split across a shared tail core) scores planted
+        MICELLE 1.000 against planted ribbon 0.984 -- in 2-D a small micelle IS locally two leaflets
+        meeting at a core, so no purely local pair test can separate them;
+      * splay (curvature) reads the same for a bilayer and a nematic droplet, since both have
+        parallel lipids (defect #21).
+    A bilayer is the only structure that is BOTH paired and locally flat: paired excludes the droplet,
+    flat excludes the micelle.
+
+    TWO-DIMENSIONAL ONLY (defect #26, 2026-08-08). A PLANTED 3-D bilayer scores 0.000, identical to a
+    3-D dispersed gas, so the metric has no discriminating power there and every 3-D reading from it is
+    void. It was validated only against 2-D planted references (ribbon 0.984 / micelle 0.000, holding
+    from 20 to 150 lipids). In 3-D use `splay`, which IS calibrated there: planted bilayer 0.000
+    against dispersed 0.852.
+
+    Local flatness is measured on the leaflet partner's own neighbours: for lipid i with partner j,
+    the same-leaflet neighbours of i must be nearly parallel to i (|u.u| high), which fails inside a
+    tightly curved micelle where consecutive lipids fan by 2*pi/n.
+    """
+    mol = getattr(e, "_mol", None)
+    if mol is None or len(mol) < 3:
+        return float("nan")
+    if e.pd != 2:
+        return float("nan")   # 2-D only; see defect #26 above. nan, not 0.0, so it cannot read as
+        #                       "no bilayer" in a table beside real 2-D values.
+    P, L, pd = e.X[:, :e.pd], e.L, e.pd
+    heads, tails = mol[:, 0], mol[:, 1:]
+
+    def mic(a, b):
+        d = a[:, None, :] - b[None, :, :]
+        return d - L * np.round(d / L)
+
+    tc = np.stack([P[tails[i]].mean(axis=0) for i in range(len(mol))])
+    u = mic(P[heads], tc)[np.arange(len(mol)), np.arange(len(mol))]
+    u /= np.linalg.norm(u, axis=1, keepdims=True) + 1e-12
+    D = np.linalg.norm(mic(P[tails.ravel()], P[tails.ravel()]), axis=2)
+    adj = (D < 1.6).reshape(len(mol), tails.shape[1], len(mol), tails.shape[1]).any(axis=(1, 3))
+    np.fill_diagonal(adj, False)
+    dots = u @ u.T
+    hh = mic(P[heads], P[heads])
+    proj = np.einsum("ijk,ik->ij", hh, u)
+    paired = ((dots < -0.5) & (proj > 1.0) & adj).any(axis=1)
+    same = adj & (dots > 0.0)                      # same-leaflet neighbours
+    flat = np.array([(dots[i][same[i]] > 0.85).mean() if same[i].any() else 0.0
+                     for i in range(len(mol))])
+    return float((paired & (flat > 0.5)).mean())
+
+
+def solvent_packing(e, _dist=None):
+    """Median nearest water-to-WATER distance as a fraction of contact. The counterpart of `packing`.
+
+    `packing` is LIPID-to-lipid and `solvation` is lipid-to-nearest-water, so nothing in this harness
+    ever looked at the solvent against itself. That blind spot hid a severe defect (F37, 2026-08-06):
+    at the standing operating point water sat at 0.43 of its own contact distance -- beads
+    interpenetrating roughly 2x -- so the solvent occupied about a fifth of the area it should and the
+    box was ~83% vacuum. Every self-assembly result in this project was collected in a near-vacuum,
+    invisible to all 111 tests, because the hydrophobic driving force was measured only where the
+    water happened to be.
+
+    ~1.0 when the solvent is a proper liquid at contact; falling toward 0 as it compresses through
+    itself. Read it beside `wet_fraction`: this says how dense the water is, that says how much of the
+    box it actually reaches.
+
+    TIME-DEPENDENT -- measure at the END of a run, not after a short relaxation (2026-08-09). At
+    repel 12 the solvent COLLAPSES progressively: median nearest neighbour 0.76 of contact at 4k
+    steps, 0.43 at 20k, with 100% of beads inside 0.8 contact and 40% in bound DIMERS (two beads
+    sharing one well). At repel 24 it holds at 0.89 and at 48 at 0.96. The cause is the
+    transformer-only constraint itself: a bounded repulsion has a finite maximum force, so short-range
+    water-water attraction can exceed it and pairs fall together, where a divergent 1/r^12 core could
+    not be crossed at any pressure.
+    """
+    sig = getattr(e, "sigma", None)
+    contact = float(2.0 * np.median(sig)) if sig is not None else 1.0
+    wat = np.asarray(e.species) == 0
+    if wat.sum() < 2:
+        return float("nan")
+    P = e.X[wat, :e.pd]
+    d = P[:, None, :] - P[None, :, :]
+    d -= e.L * np.round(d / e.L)
+    D = np.linalg.norm(d, axis=2)
+    np.fill_diagonal(D, np.inf)
+    return float(np.median(D.min(axis=1)) / contact)
+
+
+def wet_fraction(e, cell=0.5):
+    """Fraction of the non-lipid box area lying within one bead diameter of a water bead.
+
+    1.0 means fully submerged. Measured because the cross-sections showed large regions with no
+    tokens at all and nobody had asked whether the dish was actually in water: at the standing
+    operating point this reads 0.17, i.e. ~83% of the box is vacuum, and adding water does not fix it
+    (the extra water compresses too) while raising `repel` does (0.70 at repel 48).
+
+    A structural claim about hydrophobic burial is only meaningful where there is water to be buried
+    from, so this gates the interpretation of `exposed`, `solvation` and `head_enrich` alike.
+    """
+    P = e.X[:, :e.pd]
+    lip = np.asarray(e.species) != 0
+    wat = ~lip
+    if not wat.any():
+        return 0.0
+    n = max(4, int(e.L / cell))
+    g = (np.arange(n) + 0.5) * (e.L / n) - e.L / 2
+    grids = np.meshgrid(*([g] * e.pd))
+    C = np.stack([q.ravel() for q in grids], axis=1)
+
+    def near(pts, cut):
+        out = np.zeros(len(C), bool)
+        for i in range(0, len(C), 4096):
+            d = C[i:i + 4096, None, :] - pts[None, :, :]
+            d -= e.L * np.round(d / e.L)
+            out[i:i + 4096] = (np.linalg.norm(d, axis=2) < cut).any(axis=1)
+        return out
+
+    free = ~near(P[lip], 1.0) if lip.any() else np.ones(len(C), bool)
+    if not free.any():
+        return float("nan")
+    return float(near(P[wat], 1.0)[free].mean())
+
+
+def packing(e, _dist=None):
+    """Median nearest NON-BONDED neighbour distance, as a fraction of the contact distance.
+
+    Bonded pairs are excluded because a bond legitimately holds beads at BOND_REST, which is inside
+    contact for any sigma above 0.5; including them would report healthy overlap on every chain.
+    Uses the same DERIVED contact distance as `largest_cluster` rather than a chosen constant.
+
+    LIPID-TO-LIPID only: both the bead measured and its neighbour must be lipid. Counting solvent as
+    a neighbour measures SOLVATION, not structure, and in a solvated box the nearest bead to a lipid
+    is nearly always a water -- so the metric reported how close the water was and ignored the
+    membrane entirely. Measured on a 2-D bilayer planted at exactly contact spacing, that read 0.637
+    for a perfect structure and made MIN_PACKING reject the very thing it was calibrated to accept.
+    The 3-D reference scored a clean 1.000 only because it happens to carry no solvent.
+
+    ~1.0 for a properly packed structure, falling toward 0 as an aggregate collapses through itself.
+    A median, so a handful of genuinely close pairs cannot condemn a good structure and a collapse
+    (which moves every bead at once) cannot hide in a tail.
+
+    ONE-SIDED, AND UNBOUNDED ABOVE (defect #25, 2026-08-06). This is a nearest-neighbour DISTANCE
+    ratio, not an occupancy fraction, so it grows without limit as lipids move apart: 12 lipids in a
+    large box read 7.44, and dilution alone took a run from 0.50 to 0.90 with no change in structural
+    quality. Only the LOW side carries meaning -- that is what MIN_PACKING gates, and that use is
+    sound. Never compare `packing` across runs with different densities, box sizes or lipid counts;
+    for those, compare within a fixed composition or use a genuinely normalised metric.
+    """
+    sig = getattr(e, "sigma", None)
+    contact = float(2.0 * np.median(sig)) if sig is not None else 1.0
+    lip = np.asarray(e.species) != 0
+    if not lip.any():
+        return float("nan")
+    dist = _pair_dist(e) if _dist is None else _dist
+    return float(np.median(dist[np.ix_(lip, lip)].min(axis=1)) / contact)
+
+
+def solvation(e, _dist=None):
+    """Median lipid-to-nearest-SOLVENT distance over contact. The other half of `packing`.
+
+    Split out rather than folded in, because the two answer different questions and a single number
+    conflated them: `packing` asks whether the membrane interpenetrates ITSELF, this asks whether
+    solvent is jammed into it. Freshly planted water is random and legitimately overlaps, so this is
+    diagnostic rather than a gate -- it should RISE over the first few hundred steps as the solvent
+    relaxes out of the structure.
+    """
+    sig = getattr(e, "sigma", None)
+    contact = float(2.0 * np.median(sig)) if sig is not None else 1.0
+    sp = np.asarray(e.species)
+    lip, wat = sp != 0, sp == 0
+    if not lip.any() or not wat.any():
+        return float("nan")
+    # bonded pairs are masked to inf in the shared matrix, which is right for `packing`; a lipid and
+    # a water are never bonded, so the lipid-water block is unaffected either way.
+    dist = _pair_dist(e) if _dist is None else _dist
+    return float(np.median(dist[np.ix_(lip, wat)].min(axis=1)) / contact)
+
+
+def splay(e, cutoff=None):
+    """Median angle between a lipid's axis and its SAME-LEAFLET neighbours' axes, in radians.
+
+    This is the local, scale-free discriminator between a bilayer and a micelle, and it exists
+    because every global metric here is ambiguous in the middle of the range. `align` reads 1.0 for a
+    flat bilayer and ~0.09 for a micelle, but a mixture or a curved patch lands between and cannot be
+    told from a dense pile; `packing` distinguishes matter from collapse and says nothing about shape.
+
+    The geometry is unambiguous though. In a BILAYER, neighbouring lipids in the same leaflet are
+    PARALLEL, so the splay goes to 0. In a MICELLE of n lipids they fan out around the circle, so
+    neighbours differ by ~2*pi/n -- about 0.5 rad for the n~12 aggregates seen here. Curvature is the
+    actual difference between the two structures, and this measures curvature directly instead of
+    inferring it from a whole-aggregate average.
+
+    Same-leaflet is defined by u_i . u_j > 0: two lipids in opposing leaflets point antiparallel, and
+    including them would report ~pi for a perfect bilayer, which is the structure's OWN signature
+    mistaken for disorder.
+    """
+    mol = e._mol
+    if len(mol) < 3:
+        return float("nan")
+    nb = mol.shape[1]
+    u = np.zeros((len(mol), e.pd))
+    for k in range(1, nb):
+        u += -delta(e, mol[:, 0], mol[:, k])
+    u /= np.maximum(np.linalg.norm(u, axis=1, keepdims=True), 1e-9)
+    if cutoff is None:
+        sig = getattr(e, "sigma", None)
+        contact = float(2.0 * np.median(sig)) if sig is not None else 1.0
+        cutoff = 2.2 * contact          # first shell of neighbouring molecules
+    cen = e.X[mol[:, 0], :e.pd]
+    d = cen[:, None, :] - cen[None, :, :]
+    free = _periodic_axes(e)
+    d[:, :, free] -= e.L * np.round(d[:, :, free] / e.L)
+    near = np.linalg.norm(d, axis=2) < cutoff
+    np.fill_diagonal(near, False)
+    dots = np.clip(u @ u.T, -1.0, 1.0)
+    same = near & (dots > 0.0)
+    vals = [float(np.median(np.arccos(dots[i, same[i]]))) for i in range(len(mol)) if same[i].any()]
+    return float(np.median(vals)) if vals else float("nan")
+
+
+def spanning(e):
+    """Fraction of the periodic x-axis covered by the largest aggregate. ~1.0 means it WRAPS the box.
+
+    Occupancy binning on WRAPPED coordinates, not an extent: an unwrapped aggregate that spans the
+    box reports a span LARGER than the box, so an extent-based measure reads > 1 for the very
+    structure it is meant to identify. Coverage is what "spans" actually means.
+
+    A spanning bilayer must wrap the box -- that is what makes it rimless and therefore reachable at
+    all, since a finite patch pays edge energy and closes into a vesicle instead.
+
+    NECESSARY, NOT SUFFICIENT, and the failure is easy to walk into: in a SMALL box any decent
+    aggregate covers most of the width simply by existing. A round droplet of 20 lipids in a
+    10-wide box measured 0.90 here while being visibly not a membrane. Always read it with `splay`,
+    which distinguishes a spanning MEMBRANE from an aggregate that merely happens to be wide.
+    """
+    mol = e._mol
+    if mol.size == 0:
+        return 0.0
+    comp = largest_cluster(e)
+    if len(comp) < 3:
+        return 0.0
+    L = 2.0 * e.cfg.pos_bound
+    x = np.mod(e.X[mol[comp].ravel(), 0] + e.cfg.pos_bound, L)
+    nbins = max(8, int(L))
+    return float(len(np.unique((x / L * nbins).astype(int))) / nbins)
+
+
+def encloses(e, cell=0.4):
+    """How much SOLVENT the aggregate seals off: the number of water beads in the largest enclosed
+    pocket. 0 means nothing is encapsulated.
+
+    Counting solvent rather than empty space is what separates a vesicle from a defect. A relaxed
+    membrane carries small VOIDS between its leaflets; those do not wrap the box, so a pure geometric
+    fill counts them as pockets and a flat spanning sheet scored 8.06 where it should score 0. A void
+    between leaflets holds no water. A vesicle, by definition, encapsulates solvent -- so count the
+    solvent.
+
+    KNOWN LIMIT, and the margin is thin. A relaxed membrane traps solvent in small pockets BETWEEN
+    its leaflets, and those do not wrap either, so a flat spanning bilayer reads ~10 against a real
+    vesicle's 18-26. Usable with a threshold near 15, but not comfortable. The physically right
+    discriminator is that a lumen is lined with HEADS while an inter-leaflet void is lined with
+    TAILS; an attempt at that check rejected every real loop and was reverted rather than shipped
+    half-working. Until it exists, read this metric WITH an image.
+
+    A COUNT, not a fraction of the box. A fraction makes the same vesicle read differently in
+    different boxes -- the planted R=4 loop scored 0.0159 while an identical structure in a smaller
+    box would score higher -- so a threshold on it is really a threshold on box size.
+
+    This is what a vesicle IS. Closure is topological -- solvent inside is disconnected from solvent
+    outside -- and every local proxy for it fails. `edge` (solvent density at the tail tips) cannot
+    distinguish a rimless spanning bilayer from a random gas, because at any realistic solvent
+    density the shell around a tail is occupied almost everywhere; and a membrane planted at exactly
+    contact spacing is slightly porous, so a density proxy reports leakage where the topology is
+    intact. A partition either exists or it does not.
+
+    Method: coarsen the box to a grid, mark cells within contact of any LIPID bead as wall, then
+    flood-fill the free cells with periodic wrapping. The exterior is the component that PERCOLATES
+    the box; any other component is an enclosed pocket. Reporting the largest such pocket makes a
+    vesicle read > 0 while a sheet, a ribbon and a droplet all read 0.
+
+    `cell` defaults to 0.4 rather than 0.6 because the coarse grid could not resolve a small
+    vesicle: a lumen of radius 1.0 spans under two cells at 0.6, and the fill then absorbed
+    membrane-interior voids alongside it, over-reading by ~6x. A planted R=4 loop that is visibly
+    sealed scored BELOW its own detection threshold. Four cells across the smallest lumen worth
+    detecting is the requirement, and it must stay well under the bead diameter or a wall of beads at
+    contact will not close on the grid. It must be well under the bead diameter or a wall of beads
+    at contact will not close on the grid, and the metric would then report the exterior leaking in
+    through gaps that are not physically there.
+    """
+    pd = e.pd
+    L = e.L
+    n = max(8, int(np.ceil(L / cell)))
+    sp = np.asarray(e.species)
+    lip = np.where(sp != 0)[0]
+    if lip.size == 0:
+        return 0.0
+    sig = e.sigma if e.sigma is not None else np.full(len(e.X), 0.5)
+    grid = np.zeros((n,) * pd, dtype=bool)
+    axes = np.arange(n)
+    coords = np.stack(np.meshgrid(*([axes] * pd), indexing="ij"), axis=-1).reshape(-1, pd)
+    centres = (coords + 0.5) * (L / n) - 0.5 * L
+    P = e.X[lip, :pd]
+    # mark any cell whose centre lies within a bead radius of a lipid bead (minimum image)
+    wall = np.zeros(len(centres), dtype=bool)
+    chunk = max(1, 200000 // max(len(lip), 1))
+    for s in range(0, len(centres), chunk):
+        d = centres[s:s + chunk, None, :] - P[None, :, :]
+        d -= L * np.round(d / L)
+        wall[s:s + chunk] = (np.linalg.norm(d, axis=2) < sig[lip][None, :]).any(axis=1)
+    grid = wall.reshape((n,) * pd)
+
+    free = ~grid
+    seen = np.zeros_like(free)
+    best = 0
+    for start in np.argwhere(free):
+        st = tuple(start)
+        if seen[st]:
+            continue
+        stack, comp, touches = [st], [], set()
+        seen[st] = True
+        while stack:
+            cur = stack.pop()
+            comp.append(cur)
+            for ax in range(pd):
+                for step in (-1, 1):
+                    nxt = list(cur)
+                    raw = nxt[ax] + step
+                    nxt[ax] = raw % n
+                    if raw != nxt[ax]:
+                        touches.add(ax)          # this component wrapped: it is the exterior
+                    t = tuple(nxt)
+                    if free[t] and not seen[t]:
+                        seen[t] = True
+                        stack.append(t)
+        if not touches:                          # never wrapped -> a candidate pocket
+            best = max(best, _waters_in(e, comp, n, L))
+    return float(best)
+
+
+def _waters_in(e, cells, n, L):
+    """How many solvent beads sit inside this set of grid cells."""
+    sp = np.asarray(e.species)
+    wi = np.where(sp == 0)[0]
+    if wi.size == 0:
+        return 0
+    P = np.mod(e.X[wi, : e.pd] + 0.5 * L, L)
+    idx = np.clip((P / L * n).astype(int), 0, n - 1)
+    want = set(cells)
+    return int(sum(1 for row in idx if tuple(row) in want))
+
+
+def head_enrichment(e):
+    """How strongly HEADS are enriched on the aggregate's outer surface, as a ratio to the bulk.
+
+    1.0 means no enrichment (heads sit wherever tails do -- a disordered blob). A clean micelle buries
+    every tail and puts only heads outside, so with a 1-head/2-tail lipid the outer shell approaches
+    all heads against a bulk fraction of 1/3, i.e. a ratio near 3.
+
+    This exists because `splay` conflates two different failures that look identical in the middle of
+    its range: WRONG STRUCTURE, and RIGHT STRUCTURE WITH A PATCHY SURFACE. A self-assembled 3-D
+    aggregate read splay 0.807 -- nearer the random null (1.103) than the micelle band (0.605) -- and
+    was called disordered, but its cross-section showed a proper tail core with heads at the surface
+    and GAPS between them. Those two readings imply opposite next steps, so they need separating.
+
+    Measured on the largest cluster only, since a ratio over several aggregates describes their
+    arrangement rather than any one of them, and on UNWRAPPED positions.
+    """
+    mol = e._mol
+    if mol.size == 0:
+        return float("nan")
+    comp = largest_cluster(e)
+    if len(comp) < 4:
+        return float("nan")
+    idx = mol[comp].ravel()
+    P = unwrap(e, idx)
+    P = P - P.mean(axis=0)
+    r = np.linalg.norm(P, axis=1)
+    sp = np.asarray(e.species)[idx]
+    is_head = sp == 5
+    bulk = float(is_head.mean())
+    if bulk <= 0.0 or bulk >= 1.0:
+        return float("nan")
+    outer = r >= np.percentile(r, 75.0)      # the outermost quarter by radius
+    if not outer.any():
+        return float("nan")
+    return float(is_head[outer].mean() / bulk)
+
+
+def largest_cluster(e, cutoff=None):
+    """Molecule indices of the biggest connected aggregate, joined with minimum image.
+
+    Shape must be measured PER CLUSTER: a global covariance over several droplets reports the
+    arrangement of droplets, not the shape of any of them.
+    """
+    mol = e._mol
+    n = len(mol)
+    if n == 0:
+        return np.zeros(0, dtype=int)
+    if cutoff is None:
+        # DERIVED, not chosen. Two beads are in contact at sigma_i + sigma_j; anything appreciably
+        # beyond that is separated by solvent. A constant was wrong in BOTH directions within hours:
+        # 2.2 merged distinct micelles (a cluster of them then read as a vesicle) and 1.4 split a
+        # bilayer's leaflets (the harness then rejected a real membrane). Scaling the actual contact
+        # distance removes the guesswork and adapts to per-species radii.
+        sig = getattr(e, "sigma", None)
+        contact = float(2.0 * np.median(sig)) if sig is not None else 1.0
+        cutoff = 1.6 * contact
+    # Connect on ANY bead pair, not the middle bead: a bilayer's leaflets meet TAIL to TAIL ~1 apart
+    # while their middle beads are ~5 apart, so middle-bead clustering split every bilayer in half and
+    # the harness rejected it as "fragmented".
+    #
+    # The cutoff is bounded from BOTH sides and 2.2 was too generous. Four separate micelles, each a
+    # distinct aggregate with 2-3 units of water between them, were merged into a single "cluster" of
+    # 63/63 lipids; the water BETWEEN them then read as a lumen, giving hollow 0.06 and enclosed 2.96
+    # -- above bulk density, which is impossible for a real interior -- and the classifier called it a
+    # VESICLE. A screenshot showed four micelles. 1.4 still joins leaflets in contact (~1.0) but no
+    # longer bridges aggregates separated by open solvent.
+    P = e.X[mol.ravel(), :e.pd].reshape(n, -1, e.pd)
+    d = P[:, None, :, None, :] - P[None, :, None, :, :]
+    free = _periodic_axes(e)
+    d[..., free] -= e.L * np.round(d[..., free] / e.L)
+    near = (np.einsum("ijabc,ijabc->ijab", d, d) < cutoff ** 2).any(axis=(2, 3))
+    np.fill_diagonal(near, False)
+    seen, best = set(), []
+    for s in range(n):
+        if s in seen:
+            continue
+        stack, comp = [s], []
+        while stack:
+            k = stack.pop()
+            if k in seen:
+                continue
+            seen.add(k)
+            comp.append(k)
+            stack.extend(np.where(near[k])[0].tolist())
+        if len(comp) > len(best):
+            best = comp
+    return np.array(sorted(best), dtype=int)
+
+
+def measure(e, prev_X=None):
+    # prev_X MUST be from exactly one step earlier: DISP_MAX is a per-step bound.
+    """All admissible structure in one call.
+
+    Returns a dict. `ok` is False when the molecule is deformed or the integrator is overshooting; in
+    that case the structural fields describe nothing and must not be read.
+    """
+    mol = e._mol
+    bmean, bmax, bfrac = bond_stats(e)
+    out = {"bond_mean": bmean, "bond_max": bmax, "bond_frac": bfrac,
+           "disp": 0.0, "ok": True, "why": "", "n_cluster": 0,
+           "lamellar": float("nan"), "aspect": float("nan"), "aspect2": float("nan"),
+           "cluster_frac": 0.0, "hollow": float("nan"), "edge": float("nan"),
+           "align": float("nan"), "thick_mol": float("nan"), "enclosed": float("nan"),
+           "solvent_packing": float("nan"), "wet_frac": float("nan"),
+           "bilayer_frac": float("nan"),
+           "packing": float("nan"), "solvation": float("nan"),
+           "splay": float("nan"), "head_enrich": float("nan"),
+           "spanning": 0.0, "encloses": 0.0}
+
+    if prev_X is not None:
+        d = e.X[:, :e.pd] - prev_X[:, :e.pd]
+        free = _periodic_axes(e)
+        d[:, free] -= e.L * np.round(d[:, free] / e.L)
+        out["disp"] = float(np.linalg.norm(d, axis=1).max())
+
+    _dist = _pair_dist(e)                 # one (N,N) matrix, shared by both
+    out["packing"] = packing(e, _dist)
+    # solvent guards: `packing` is lipid-to-lipid and `solvation` is lipid-to-water, so nothing
+    # here ever looked at water against water. F37 found the solvent compressed to 0.43 of its
+    # own contact distance with ~83% of the box vacuum, invisible to every test.
+    out["solvent_packing"] = solvent_packing(e)
+    out["wet_frac"] = wet_fraction(e)
+    out["bilayer_frac"] = bilayer_fraction(e)
+    out["solvation"] = solvation(e, _dist)
+    out["splay"] = splay(e)
+    out["head_enrich"] = head_enrichment(e)
+    out["encloses"] = encloses(e)
+    out["spanning"] = spanning(e)
+    if out["packing"] < MIN_PACKING:
+        # FIRST, ahead of every shape metric. A collapsed pile still has well-defined bond lengths and
+        # well-defined directions, so it scores as a flawless membrane on everything else here.
+        out["ok"], out["why"] = False, (f"collapsed (nearest non-bonded neighbour at "
+                                        f"{out['packing']:.2f} of contact)")
+    elif bfrac > 0.02:
+        out["ok"], out["why"] = False, f"molecule deformed (bond mean {bmean:.2f}, {bfrac:.0%} > {BOND_MAX})"
+    elif out["disp"] > DISP_MAX:
+        out["ok"], out["why"] = False, f"integrator overshooting ({out['disp']:.3f}/step)"
+
+    comp = largest_cluster(e)
+    out["n_cluster"] = int(len(comp))
+    out["cluster_frac"] = float(len(comp) / max(len(mol), 1))
+    if len(comp) < 6:
+        out["ok"], out["why"] = False, "no aggregate"
+        return out
+    if out["ok"] and out["cluster_frac"] < MIN_CLUSTER_FRAC:
+        # only if nothing more fundamental already failed: a torn molecule also fragments the cluster,
+        # and reporting "fragmented" there hides the ROOT CAUSE behind its own consequence.
+        out["ok"], out["why"] = False, (f"fragmented ({len(comp)}/{len(mol)} lipids = "
+                                        f"{out['cluster_frac']:.0%} in the largest cluster)")
+
+    idx = mol[comp]
+    P = unwrap(e, idx.ravel(), ref=idx[0, 0])
+    c = P - P.mean(0)
+    ev = np.linalg.eigvalsh(c.T @ c / len(c))
+    out["aspect"] = float(ev[0] / max(ev[-1], 1e-12))
+    if e.pd == 3:
+        out["aspect2"] = float(ev[1] / max(ev[-1], 1e-12))
+
+    # exposed rim: tail beads with water in contact range. Requires explicit solvent -- with none,
+    # gamma = 0 by construction and the closure the pathway depends on cannot happen.
+    wi = getattr(e, "_wi", np.zeros(0, dtype=int))
+    if wi.size:
+        # deepest tail bead only -- see bicelle2d.edge_frac for why "any wet tail bead" saturates
+        tips = idx[:, -1]
+        dw = e.X[tips, :e.pd][:, None, :] - e.X[wi, :e.pd][None, :, :]
+        free = _periodic_axes(e)
+        dw[..., free] -= e.L * np.round(dw[..., free] / e.L)
+        # LOCAL SOLVENT DENSITY AROUND TAIL TIPS, RELATIVE TO BULK -- not "is any water nearby".
+        #
+        # The predicate version saturated and was useless: it asked whether ANY water lay within 1.2
+        # of the deepest tail bead, and at our solvent density that shell holds ~2 waters ANYWHERE in
+        # the box, so it was true almost everywhere. Measured against controls it could not tell a
+        # rimless spanning bilayer (0.727) from a random gas (0.727) from a closed loop (0.800).
+        #
+        # A ratio to bulk cannot saturate, and has the same form as `enclosed` and `head_enrichment`:
+        #     0  tails fully buried, no solvent contact  (a sealed membrane or a closed vesicle)
+        #     1  tails as wet as if they were free in bulk solvent
+        # A rim sits between, since its tails are exposed on one side and shielded on the other.
+        r_shell = 1.2
+        cnt = (np.einsum("ijc,ijc->ij", dw, dw) < r_shell ** 2).sum(axis=1)
+        vol_box = (e.L ** e.pd)
+        vol_shell = (np.pi * r_shell ** 2 if e.pd == 2 else (4.0 / 3.0) * np.pi * r_shell ** 3)
+        expect = wi.size * vol_shell / vol_box          # waters in that shell at BULK density
+        out["edge"] = float(cnt.mean() / expect) if expect > 0 else float("nan")
+
+    # enclosed solvent: water nearer the aggregate centre than the lipid shell it sits inside.
+    # A sealed vesicle traps water; a micelle fills the same volume with tails; an open disc does not
+    # separate an interior at all.
+    if wi.size:
+        cen0 = P.mean(0)
+        dwc = e.X[wi, :e.pd] - cen0
+        free2 = _periodic_axes(e)
+        dwc[:, free2] -= e.L * np.round(dwc[:, free2] / e.L)
+        rw = np.linalg.norm(dwc, axis=1)
+        rl = np.linalg.norm(P - cen0, axis=1)
+        r_inner = np.percentile(rl, 15)          # inner face of the lipid shell
+        if r_inner <= 0.5:
+            # no lumen at all (a FILLED aggregate): definitively zero trapped solvent, not undefined
+            out["enclosed"] = 0.0
+        else:
+            v_in = (4.0 / 3.0 * np.pi * r_inner ** 3) if e.pd == 3 else (np.pi * r_inner ** 2)
+            v_box = float(np.prod(e.L)) if np.ndim(e.L) else float(e.L) ** e.pd
+            dens_in = float((rw < r_inner).sum()) / max(v_in, 1e-9)
+            dens_bulk = len(wi) / max(v_box, 1e-9)
+            out["enclosed"] = float(dens_in / max(dens_bulk, 1e-12))
+
+    nb = idx.shape[1]
+    Pm = P.reshape(len(comp), nb, e.pd)
+
+    # nematic order of the lipid axes: 1 for a bilayer, 0 for a radial (micelle/vesicle) structure.
+    # Computed from INTRAMOLECULAR vectors via minimum image, never from unwrapped positions: a
+    # molecule is always smaller than L/2 so this is exact, whereas unwrapping is ill-defined for a
+    # structure that PERCOLATES the box (BFS unrolls it arbitrarily). That makes `align` the one
+    # orientational metric that is valid for spanning and finite structures alike.
+    u = np.zeros((len(comp), e.pd))
+    for k in range(1, nb):
+        u += -delta(e, idx[:, 0], idx[:, k])
+    u /= max(nb - 1, 1)
+    u /= np.maximum(np.linalg.norm(u, axis=1, keepdims=True), 1e-9)
+    Q = np.einsum("ia,ib->ab", u, u) / len(u)
+    lam_max = float(np.linalg.eigvalsh(Q)[-1])
+    out["align"] = float((e.pd * lam_max - 1.0) / (e.pd - 1.0))
+
+    # thickness along the director, in molecule lengths. Unlike `aspect` this does not depend on the
+    # BOX: the same membrane measured aspect 0.245 at bound=6 and 0.109 at bound=9, because a spanning
+    # structure inherits its lateral extent from the container.
+    nrm = np.linalg.eigh(Q)[1][:, -1]
+    proj = (P - P.mean(0)) @ nrm
+    mol_len = max(nb - 1, 1) * BOND_REST
+    out["thick_mol"] = float((np.percentile(proj, 97) - np.percentile(proj, 3)) / (2 * mol_len))
+
+    # hollowness, guarded: radial core-vs-shell is only meaningful for a round aggregate. On a slab
+    # the "core" is a disc through the membrane and the ratio means nothing.
+    round_enough = out["aspect"] > 0.55
+    cen = P.mean(0)
+    rt = np.linalg.norm(Pm[:, 1:].reshape(-1, e.pd) - cen, axis=1)
+    R = np.percentile(rt, 95)
+    if R > 1e-9 and round_enough:
+        core = float((rt < 0.35 * R).sum())
+        shell = float(((rt >= 0.35 * R) & (rt < R)).sum())
+        v_core = (0.35 * R) ** e.pd
+        v_shell = R ** e.pd - v_core
+        dens_core = core / max(v_core, 1e-9)
+        dens_shell = shell / max(v_shell, 1e-9)
+        out["hollow"] = float(dens_core / max(dens_shell, 1e-9))
+    thin = np.linalg.eigh(c.T @ c / len(c))[1][:, 0]
+    mid = P.mean(0)
+    h = np.abs((Pm[:, 0] - mid) @ thin)
+    t = np.abs((Pm[:, 1:] - mid[None, None, :]) @ thin).mean(axis=1)
+    out["lamellar"] = float((h > t).mean())
+    return out
+
+
+def header():
+    return ("   step  lamellar  aspect  hollow  edge  n_clu  frac  bond  disp   status")
+
+
+def line(t, m):
+    st = "ok" if m["ok"] else f"DISQUALIFIED: {m['why']}"
+    lam = "  n/a " if np.isnan(m["lamellar"]) else f"{m['lamellar']:6.3f}"
+    a1 = "  n/a" if np.isnan(m["aspect"]) else f"{m['aspect']:5.2f}"
+    a2 = "  n/a" if np.isnan(m.get("hollow", float("nan"))) else f"{m['hollow']:5.2f}"
+    ed = " n/a " if np.isnan(m.get("edge", float("nan"))) else f"{m['edge']:5.2f}"
+    return (f"  {t:6d}  {lam}  {a1}   {a2}  {ed}  {m['n_cluster']:4d}  "
+            f"{m.get('cluster_frac', 0):.2f}  {m['bond_mean']:.2f}  {m['disp']:.3f}  {st}")
