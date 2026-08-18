@@ -424,6 +424,20 @@ py_binary(
     deps = [":legacy"],
 )
 py_binary(
+    name = "_throughput",
+    srcs = ["_throughput.py"],
+    main = "_throughput.py",
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
+    name = "_perfcheck",
+    srcs = ["_perfcheck.py"],
+    main = "_perfcheck.py",
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_integrate",
     srcs = ["integrate.py"],
     main = "integrate.py",

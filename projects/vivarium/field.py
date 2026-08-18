@@ -236,6 +236,67 @@ class Field:
     CHUNK = 512
 
     def _rebuild(self, X):
+        """Cell list where the box allows it, chunked all-pairs otherwise.
+
+        The chunked path is O(n^2) in time. That is tolerable in 2-D but not for a 3-D vesicle, which
+        needs several thousand beads: at n = 5000 a rebuild touches 25 million pairs. A cell list of
+        side >= rc + skin makes it O(n), since only the 3^d adjacent cells can hold a neighbour.
+
+        It falls back to the dense path when fewer than 3 cells fit along an axis, because with 1 or 2
+        cells per axis a cell is its own periodic neighbour more than once and the offset enumeration
+        would double count.
+        """
+        cut = self.rc * self.sigma + self.SKIN
+        ncell = int(self.L // cut)
+        if ncell < 3:
+            return self._rebuild_dense(X)
+        n, d = X.shape
+        cs = self.L / ncell
+        c = np.floor((X + 0.5 * self.L) / cs).astype(np.int64) % ncell        # (n, d) cell coords
+        cid = np.zeros(n, dtype=np.int64)
+        for k in range(d):
+            cid = cid * ncell + c[:, k]
+        n_cells = ncell ** d
+
+        order = np.argsort(cid, kind="stable")
+        counts = np.bincount(cid, minlength=n_cells)
+        starts = np.concatenate([[0], np.cumsum(counts)[:-1]])
+        rank = np.arange(n) - starts[cid[order]]
+        max_occ = int(counts.max())
+        table = np.full((n_cells, max_occ), -1, dtype=np.int64)
+        table[cid[order], rank] = order
+
+        offs = np.array(np.meshgrid(*[[-1, 0, 1]] * d, indexing="ij")).reshape(d, -1).T
+        cut2 = cut * cut
+        pis, pjs = [], []
+        for off in offs:
+            nb = (c + off) % ncell
+            nid = np.zeros(n, dtype=np.int64)
+            for k in range(d):
+                nid = nid * ncell + nb[:, k]
+            cand = table[nid]                                   # (n, max_occ)
+            i = np.repeat(np.arange(n), max_occ)
+            j = cand.ravel()
+            keep = (j >= 0) & (i < j)                           # upper triangle, drop padding
+            i, j = i[keep], j[keep]
+            if not len(i):
+                continue
+            dd = X[i] - X[j]
+            dd -= self.L * np.round(dd / self.L)
+            near = np.einsum("ic,ic->i", dd, dd) < cut2
+            pis.append(i[near])
+            pjs.append(j[near])
+        pi = np.concatenate(pis) if pis else np.zeros(0, np.int64)
+        pj = np.concatenate(pjs) if pjs else np.zeros(0, np.int64)
+        if len(self._excl) and len(pi):
+            key = pi * (1 << 32) + pj
+            keep = ~np.isin(key, self._excl)
+            pi, pj = pi[keep], pj[keep]
+        srt = np.lexsort((pj, pi))
+        self._pi, self._pj = pi[srt], pj[srt]
+        self._anchor = X.copy()
+
+    def _rebuild_dense(self, X):
         """Candidate pairs within rc + skin, built in row blocks so memory is bounded.
 
         The whole-array form allocates (n, n, d) doubles -- 864 MB at n = 6000 in 3-D -- which caps
