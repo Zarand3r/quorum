@@ -405,6 +405,13 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_dtladder",
+    srcs = ["_dtladder.py"],
+    main = "_dtladder.py",
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_sizing3d",
     srcs = ["_sizing3d.py"],
     main = "_sizing3d.py",

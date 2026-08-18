@@ -96,7 +96,7 @@ def qk_factors(chi):
     return q, k
 
 
-def _core(s):
+def _core(s, height):
     """Bounded repulsive core and its derivative, in units where contact is s = 1.
 
     Bounded rather than divergent: the r^-12 and r^-4 cores both need a timestep far smaller than this
@@ -104,16 +104,16 @@ def _core(s):
 
     QUADRATIC in the overlap, so the force is linear in overlap (the DPD form). A quartic was tried
     first and is too soft near contact: at s = 0.67 it costs 0.7 eps, about 2 kT, so beads compress
-    through it freely and packing sat at 0.67. The quadratic costs 6.5 eps there, about 18 kT, while
-    still reaching only CORE_HEIGHT at full overlap so the timestep stays usable. The force vanishes
-    continuously at s = 1.
+    through it freely and packing sat at 0.67. The quadratic costs 6.5 eps there while still reaching
+    only `height` at full overlap, so the timestep stays usable. The force vanishes continuously at
+    s = 1.
     """
     u = np.zeros_like(s)
     du = np.zeros_like(s)
     m = s < 1.0
     x = 1.0 - s[m]
-    u[m] = CORE_HEIGHT * x ** 2
-    du[m] = -2.0 * CORE_HEIGHT * x
+    u[m] = height * x ** 2
+    du[m] = -2.0 * height * x
     return u, du
 
 
@@ -134,7 +134,19 @@ def _well(s, rc):
     return u, du
 
 
-CORE_HEIGHT = 60.0          # in eps; the barrier at full overlap
+# The core barrier at full overlap, in units of the well depth `eps`. THE RATIO core/well IS THE
+# PHYSICAL PARAMETER, not either scale alone, and temperature cannot change it -- a point that was
+# missed when this was first compared against the reference model. Matching only well/kT by cooling
+# would have driven core/kT from 171 to 342 and made the mismatch worse.
+#
+# The reference YLZ bounded core is u_R = -eps + k_core (rmin - r)^2 with k_core = 30 and
+# rmin = 2^(1/6) sigma, so its barrier above the well bottom is
+#     u_R(0) - (-eps) = k_core * rmin^2 = 30 * 1.2599 = 37.8 eps.
+# This model's barrier above its own well bottom is exactly CORE_HEIGHT. It was 60, i.e. a core about
+# 1.6x stiffer relative to cohesion than the reference. A core that stiff relative to the attraction
+# is the sort of imbalance that turns a fluid, readily fusing membrane into a fragmented or
+# percolating one, which is what the emergent morphology looked like.
+CORE_HEIGHT = 37.8
 
 
 class Field:
@@ -145,12 +157,15 @@ class Field:
     """
 
     def __init__(self, species, bonds, L, eps=1.0, sigma=1.0, rc=2.5, k_bond=200.0,
-                 r_bond=1.0, chi=None, bend_frac=1.0, angles=None):
+                 r_bond=1.0, chi=None, bend_frac=1.0, angles=None, core_height=None):
         self.species = np.asarray(species, dtype=np.int64)
         self.bonds = np.asarray(bonds, dtype=np.int64).reshape(-1, 2)
         self.L = float(L)
         self.eps, self.sigma, self.rc = float(eps), float(sigma), float(rc)
         self.k_bond, self.r_bond = float(k_bond), float(r_bond)
+        # exposed so core and well can be swept SEPARATELY; they are two dimensionless groups
+        # (core/kT and well/kT) and one temperature cannot set both
+        self.core_height = CORE_HEIGHT if core_height is None else float(core_height)
         # CHAIN STIFFNESS as 1-3 harmonic bonds at twice the rest length, i.e. a straight chain is the
         # minimum. Without this the tail is a FREELY JOINTED chain with zero persistence length, and a
         # membrane's bending rigidity comes from only two places -- chain stiffness and
@@ -285,7 +300,7 @@ class Field:
     def energy(self, X):
         d, r, iu = self._pairs(X)
         s = r / self.sigma
-        uc, _ = _core(s)
+        uc, _ = _core(s, self.core_height)
         uw, _ = _well(s, self.rc)
         chi = self.content()[iu]
         u = self.eps * (uc + uw * chi)
@@ -309,7 +324,7 @@ class Field:
         n = len(X)
         d, r, iu = self._pairs(X)
         s = r / self.sigma
-        _, duc = _core(s)
+        _, duc = _core(s, self.core_height)
         uw, duw = _well(s, self.rc)
         chi = self.content()[iu]
         # dU/dr, guarding r = 0 where the direction is undefined

@@ -39,10 +39,15 @@ membrane's bending rigidity `kappa` comes from exactly two places: chain stiffne
 orientation-dependent interactions.
 
 **`field.py` has neither.** The orientation term was deliberately omitted so spontaneous curvature
-could not be imported, and the chain term was omitted by oversight. A membrane with `kappa ~ 0` cannot
-hold a curved shape -- it crumples -- which is what the 3-D vesicle did: shell CV rose 0.136 -> 0.282
-while staying connected, i.e. the shell stayed intact and lost its SHAPE. That is the signature of
-missing bending rigidity, not of a collapsed aggregate.
+could not be imported, and the chain term was omitted by oversight.
+
+**Softened after review.** The original wording -- that the membrane therefore had "essentially no
+bending rigidity" -- is too strong. Bending rigidity also emerges from packing and pair interactions:
+Cooke-Kremer-Deserno obtain self-assembling fluid bilayers with kappa of roughly 3-30 kT from a simple
+bead model with no orientation term. So the absence of a 1-3 term does not imply kappa ~ 0, and the
+3-D shell CV rise is consistent with low rigidity but does not measure it. **kappa must be measured,
+not inferred from the presence or absence of the term.** Adding chain stiffness remains correct; the
+claim about what its absence implied does not.
 
 This is the most likely single cause of every 3-D failure, and it predicts the 2-D survival too: a
 2-D ring is a curve whose "bending" is resisted by in-plane packing, so it needs far less `kappa`.
@@ -75,7 +80,16 @@ electrostatics, oil-oil by dispersion, and water gains little from wetting a non
 Consequence: a weakly cohesive solvent exerts little lateral pressure on the membrane and provides
 little osmotic support to a lumen -- which is the same failure the 3-D lumen showed.
 
-## 5. Defect 4 -- we have been running twice as hot as the oracle (MODERATE)
+**Softened after review.** Ranking `chi_WW` above `chi_TT` is not itself "the hydrophobic effect".
+What matters is the free-energy preference for a tail to leave water, i.e. the balance of like and
+unlike terms and the resulting transfer free energy. The reordering is defensible, but the evidence
+for it should be a measured tail-transfer or binary-mixture control, not a ranking of pair
+coefficients. That control has not been run.
+
+## 5. Defect 4 -- the CORE/WELL RATIO is wrong, and temperature cannot fix it (corrected)
+
+**This section originally said "we have been running twice as hot". That was wrong**, and the error
+mattered, because it pointed at a knob that cannot repair the defect.
 
 Both models put the attractive well at depth `eps` and use a bounded core, so the two dimensionless
 ratios that govern behaviour are directly comparable:
@@ -85,10 +99,20 @@ ratios that govern behaviour are directly comparable:
 | core height / kT | 30 / 0.1724 = **174** | 60 / 0.35 = **171** |
 | well depth / kT | 1.0 / 0.1724 = **5.80** | 1.0 / 0.35 = **2.86** |
 
-The cores match almost exactly. The COHESION does not: relative to thermal energy our well is half as
-deep. Aggregation and coarsening depend on this ratio roughly exponentially, so a factor of two is
-large, and it matches what was observed -- lipids that condense into many small aggregates and never
-ripen into one, at every concentration tried.
+The cores match almost exactly and the cohesion does not, and those two facts CANNOT both be repaired
+by temperature, because their ratio is temperature-independent:
+
+    core / well     ours 60 / 1.0 = 60          reference 37.8 / 1.0 = 37.8
+
+taking the reference barrier above its own well bottom, `u_R(0) - (-eps) = k_core * rmin^2 =
+30 * 2^(1/3) = 37.8 eps`. Halving kT to match well/kT would have driven core/kT from 171 to 342 and
+made the mismatch worse.
+
+So the defect is that our excluded volume is about 1.6x stiffer RELATIVE TO COHESION than the
+reference. A core that hard against an attraction that weak is exactly the imbalance that turns a
+fluid, readily fusing membrane into a fragmented or percolating one -- which is what the emergent
+morphology looks like. `core_height` is now an explicit constructor argument set to 37.8, so the two
+dimensionless groups (core/kT and well/kT) can be swept SEPARATELY. Neither is a temperature sweep.
 
 ## 6. What is faithful
 
@@ -124,7 +148,10 @@ membrane, and which every serious coarse-grained lipid model has.
    with no preferred curvature. This is the one that plausibly changes the result.
 2. **Exclude 1-2 pairs from the non-bonded term.**
 3. **Reorder `chi` so water is the most cohesive species**, keeping the demixing condition satisfied.
-4. **Run at the oracle's reduced temperature**, `kT/eps ~ 0.17`, or deepen the well to match.
+4. **Match the core/well RATIO, sweeping the two dimensionless groups separately.** Not a temperature
+   sweep -- see section 5.
+5. **Measure `kappa` and the edge line tension, and measure the tail-transfer free energy**, rather
+   than inferring either from which terms are present.
 
 1 and 2 change the molecule, so `_sizing3d` must be re-measured after them and every sizing derived
 from it recomputed.
