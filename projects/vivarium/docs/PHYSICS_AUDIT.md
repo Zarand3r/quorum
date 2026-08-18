@@ -180,9 +180,26 @@ core curvature simultaneously. That mechanism was not demonstrated and the claim
 interacting system has correlated modes and nonlinear forces, which is reason enough to calibrate
 rather than predict.)
 
-**The reference rung is not yet proven converged.** Showing that larger timesteps differ from 2e-4
-does not show that 2e-4 agrees with the dt -> 0 limit. Rungs at 5e-5 and 1e-4 are required and are
-running.
+**The reference rung is now proven converged.** Showing that larger timesteps differ from 2e-4 does
+not show that 2e-4 agrees with the dt -> 0 limit, so rungs below it were run:
+
+| dt | k*dt | sd(bond) | vs 5e-5 | verdict |
+|---|---|---|---|---|
+| 5e-5 | 0.010 | 0.02776 | reference | |
+| 1e-4 | 0.020 | 0.02780 | +0.2% | OK |
+| **2e-4** | 0.040 | 0.02782 | **+0.2%** | **OK -- the working value is converged** |
+| 4e-4 | 0.080 | 0.02948 | +6.2% | BIASED |
+
+So 2e-4 sits within 0.2% of the dt -> 0 asymptote, comfortably inside the 2% gate, and the bias onset
+is between 2e-4 and 4e-4. The working timestep is validated and there is no headroom above it.
+
+Note the isolated-mode prediction OVERestimates at small dt (+1.0% predicted against +0.2% measured at
+2e-4) having UNDERestimated at large dt. The relation is not a fixed multiple, which is further reason
+to calibrate empirically rather than predict.
+
+Acceleration must therefore come from somewhere other than a larger timestep: better integration of
+the stiff bonded part at k = 200, or a deliberately different model (implicit solvent, softer bond),
+which must be labelled as such.
 
 **Softening `k_bond` is NOT an acceleration of this model.** Bond width scales as `sqrt(kT/k)`, so
 200 -> 50 doubles it, changing molecular geometry, packing fluctuations, membrane thickness, area per
