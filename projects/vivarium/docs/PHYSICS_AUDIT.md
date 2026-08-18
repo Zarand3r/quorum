@@ -155,3 +155,55 @@ membrane, and which every serious coarse-grained lipid model has.
 
 1 and 2 change the molecule, so `_sizing3d` must be re-measured after them and every sizing derived
 from it recomputed.
+
+---
+
+## 9. Timestep and the kinetic clock (added after the second review)
+
+**The timestep criterion was wrong, and the corrected one leaves no headroom.** `F_max * dt = 0.024`
+uses force magnitude; the controlling quantity for Euler-Maruyama is the largest CURVATURE, and the
+stiffest mode is `k_bond = 200`, not the core (`2 * 37.8 = 75.6`). Comparing the WIDTH of the bond
+distribution -- the moment discretization inflates, and the one a mean cannot see -- at matched reduced
+time:
+
+| dt | k*dt | measured width | isolated-mode prediction |
+|---|---|---|---|
+| 2e-4 | 0.04 | reference | +1.0% |
+| 4e-4 | 0.08 | +5.7% | +2.1% |
+| 8e-4 | 0.16 | +10.7% | +4.3% |
+| 1.6e-3 | 0.32 | +31.2% | +9.1% |
+| 3.2e-3 | 0.64 | +788% | +21.3% |
+
+The isolated harmonic prediction materially UNDERESTIMATES the observed full-system bias, so timestep
+selection here is empirical. (An earlier draft attributed the excess to beads carrying bond, 1-3 and
+core curvature simultaneously. That mechanism was not demonstrated and the claim is withdrawn; the
+interacting system has correlated modes and nonlinear forces, which is reason enough to calibrate
+rather than predict.)
+
+**The reference rung is not yet proven converged.** Showing that larger timesteps differ from 2e-4
+does not show that 2e-4 agrees with the dt -> 0 limit. Rungs at 5e-5 and 1e-4 are required and are
+running.
+
+**Softening `k_bond` is NOT an acceleration of this model.** Bond width scales as `sqrt(kT/k)`, so
+200 -> 50 doubles it, changing molecular geometry, packing fluctuations, membrane thickness, area per
+lipid and possibly `kappa`. That is especially dangerous right after chain stiffness moved the
+thickness from 5.72 to 8.00. A softer lipid that self-assembles vesicles is the result "a softer lipid
+assembles vesicles", not "we sampled the original model faster". Two separate lines are required:
+physics-preserving acceleration (better integration of the stiff bonded part at k = 200), and a
+deliberate `k_bond` physics sweep. The same caveat applies to implicit solvent, which changes
+lipid-mediated interactions, osmotic effects and lumen thermodynamics rather than merely running
+faster.
+
+## 10. Cluster diffusion sets the real clock
+
+    D_cluster = D_1 / N_beads          exactly, alpha = 1
+
+derived (internal forces cancel in the COM; independent per-bead noise averages as 1/N) and measured
+over 12 seeds, ratio to prediction 0.84-1.44 across a 64x size range and 0.98 at M = 64. A 64-lipid
+patch diffuses 55x slower than a monomer.
+
+Since the Smoluchowski collision rate goes as `D * n` and coarsening reduces BOTH -- `D` as 1/M and
+number density as 1/M -- the rate falls roughly as 1/M^2. Reaching one large aggregate is therefore not
+"100x more steps"; the cost grows steeply as coarsening proceeds. Nothing offsets it, because explicit
+water here provides thermodynamics and sterics but NOT momentum-carrying hydrodynamics -- so the model
+pays most of the cost of explicit solvent without one of the principal dynamical reasons to have it.
