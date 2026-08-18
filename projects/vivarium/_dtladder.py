@@ -36,17 +36,24 @@ from _sizing3d import geometry, plant_flat
 from field import Field
 
 
+SAMPLE_EVERY_T = 0.01          # reduced-time stride between samples, identical for every rung
+
+
 def run(dt, T, n_side=6, n_tail=2, kT=0.17, L=40.0, seed=1):
     X, species, bonds, mol = plant_flat(n_side, n_tail, L, 1.1)
     f = Field(species, bonds, L)
     rng = np.random.default_rng(seed)
     amp = np.sqrt(2.0 * kT * dt)
     steps = int(round(T / dt))
+    every = max(int(round(SAMPLE_EVERY_T / dt)), 1)
     nb, n13 = f.bonds, f.angles
     acc = {k: [] for k in ("bond", "b13", "nn")}
     for t in range(steps):
         X += f.forces(X) * dt + amp * rng.normal(size=X.shape)
-        if t > steps // 2 and t % 50 == 0:                 # sample the second half only
+        # sample at equal REDUCED-TIME intervals, not equal step counts: a fixed stride in steps
+        # gives the small-dt rungs proportionally more samples over the same physical time, so the
+        # rungs would not be compared at equal statistical weight.
+        if t > steps // 2 and t % every == 0:
             # the STANDARD DEVIATION of a stiff bond is the diagnostic, not its mean. Euler-Maruyama
             # inflates <x^2> by 1/(1 - k dt / 2), i.e. the width, while the mean of a harmonic mode is
             # almost insensitive to dt -- the first version of this ladder compared means and
@@ -69,6 +76,9 @@ if __name__ == "__main__":
     rungs = [float(v) for v in (sys.argv[2] if len(sys.argv) > 2
                                 else "2e-4,4e-4,8e-4,16e-4").split(",")]
     k_stiff = 200.0                     # k_bond, the stiffest mode; core is 2*37.8 = 75.6
+    # NOTE. The lowest rung is only a REFERENCE, not a proven converged value: showing that larger
+    # timesteps differ from it does not show that it agrees with the dt -> 0 limit. Rungs below the
+    # working value are required to establish the asymptote, which is what this run adds.
     print(f"timestep ladder at matched reduced time T = {T}, stiffest mode k = {k_stiff}")
     print(f"stability needs k*dt < 2; predicted variance inflation is 1/(1 - k*dt/2)\n")
     print(f"{'dt':>9}{'k*dt':>7}{'predict':>9}{'steps':>8}"

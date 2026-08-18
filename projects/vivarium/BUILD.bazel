@@ -405,6 +405,13 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_clusterdiff",
+    srcs = ["_clusterdiff.py"],
+    main = "_clusterdiff.py",
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_dtladder",
     srcs = ["_dtladder.py"],
     main = "_dtladder.py",
