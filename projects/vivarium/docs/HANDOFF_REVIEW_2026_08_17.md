@@ -1,6 +1,6 @@
 # Reviewer prompt: a physics audit found four defects; the negative results may be sampling artefacts
 
-**Date:** 2026-08-17. Worktree `/home/rbao/quorum-thermolife`, branch `quorum-asal-boids-reproduction`.
+**Date:** 2026-08-17. Worktree `/home/rbao/quorum-thermolife`, branch `autoresearch/bilayer-emergence`.
 Self-contained. Questions in §6.
 
 ---

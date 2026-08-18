@@ -172,3 +172,42 @@ unit-diameter beads above 2-D close packing, forcing overlap before any force ac
 4. **`ring_assay` needs a fourth gate.** Its three gates use compact aggregates, so a spanning
    percolating network is outside its calibration domain and a pore can read as a lumen. It reported
    HOLLOW on exactly that; the render caught it.
+
+---
+
+## RETRACTION (2026-08-18): the 2-D edge-scaling argument was wrong
+
+The leading explanation offered above -- that a 2-D bilayer edge is a POINT costing O(1), "cheaply
+capped by a few heads", so closure is never strongly driven, whereas a 3-D edge is a LINE whose cost
+grows with perimeter -- is **withdrawn**. It was put in the reviewer handoff as our own reading, and
+the data refuting it was already in hand.
+
+Two planted runs at IDENTICAL configuration (70 four-tail lipids, L = 40, 770 water, kT = 0.35,
+packing fraction 0.55), differing only in what was planted:
+
+| planted | E/lipid | shell CV |
+|---|---|---|
+| closed ring | **-28.91** | 0.204 |
+| open arc (3/4) | -28.54 | 0.245 |
+
+The ring is lower by 0.37 eps/lipid, about 26 eps over 70 lipids, or **~74 kT**. That is consistent
+with an edge cost near 13 eps per exposed end -- roughly ten tail beads losing their water-excluded
+contacts -- and it is a large driving force, not a negligible one.
+
+**So 2-D closure is thermodynamically FAVOURED and the obstacle is kinetic.** The system does not fail
+to prefer the closed state; it fails to reach it. That agrees with everything else measured: a planted
+ring is stable with its shell CV tightening monotonically, a planted arc is ALSO metastable and sits
+open for 250 000 steps, and both emergence arms are under-sampled with `D_M = D_1/N` making coarsening
+progressively worse. Two local minima with a barrier between them, and the lower one is the ring.
+
+**Caveats.** This is energy, not free energy -- the open arc carries more configurational entropy,
+though a few kT does not overturn 74 kT. One seed per arm, mitigated by the quantity being an
+intensive average over 70 lipids rather than a cluster count. And the arc is not literally "the ring
+with a gap": at the same lipid count over 3/4 of a circle it relaxes to a larger radius (9.54 against
+8.90), so this compares two geometries rather than one geometry with and without a seam. A cleaner
+version would open a seam in an equilibrated ring and hold N, R and density fixed.
+
+**Consequence for "is 3-D required".** The evidence now says **no**. The 2-D ring phase exists, is
+stable, and is energetically preferred to the open state. 3-D remains easier for the reference models
+-- both close there and neither closes in 2-D -- but the case that 2-D closure is thermodynamically
+excluded has collapsed, and with it the argument for moving the milestone.

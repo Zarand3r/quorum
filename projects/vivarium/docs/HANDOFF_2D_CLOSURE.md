@@ -1,6 +1,6 @@
 # Reviewer prompt: is a closed bilayer ring a stable phase in strictly 2-D?
 
-**Date:** 2026-08-15. Worktree `/home/rbao/quorum-thermolife`, branch `quorum-asal-boids-reproduction`.
+**Date:** 2026-08-15. Worktree `/home/rbao/quorum-thermolife`, branch `autoresearch/bilayer-emergence`.
 Self-contained; you need no prior context. **One question, in §4.** Everything before it is the
 evidence, so you can judge whether the question is even well posed.
 
