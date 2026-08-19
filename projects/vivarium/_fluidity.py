@@ -58,11 +58,19 @@ if __name__ == "__main__":
     steps = int(sys.argv[1]) if len(sys.argv) > 1 else 40000
     n_side, n_tail, L = 7, 2, 40.0
     print(f"planted flat bilayer, {2 * n_side * n_side} lipids, vacuum, dt=8e-3, {steps} steps")
-    print(f"{'kT':>6}{'kT/eps':>8}{'thick':>8}{'a/lipid':>9}{'MSD/a':>8}"
+    # SWEEP AXIS. Temperature alone cannot resolve this: at kT = 0.55 the membrane is fluid but
+    # tail-tail cohesion falls to 1.27 kT per contact and a finite arc FRAGMENTED (70 -> 38 lipids).
+    # Chain flexibility changes the phase WITHOUT touching the cohesion-to-kT ratio. bend_frac was set
+    # to 1.0, i.e. the 1-3 stiffener as stiff as the backbone bond, which makes a rigid rod; real
+    # lipid tails are floppy and their gauche defects are what produce the fluid phase.
+    mode = sys.argv[2] if len(sys.argv) > 2 else "bend"
+    axis = ((0.17, b) for b in (1.0, 0.5, 0.25, 0.1, 0.0)) if mode == "bend" else \
+           ((t, 1.0) for t in (0.17, 0.35, 0.55, 0.75, 1.00))
+    print(f"{'kT':>6}{'bend':>7}{'thick':>8}{'a/lipid':>9}{'MSD/a':>8}"
           f"{'nbr kept':>10}   phase", flush=True)
-    for kT in (0.17, 0.35, 0.55, 0.75, 1.00):
+    for kT, bend in axis:
         X, species, bonds, mol = plant_flat(n_side, n_tail, L, 1.1)
-        f = Field(species, bonds, L)
+        f = Field(species, bonds, L, bend_frac=bend)
         ig = Inertial(f, kT, 8e-3, seed=5)
         for _ in range(steps // 4):                       # equilibrate before the clock starts
             X = ig.step(X)
@@ -86,5 +94,5 @@ if __name__ == "__main__":
         phase = "FLUID" if fluid else "gel (caged)" if gel else "intermediate"
         if d < 2.0:
             phase = "dissolved / not a membrane"
-        print(f"{kT:>6.2f}{kT:>8.2f}{d:>8.2f}{a:>9.3f}{msd / a:>8.2f}{kept:>10.2f}   {phase}",
+        print(f"{kT:>6.2f}{bend:>7.2f}{d:>8.2f}{a:>9.3f}{msd / a:>8.2f}{kept:>10.2f}   {phase}",
               flush=True)

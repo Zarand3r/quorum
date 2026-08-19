@@ -54,3 +54,57 @@ exactly and fails its OWN contemporaneous admissibility bar.
 favoured and 3-D is not required). "3-D solvent" at phi 0.15-0.35 is fragmented droplets, voiding
 every 3-D result. "2-D is not implicated" was half right: it percolates at phi 0.55, but with vapour
 voids, and the instrument conflated fragmentation with inhomogeneity.
+
+---
+
+## 2026-08-18 — two falsifications: temperature alone fails, chain flexibility fails
+
+**Prediction under test (stated last entry).** At kT = 0.55 the kinetic failures relax and a planted
+arc closes.
+
+**Run.** Planted arc0.75, 70 four-tail lipids, L = 40, phi = 0.55, inertial dt = 8e-3, 100000 steps
+(1600 reduced time, ~32x the original arc run). Temperature the ONLY change from the kT = 0.17 arc.
+
+| step | largest | R_mid | shell CV | lumen |
+|---|---|---|---|---|
+| 5000 | 64/70 | 10.73 | 0.282 | 0.51 |
+| 25000 | 70/70 | 11.18 | 0.208 | 0.36 |
+| 55000 | 70/70 | 11.71 | 0.178 | 0.30 |
+| 85000 | **38/70** | 12.20 | 0.187 | 0.27 |
+
+**PREDICTION FALSIFIED.** The arc did not close. It expanded from R_mid 6.73 to 12.2 and then TORE IN
+TWO -- the render at 95000 shows two separate fragments with clear gaps. Moving away from closure, not
+toward it. At kT = 0.55 tail-tail cohesion is only 1.27 kT per contact, so a finite ribbon has too
+little line tension to hold itself together, let alone close.
+
+**Second hypothesis, also falsified.** Proposed that `bend_frac = 1.0` (the 1-3 stiffener as stiff as
+the backbone) made a rigid rod that packs into a gel, and that floppier tails would fluidise at fixed
+cohesion. Swept at kT = 0.17, planted flat bilayer, vacuum:
+
+| bend_frac | MSD/a | nbr kept | phase |
+|---|---|---|---|
+| 1.00 | 0.29 | 0.80 | gel |
+| 0.50 | 0.19 | 0.82 | gel |
+| 0.25 | 0.13 | 0.88 | gel |
+| 0.10 | 0.24 | 0.84 | gel |
+| 0.00 (freely jointed) | 0.33 | 0.77 | gel/intermediate |
+
+Even a completely freely jointed chain is caged at kT = 0.17. The gel is NOT caused by chain
+stiffness; it is the cohesion-to-temperature ratio itself -- chi_TT = 0.70 eps at kT = 0.17 is 4.1 kT
+per contact and roughly 25 kT of binding per lipid.
+
+**What this leaves.** Fluidity needs eps/kT low; holding a finite patch together needs the SUMMED
+binding per lipid high. Those conflict at fixed tail length, and the two obvious single-knob fixes are
+now both dead. The remaining route is more contacts at weaker individual contacts -- i.e. longer
+tails at higher temperature -- which changes two things at once and must be swept as a plane, not a
+line.
+
+**Next, with falsification stated first.** Sweep the (kT, n_tail) plane on a planted FINITE ribbon,
+scoring both fluidity (MSD/a, neighbours kept) and integrity (largest cluster). Falsification: if no
+cell is simultaneously fluid (MSD/a > 1) and intact (largest > 0.9), then this force field has no
+fluid-membrane regime and the vesicle target is unreachable without changing the interaction form,
+not its parameters.
+
+**Also corrected.** The wide-open C at 30000 steps was PLANTED (`plant="arc0.75"`), not emergent, and
+was a failure in progress rather than a promising intermediate. No emergent vesicle exists in this
+project in any dimension.
