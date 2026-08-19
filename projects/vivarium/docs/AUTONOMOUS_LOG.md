@@ -1701,3 +1701,41 @@ screenshot.
 models agree at beta = 0 and the vesicle target as specified is unmet by both. Rendering as large clean
 flat sheets means our model does not match the reference even at beta = 0, and the gap is
 morphological. The beta = 0.15 arm must show vesicles, or neither reading can be trusted.
+
+---
+
+## 2026-08-19 — ORACLE MORPHOLOGY COMPARED BY EYE: beta=0 is flat, beta=0.15 is curved
+
+**Both arms rendered through OUR renderer, recentred on the aggregate's centre of mass.**
+
+* **beta = 0** (400000 steps): an elongated strand -- a slab cut through a flat sheet -- plus one
+  compact disc, and scattered fragments. Extended, FLAT structures.
+* **beta = 0.15** (700000 steps): curved C-shaped arcs with heads outside and tails inside, i.e. slab
+  cuts through small shells, alongside compact clusters.
+
+**The positive control did its job.** The renderer distinguishes the two conditions, and its verdict
+matches the oracle's own independent classifier ("flat sheet/disc" against "VESICLE"). So the beta = 0
+image can be believed, which was the whole point of running the control arm.
+
+**The synthesis is supported.** beta = 0 produces extended flat structures; that is morphologically
+what our model produces -- branched bilayer strands that never curve into shells. The reference model
+without spontaneous curvature and our model without it look like the same kind of object.
+
+**Caveat, stated because it limits the strength of this.** The oracle's vesicles are tiny -- R ~ 2.3
+sigma, 40-54 molecules -- so a +-2.0 slab captures nearly the whole object and a clean ring is not
+expected even for a perfect shell. The beta = 0 structures are much larger, so the two arms are not
+sampled equivalently by a fixed slab. The qualitative distinction (flat and elongated versus curved
+arcs) is visible and matches the classifier; a quantitative morphological comparison would need the
+slab scaled to each object.
+
+**No emergent screenshot.** These are oracle renders, not self-assembly from our model, so they do not
+qualify under the standing rule. Nothing new from our own emergence runs.
+
+**Where this leaves the project.** Every measured property now matches between the two models --
+coalescence at all three gaps, line tension, fluidity, cluster diffusion, spontaneous curling of a flat
+ribbon -- and the one difference that produces vesicles in the reference is `beta`, which we excluded
+by design. The remaining question is the one for the reviewer: whether closure without imposed C_0 is
+achievable at all, or whether the target as specified is unreachable in principle.
+
+**Falsification for any further work.** A model with an EVEN orientation term (rigidity, C_0 = 0)
+should not close if this reading is right. That is the one cheap test left that could overturn it.
