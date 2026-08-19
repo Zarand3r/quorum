@@ -764,3 +764,34 @@ critical size that curls and closes means closure is spontaneous given one large
 ribbon that stays flat for 100000 steps means the 81 kT of available edge energy is separated from the
 closed state by a BARRIER, and curvature nucleation is a distinct missing step -- a different problem
 from anything attacked so far.
+
+---
+
+## 2026-08-19 tick — coarsening arrest now 90000 steps; flat-ribbon still mid-run
+
+**Emergence at N = 200 reached 130000 steps.** Largest aggregate 178/200, unchanged since step 40000:
+**ninety thousand consecutive steps with no merge.** The two satellite aggregates on the right have
+not moved appreciably in that time.
+
+The strands DO show two-sided head coverage, so local bilayer organisation is real; what never happens
+is a change in global topology. That distinction matters -- the force field builds correct membrane
+locally and cannot rearrange it globally.
+
+**`flat200` at 30000 of 100000, PLANTED, not read.** Deferred to its endpoint, per the rule that
+produced the transient-ring retraction two ticks ago when it was ignored.
+
+**Nothing new concluded this tick.** Recording that plainly rather than manufacturing a finding: the
+emergence run is confirming what was already established at 65000 steps, and the one experiment that
+could change the picture has not finished.
+
+**Standing falsification, unchanged.** Flat ribbon above the critical size curls and closes -> closure
+is spontaneous given one aggregate, and the whole problem reduces to nucleation. Flat ribbon still
+flat at 100000 -> the 81 kT of edge energy is behind a BARRIER, and curvature nucleation is a distinct
+missing step.
+
+**Stuck-criterion check.** (a) three consecutive ticks with no measurement surviving its error bar: the
+threshold sweep and lambda both survived within the last five ticks, so no. (b) same hypothesis
+falsified three times with no new mechanism: each failure has produced a new mechanism, so no. (c) two
+consecutive attempts at the same measurement failing for instrument reasons: kappa already tripped
+this and a reviewer prompt was written. Not stuck, but the margin is thin, and if the flat-ribbon test
+comes back null the honest next move is the reviewer rather than a seventh regime.
