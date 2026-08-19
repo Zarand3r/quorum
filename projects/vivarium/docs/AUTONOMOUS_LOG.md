@@ -202,3 +202,42 @@ kT = 0.17 with FOUR-tail lipids -- in the gel, with a different lipid, one seed 
 ring vs arc at (kT = 0.45, two tails) over 5 seeds. If E(ring) - E(arc) is not resolvably negative at
 2 sigma, then closure is NOT preferred for this lipid at this temperature, the three failures need no
 kinetic explanation, and the earlier 74 kT is a property of the gel phase rather than of the model.
+
+---
+
+## 2026-08-18 tick — the ring-vs-arc comparison is blind; switching to measuring the constant
+
+**Falsification stated last entry.** If E(ring) - E(arc) is not resolvably negative at 2 sigma,
+closure is not preferred for this lipid at this temperature.
+
+**Result, and the criterion does NOT apply.** 70 two-tail lipids, L = 40, kT = 0.45, 5 seeds,
+30000 steps:
+
+|  | E/lipid |
+|---|---|
+| ring | -59.620 +- 0.491 |
+| arc0.75 | -59.620 +- 0.181 |
+| difference | **-0 +- 81 kT** |
+
+The error bar is LARGER than the 74 kT effect it was built to detect, so this does not show that
+closure is unfavourable -- it shows the measurement is blind to it. Seed-to-seed structural variation
+dominates: the ring's per-lipid spread alone is about 1.1 eps, and resolving 0.48 eps/lipid at that
+spread needs of order 80 seeds. **No conclusion is drawn from this run in either direction.**
+
+The failure is one of experimental design rather than of sampling: differencing two large per-lipid
+energies of structures that relax differently is a bad estimator no matter how many seeds are thrown
+at it.
+
+**Next, and it is what the reviewer recommended before the three closure attempts were spent.**
+Measure the CONSTANT, not the difference. Closure trades edge energy saved against bending energy
+paid, and the edge term isolates exactly:
+
+    lambda = [ E(finite flat ribbon) - E(spanning flat ribbon) ] / 2
+
+Both flat, so bending contributes to neither; the spanning ribbon is periodic and has NO ends, which
+is the control that makes the difference mean only "two exposed ends". Smaller, better-posed, and
+cheaper than ring-versus-arc.
+
+**Falsification, stated before the run.** lambda must be POSITIVE and resolvable at 2 sigma, because
+an exposed edge puts tails against water. If it is not, the model does not penalise an edge at all,
+and every closure failure is explained directly -- there would be nothing to gain by closing.
