@@ -1515,3 +1515,33 @@ including the argument for why that list is exhaustive rather than merely long.
 without raising per-contact energy by a mechanism other than tail length, or (b) show that reliable
 coalescence is not required for vesicle formation in the first place -- which is question 2 of the
 reviewer prompt and the one that could invalidate this entire line of reasoning.
+
+---
+
+## 2026-08-19 tick — running the control that can INVALIDATE our own conclusion
+
+**No new results.** Dilute emergence unchanged at largest 23/200 across 70000-170000 steps, i.e.
+100000 steps at the same value. No screenshot.
+
+**The conclusion reached last tick rests on an unchecked assumption.** "Patches merge only 47% of the
+time and no lever fixes it, therefore the interaction form is at fault" is only valid if reliable
+coalescence is REQUIRED -- that is, if a healthy membrane model would merge patches in contact close to
+always. Nobody has checked that. It is question 2 of the reviewer prompt, and rather than ask, it can
+be measured directly.
+
+**Launched: the identical protocol on the ORACLE.** `bilipid.py` produces vesicles from a dispersed
+start (237 clusters -> 43, with 2 vesicles by 875000 steps), so it is a working membrane model by the
+only standard that matters here. Two flat two-leaflet patches planted in contact, gaps 0.0/1.0/2.5,
+15 seeds each, 30000 steps, largest connected fraction as the readout -- the same measurement, on a
+model known to succeed.
+
+**Falsification, stated before the run.** If the oracle merges near 100%, our 47% is a genuine defect
+and the interaction-form conclusion stands. If the oracle also lands near 50%, then reliable
+coalescence is NOT a property of working membrane models, our criterion was wrong rather than our
+model, the whole coalescence argument is void, and `HANDOFF_COALESCENCE.md` must be rewritten around a
+different question.
+
+**Why this before anything else.** Every other candidate experiment builds on the coalescence
+conclusion. This one tests it. Running the control that can demolish a result before building further
+on it is cheaper than discovering the same thing after a reviewer points it out -- and this project has
+already withdrawn roughly twenty results, most of them for exactly this reason.

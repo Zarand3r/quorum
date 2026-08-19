@@ -759,6 +759,13 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_oracle_pfuse",
+    srcs = ["_oracle_pfuse.py"],
+    main = "_oracle_pfuse.py",
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_pfuse",
     srcs = ["_pfuse.py"],
     main = "_pfuse.py",
