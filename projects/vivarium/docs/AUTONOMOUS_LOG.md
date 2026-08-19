@@ -314,3 +314,33 @@ because the fix for too few clean wavelengths is a bigger membrane, not a longer
 **Falsification, restated.** If per-mode kappa still spreads by more than 2x at 120 lipids, kappa is
 not measurable by undulations at any size we can afford, and the closure question must be settled by
 a different route -- e.g. direct buckling, or simply testing nucleation directly.
+
+---
+
+## 2026-08-18 tick — kappa rerun in flight; the size test that does not need kappa
+
+**Running.** Undulation spectrum on the doubled membrane, 120 two-tail lipids, L = 60, 24 bins,
+6 modes, 60000 steps, kT = 0.45. Gate is per-mode consistency (spread < 2x), which the previous R^2
+test could not enforce. No output yet -- it prints only at completion.
+
+**No new render this tick.** The spectrum run does not render; the newest image is still
+`mix2d_arc0.75_N70_s0100000.png`, the unrolled band, already examined. Recorded rather than skipped.
+
+**Prepared next, and it is deliberately independent of kappa.** The closure criterion is a competition
+between a constant and a size-dependent term:
+
+    edge saved   = 2 * lambda                    (independent of ribbon length)
+    bending paid = pi * kappa / R,  R = L_c/2pi  (falls as the ribbon grows)
+
+so whatever kappa turns out to be, there is a CRITICAL SIZE above which closure wins. That converts an
+awkward absolute measurement into a threshold, which is much easier to see: sweep planted arc length
+at the fluid regime and look for the size at which arcs stop unrolling and start closing.
+
+This also re-reads the three closure failures usefully. All three used ~70 lipids. If the critical
+size is larger than that, they were all run below threshold and their failure says nothing about the
+model -- exactly the sort of thing that should have been computed before spending three runs.
+
+**Falsification, stated before the run.** If arcs of 70, 120, 200 and 300 lipids ALL unroll at
+kT = 0.45, then either lambda does not act as measured or the bending cost does not fall with size,
+and the continuum picture used to interpret every result in this line is wrong. If instead there is a
+threshold, its location gives kappa directly via `pi*kappa/R = 2*lambda`, without any spectrum.
