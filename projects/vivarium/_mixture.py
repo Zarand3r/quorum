@@ -402,6 +402,11 @@ if __name__ == "__main__":
     kT = float(sys.argv[6]) if len(sys.argv) > 6 else 0.35
     phi = float(sys.argv[7]) if len(sys.argv) > 7 else (0.55 if d == 2 else 0.35)
     plant = sys.argv[8] if len(sys.argv) > 8 else "random"
+    # SEED was hardcoded in both the builder and the integrator, so every 3-D result so far is ONE
+    # trajectory and the 1.2M "long run" is a deterministic replay of the 400k one -- it reproduces
+    # largest = 126 at step 60000 exactly. Duration and seed variability are different questions and
+    # this makes the second one askable.
+    seed = int(sys.argv[9]) if len(sys.argv) > 9 else 0
 
     n_short = int(round(n_lip * frac_short))
     n_long = n_lip - n_short
@@ -416,12 +421,12 @@ if __name__ == "__main__":
         raise ValueError(f"L={L} too small for {n_lip} lipids at packing fraction {phi}")
 
     X, species, bonds, mols, wi, chains = build(n_short, n_long, n_water, L, d, plant=plant,
-                                                branched=True)
+                                                branched=True, seed=seed)
     f = Field(species, bonds, L)
     # INERTIAL at the validated dt = 8e-3: same energy, same equilibrium ensemble (verified against
     # the overdamped run over 5 seeds per rung), 28x more reduced time per minute end to end.
     dt = 8e-3
-    ig = Inertial(f, kT, dt, seed=1)
+    ig = Inertial(f, kT, dt, seed=1 + seed)
 
     print(f"MIXTURE {d}-D: {n_short} short (2 tails) + {n_long} long (4 tails) + {n_water} water, "
           f"L={L}, packing fraction {phi}, kT={kT}, start={plant}", flush=True)
@@ -438,4 +443,4 @@ if __name__ == "__main__":
             print(f"{t:>8}{f.energy(X) / n_lip:>9.2f}{largest_cluster(X, mols, L):>9}"
                   f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['lumen']:>7.2f}{g['lumen_w']:>8}"
                   f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)
-            shot(X, species, L, f"mix{d}d_{plant}_N{n_lip}_s{t:07d}")
+            shot(X, species, L, f"mix{d}d_{plant}_N{n_lip}_sd{seed}_s{t:07d}")

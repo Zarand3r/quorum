@@ -1922,3 +1922,32 @@ the reference's time to closure", not "3-D cannot close".
 **Falsification for the 1.2M run, unchanged.** A lumen with shell CV falling toward 0.05 before 1.2M
 steps overturns the equivalence. Largest frozen with shell CV rising closes the duration objection for
 this trajectory.
+
+---
+
+## 2026-08-19 tick — seed control added; 3-D replicates launched to fix the one-trajectory weakness
+
+**The weakness identified last tick, now addressed.** `_mixture` hardcoded both the builder seed and
+the integrator seed, so every 3-D result in this project is ONE trajectory, and the 1.2M "long run" is
+a deterministic replay of the 400k one -- it reproduces largest = 126 at step 60000 exactly. Duration
+and seed variability are different questions and only the first was being asked.
+
+**Launched:** three independent seeds at 400000 steps each, same configuration (300 branched lipids,
+3-D, implicit solvent, dispersed, L = 25, kT = 0.45). The 1.2M duration arm continues in parallel.
+
+**Why replicates before more duration.** The coalescence work taught that small samples in this harness
+are systematically optimistic -- the 5-seed gap sweep over-reported by roughly 2x against 15 seeds. A
+conclusion resting on n = 1 in 3-D, while the 2-D coalescence numbers rest on n = 15, is the weakest
+leg of the equivalence argument and the cheapest to strengthen.
+
+**Falsification, stated before the replicates land.** If all three seeds arrest with largest well below
+300 and shell CV rising away from 0.05, the 3-D negative is a property of the model rather than of one
+trajectory. If any seed closes, the single-trajectory conclusion was wrong and n = 1 was exactly the
+error the coalescence work warned about.
+
+**No screenshot:** the replicates are at step 0 and the completed run's structure is unchanged from the
+frame already sent.
+
+**Also fixed:** render tags now carry the seed (`mix3d_random_N300_sd{seed}_s{step}`), so replicate
+frames cannot overwrite one another -- the same defect as the missing `L` and missing `n_tail` in
+earlier tags, applied as a rule this time rather than patched per filename.
