@@ -454,3 +454,44 @@ the topology is the lever.
 
 **No new emergent render this tick.** The newest is the branched endpoint already sent last cycle;
 not resending it, and not substituting a planted frame.
+
+---
+
+## 2026-08-19 tick — the box has been excluding closure all along, and the banner said so
+
+**Matched branched-vs-linear, both n_tail = 4 (5 beads/lipid), fixed assay, 150000 steps:**
+
+| topology | R_mid | shell CV | HOLLOW | end |
+|---|---|---|---|---|
+| linear | 11.70 | 0.283 | **0 of 41** | spanning |
+| branched | 9.15 | 0.446 | **0 of 41** | spanning |
+
+**The 29% HOLLOW reported for branched last cycle was entirely the spanning-network artefact.** With
+the corrected assay it is 0%, cleanly confirming both that the fix works and that the earlier signal
+was nothing. Retracted in full.
+
+Morphology does differ -- branched is markedly more compact (R_mid 9.15 against 11.70) and less
+shell-like -- so topology is doing something, but neither closes.
+
+**THE ACTUAL BLOCKER, and it has been printed at the top of every emergence run in this project:**
+
+    "a spanning stripe costs about 56 lipids, so a ring is affordable ABOVE -- stripe wins this count"
+
+At N = 70 in L = 28, a spanning stripe is affordable, so it WINS. A ring cannot form because a stripe
+is cheaper. That is geometric and independent of lipid topology, temperature, chain length, fluidity
+or the assay -- every variable this project has spent weeks sweeping. The banner has stated the
+diagnosis on every run and was never acted on.
+
+This also re-reads the whole emergence series: every 2-D assembly run at L = 28 with N >= 56 was in
+the stripe-favoured regime, so none of them could have produced a ring and none of them says anything
+about whether this force field can.
+
+**Relaunched in the ring-favourable regime.** N = 70, L = 40, so a stripe needs 80 lipids and is
+UNAFFORDABLE; the banner now reads "a ring is affordable BELOW this count". Branched lipid, kT = 0.45,
+fixed assay, 150000 steps, dispersed start. Every known fix applied at once for the first time.
+
+**Falsification, stated before the run.** If no checkpoint is HOLLOW in the ring-favourable regime
+with the branched lipid at fluid temperature, then geometry was not the blocker either, and the
+remaining candidates are nucleation rate and the critical-size threshold. If a ring does appear, it
+will be the first emergent closed structure in this project and must be confirmed by render before it
+is claimed -- five false HOLLOW verdicts precede it.
