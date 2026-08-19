@@ -102,7 +102,12 @@ if __name__ == "__main__":
     # than not at the temperature chosen for fluidity. Too cold is a gel that cannot rearrange; too
     # warm is a patch that falls apart. This maps the window between.
     kT = float(sys.argv[3]) if len(sys.argv) > 3 else 0.45
-    n_tail, n_each, L, phi = 4, 30, 40.0, 0.55
+    # TAIL LENGTH is the one lever that decouples cohesion from mobility. Binding per lipid scales
+    # with the number of tail beads while the per-contact energy is unchanged, so a longer branched
+    # lipid should hold an aggregate together WITHOUT moving eps/kT toward the gel. Everything tried
+    # so far moved both at once: temperature, well depth, and chain stiffness all shift eps/kT.
+    n_tail = int(sys.argv[4]) if len(sys.argv) > 4 else 4
+    n_each, L, phi = 30, 40.0, 0.55
     width = (n_each // 2) * 1.05
     assert 2 * width + 2.5 + 4.0 < L, (
         f"two patches of width {width:.1f} plus the largest gap do not fit in L={L}")

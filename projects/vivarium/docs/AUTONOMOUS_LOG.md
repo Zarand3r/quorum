@@ -1415,3 +1415,37 @@ bends" (answered so far: no).
 **Reviewer prompt updated** to carry this result -- it materially changes question 1, since the model
 does produce spontaneous curvature and clean bilayer structure, and fails only at holding the
 aggregate together.
+
+---
+
+## 2026-08-19 tick — tail length is the one lever that decouples cohesion from mobility
+
+**No new results.** Dilute emergence unchanged at largest 23/200 across 70000-115000 steps, i.e. 45000
+steps at the same value. No screenshot: nothing has moved.
+
+**What the flat-ribbon endpoint changed.** Curvature is spontaneous and the bilayer structure is
+clean; the failure is that the aggregate splits before it can finish closing. So the target is now
+specifically INTEGRITY at a temperature that still permits rearrangement.
+
+**Why every previous attempt could not have worked.** Cohesion and mobility are both governed by
+`eps/kT`, and everything tried so far moved that single ratio:
+
+  * temperature 0.17-0.70 -- moves eps/kT directly;
+  * well depth and the chi matrix -- moves eps/kT directly;
+  * chain stiffness `bend_frac` -- does not change eps/kT and correspondingly changed nothing (freely
+    jointed chains are still caged at kT = 0.17);
+  * coherent rescaling of the whole interaction vector -- leaves eps/kT unchanged by construction.
+
+**Tail length is different.** Binding per lipid scales with the NUMBER of tail beads while the
+per-contact energy is unchanged, so a longer branched lipid can hold an aggregate together without
+shifting eps/kT toward the gel. This was tested before only for LINEAR chains, where the packing
+parameter `P = v/(a0 l)` is independent of tail length and the test could not have worked. With
+branched topology it is a genuine lever for the first time.
+
+**Launched:** gap-0 coalescence and integrity, branched, kT = 0.45, 15 seeds each, at n_tail = 4, 6, 8.
+
+**Falsification, stated before the run.** If merged fraction rises materially above the 7/15 measured
+at n_tail = 4, cohesion and mobility ARE separable in this model and the route is longer lipids. If it
+stays near 7/15 at n_tail = 8, the two cannot be decoupled by any lever available here, and the
+conclusion that the interaction form is at fault becomes firm rather than provisional -- which is
+exactly what the reviewer prompt asks about.
