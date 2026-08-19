@@ -1319,3 +1319,32 @@ than a seventh regime.
 **Flat ribbon at 35000 of 100000**, PLANTED, not read: largest 89/120 with lumen falling 0.56 -> 0.30.
 It is the one experiment still capable of changing the picture, so it runs to its endpoint before the
 reviewer prompt is finalised.
+
+---
+
+## 2026-08-19 tick — dilute emergence illustrates the coalescence bound directly
+
+**Emergence at N = 200, L = 100 (very dilute), 70000 steps.** Largest 23/200; the render shows roughly
+20 small micelles scattered through the solvent, none above ~23 lipids.
+
+This is the same micelle phase, further fragmented by dilution, and it makes the coalescence result
+concrete: reaching the 120-lipid critical size from aggregates of ~20 requires many successive merge
+events, each succeeding at most 47% in DIRECT CONTACT and 13-20% at realistic separations. The
+dispersed route to a 2-D vesicle is closed by arithmetic, not by patience.
+
+**Flat ribbon at 45000 of 100000**, PLANTED, not read. Largest is fluctuating (89 -> 47 -> 73 of 120),
+which is itself consistent with the coalescence finding -- the ribbon is repeatedly splitting and
+partially rejoining rather than holding as one object.
+
+**Nothing retracted this tick.**
+
+**Standing position.** The falsification that fired last tick is unchanged: patches do not reliably
+merge at any temperature (peak 47% at kT = 0.45, falling to 5/15 and 4/15 at 0.55 and 0.70). Stuck
+criterion (b) has fired. The reviewer prompt is drafted pending the flat-ribbon endpoint, which is the
+only remaining experiment that could alter the conclusion.
+
+**Falsification for the flat-ribbon endpoint, restated.** Curls and closes -> closure is spontaneous
+given ONE aggregate, and the whole problem reduces to coalescence, which is now measured and bounded.
+Still flat, or split into pieces, at 100000 -> the 81 kT of edge energy sits behind a barrier AND the
+aggregate cannot even hold itself together, which would make the interaction-form conclusion firmer
+still.
