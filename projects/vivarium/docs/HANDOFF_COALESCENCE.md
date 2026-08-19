@@ -34,6 +34,17 @@ N = 70 and retain a lumen at 120/150/200/300, shell CV falling monotonically
 to 120 requires many successive merge events at <= 47% each. The dispersed route is closed by
 arithmetic rather than by insufficient sampling.
 
+## 2b. What the model DOES do (added 2026-08-19, and it narrows the question)
+
+A finite flat two-leaflet ribbon of 120 lipids, with **no curvature planted and no orientation term in
+the energy**, CURLS spontaneously over 100000 steps into a pronounced S/C shape, with clean bilayer
+structure throughout -- heads on both faces, well defined tail core. It does not close, and it splits
+(largest 120 -> 73), with both fragments curling.
+
+So the model bends membranes correctly and builds correct local bilayer. What it cannot do is hold an
+aggregate together long enough to finish closing. That narrows the question below from "is this model
+broken" to "why can it not maintain an aggregate at a temperature where it can rearrange".
+
 ## 3. The system
 
 2-D coarse-grained amphiphile, explicit solvent, pair energy

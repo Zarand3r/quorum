@@ -1373,3 +1373,45 @@ the critical size that curls and closes means closure is spontaneous given ONE a
 problem reduces to coalescence -- which is measured and bounded at 47%. One that stays flat or ends
 fragmented means the 81 kT of edge energy sits behind a barrier AND the aggregate cannot hold itself
 together, which would make the interaction-form conclusion firmer and complete the reviewer prompt.
+
+---
+
+## 2026-08-19 — FLAT RIBBON ENDPOINT: curvature IS spontaneous; closure and integrity are not
+
+**The decisive test, at its endpoint.** Finite flat two-leaflet ribbon, 120 branched lipids, L = 90
+(genuinely finite -- width 63 in a 90 box), kT = 0.45, 100000 steps, NO curvature planted:
+
+| | start | end |
+|---|---|---|
+| largest | 120/120 | **73/120** |
+| shell CV | 0.541 | 0.255 |
+| lumen ratio | 0.99 | 0.19 |
+
+**The render is more informative than the metrics and disagrees with the obvious reading of them.**
+The ribbon has CURLED into a pronounced S/C shape -- it is no longer flat -- and the bilayer structure
+is the cleanest this project has produced: crisp heads on both faces, clean tail core, well defined
+two-leaflet membrane along its whole length. It split into two pieces, and BOTH pieces curled.
+
+So the binary falsification was too coarse. Three separate answers:
+
+* **curvature: SPONTANEOUS.** A flat ribbon curls on its own, with no curvature planted and no
+  orientation term in the energy. This is the first direct demonstration that the measured 81 kT of
+  edge energy actually drives bending, rather than merely being available in principle.
+* **closure: NO.** The curled ends never meet.
+* **integrity: NO.** 120 -> 73, i.e. the ribbon split, consistent with the coalescence curve showing
+  patches fail to hold together more than half the time at this temperature.
+
+**Read on the metrics alone** -- lumen 0.99 -> 0.19, verdict "fragmented" -- this would have been
+recorded as a flat failure. The render changed the conclusion. That is the reverse of the usual
+failure here, where a metric flattered and the render corrected it, and it is the reason both are
+required.
+
+**What it changes.** The blocker is now specifically: an aggregate that curls correctly cannot stay
+whole long enough to close. Curvature is not the missing ingredient; cohesion at a temperature that
+permits rearrangement is. That is exactly the tension the coalescence curve measures, and it moves the
+question from "can this model bend a membrane" (answered: yes) to "can it hold one together while it
+bends" (answered so far: no).
+
+**Reviewer prompt updated** to carry this result -- it materially changes question 1, since the model
+does produce spontaneous curvature and clean bilayer structure, and fails only at holding the
+aggregate together.
