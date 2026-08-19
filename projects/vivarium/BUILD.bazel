@@ -878,6 +878,10 @@ py_binary(
 
 py_test(
     name = "test_suite",
+    # The suite runs real dynamics, so it is minutes not seconds. It sat at ~235 s and two added
+    # gates pushed it past the 300 s default, which reports as a FAILURE rather than as a timeout in
+    # the summary -- a slow test suite that looks like a broken one gets ignored.
+    timeout = "long",
     srcs = glob(["tests/**/*.py"]) + ["bench_step.py"],
     main = "tests/pytest_main.py",
     data = [

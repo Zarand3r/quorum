@@ -189,3 +189,37 @@ def test_ring_assay_survives_a_core_peak_in_the_outermost_bin():
     X[wi] = rng.uniform(-L / 2, L / 2, size=(40, 2))
     verdict, _ = classify(View(X, mol, wi, L, 2))      # must not raise
     assert verdict in {"HOLLOW", "filled", "other", "fragmented", "no tails"}
+
+
+def test_ring_assay_refuses_a_percolating_network():
+    """A network that spans the box has no inside, and its pores sit where a lumen would be.
+
+    This produced the FIFTH false HOLLOW from this assay, on an emergent percolating network. The
+    fourth gate was added for exactly this failure but planted a CLEAN spanning stripe, which
+    `classify` already handled correctly, so it never exercised a network with pores. The gate must
+    plant the structure that actually fooled it.
+    """
+    import numpy as np
+
+    from ring_assay import classify
+
+    class View:
+        def __init__(self, X, mol, wi, L, pd):
+            self.X, self._mol, self._wi, self.L, self.pd = X, mol, wi, L, pd
+
+    rng = np.random.default_rng(2)
+    L, nb = 28.0, 3
+    # two crossing bilayer strips: percolates both axes, with four large pores between the arms
+    pts = []
+    for t in np.linspace(-L / 2, L / 2, 26, endpoint=False):
+        pts += [[t, 3.0], [t, -3.0], [3.0, t], [-3.0, t]]
+    pts = np.array(pts)
+    n_lip = len(pts)
+    X = np.zeros((n_lip * nb + 60, 2))
+    mol = np.arange(n_lip * nb).reshape(n_lip, nb)
+    for b in range(nb):
+        X[mol[:, b]] = pts + b * 0.3
+    wi = np.arange(n_lip * nb, n_lip * nb + 60)
+    X[wi] = rng.uniform(-L / 2, L / 2, size=(60, 2))
+    verdict, _ = classify(View(X, mol, wi, L, 2))
+    assert verdict != "HOLLOW", f"a percolating network must not be called HOLLOW, got {verdict}"

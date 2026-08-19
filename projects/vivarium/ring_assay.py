@@ -109,6 +109,18 @@ def classify(e, sel=None, min_frac=0.90, lumen_min=3.0):
     if frac < min_frac:
         return "fragmented", dict(frac=frac)
 
+    # SPANNING CHECK, before any radial reasoning. A centroid-radial profile assumes a COMPACT
+    # aggregate with an inside and an outside. A network that percolates the periodic box has neither,
+    # and its pores sit exactly where a lumen would be -- which produced a HOLLOW verdict on an
+    # obvious percolating network (the fifth false positive from this assay). The fourth gate was
+    # supposed to catch this but plants a CLEAN stripe, which classify already handled, so it never
+    # exercised a network with pores.
+    P = e.X[:, :e.pd]
+    ext = P[e._mol[big]].reshape(-1, e.pd)
+    span = np.array([_mic(ext[:, k][:, None] - ext[:, k][None, :], e.L).max() for k in range(e.pd)])
+    if (span > 0.45 * e.L).any():
+        return "spanning", dict(frac=frac, span=float(span.max() / e.L))
+
     rr, rh, rt, rw, cen = radial_profiles(e, sel=big)
     if rt.max() <= 0:
         return "no tails", dict(frac=frac)

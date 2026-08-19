@@ -59,18 +59,31 @@ def test_cell_list_is_actually_used_in_3d():
 
 
 def test_neighbour_build_scales_subquadratically():
-    """Doubling the bead count must not quadruple the rebuild cost."""
-    def build_ms(n_side, L):
-        X, f = _make3d(n_side=n_side, L=L)
-        f._rebuild(X)                     # warm
-        t0 = time.perf_counter()
-        for _ in range(3):
-            f._rebuild(X)
-        return (time.perf_counter() - t0) * 1000.0 / 3, len(X)
+    """Doubling the bead count must not quadruple the rebuild cost.
 
-    # hold density fixed so the comparison is about the ALGORITHM, not about crowding
-    t_small, n_small = build_ms(6, 22.0)
-    t_big, n_big = build_ms(9, 33.0)
+    The two sizes are timed INTERLEAVED and reduced by median. Measuring one size fully and then the
+    other makes the ratio sensitive to load drift between the two blocks: this gate fired at 0.70
+    against a 0.6 threshold purely because a long simulation started competing for CPU partway
+    through. A ratio cancels machine SPEED but not machine speed CHANGING, and a flaky performance
+    gate is worse than none because it trains you to ignore it.
+    """
+    small = _make3d(n_side=6, L=22.0)
+    big = _make3d(n_side=9, L=33.0)
+    for X, f in (small, big):
+        f._rebuild(X)                     # warm both
+
+    def once(pair):
+        X, f = pair
+        t0 = time.perf_counter()
+        f._rebuild(X)
+        return (time.perf_counter() - t0) * 1000.0
+
+    ts, tb = [], []
+    for _ in range(7):
+        ts.append(once(small))
+        tb.append(once(big))
+    t_small, t_big = float(np.median(ts)), float(np.median(tb))
+    n_small, n_big = len(small[0]), len(big[0])
     growth = (t_big / max(t_small, 1e-9)) / ((n_big / n_small) ** 2)
     assert growth < 0.6, (
         f"neighbour build grew {t_big / t_small:.1f}x for a {n_big / n_small:.1f}x bead increase, "
