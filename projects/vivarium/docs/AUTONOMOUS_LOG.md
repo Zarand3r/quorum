@@ -1449,3 +1449,28 @@ at n_tail = 4, cohesion and mobility ARE separable in this model and the route i
 stays near 7/15 at n_tail = 8, the two cannot be decoupled by any lever available here, and the
 conclusion that the interaction form is at fault becomes firm rather than provisional -- which is
 exactly what the reviewer prompt asks about.
+
+---
+
+## 2026-08-19 tick — reproducibility confirmed at n_tail=4; 6 and 8 pending
+
+**n_tail = 4 reproduces 7/15 exactly** against the earlier independent 15-seed run at kT = 0.45. Same
+value, same mean largest fraction (0.761). Worth recording: this harness has produced a wrap-around
+geometry bug, a silently-killed run and a systematically optimistic small-n estimate, so an exact
+reproduction is meaningful evidence that the current configuration is measuring what it claims.
+
+**n_tail = 6 and 8 pending.** No conclusion until both land -- the falsification is stated in terms of
+whether the merged fraction rises materially above 7/15, and one arm cannot answer that.
+
+**Dilute emergence unchanged** at largest 23/200 across 70000-125000 steps. No screenshot.
+
+**Fixed while waiting.** The P_fuse initial-condition render tag was `pfuse_gap{gap}` only, so a sweep
+over tail length overwrote its own frames. That is the same defect that made the L = 28 and L = 40
+emergence renders indistinguishable several ticks ago, and it recurred because the fix then was
+applied to one filename rather than to the habit. Tags now carry every swept variable.
+
+**Nothing concluded or retracted this tick.**
+
+**Falsification unchanged.** Merged fraction rising materially above 7/15 at longer tails means
+cohesion and mobility are separable and longer lipids are the route; staying near 7/15 at n_tail = 8
+means they cannot be decoupled by any lever available in this model.
