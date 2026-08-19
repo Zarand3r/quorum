@@ -1057,3 +1057,45 @@ a POPULATION of small vesicles rather than one large aggregate.
 **Operational rules added:** retire the previous tick's runs before launching new ones; pin thread
 counts; run sequentially rather than in parallel; never use `bazel run` while a script is issuing its
 own.
+
+---
+
+## 2026-08-19 tick — P_fuse: NOT purely transport, and the positive control failed once
+
+**Thread pinning worked.** With `OMP/OPENBLAS/MKL/NUMEXPR_NUM_THREADS=1` and sequential execution,
+P_fuse completed in one tick after two ticks of making no progress at all. Load 100 -> 54.
+
+**Result**, two 30-lipid patches placed in contact, branched, kT = 0.45, 5 seeds, 15000 steps:
+
+| gap | merged | largest frac (mean) |
+|---|---|---|
+| 0.0 (touching) | 4/5 | 0.900 |
+| 1.0 | 2/5 | 0.747 |
+| 2.5 | 1/5 | 0.710 |
+
+**Neither branch of the stated falsification is cleanly satisfied.** P_fuse is not near 1 at any finite
+separation, so transport is NOT the whole story -- there is real resistance to merging. But it is not
+near 0 either: even at 2.5 sigma the largest cluster averages 71% of lipids, so patches do partially
+join. The honest reading is an intermediate barrier, monotonic in gap.
+
+**The positive control failed once and that is the most informative part.** At gap 0 the two patches
+start geometrically joined -- the initial-condition render confirms a single continuous slab -- yet
+1 of 5 seeds ended fragmented. Patches can COME APART. The harness was designed assuming gap 0 must
+give 5/5, so this is a property of the physics rather than of the setup: at kT = 0.45 a bilayer patch
+is marginally stable against splitting, which also explains the emergence runs ending as several
+pieces rather than one.
+
+**Caveat, stated plainly:** 5 seeds gives a binomial standard error near 0.2, so 4/5 against 2/5 is
+about a 1-sigma difference. The monotonic trend is suggestive; the individual numbers are not
+resolvable. Relaunched at **15 seeds** before anything is concluded from them.
+
+**Geometry verified by render.** `init_pfuse_gap2.5.png` shows two cleanly separated two-leaflet slabs
+with heads on both faces -- the guard added after the wrap-around bug is doing its job.
+
+**No emergent screenshot.** The dilute run is at 5000 of 200000 with largest 8/200, i.e. still
+dispersing; a frame of near-random lipids is not progress.
+
+**Falsification for the 15-seed rerun.** If gap 0 still fails to reach 15/15, spontaneous splitting of
+a joined patch is real and the aggregate-size problem is one of stability, not assembly. If gaps 1.0
+and 2.5 stay below ~0.5 with tighter error bars, there is a genuine fusion barrier and more sampling
+will not deliver one aggregate.
