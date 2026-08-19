@@ -424,6 +424,13 @@ py_binary(
     deps = [":legacy"],
 )
 py_binary(
+    name = "_solvent3d",
+    srcs = ["_solvent3d.py"],
+    main = "_solvent3d.py",
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_throughput",
     srcs = ["_throughput.py"],
     main = "_throughput.py",

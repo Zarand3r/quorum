@@ -36,6 +36,7 @@ import sys
 import numpy as np
 
 from field import Field, HEAD, TAIL, WATER
+from integrate import Inertial
 
 
 def plant_flat(n_side, n_tail, L, gap):
@@ -90,16 +91,15 @@ if __name__ == "__main__":
     X, species, bonds, mol = plant_flat(n_side, n_tail, L, gap)
     f = Field(species, bonds, L)
     a0, d0 = geometry(X, mol, n_side)
-    kT, gamma, dt = 0.35, 1.0, 2e-4
-    rng = np.random.default_rng(1)
-    amp = np.sqrt(2.0 * kT * dt / gamma)
+    kT, dt = 0.17, 8e-3
+    ig = Inertial(f, kT, dt, seed=1)
     print(f"planted flat 3-D bilayer: {len(mol)} lipids (1 head + {n_tail} tails), "
           f"vacuum, kT={kT}", flush=True)
     print(f"{'step':>8}{'E/lipid':>10}{'a (area/lipid)':>16}{'d (thickness)':>15}", flush=True)
     print(f"{0:>8}{f.energy(X) / len(mol):>10.3f}{a0:>16.3f}{d0:>15.3f}", flush=True)
     every = max(steps // 6, 1)
     for t in range(1, steps + 1):
-        X += (f.forces(X) / gamma) * dt + amp * rng.normal(size=X.shape)
+        X = ig.step(X)
         if t % every == 0:
             a, d = geometry(X, mol, n_side)
             print(f"{t:>8}{f.energy(X) / len(mol):>10.3f}{a:>16.3f}{d:>15.3f}", flush=True)

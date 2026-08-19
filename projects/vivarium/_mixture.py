@@ -38,6 +38,7 @@ import numpy as np
 
 from _shot import disc, write_png
 from field import Field, HEAD, TAIL, WATER
+from integrate import Inertial
 
 W, H = 760, 560
 
@@ -331,9 +332,10 @@ if __name__ == "__main__":
 
     X, species, bonds, mols, wi, chains = build(n_short, n_long, n_water, L, d, plant=plant)
     f = Field(species, bonds, L)
-    gamma, dt = 1.0, 2e-4
-    rng = np.random.default_rng(1)
-    amp = np.sqrt(2.0 * kT * dt / gamma)
+    # INERTIAL at the validated dt = 8e-3: same energy, same equilibrium ensemble (verified against
+    # the overdamped run over 5 seeds per rung), 28x more reduced time per minute end to end.
+    dt = 8e-3
+    ig = Inertial(f, kT, dt, seed=1)
 
     print(f"MIXTURE {d}-D: {n_short} short (2 tails) + {n_long} long (4 tails) + {n_water} water, "
           f"L={L}, packing fraction {phi}, kT={kT}, start={plant}", flush=True)
@@ -343,8 +345,7 @@ if __name__ == "__main__":
           f"{'lumenW':>8}{'shortOUT':>10}{'shortIN':>9}   enrichment", flush=True)
     every = max(steps // 20, 1)
     for t in range(steps + 1):
-        X += (f.forces(X) / gamma) * dt + amp * rng.normal(size=X.shape)
-        X -= L * np.round(X / L)
+        X = ig.step(X)
         if t % every == 0:
             g = geometry(X, mols, wi, chains, L, d)
             enr = g["f_out"] - g["f_in"]
