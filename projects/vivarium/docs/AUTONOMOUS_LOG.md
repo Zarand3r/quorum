@@ -1348,3 +1348,28 @@ given ONE aggregate, and the whole problem reduces to coalescence, which is now 
 Still flat, or split into pieces, at 100000 -> the 81 kT of edge energy sits behind a barrier AND the
 aggregate cannot even hold itself together, which would make the interaction-form conclusion firmer
 still.
+
+---
+
+## 2026-08-19 tick — holding for the flat-ribbon endpoint; reviewer prompt drafted
+
+**Flat ribbon at 90000 of 100000**, one checkpoint from its endpoint. PLANTED, so still not read as a
+trend: largest 68 of 120, shell CV 0.261, lumen ratio 0.21. Deliberately not interpreted -- the whole
+point of the endpoint rule is that this project has twice reported a planted structure's mid-run state
+as a result and had to retract it.
+
+**Dilute emergence unchanged** at largest 23/200 across 70000, 80000, 95000 and 100000 steps. No
+screenshot: four checkpoints at the same value is not progress and resending would imply otherwise.
+
+**Reviewer prompt drafted** at `docs/HANDOFF_COALESCENCE.md`, built around the coalescence curve (peak
+47% at kT = 0.45; 0/15 at 0.25; 4/15 at 0.70; 3/15 and 2/15 at gaps 1.0 and 2.5 sigma). Four questions,
+the sharpest being whether reliable merging should be expected in a healthy CG membrane model at all --
+if real patches also merge stochastically at these sizes, our criterion is wrong rather than the model.
+
+**Nothing concluded or retracted this tick.**
+
+**Falsification for the endpoint, restated one last time before it lands.** A finite flat ribbon above
+the critical size that curls and closes means closure is spontaneous given ONE aggregate, and the whole
+problem reduces to coalescence -- which is measured and bounded at 47%. One that stays flat or ends
+fragmented means the 81 kT of edge energy sits behind a barrier AND the aggregate cannot hold itself
+together, which would make the interaction-form conclusion firmer and complete the reviewer prompt.
