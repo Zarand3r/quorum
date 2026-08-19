@@ -57,22 +57,27 @@ def largest_water_fraction(X, L, cut=1.5):
 
 
 def density_contrast(X, L, nbin=4):
+    d = X.shape[1]
     idx = np.floor((X + 0.5 * L) / (L / nbin)).astype(int) % nbin
-    flat = (idx[:, 0] * nbin + idx[:, 1]) * nbin + idx[:, 2]
-    counts = np.bincount(flat, minlength=nbin ** 3).astype(float)
+    flat = idx[:, 0]
+    for k in range(1, d):
+        flat = flat * nbin + idx[:, k]
+    counts = np.bincount(flat, minlength=nbin ** d).astype(float)
     return float(counts.max() / max(counts.mean(), 1e-9)), float(counts.min() / max(counts.mean(), 1e-9))
 
 
 if __name__ == "__main__":
     steps = int(sys.argv[1]) if len(sys.argv) > 1 else 20000
-    L, kT = 16.0, 0.17
-    print(f"pure solvent, L={L}, kT={kT}, {steps} steps at dt=8e-3")
+    dim = int(sys.argv[2]) if len(sys.argv) > 2 else 3
+    L, kT = (16.0, 0.17) if dim == 3 else (28.0, 0.17)
+    print(f"pure solvent, {dim}-D, L={L}, kT={kT}, {steps} steps at dt=8e-3")
     print(f"{'phi':>7}{'n_water':>9}{'largest frac':>14}{'clusters':>10}"
           f"{'dens max/mean':>15}{'min/mean':>10}   verdict", flush=True)
-    for phi in (0.15, 0.25, 0.35, 0.45, 0.55):
-        n = int(round(phi * L ** 3 / (np.pi / 6.0)))
+    unit = (np.pi / 6.0) if dim == 3 else (np.pi / 4.0)
+    for phi in (0.15, 0.25, 0.35, 0.45, 0.55, 0.65):
+        n = int(round(phi * L ** dim / unit))
         rng = np.random.default_rng(0)
-        X = rng.uniform(-L / 2, L / 2, size=(n, 3))
+        X = rng.uniform(-L / 2, L / 2, size=(n, dim))
         species = np.full(n, WATER, dtype=np.int64)
         f = Field(species, np.zeros((0, 2), int), L)
         ig = Inertial(f, kT, 8e-3, seed=2)
@@ -80,6 +85,15 @@ if __name__ == "__main__":
             X = ig.step(X)
         frac, nc = largest_water_fraction(X, L)
         hi, lo = density_contrast(X, L)
-        ok = frac > 0.95 and hi < 1.6 and lo > 0.4
-        print(f"{phi:>7.2f}{n:>9}{frac:>14.3f}{nc:>10}{hi:>15.2f}{lo:>10.2f}   "
-              f"{'LIQUID' if ok else 'droplets / not homogeneous'}", flush=True)
+        # PERCOLATION is the discriminator, not homogeneity. A first version of this reported
+        # "droplets" whenever the density contrast was large, which conflated two different failures:
+        # a FRAGMENTED phase (many disconnected drops, no solvent at all) and a percolating liquid
+        # that merely contains vapour voids. The 2-D runs at phi = 0.55 are the second kind -- all
+        # water in ONE cluster, contrast 1.9 -- and calling them droplets was wrong.
+        percolates = frac > 0.95
+        homogeneous = hi < 1.6 and lo > 0.4
+        verdict = ("LIQUID" if percolates and homogeneous else
+                   "percolating, with vapour voids" if percolates else
+                   "FRAGMENTED -- not a solvent")
+        print(f"{phi:>7.2f}{n:>9}{frac:>14.3f}{nc:>10}{hi:>15.2f}{lo:>10.2f}   {verdict}",
+              flush=True)
