@@ -752,6 +752,13 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_regime",
+    srcs = ["_regime.py"],
+    main = "_regime.py",
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_fluidity",
     srcs = ["_fluidity.py"],
     main = "_fluidity.py",

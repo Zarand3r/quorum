@@ -108,3 +108,36 @@ not its parameters.
 **Also corrected.** The wide-open C at 30000 steps was PLANTED (`plant="arc0.75"`), not emergent, and
 was a failure in progress rather than a promising intermediate. No emergent vesicle exists in this
 project in any dimension.
+
+---
+
+## 2026-08-18 — a fluid-and-intact regime exists, at short tails and kT = 0.45
+
+**Falsification stated last entry.** If no (kT, n_tail) cell is simultaneously fluid and intact, the
+force field has no fluid-membrane regime and the target is unreachable by parameters.
+
+**NOT falsified — one cell qualifies.** Planted finite 2-D ribbon, 60 lipids, vacuum, 20000 steps:
+
+| kT | tails | nbr kept | largest | verdict |
+|---|---|---|---|---|
+| 0.45 | **2** | **0.42** | 0.98 | **FLUID + INTACT** |
+| 0.17/0.30 | 2 | 0.83 / 0.80 | 1.00 | intact but gel |
+| 0.17/0.30/0.45 | 4 | 0.83 / 0.73 / 0.74 | 1.00 | intact but gel |
+| 0.17/0.30/0.45 | 6 | 0.93 / 0.75 / 0.83 | 1.00 | intact but gel |
+
+Shorter tails fluidise because binding per lipid scales with tail length; two tails at kT = 0.45 give
+enough exchange (58% of neighbours lost) while the patch still holds at 0.98.
+
+**INSTRUMENT ERROR CAUGHT, by having two observables disagree.** The first pass judged fluidity on
+MSD/a and called every cell FLUID + INTACT, including kT = 0.17 at MSD/a = 11.57 where the spanning
+3-D bilayer reads 0.29. Neighbour retention stayed at 0.83 there, i.e. gel. A finite aggregate in
+vacuum translates AND rotates, and subtracting the mean displacement removes only translation.
+Kabsch alignment was added, but it barely moved the number (11.53), so the residual is some other
+collective mode -- ribbon curl or breathing -- that MSD cannot separate from real diffusion. MSD is
+now reported only as a cross-check; the criterion is neighbour exchange, which no collective motion
+can produce. Verdicts from the first pass are withdrawn.
+
+**Next, falsification first.** Planted arc0.75 at kT = 0.45 with TWO-tail lipids -- the one qualifying
+cell -- 100000 inertial steps. Prediction: it closes, or at least the ends approach rather than tear.
+Falsification: if it tears like the kT = 0.55 four-tail arc (largest 70 -> 38) or sits open like the
+kT = 0.17 one, then fluidity is not sufficient for closure and the blocker is elsewhere.
