@@ -141,6 +141,12 @@ def build(n_short, n_long, n_water, L, d, tails=(2, 4), seed=0, plant="random", 
         _plant_ring(X, mols, np.array(chains), d)
     elif plant == "sphere":
         _plant_sphere(X, mols, np.array(chains), d)
+    elif plant == "flat":
+        # A FLAT ribbon separates the two steps that emergence conflates. Nucleation must produce one
+        # large aggregate; closure must then bend it shut. Planting an ARC hands the system its
+        # curvature and tests only the second step; planting FLAT hands it a single aggregate with no
+        # curvature at all, so whether it curls is the closure question asked cleanly.
+        _plant_flat_ribbon(X, mols, np.array(chains), d)
     elif plant.startswith("arc"):
         # `arc0.75` plants three quarters of a ring: a bilayer with TWO EXPOSED ENDS at the same
         # curvature the closed state prefers. The question is whether edge tension pulls the ends
@@ -240,6 +246,25 @@ def _plant_sphere(X, mols, chains, d):
             for b in range(len(idx)):
                 X[idx[b]] = u[j] * (R_head - sgn * b)
         k += count
+
+
+def _plant_flat_ribbon(X, mols, chains, d, gap=1.05):
+    """Two flat leaflets, tails meeting, heads out on both faces. No curvature planted."""
+    n = len(mols)
+    nb = len(mols[0])
+    per = n // 2
+    xs = (np.arange(per) - (per - 1) / 2.0) * gap
+    k = 0
+    for sgn in (+1.0, -1.0):
+        for j in range(per):
+            idx = mols[k]
+            for b in range(len(idx)):
+                off = 0.5 + (len(idx) - 1 - b) * 1.0
+                pos = np.zeros(d)
+                pos[0] = xs[j]
+                pos[1] = sgn * off
+                X[idx[b]] = pos
+            k += 1
 
 
 def _plant_ring(X, mols, chains, d, span=1.0):

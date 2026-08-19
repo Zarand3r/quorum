@@ -697,3 +697,36 @@ that is an emergent vesicle. If it returns to a slab or the loop dissolves, then
 critical size is necessary but not sufficient, and the blocker is nucleation into ONE aggregate rather
 than the stability of a closed state -- note the run currently has several separate aggregates, which
 is exactly that failure mode.
+
+---
+
+## 2026-08-19 tick — the emergent ring was TRANSIENT; coarsening is arrested
+
+**RETRACTION of last tick's optimism.** The ring-like closed loop at 45000 steps has OPENED by 90000
+into a branched network with large voids. It was a transient pore in a percolating network -- the same
+structure that produced five false HOLLOW verdicts -- not a closing vesicle. Logged last tick as "NOT
+claimed as closure", which was the right call, and the record now carries both the hope and the
+outcome.
+
+**Coarsening is arrested.** Largest aggregate has sat at 178/200 from step 40000 to 90000 -- fifty
+thousand steps, shell CV flat at ~0.40, no change. The stated falsification fired: being above the
+critical size is NECESSARY but NOT SUFFICIENT, and the blocker is reaching ONE aggregate rather than
+the stability of a closed state.
+
+That is consistent with the measured `D_M = D_1 / N_beads`: once aggregates are large they barely
+diffuse, so the last few merges never happen. 22 lipids remain stranded in separate clusters and
+cannot find the main one.
+
+**Next: separate the two steps that emergence conflates.** Nucleation must produce one large
+aggregate; closure must then bend it shut. Planting an ARC hands the system its curvature and tests
+only the second step. Planting FLAT hands it a single aggregate with NO curvature, so whether it curls
+is the closure question asked cleanly for the first time.
+
+Launched: flat two-leaflet ribbon, no curvature planted, N = 200 (L = 52) and N = 120 (L = 44), both
+above the critical size, branched, kT = 0.45, 100000 steps.
+
+**Falsification, stated before the run.** If a flat ribbon above the critical size curls and closes,
+closure is spontaneous once a single large aggregate exists, and everything now rests on nucleation --
+which `D_M = D_1/N` says is the hard part. If it stays flat for 100000 steps, then closure needs a
+curvature nucleation event that thermal fluctuation does not supply on these timescales, and the
+81 kT of available edge energy is separated from the closed state by a barrier rather than a slope.
