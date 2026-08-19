@@ -539,3 +539,48 @@ fluid, stripe-favoured, ring-favourable), each time with a NEW mechanism propose
 -- same hypothesis falsified three times with no new mechanism -- has not strictly fired. But the
 critical-size test is the last idea in the current frame. If it fails too, this warrants a reviewer
 prompt rather than a sixth regime.
+
+---
+
+## 2026-08-19 tick — A CRITICAL SIZE APPEARS. Planted arcs stop unrolling above ~120 lipids
+
+**Critical-size test, planted arc0.75, branched, kT = 0.45, L = 40, 60000 steps:**
+
+| N | R_mid | shell CV | lumen ratio | lumen water | outcome |
+|---|---|---|---|---|---|
+| 70 | 9.79 | 0.370 | **0.00** | 0 | lumen lost, unrolls |
+| 120 | 11.72 | 0.353 | 1.40 | 85 | lumen retained |
+| **200** | 17.04 | **0.218** | 1.12 | 45 | lumen retained, most shell-like |
+| 300 | — | — | — | — | CRASHED: box too small |
+
+**The prediction is supported.** The render at N = 200 shows a nearly closed thick annulus with a
+large central lumen, heads lining BOTH the inner and outer boundaries, and a remaining seam at the
+lower right. At N = 70 the identical plant unrolls flat. This is the first arc in the project to hold
+its curvature rather than flatten, and the threshold sits between 70 and 120.
+
+That also retroactively explains the three earlier closure failures: **all used ~70 lipids, which is
+below the threshold.** They were run in a regime where unrolling is the correct behaviour, so none of
+them was evidence about the model -- exactly the risk flagged when this test was designed, and the
+reason it should have been run before them.
+
+**Planted, not emergent.** This is closure of a planted arc, i.e. a statement about which states are
+stable, not about reachability.
+
+**Emergence is unchanged.** 45 branched lipids, dispersed, L = 28: HOLLOW 0 of 41, all 45 in one
+aggregate, dense slab with water expelled -- the same demixing phenotype as every other condition
+tried. Emergence has now given the same answer at N = 45, 70 (L = 28 and L = 40), linear and branched,
+kT = 0.17/0.45/0.55.
+
+**Bug.** N = 300 crashed on `L=40.0 too small for 300 lipids at packing fraction 0.55`. The sweep
+hard-coded one box size across a 4x range in lipid count, so the largest arm was unrunnable. Relaunched
+with the box scaled to the lipid count (N = 300 at L = 52, plus N = 150 at L = 44 to tighten the
+threshold).
+
+**Falsification for the next run, stated first.** If N = 300 and N = 150 also retain their lumen, the
+threshold is confirmed between 70 and 120 and kappa follows from `pi*kappa/R = 2*lambda` at that
+radius. If N = 300 unrolls where N = 200 did not, the ordering is non-monotonic and the continuum
+picture fails -- which would put the +40.7 kT line tension in question too.
+
+**Also queued:** an emergence run at N = 200, L = 52 -- ABOVE the newly found critical size. Every
+emergence run so far has been below it, so none of them could have closed. That is the single most
+important consequence of this tick.
