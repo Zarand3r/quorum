@@ -752,6 +752,13 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_kappa",
+    srcs = ["_kappa.py"],
+    main = "_kappa.py",
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_linetension",
     srcs = ["_linetension.py"],
     main = "_linetension.py",

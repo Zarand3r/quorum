@@ -266,3 +266,51 @@ because "looked at the render" should mean an actual look, not a box ticked.
 not resolvable, that is a statement about the instrument. If it is resolvable and NEGATIVE or zero,
 the model does not penalise an exposed edge and all three closure failures are explained without any
 kinetic argument.
+
+---
+
+## 2026-08-18 tick — line tension measured; kappa attempt RETRACTED, gate was too weak
+
+**Line tension, the falsification did NOT fire.** 60 two-tail lipids, L = 30, kT = 0.45, 5 seeds:
+
+| | E |
+|---|---|
+| spanning (no ends) | -2115.13 +- 6.04 |
+| finite (two ends) | -2078.50 +- 12.79 |
+| **lambda** | **+18.31 +- 7.07 eps = +40.7 +- 15.7 kT per end** |
+
+Positive and resolvable at 2.6 sigma. An exposed edge costs energy, so closure has about **81 kT** to
+gain from removing two ends -- independently confirming the earlier, noisy 74 kT ring-versus-arc
+figure by a much better-posed route. This is the first number in this line of work that has survived
+its own error bar.
+
+That reduced the problem to one unknown: closing our ribbon costs about `pi*kappa/R ~ 0.54*kappa`, so
+closure is favoured whenever kappa < ~150 kT. Real membranes are 10-30 kT.
+
+**kappa attempt: RESULT RETRACTED.** The undulation spectrum gave slope 19.8 with R^2 = 0.961 and
+kappa = 0.7 kT, which was reported as "favoured, failures are kinetic". It is wrong. Extracting kappa
+from each mode separately:
+
+| mode | q | kappa |
+|---|---|---|
+| 1 | 0.209 | 10.42 kT |
+| 2 | 0.419 | 2.78 kT |
+| 3 | 0.628 | 0.62 kT |
+| 4 | 0.838 | 0.74 kT |
+
+**16.7x spread.** The spectrum is not q^-4 and no kappa exists to extract. R^2 = 0.961 passed because
+a linear fit of 1/<|u_q|^2> against q^4 spanning 2.5 decades in x is dominated by its single largest
+point -- R^2 is a poor test of a power law. The preregistered falsification ("the spectrum must follow
+q^-4") DID fire; the instrument chosen to test it was too blunt to notice.
+
+Also visible in that table is why: mode 4 has wavelength ~7 sigma, near the molecular size where
+continuum bending does not apply, and mode 1 is the box itself. At 60 lipids there may be no clean
+modes at all.
+
+**Fixed and relaunched.** The gate is now per-mode consistency (spread < 2x), which cannot be passed
+by a fit dominated by one point. Membrane doubled to 120 lipids in L = 60 with 24 bins and 6 modes,
+because the fix for too few clean wavelengths is a bigger membrane, not a longer run.
+
+**Falsification, restated.** If per-mode kappa still spreads by more than 2x at 120 lipids, kappa is
+not measurable by undulations at any size we can afford, and the closure question must be settled by
+a different route -- e.g. direct buckling, or simply testing nucleation directly.
