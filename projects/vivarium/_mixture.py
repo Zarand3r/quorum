@@ -336,11 +336,17 @@ def geometry(X, mols, wi, chains, L, d):
 
     lip_len = float(chains.mean())
     r_in = max(R_mid - lip_len, 0.0)
-    rw = np.linalg.norm(_wrap(X[wi] - cen, L), axis=1)
-    n_in = int((rw < r_in).sum())
-    lumen = 0.0
-    if r_in > 0.5:
-        lumen = (n_in / (C_D[d] * r_in ** d)) / (len(wi) / L ** d)
+    # With IMPLICIT solvent there are no water beads, so lumen occupancy is undefined rather than
+    # zero. Reporting 0 would read as "lumen collapsed" when in fact nothing was measured, which is
+    # exactly the kind of silent-zero this project has been caught by before.
+    if len(wi) == 0:
+        n_in, lumen = 0, float("nan")
+    else:
+        rw = np.linalg.norm(_wrap(X[wi] - cen, L), axis=1)
+        n_in = int((rw < r_in).sum())
+        lumen = 0.0
+        if r_in > 0.5:
+            lumen = (n_in / (C_D[d] * r_in ** d)) / (len(wi) / L ** d)
     return dict(f_out=f_out, f_in=f_in, n_out=int(outer.sum()), n_in_leaf=int(inner.sum()),
                 R_mid=R_mid, shell_cv=shell_cv, lumen=lumen, lumen_w=n_in, r_in=r_in)
 
@@ -400,11 +406,17 @@ if __name__ == "__main__":
     n_short = int(round(n_lip * frac_short))
     n_long = n_lip - n_short
     lip_beads = n_short * 3 + n_long * 5
-    n_water = int(round(phi * L ** d / C_D[d] * (2 ** d))) - lip_beads
+    # phi = 0 means IMPLICIT SOLVENT: no water beads at all, which is what the oracle does. It also
+    # removes the 3-D solvent defect entirely -- at phi 0.15-0.35 our explicit water is fragmented
+    # droplets rather than a liquid, which voided every previous 3-D run here. Without water the
+    # hydrophobic ordering still holds through chi, since tails attract tails (0.70) more than heads
+    # attract heads (0.20), which is the Cooke-Deserno construction.
+    n_water = 0 if phi <= 0.0 else int(round(phi * L ** d / C_D[d] * (2 ** d))) - lip_beads
     if n_water < 0:
         raise ValueError(f"L={L} too small for {n_lip} lipids at packing fraction {phi}")
 
-    X, species, bonds, mols, wi, chains = build(n_short, n_long, n_water, L, d, plant=plant)
+    X, species, bonds, mols, wi, chains = build(n_short, n_long, n_water, L, d, plant=plant,
+                                                branched=True)
     f = Field(species, bonds, L)
     # INERTIAL at the validated dt = 8e-3: same energy, same equilibrium ensemble (verified against
     # the overdamped run over 5 seeds per rung), 28x more reduced time per minute end to end.

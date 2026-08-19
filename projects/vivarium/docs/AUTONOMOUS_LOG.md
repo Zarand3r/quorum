@@ -1739,3 +1739,33 @@ achievable at all, or whether the target as specified is unreachable in principl
 
 **Falsification for any further work.** A model with an EVEN orientation term (rigidity, C_0 = 0)
 should not close if this reading is right. That is the one cheap test left that could overturn it.
+
+---
+
+## 2026-08-19 tick — our force field in 3-D with IMPLICIT solvent, to separate dimensionality from beta
+
+**Two differences remain** between our model and the reference: the oracle is 3-D, and it has
+`beta = 0.15`. Every other measured property now matches. This run separates them.
+
+**Why implicit solvent.** Our 3-D explicit water is fragmented droplets at every affordable packing
+fraction (0.15-0.35: largest cluster 0.27-0.48, empty cells), which voided every previous 3-D run. The
+oracle uses no solvent at all. Setting `phi = 0` removes the defect rather than working around it, and
+the hydrophobic ordering survives through `chi`, where tails attract tails (0.70) more than heads
+attract heads (0.20) -- the Cooke-Deserno construction.
+
+**Launched:** our field, 3-D, 300 branched lipids, no water, L = 25 (the oracle's box), kT = 0.45,
+dispersed start, 400000 steps.
+
+**Falsification, stated before the run.** If vesicles appear, 2-D was the blocker all along, the model
+is otherwise complete, and every 2-D negative result was answering a question about dimensionality
+rather than about the force field. If flat sheets and strands appear as in 2-D, dimensionality is NOT
+the difference and `beta` is the remaining candidate -- which would mean our model reproduces
+oracle-at-beta-0 in three dimensions as well as two.
+
+**Two harness bugs fixed to get here**, both of the same family as earlier ones:
+* `n_water` was computed from `phi` with no zero case, so implicit solvent raised "L too small";
+* `geometry` computed lumen occupancy from an empty water array. It now returns NaN rather than 0 --
+  reporting 0 would read as "lumen collapsed" when nothing was measured at all, which is precisely the
+  silent-zero this project has been caught by before.
+
+**No emergent screenshot.** Nothing new since the dilute run finished; this 3-D run is at step 0.
