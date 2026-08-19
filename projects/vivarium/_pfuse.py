@@ -122,7 +122,10 @@ if __name__ == "__main__":
             X, species, bonds, mol = two_patches(n_each, n_tail, L, gap, n_water, seed=sd)
             if sd == 0:
                 from _shot import render_initial
-                render_initial(X, species, L, f"pfuse_gap{gap:g}")
+                # tag carries EVERY swept variable. Omitting n_tail made a sweep's frames overwrite
+                # one another, which is the same defect that made the L=28 and L=40 emergence renders
+                # indistinguishable a few ticks ago.
+                render_initial(X, species, L, f"pfuse_gap{gap:g}_nt{n_tail}_kT{int(kT * 100)}")
             f = Field(species, bonds, L)
             ig = Inertial(f, kT, 8e-3, seed=500 + sd)
             for _ in range(steps):
