@@ -945,3 +945,36 @@ would imply change where there is none.
 and 2.5 near 1 mean transport is the whole story, near 0 mean a fusion barrier. Flat ribbon: curls
 means closure is spontaneous given one aggregate, still flat at 100000 means the 81 kT sits behind a
 barrier.
+
+---
+
+## 2026-08-19 tick — the flat-ribbon test was VOID: the ribbon spanned the box
+
+**flat200 finished, and its result is withdrawn before being used.** At N = 200 the plant places
+`per = 100` lipids per leaflet at 1.05 spacing, i.e. a ribbon **105 sigma wide in a box of L = 52**.
+It wrapped through the periodic boundary and had NO ENDS. The whole point of the flat plant is to
+provide two exposed ends whose edge energy closure can recover; with none, there was nothing to gain
+and the run faithfully reported that a spanning ribbon stays flat -- which was never in question.
+
+Endpoint numbers, recorded so the void run is on the record: largest 200/200, shell CV 0.537 -> 0.440,
+lumen water 84 -> 52, R_mid 13.18 -> 13.83. The render shows a flat spanning slab with one small pore.
+
+**Third geometry error of this kind**, after `_pfuse` (two patches wider than the box) and `_kappa`
+(bins too few for the lipid count). All three were in harnesses that plant a configuration. I added
+`render_initial()` two ticks ago for precisely this and did not wire it into the flat plant -- the fix
+existed and was not applied where it was needed. A width assertion is now in `_plant_flat_ribbon`
+itself, so the check travels with the code rather than with my attention.
+
+**Relaunched properly.** N = 120 (width 63) in L = 90, genuinely finite, 100000 steps. Also queued an
+emergence run at N = 120, L = 60 to keep a dispersed-start run in flight.
+
+**Falsification, unchanged and now actually testable.** A finite flat ribbon above the critical size
+that curls and closes means closure is spontaneous once one aggregate exists. One that stays flat for
+100000 steps means the 81 kT of edge energy sits behind a barrier and curvature nucleation is a
+distinct missing step.
+
+**Standing question to the user, still open.** The oracle reached its vesicle from a DISPERSED start
+with no planting at all (237 clusters -> flat sheet -> vesicle by 625000 steps, largest 20 -> 54). Our
+planted diagnostics answer stability, not reachability, and the sharper comparison is the coarsening
+curve -- the oracle's cluster count falls 237/146/74/49/43 while ours freezes at 178/200 for 150000
+steps. That comparison has not been run and is arguably higher value than any further planting.

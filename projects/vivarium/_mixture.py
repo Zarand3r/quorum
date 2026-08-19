@@ -146,7 +146,7 @@ def build(n_short, n_long, n_water, L, d, tails=(2, 4), seed=0, plant="random", 
         # large aggregate; closure must then bend it shut. Planting an ARC hands the system its
         # curvature and tests only the second step; planting FLAT hands it a single aggregate with no
         # curvature at all, so whether it curls is the closure question asked cleanly.
-        _plant_flat_ribbon(X, mols, np.array(chains), d)
+        _plant_flat_ribbon(X, mols, np.array(chains), d, L=L)
     elif plant.startswith("arc"):
         # `arc0.75` plants three quarters of a ring: a bilayer with TWO EXPOSED ENDS at the same
         # curvature the closed state prefers. The question is whether edge tension pulls the ends
@@ -248,11 +248,23 @@ def _plant_sphere(X, mols, chains, d):
         k += count
 
 
-def _plant_flat_ribbon(X, mols, chains, d, gap=1.05):
-    """Two flat leaflets, tails meeting, heads out on both faces. No curvature planted."""
+def _plant_flat_ribbon(X, mols, chains, d, gap=1.05, L=None):
+    """Two flat leaflets, tails meeting, heads out on both faces. No curvature planted.
+
+    MUST BE FINITE. The point of this plant is to give the aggregate two exposed ENDS whose edge
+    energy closure can recover. A ribbon wider than the periodic box wraps and has NO ends at all, so
+    there is nothing to gain by closing and the experiment measures nothing. The first version did
+    exactly that -- N = 200 gives width 100 * 1.05 = 105 sigma in a box of L = 52 -- and the run
+    faithfully reported that a spanning ribbon stays flat, which was never in question.
+    """
     n = len(mols)
     nb = len(mols[0])
     per = n // 2
+    width = per * gap
+    if L is not None and width > 0.8 * L:
+        raise ValueError(f"flat ribbon of {n} lipids is {width:.1f} wide and would span a box of "
+                         f"L={L}: it would have no ends, so closure has nothing to gain. "
+                         f"Need L > {width / 0.8:.0f}.")
     xs = (np.arange(per) - (per - 1) / 2.0) * gap
     k = 0
     for sgn in (+1.0, -1.0):
