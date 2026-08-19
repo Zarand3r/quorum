@@ -57,6 +57,15 @@ def shot(X, species, L, tag, slab=1.2):
     img = np.zeros((H, W, 3), dtype=np.uint8)
     img[:, :] = (14, 16, 22)
     scale = min(W, H) * 0.92 / L
+    # RECENTRE ON THE AGGREGATE before slabbing. The slab was cut about a FIXED plane (z = 0) while
+    # the structure is free to sit anywhere in a periodic box, so it caught whatever happened to be
+    # near the origin -- at seed 1 step 220000 that was nothing at all and the frame came out empty.
+    # Worse than empty: an OFF-CENTRE slab through a hollow shell looks like a filled disc, so every
+    # "filled blob, not a shell" reading from a 3-D render here is suspect until re-rendered.
+    # This is the same fix applied to the oracle renderer two ticks ago and not propagated here.
+    if X.shape[1] >= 3:
+        ref = X - L * np.round((X - X[0]) / L)          # unwrap relative to one bead
+        X = ref - ref.mean(axis=0)
     keep = np.ones(len(X), bool) if X.shape[1] < 3 else (np.abs(X[:, 2]) < slab)
     for sp, rgb, rad in ((WATER, (46, 72, 92), 1.7), (TAIL, (232, 150, 62), 3.0),
                          (HEAD, (86, 160, 240), 3.6)):

@@ -1977,3 +1977,37 @@ and neither substitutes for the other.
 
 **Falsification unchanged.** All three seeds arresting with shell CV rising means the 3-D negative is a
 property of the model. Any seed closing means the single-trajectory conclusion was wrong.
+
+---
+
+## 2026-08-19 — 3-D RENDERS WERE CUT AT A FIXED PLANE; "filled blob" readings are suspect
+
+**Caught by an empty frame.** Seed 1 at step 220000 rendered as a completely blank image. Cause:
+`_mixture.shot` cuts its slab about z = 0 while the aggregate is free to sit anywhere in a periodic
+box, so it caught nothing.
+
+**The serious consequence is not the blank frame.** An OFF-CENTRE slab through a hollow shell looks
+like a FILLED DISC. Every "filled blobs, not shells" reading taken from a 3-D render in this project
+was made through a fixed-plane cut of unknown offset, so those readings are suspect until re-rendered.
+That includes the frames sent for the 3-D implicit-solvent runs.
+
+**This is the same defect fixed in the ORACLE renderer two ticks ago and not propagated here.** The
+oracle version was patched to unwrap and recentre on the aggregate's centre of mass; `_mixture.shot`
+was left alone. Third instance in this session of fixing a defect in one place and leaving its sibling
+untouched -- the others being the render-tag omissions (L, then n_tail, then seed).
+
+**Fixed properly:** `shot` now unwraps relative to one bead under the minimum image and recentres on
+the aggregate's centre of mass before slabbing.
+
+**What is NOT affected.** All 2-D renders -- every emergence frame sent to the user, the flat-ribbon
+curl, the planted rings and arcs -- have no slab at all and are unaffected. The metrics are also
+unaffected: shell CV, largest cluster and lumen occupancy are computed from coordinates, not from the
+render.
+
+**Re-render launched** on seed 0 to 240000 steps with the corrected slab, so the "filled versus hollow"
+question can be re-answered on the same trajectory that produced the original claim.
+
+**Falsification, stated before the re-render.** If the recentred slab shows filled discs, the original
+reading stands and 3-D aggregates really are solid. If it shows rings, the aggregates were hollow all
+along and the 3-D negative result is wrong -- which would also undo the conclusion that dimensionality
+is excluded.
