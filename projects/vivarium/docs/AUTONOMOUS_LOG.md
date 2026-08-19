@@ -1769,3 +1769,28 @@ oracle-at-beta-0 in three dimensions as well as two.
   silent-zero this project has been caught by before.
 
 **No emergent screenshot.** Nothing new since the dilute run finished; this 3-D run is at step 0.
+
+---
+
+## 2026-08-19 tick — 3-D implicit solvent under way; shell CV is NOT a shell indicator
+
+**Our field, 3-D, implicit solvent, dispersed, at 40000 of 400000 steps.** Largest 126/300, shell CV
+0.187, and the render shows two compact FILLED aggregates -- the +-1.2 slab would show a ring if they
+were hollow.
+
+**Metric confusion caught before it became a claim.** Shell CV 0.187 is the lowest any emergent
+structure has reached here, and the obvious reading is "most shell-like yet". It is not. Shell CV is
+`std(r)/mean(r)` over lipid beads about the centre: a FILLED sphere gives about 0.25 and a thin shell
+about 0.05, so a low value means COMPACT, which a filled ball satisfies just as well as a shell.
+
+**Calibration, from the oracle's own vesicles:** shell CV **0.045-0.057** when it is genuinely closed.
+That is the reference number this project never had, and it makes 0.187 clearly a blob. Recording it so
+"shell CV fell" is never again reported as progress toward closure without checking against 0.05.
+
+**Not over-read.** 40000 of 400000 steps, and the oracle needed 625000 to close, so this is early. It
+is a dispersed-start run, so early checkpoints are legitimate to note -- unlike a planted structure,
+where they mostly show the plant.
+
+**No conclusion yet. Falsification unchanged:** vesicles here mean 2-D was the blocker and the model is
+otherwise complete; flat sheets and compact blobs mean dimensionality is not the difference and `beta`
+is the only remaining candidate.
