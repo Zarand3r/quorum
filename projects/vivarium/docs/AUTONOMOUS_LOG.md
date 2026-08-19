@@ -1247,3 +1247,39 @@ PLANTED, not read.
 **No emergent screenshot.** Nothing new since the micelle-population frame, which was correctly
 identified as not progress: 10-36 lipids per aggregate against a critical size of 120, and no bilayer
 character.
+
+---
+
+## 2026-08-19 tick — full 15-seed gap sweep: small-n was systematically optimistic
+
+**Complete gap sweep at kT = 0.45, 15 seeds, against the earlier 5-seed run:**
+
+| gap | 5 seeds | **15 seeds** |
+|---|---|---|
+| 0.0 (touching) | 0.80 | **0.47** |
+| 1.0 | 0.40 | **0.20** |
+| 2.5 | 0.20 | **0.13** |
+
+All three dropped by roughly half. Not scatter around a common mean -- every value moved the same
+direction, so the 5-seed run was systematically optimistic rather than merely noisy. Worth recording
+as a methodological fact: in this harness, small-n over-reports merging, probably because a run that
+fragments takes longer to reach its final state and short samples catch it mid-way.
+
+**Settled result.** Two bilayer patches placed in DIRECT CONTACT become one aggregate only 47% of the
+time, and 13-20% at 1-2.5 sigma separation. Merging is unreliable at every separation tested, so
+neither branch of the original falsification holds: it is not a pure transport limit (contact does not
+suffice) and not a hard barrier (it happens sometimes).
+
+**Combined with the temperature curve** (0/15, 1/15, 3/15 at kT = 0.25/0.30/0.35), merging improves
+monotonically with mobility and never becomes reliable in any regime where the aggregate also holds
+together.
+
+**Flat ribbon progressing properly this time** -- 15000 of 100000, largest recovered 75 -> 107 -> 115
+of 120. PLANTED, not read until the endpoint. Verified it is a single run with no duplicates; earlier
+`pgrep` matches were my own shell text rather than extra processes.
+
+**No emergent screenshot.** Nothing new since the micelle-population frame.
+
+**Falsification for the runs in flight, unchanged.** kT = 0.55 and 0.70 reaching ~15/15 locates a
+merging window; staying below ~10/15 means two patches in contact do not reliably coalesce at any
+temperature this model can run.
