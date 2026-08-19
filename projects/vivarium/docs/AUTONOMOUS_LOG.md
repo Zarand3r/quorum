@@ -824,3 +824,34 @@ emergence failures are a sampling problem with a known scaling. P_fuse near 0 DE
 contact means there is a barrier to merging two bilayer patches, no amount of running or concentration
 will produce one aggregate, and the work should redirect at the interaction form rather than at
 sampling.
+
+---
+
+## 2026-08-19 tick — P_fuse geometry was broken; caught by arithmetic, not by a result
+
+**BUG, caught before it produced a number.** The first `_pfuse` launch placed two 60-lipid patches in
+a box of L = 40. Each patch is `(n_each/2) * 1.05 = 31.5` sigma wide, so two patches plus the gap span
+63+ sigma in a 40 sigma box: they wrapped through the periodic boundary and overlapped. P_fuse would
+have returned a plausible-looking number from a configuration where the "two" patches were already
+merged by construction.
+
+Caught by checking the arithmetic while the run was in flight rather than by looking at the output --
+there is no render in this harness, so the geometry had no visual check. An `assert` now enforces
+`2 * width + max_gap + margin < L` at startup, so this cannot silently recur.
+
+Relaunched with n_each = 30 (patch width 15.75, two patches plus the largest gap comfortably inside
+L = 40). No result yet.
+
+**Other runs.** Emergence at N = 200 reached 155000 steps, largest still 178/200 -- arrest spans
+115000 steps. `flat200` at 55000 of 100000, planted, not read.
+
+**No screenshot.** The emergent system is frozen and its newest frame is indistinguishable from the
+one already sent.
+
+**Falsification for P_fuse, unchanged.** Near 1 means transport is the whole story. Near 0 despite
+starting in contact means a fusion barrier that sampling cannot fix.
+
+**Note on the failure mode.** This is the second time this session that a harness without a render
+produced a geometry error -- the first was the undulation spectrum measuring its own sampling noise.
+Every harness that plants a configuration should render its initial condition, and the ones that do
+not are exactly where the silent errors have been.

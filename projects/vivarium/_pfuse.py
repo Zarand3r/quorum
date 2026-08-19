@@ -92,7 +92,15 @@ def largest_frac(X, mol, L, cut=1.4):
 if __name__ == "__main__":
     steps = int(sys.argv[1]) if len(sys.argv) > 1 else 20000
     n_seed = int(sys.argv[2]) if len(sys.argv) > 2 else 5
-    kT, n_tail, n_each, L, phi = 0.45, 4, 60, 40.0, 0.55
+    # GEOMETRY CHECK, done analytically before trusting the run. Each patch is (n_each/2) * 1.05 wide,
+    # so two patches plus the gap must FIT in L. The first launch used n_each = 60 in L = 40: each
+    # patch 31.5 wide, two spanning 63 + gap in a 40 box, so they wrapped through the periodic
+    # boundary and overlapped. That would have produced a meaningless P_fuse rather than an obviously
+    # broken one, which is the dangerous kind.
+    kT, n_tail, n_each, L, phi = 0.45, 4, 30, 40.0, 0.55
+    width = (n_each // 2) * 1.05
+    assert 2 * width + 2.5 + 4.0 < L, (
+        f"two patches of width {width:.1f} plus the largest gap do not fit in L={L}")
     n_water = int(round(phi * L * L / (np.pi * 0.25))) - (1 + n_tail) * 2 * n_each
 
     print(f"P_fuse: two {n_each}-lipid patches placed IN CONTACT, branched, kT={kT}, "
