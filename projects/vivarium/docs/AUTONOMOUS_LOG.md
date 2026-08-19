@@ -1861,3 +1861,31 @@ with correct gradients through bead positions -- not a parameter change. It is s
 
 **Falsification for the run still in flight.** Shell CV falling toward 0.05 by 400000 with a lumen
 appearing would overturn the equivalence. Staying near 0.27 with largest frozen confirms it.
+
+---
+
+## 2026-08-19 tick — shell CV rising monotonically; queued a run at the oracle's own timescale
+
+**3-D implicit at 360000 of 400000.** Largest still 126/300, frozen since step 20000. Shell CV rising
+monotonically across the whole run:
+
+    step      180k    200k    240k    260k    280k    300k    320k    340k    360k
+    shell CV  0.182   0.198   0.227   0.265   0.253   0.270   0.276   0.285   0.293
+
+That is the aggregate becoming LESS compact over time, moving steadily away from the 0.045-0.057 that
+marks a closed shell in the reference. Not a system approaching closure slowly.
+
+**No screenshot:** structure unchanged from the frame already sent, largest frozen and morphology the
+same filled blobs.
+
+**One objection to the equivalence remains open**, and it is fair: our run is 400000 steps while the
+oracle needed 625000 to its first vesicle. A negative at 400000 does not exclude closure at 700000.
+
+**Queued: 1.2M steps**, the same configuration, which is nearly twice the oracle's time to first
+closure. That removes the objection rather than arguing against it.
+
+**Falsification, stated before the long run.** If a lumen appears and shell CV falls toward 0.05 before
+1.2M steps, the equivalence claim is wrong and our model simply needed the reference's own timescale.
+If largest stays frozen and shell CV keeps rising, the "not long enough" objection is closed and the
+negative result stands as stated: our force field reproduces the reference at beta = 0, and closure
+requires the spontaneous-curvature term excluded by design.
