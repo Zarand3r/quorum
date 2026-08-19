@@ -32,6 +32,7 @@ DIMENSION
 from __future__ import annotations
 
 import os
+import pathlib
 import sys
 
 import numpy as np
@@ -374,6 +375,15 @@ def geometry(X, mols, wi, chains, L, d, members=None):
 
     rt = np.linalg.norm(_wrap(X[lipid_beads] - cen, L), axis=1)
     R_mid = float(np.median(rt))
+
+    # A cluster wider than half the box has no unambiguous centroid under periodic boundaries: the
+    # minimum image cannot tell "one big ring" from "two pieces near opposite faces". Returning a
+    # number anyway is how a planted, obviously hollow ring came back as hollow = 1.556 in a box of
+    # L = 70 with a diameter of 50.7. Fail loudly instead of plausibly.
+    if 2.0 * float(rt.max()) > 0.5 * L:
+        return dict(f_out=f_out, f_in=f_in, n_out=int(outer.sum()), n_in_leaf=int(inner.sum()),
+                    R_mid=R_mid, shell_cv=float("nan"), hollow=float("nan"), mix=float("nan"),
+                    lumen=float("nan"), lumen_w=0, r_in=float("nan"))
     shell_cv = float(rt.std() / max(rt.mean(), 1e-9))
 
     # Density in the inner third over density in the shell region: 0 = empty centre, ~1 = filled.
@@ -403,8 +413,27 @@ def geometry(X, mols, wi, chains, L, d, members=None):
         lumen = 0.0
         if r_in > 0.5:
             lumen = (n_in / (C_D[d] * r_in ** d)) / (len(wi) / L ** d)
+    # BILAYER ORDER, measured rather than eyeballed. For every head bead in the aggregate, the
+    # fraction of its close non-bonded neighbours that are TAIL beads, divided by the tail fraction of
+    # the aggregate. 1.0 = heads and tails randomly mixed; well below 1 = heads excluded from the tail
+    # core, which is what a bilayer means. Needed because the implicit-solvent renders showed condensed
+    # aggregates whose heads and tails were intermixed, and "it looks scrambled" is not a measurement.
+    hb = np.concatenate([m[:1] for m in mols])
+    tb = np.concatenate([m[1:] for m in mols])
+    Pc = X[lipid_beads]
+    dmat = _wrap(X[hb][:, None, :] - Pc[None, :, :], L)
+    close = np.linalg.norm(dmat, axis=2) < 1.5
+    is_tail = np.isin(lipid_beads, tb)
+    own = np.isin(lipid_beads, hb)                       # do not count a head as its own neighbour
+    close[:, own] &= ~np.eye(len(hb), len(lipid_beads), dtype=bool)[:, own]
+    n_nb = close.sum(axis=1)
+    n_tail_nb = (close & is_tail[None, :]).sum(axis=1)
+    frac = n_tail_nb[n_nb > 0].sum() / max(n_nb[n_nb > 0].sum(), 1)
+    mix = float(frac / max(is_tail.mean(), 1e-9))
+
     return dict(f_out=f_out, f_in=f_in, n_out=int(outer.sum()), n_in_leaf=int(inner.sum()),
-                R_mid=R_mid, shell_cv=shell_cv, hollow=hollow, lumen=lumen, lumen_w=n_in, r_in=r_in)
+                R_mid=R_mid, shell_cv=shell_cv, hollow=hollow, mix=mix,
+                lumen=lumen, lumen_w=n_in, r_in=r_in)
 
 
 def _wrap(v, L):
@@ -504,7 +533,7 @@ if __name__ == "__main__":
           f"L={L}, packing fraction {phi}, kT={kT}, start={plant}", flush=True)
     print("enrichment = (short fraction of OUTER leaflet) - (short fraction of INNER leaflet); "
           "0 = no partitioning", flush=True)
-    print(f"{'step':>8}{'E/lip':>9}{'largest':>9}{'R_mid':>7}{'shellCV':>9}{'hollow':>8}"
+    print(f"{'step':>8}{'E/lip':>9}{'largest':>9}{'R_mid':>7}{'shellCV':>9}{'hollow':>8}{'mix':>7}"
           f"{'lumen':>7}{'lumenW':>8}{'shortOUT':>10}{'shortIN':>9}   enrichment", flush=True)
     every = max(steps // 20, 1)
     for t in range(steps + 1):
@@ -513,8 +542,17 @@ if __name__ == "__main__":
             g = geometry(X, mols, wi, chains, L, d)
             enr = g["f_out"] - g["f_in"]
             print(f"{t:>8}{f.energy(X) / n_lip:>9.2f}{largest_cluster(X, mols, L):>9}"
-                  f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['hollow']:>8.3f}"
+                  f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['hollow']:>8.3f}{g['mix']:>7.3f}"
                   f"{g['lumen']:>7.2f}{g['lumen_w']:>8}"
                   f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)
             shot(X, species, L, f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}"
                  f"_sd{seed}_s{t:07d}")
+    # Save the final state. Post-hoc analysis has had to RE-RUN the simulation three times in this
+    # project because only images and printed metrics survived; a new observable then cannot be applied
+    # to a finished experiment. Coordinates plus species and topology are enough to score anything.
+    root = os.environ.get("BUILD_WORKSPACE_DIRECTORY", ".")
+    out = pathlib.Path(root) / "projects" / "vivarium" / "docs" / "states"
+    out.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(out / f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}_sd{seed}.npz",
+                        X=X, species=species, chains=chains, L=L, d=d, phi=phi, steps=steps,
+                        mols=np.array([m for m in mols], dtype=object), allow_pickle=True)

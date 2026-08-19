@@ -2258,3 +2258,78 @@ critical size exists and the three earlier ~70-lipid failures were undersized. I
 the continuum picture behind every interpretation in this project is wrong. If all four close, size was
 never the variable. And if the planted RING controls fail to hold at either size, the whole series is
 void and the result is about implicit solvent rather than about size.
+
+---
+
+## 2026-08-19f tick — the implicit-solvent arc series is VOID: the aggregates are not bilayers
+
+### The critical-size test completed, and its control killed it
+
+All 20 arcs and 6 planted-ring controls finished. The ring controls -- included last tick precisely
+because implicit solvent with the derived chi is a new condition -- did their job:
+
+| planted RING (closed-state control) | hollow | verdict |
+|---|---|---|
+| N = 70, 3 seeds | 1.13 - 1.16 | **collapsed to a filled disc** |
+| N = 300, 3 seeds | **0.000** | holds, cleanly hollow |
+
+So the closed state is not stable at N = 70 in this condition, and the N = 70 arm was void before the
+arcs were read. The arcs showed a real size trend in `hollow` (means: N=70 1.39, N=120 1.45, N=200 1.16,
+N=300 0.58).
+
+**Then the render killed the whole series.** The N = 300 arc at 150 000 steps is still an open C, and
+both it and the stable N = 300 ring are **scrambled**: heads and tails intermixed throughout, not heads
+on the faces with tails in the core. Geometry survived; bilayer order did not. A trend in `hollow`
+across sizes is a statement about droplet shape, not about membrane mechanics, so **the critical-size
+test does not measure kappa in this condition and the series is withdrawn.**
+
+This is the fourth time in this project a metric and a render have disagreed, and the fourth time the
+render was right.
+
+### Made it a measurement instead of an impression
+
+"It looks scrambled" is not a result. Added `mix`: for every head bead in the aggregate, the fraction
+of its close non-bonded neighbours that are TAIL beads, divided by the aggregate's tail fraction.
+**1.0 = randomly mixed; a freshly planted perfect bilayer reads 0.536.**
+
+Planted N = 300 ring, L = 138, kT = 0.45, 5 seeds per condition:
+
+| step | 0 | 3000 | 6000 | 12000 |
+|---|---|---|---|---|
+| implicit sd0 | 0.625 | 0.934 | 0.936 | 0.929 |
+| implicit sd1 | 0.625 | 0.942 | 0.925 | 0.921 |
+| implicit sd2 | 0.625 | 0.950 | 0.936 | 0.953 |
+| implicit sd3 | 0.625 | 0.934 | 0.935 | 0.934 |
+
+**Implicit solvent scrambles the bilayer to near-random mixing within 3000 steps**, in every seed, while
+the ring keeps its shape (hollow 0.000, shell CV 0.12). The explicit arm is still running and is the
+comparison that decides whether this is a solvent effect or simply kT = 0.45 being too hot.
+
+**Likely cause, stated as a hypothesis not a conclusion.** The exchange-averaged chi gives head-tail
+**+0.45**, i.e. ATTRACTIVE: by that mean-field accounting an H-T contact frees water to make a W-W bond
+and is favourable. Nothing then keeps heads out of the tail core except head-head repulsion. Cooke and
+Deserno make head-tail purely repulsive instead. So the derivation may be too crude for a dense phase,
+even though it fixed the gross defect it was introduced for (heads buried at no cost).
+
+### Two instrument fixes
+
+* **A cluster wider than half the box has no unambiguous centroid** under periodic boundaries. A planted,
+  obviously hollow N = 300 ring in L = 70 (diameter 50.7) returned `hollow` = **1.556**, i.e. filled.
+  `geometry` now returns NaN for every shape observable in that regime instead of a plausible number.
+  The guard immediately proved itself: two straggler runs queued behind `xargs` started under the old
+  L = 70 script after the relaunch, and came back NaN instead of quietly contributing wrong data.
+* **Final state is now saved** to `docs/states/*.npz`. Post-hoc analysis has had to re-run the
+  simulation three times in this project because only images and printed metrics survived, so a new
+  observable could never be applied to a finished experiment.
+
+### 3-D emergence, still in flight and progressing
+
+Seed 1 has coarsened from ~7 micelles at step 20 000 to ~4 at 100 000, largest **48 -> 69/300**; seed 0
+is at 61/300 with E/lipid -136.7. `hollow` 2.5-3.1 throughout: solid micelles, nothing hollowing out.
+
+**FALSIFICATION, STATED BEFORE THE EXPLICIT ARM IS READ.** If explicit solvent holds `mix` near 0.54
+while implicit sits at 0.93, the solvent-averaged chi is disqualified for dense phases and all membrane
+work must stay explicit -- with the arc series re-run there. If explicit ALSO rises to ~0.93, the
+bilayer is simply unstable at kT = 0.45 and the fault is temperature, not solvent, which would also
+call into question every 2-D result measured at this temperature. If explicit rises only partway, the
+effect is real but shared, and the ranking of causes needs a temperature sweep.
