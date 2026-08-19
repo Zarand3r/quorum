@@ -1951,3 +1951,29 @@ frame already sent.
 **Also fixed:** render tags now carry the seed (`mix3d_random_N300_sd{seed}_s{step}`), so replicate
 frames cannot overwrite one another -- the same defect as the missing `L` and missing `n_tail` in
 earlier tags, applied as a rule this time rather than patched per filename.
+
+---
+
+## 2026-08-19 tick — seed variability is real: 67 vs 126 at the same step
+
+**First replicate reporting.** Seed 1 at step 60000 has largest **67/300** where seed 0 had **126/300**
+at the same point -- roughly a factor of two. Shell CV 0.297, still far from the 0.05 that marks a
+closed shell.
+
+**So the n = 1 concern was substantive, not pedantic.** Aggregate size in 3-D varies about twofold
+between trajectories, which means the single-trajectory result reported two ticks ago ("largest 126,
+frozen") described one draw rather than the model's behaviour. The equivalence argument's 3-D leg was
+genuinely thinner than its 2-D legs, and the replicates are the right fix.
+
+**Neither trajectory is closing**, which is the part that matters for the conclusion: seed 0 arrested
+with shell CV rising to 0.319, seed 1 is at 0.297 and also not falling. Variability is in HOW MUCH
+aggregates, not in WHETHER they close.
+
+**Duration arm at 300000** of 1.2M, reproducing seed 0 exactly as expected of a deterministic replay
+(largest 126, shell CV 0.270). It tests duration only; the replicates test variability. Both are needed
+and neither substitutes for the other.
+
+**No screenshot:** seed 1 is early and seed 0's structure is unchanged from the frame already sent.
+
+**Falsification unchanged.** All three seeds arresting with shell CV rising means the 3-D negative is a
+property of the model. Any seed closing means the single-trajectory conclusion was wrong.
