@@ -1592,3 +1592,49 @@ ours at gaps 1.0 and 2.5 as well, the continuous measure is a real discriminator
 becomes what produces that difference. If the two converge, then our aggregates behave like the
 oracle's in every respect measured here, and the failure to form vesicles must lie somewhere the
 coalescence protocol does not probe at all.
+
+---
+
+## 2026-08-19 — COALESCENCE LINE FULLY VOID, and the real answer falls out
+
+**Full control, identical protocol, 15 seeds:**
+
+| gap | oracle merged | ours merged | oracle frac | ours frac |
+|---|---|---|---|---|
+| 0.0 | 7/15 | 7/15 | 0.910 | 0.761 |
+| 1.0 | 2/15 | **3/15** | 0.613 | **0.667** |
+| 2.5 | 0/15 | **2/15** | 0.447 | **0.564** |
+
+**At separation our model is BETTER than the oracle**, on both the count and the continuous measure,
+and the oracle still makes vesicles. So the "surviving continuous signal" recorded last tick
+(0.910 vs 0.761 at gap 0) is retracted too -- it reverses at 1.0 and 2.5 and was one point of a
+three-point comparison read in isolation.
+
+**Coalescence is not the discriminator in any form.** Ten ticks of work on merging, splitting,
+temperature curves and tail length describe behaviour our model shares with a working one.
+
+**What the comparison leaves.** Line tension, fluidity, cluster diffusion and now coalescence are all
+comparable between the two models. Our flat ribbon curls SPONTANEOUSLY with clean bilayer structure, so
+curvature is not missing either. The remaining differences are exactly two: the oracle is 3-D, and the
+oracle has `beta = 0.15`.
+
+And the oracle's own beta scan settles which matters: **at beta = 0 it produces 0 vesicles in 1.5M
+steps** -- flat sheets and discs, heads outward 0.42 -- against 3-4 sustained vesicles at beta = 0.15.
+
+**So both models fail to close without imposed spontaneous curvature.** Ours behaves like the oracle at
+beta = 0: correct bilayers, correct curvature response, no closure. That is not a defect in our
+interaction form; it is the same result the reference gives under the same condition. The vesicle
+target as specified -- closure with NO imposed C_0 -- may not be achievable in either model.
+
+**This reframes the entire project's negative result.** "Vivarium cannot make a vesicle" was treated
+for weeks as a flaw to be found. The measured position is that vivarium reproduces the reference
+model's behaviour at beta = 0, and the reference needs beta != 0 to close. The open question is no
+longer "what is broken" but "can closure occur without imposed spontaneous curvature at all", which is
+a question about membrane physics rather than about this code.
+
+**Dilute emergence finished:** HOLLOW 0 of 41, largest 23-27/200 throughout.
+
+**Falsification for the next step.** The claim above predicts that an EVEN orientation term -- one
+supplying rigidity with `C_0 = 0`, which was ruled out earlier on the grounds that it might import
+curvature -- should NOT produce closure, while a signed `beta`-like term should. If an even term does
+produce closure, the claim is wrong and spontaneous curvature is not required after all.
