@@ -2081,3 +2081,54 @@ negative was an artefact of the wrong chi. If heads stay buried, the derived chi
 the defect is elsewhere in the model.
 
 Suite: 178 passed, including 3 new metric gates.
+
+---
+
+## 2026-08-19c — shell CV has no discriminating power at our system size; the 0.05 target was unreachable
+
+The planted 3-D vesicle reads shell CV **0.246 at step 0** -- before a single step of dynamics, on a
+structure that is hollow by construction. That is the same value the emergent runs were producing, and
+it was being read as "filled blob."
+
+**Why.** shell CV = std(r)/mean(r) is a ratio, so it separates hollow from solid only while the
+membrane is thin compared with the radius:
+
+    thin shell of thickness t at radius R    CV = t / (sqrt(12) R)
+    solid ball of radius R                   CV = 0.258, at ANY radius
+
+Our 4-tail lipid is 5 beads, about 5 sigma, planted at R_mid 5.71. Thickness and radius are the same
+size, so the shell's CV collapses onto the ball's. Measured on planted structures (`_cvdegenerate.py`,
+box scaled to the structure):
+
+| geometry | hollow-shell CV | gap vs solid ball | hollowness gap |
+|---|---|---|---|
+| **our 4-tail lipid, R_mid 5.71** | 0.248 | **0.016** | 1.035 |
+| same lipid, R_mid 12 | 0.118 | 0.144 | 1.066 |
+| thin shell, R_mid 12 | 0.068 | 0.185 | 0.850 |
+| oracle-like, R_mid 20 | **0.041** | 0.220 | 1.047 |
+
+**Two conclusions, both withdrawing earlier work.**
+
+1. **The instrument was blind in the regime it was used.** 0.016 of separation between a perfect
+   vesicle and a solid ball. Every 3-D reading of the form "shell CV says filled, not hollow" is void
+   -- not because the numbers were miscomputed, but because the metric could not have said otherwise.
+2. **The 0.05 target was geometrically unreachable.** The oracle's 0.045 is reproduced here by
+   GEOMETRY ALONE at R_mid 20, so it is a signature of vesicle SIZE, not of vesicle quality. Reaching
+   it needs R_mid ~20, i.e. about 4200 lipids, against our 300. The standing falsification criterion
+   "shell CV falling toward 0.05" could never have been met at N = 300 in L = 25 regardless of the
+   physics, and every negative verdict that leaned on it is withdrawn.
+
+**Replacement: `hollow`** -- bead density in the inner third over density in the shell region. 0 = empty
+centre, ~1 = filled. It separates by about 1.0 at every radius tested, including ours, and it asks the
+question directly instead of inferring it from a spread. On the real planted vesicle it reads **0.000**
+where CV reads 0.246. Now reported every checkpoint and gated by three tests, including one that pins
+CV's blindness so the regression is visible if it ever changes.
+
+**Relaunched** all three arms (planted control, seeds 0 and 1) under the derived chi with `hollow`
+reported. The earlier arms were killed: they carried the legacy metric, and two duplicate seed-0 runs
+had been writing the same filenames.
+
+**Falsification, unchanged in substance but now measurable.** If the emergent aggregates reach
+`hollow` near 0 with heads at the surface, they are vesicles and every "filled blob" verdict was an
+instrument artefact. If `hollow` stays near 1, they are genuinely solid and the negative stands -- this
+time on an instrument with power to say so.

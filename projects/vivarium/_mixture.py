@@ -376,6 +376,20 @@ def geometry(X, mols, wi, chains, L, d, members=None):
     R_mid = float(np.median(rt))
     shell_cv = float(rt.std() / max(rt.mean(), 1e-9))
 
+    # Density in the inner third over density in the shell region: 0 = empty centre, ~1 = filled.
+    # shell_cv is kept for continuity with the logged history but it is BLIND at this system size --
+    # a planted hollow shell of this lipid at R_mid 5.71 scores 0.248 against a solid ball's 0.264,
+    # a separation of 0.016 (`_cvdegenerate.py`). CV only discriminates while the membrane is thin
+    # compared with the radius, and here they are the same size. `hollow` asks the question directly
+    # and separates the two by about 1.0 at every radius tested.
+    R95 = float(np.percentile(rt, 95))
+    r_third = R95 / 3.0
+    v_in = r_third ** d
+    v_out = max(R95 ** d - v_in, 1e-12)
+    n_core = float((rt < r_third).sum())
+    n_shell = float(((rt >= r_third) & (rt < R95)).sum())
+    hollow = float((n_core / v_in) / max(n_shell / v_out, 1e-12))
+
     lip_len = float(chains.mean())
     r_in = max(R_mid - lip_len, 0.0)
     # With IMPLICIT solvent there are no water beads, so lumen occupancy is undefined rather than
@@ -390,7 +404,7 @@ def geometry(X, mols, wi, chains, L, d, members=None):
         if r_in > 0.5:
             lumen = (n_in / (C_D[d] * r_in ** d)) / (len(wi) / L ** d)
     return dict(f_out=f_out, f_in=f_in, n_out=int(outer.sum()), n_in_leaf=int(inner.sum()),
-                R_mid=R_mid, shell_cv=shell_cv, lumen=lumen, lumen_w=n_in, r_in=r_in)
+                R_mid=R_mid, shell_cv=shell_cv, hollow=hollow, lumen=lumen, lumen_w=n_in, r_in=r_in)
 
 
 def _wrap(v, L):
@@ -490,8 +504,8 @@ if __name__ == "__main__":
           f"L={L}, packing fraction {phi}, kT={kT}, start={plant}", flush=True)
     print("enrichment = (short fraction of OUTER leaflet) - (short fraction of INNER leaflet); "
           "0 = no partitioning", flush=True)
-    print(f"{'step':>8}{'E/lip':>9}{'largest':>9}{'R_mid':>7}{'shellCV':>9}{'lumen':>7}"
-          f"{'lumenW':>8}{'shortOUT':>10}{'shortIN':>9}   enrichment", flush=True)
+    print(f"{'step':>8}{'E/lip':>9}{'largest':>9}{'R_mid':>7}{'shellCV':>9}{'hollow':>8}"
+          f"{'lumen':>7}{'lumenW':>8}{'shortOUT':>10}{'shortIN':>9}   enrichment", flush=True)
     every = max(steps // 20, 1)
     for t in range(steps + 1):
         X = ig.step(X)
@@ -499,7 +513,8 @@ if __name__ == "__main__":
             g = geometry(X, mols, wi, chains, L, d)
             enr = g["f_out"] - g["f_in"]
             print(f"{t:>8}{f.energy(X) / n_lip:>9.2f}{largest_cluster(X, mols, L):>9}"
-                  f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['lumen']:>7.2f}{g['lumen_w']:>8}"
+                  f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['hollow']:>8.3f}"
+                  f"{g['lumen']:>7.2f}{g['lumen_w']:>8}"
                   f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)
             shot(X, species, L, f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}"
                  f"_sd{seed}_s{t:07d}")

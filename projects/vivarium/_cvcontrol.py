@@ -43,7 +43,7 @@ from _mixture import geometry
 L, NB = 40.0, 3
 
 
-def _shell(n, R, centre, rng):
+def _shell(n, R, centre, rng, NB=NB):
     """n lipids on a sphere of radius R: head outward, tails inward. A deliberately clean shell.
 
     Directions come from a Fibonacci sphere rather than random normals, and `n` is set from the area
