@@ -1170,3 +1170,43 @@ a closed shell is reachable at 40-54 molecules, while our 2-D threshold is 120.
 **Falsification unchanged for that sweep.** Merged fraction rising toward 15/15 as kT falls locates a
 window where patches are both mobile and stable; staying near 0.5 everywhere means splitting is not
 thermal and the interaction form is implicated.
+
+---
+
+## 2026-08-19 tick — temperature falsification FIRES in the opposite direction; I killed my own decisive test
+
+**Patch stability against temperature, gap 0, 15 seeds, 15000 steps:**
+
+| kT | merged | largest frac (mean) |
+|---|---|---|
+| 0.25 | **0/15** | 0.559 |
+| 0.30 | 1/15 | 0.656 |
+| 0.45 | 7/15 | 0.761 |
+
+**The stated falsification is met, backwards.** The prediction was that the merged fraction would rise
+toward 15/15 as kT fell, locating a window where patches are both mobile and stable. It FALLS TO ZERO.
+There is no cooler window: colder is strictly worse.
+
+**Which revises last tick's interpretation.** "A joined bilayer patch splits because kT = 0.45 is too
+hot" is wrong. At low kT each patch compacts and rounds up INDIVIDUALLY and cannot rejoin, because
+rejoining requires the mobility the gel regime removes. The gap-0 arm therefore measures seam healing
+and patch coalescence together, and both are mobility-limited. Splitting is not thermally driven in
+the direction assumed.
+
+**Standing tension, now measured on both sides.** Mobility is required to merge (this result) and
+mobility is what makes aggregates marginal (the 7/15 at kT = 0.45). Cohesion strong enough to hold a
+patch is cohesion strong enough to freeze it. That is the same conflict the (kT, n_tail) plane showed,
+now confirmed by a second, independent observable.
+
+**OWN GOAL: `flatfin120` was `Killed`.** The finite flat-ribbon test -- repeatedly described here as
+the one experiment the whole line waits on -- was destroyed by my own `pkill -9 -f "_mixture.py 100000"`
+during the thread-oversubscription cleanup two ticks ago. The pattern matched the run I wanted to keep
+as well as the stale ones I wanted to remove, and I did not check what the kill had hit. Relaunched.
+
+**Falsification for the relaunch, restated.** A finite flat ribbon above the critical size that curls
+and closes means closure is spontaneous given one aggregate. One still flat at 100000 steps means the
+81 kT of edge energy sits behind a barrier and curvature nucleation is a distinct missing step.
+
+**No emergent screenshot.** Nothing new since the micelle-population frame, which was correctly called
+out as not being progress: those aggregates hold 10-36 lipids against a critical size of 120 and have
+no bilayer character at all.
