@@ -978,3 +978,47 @@ with no planting at all (237 clusters -> flat sheet -> vesicle by 625000 steps, 
 planted diagnostics answer stability, not reachability, and the sharper comparison is the coarsening
 curve -- the oracle's cluster count falls 237/146/74/49/43 while ours freezes at 178/200 for 150000
 steps. That comparison has not been run and is arguably higher value than any further planting.
+
+---
+
+## 2026-08-19 tick — REFRAMING: the oracle never forms one big aggregate, and neither should we
+
+**From data already in hand**, comparing the oracle's vesicle-producing run against ours:
+
+| | oracle (3-D, N=300) | ours (2-D, N=200) |
+|---|---|---|
+| clusters at end | **43** | ~3 |
+| largest cluster | 54 | 178 |
+| largest / N | **0.18** | **0.89** |
+| vesicles | 2 | 0 |
+
+The oracle's successful state is MANY SMALL clusters, two of which happen to be closed vesicles of
+~40-54 molecules. It never coalesces. Our aggregate is five times larger relative to N than the
+oracle's ever gets.
+
+**This inverts the standing diagnosis.** "Coarsening is arrested at 178/200" was read as a failure to
+reach one aggregate. But the oracle does not reach one aggregate either -- it succeeds precisely
+because its clusters stay small enough to close individually. Our problem is not too little
+coarsening; it is **too much**, producing a percolating network that cannot close at any size.
+
+Everything downstream of that reading is affected: the push to larger N, the ring-favourable box, the
+critical-size framing as "we were below threshold". The critical-size result stands as a statement
+about PLANTED arcs, but the inference "therefore emergence needs N >= 120 in one aggregate" does not
+follow from it.
+
+**Falsification, stated before the run.** If a dispersed run at much lower concentration produces many
+separate aggregates and at least one closes, the reframing is right and the target is a POPULATION of
+small vesicles rather than one large one. If low concentration merely gives small blobs that never
+close, then aggregate size is not the discriminator and the oracle's advantage lies elsewhere -- most
+likely in being 3-D, where a closed shell is reachable at 40-54 molecules while our 2-D threshold sits
+at 120.
+
+**Launched:** emergence at N = 200 in L = 100 (four times the area of the L = 52 run, so aggregates
+should stay separate), branched, kT = 0.45, dispersed, 200000 steps.
+
+**Runs.** `flatfin120` at 5000 of 100000, planted, not read. P_fuse still without rows, contending with
+the flat script. No new emergent render since the last tick.
+
+**Reporting note.** `E/lipid` is not comparable across runs with different solvent counts: it divides
+TOTAL energy, water-water included, by the lipid count. The finite flat run shows -178.74 against -26
+elsewhere purely because it carries 5072 waters. Not an anomaly, and not a quantity to compare.
