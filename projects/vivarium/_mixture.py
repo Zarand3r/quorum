@@ -37,7 +37,7 @@ import sys
 import numpy as np
 
 from _shot import disc, write_png
-from field import Field, HEAD, TAIL, WATER
+from field import Field, HEAD, TAIL, WATER, solvent_averaged_chi
 from integrate import Inertial
 
 W, H = 760, 560
@@ -317,12 +317,45 @@ def _plant_ring(X, mols, chains, d, span=1.0):
         k += count
 
 
-def geometry(X, mols, wi, chains, L, d):
-    """Shell geometry, leaflet assignment, lumen occupancy and per-leaflet composition."""
+def _unwrapped_centroid(P, L, rounds=2):
+    """Centroid of a compact cluster under periodic boundaries.
+
+    A plain mean of WRAPPED coordinates is not the centroid: a cluster straddling a boundary has half
+    its beads near 0 and half near L, so the mean lands at L/2, in empty space. Every radius is then
+    measured from a point outside the object, and minimum-image wrapping of the displacement HIDES it
+    because each radius still comes out below L/2 and still looks plausible.
+
+    Measured on a planted shell (`_cvcontrol.py`): a straddling copy of a shell whose true CV is 0.121
+    scored 0.053, because the radii all became about L/2*sqrt(3) and the spread was divided by that
+    inflated mean. The bias is toward LOW CV, which is the direction that reads as a tight vesicle.
+
+    Unwrapping relative to one bead and re-centring twice is exact for any cluster smaller than half
+    the box, which is the regime every aggregate here is in.
+    """
+    c = P[0]
+    for _ in range(rounds):
+        c = (c + _wrap(P - c, L).mean(axis=0))
+    return c
+
+
+def geometry(X, mols, wi, chains, L, d, members=None):
+    """Shell geometry, leaflet assignment, lumen occupancy and per-leaflet composition.
+
+    Scored on the LARGEST CLUSTER, not on every lipid. Averaging over all lipids reports how spread
+    out the whole population is rather than whether the aggregate is a shell: in the 3-D emergence
+    runs the largest cluster held 119-126 of 300 lipids, so two thirds of the beads scored sat in
+    other aggregates. On a planted shell with 180 loose lipids added elsewhere that inflated CV by
+    4.2x (`_cvcontrol.py`). Where the system IS one aggregate -- every planted ring and vesicle -- the
+    largest cluster is all of it and this changes nothing, so the planted numbers carry over.
+    """
+    if members is None:
+        members = largest_members(X, mols, L)
+    mols = [mols[i] for i in members]
+    chains = chains[members]
     heads = np.array([m[0] for m in mols])
     tailc = np.array([X[m[1:]].mean(axis=0) for m in mols])
     lipid_beads = np.concatenate(mols)
-    cen = X[lipid_beads].mean(axis=0)
+    cen = _unwrapped_centroid(X[lipid_beads], L)
 
     u = X[heads] - tailc                       # tail -> head, derived, never stored
     u -= L * np.round(u / L)
@@ -364,8 +397,8 @@ def _wrap(v, L):
     return v - L * np.round(v / L)
 
 
-def largest_cluster(X, mols, L, cut=1.4):
-    """Molecules in the largest aggregate, linked BEAD to bead.
+def _cluster_labels(X, mols, L, cut=1.4):
+    """Connected-component label per molecule, linked BEAD to bead.
 
     Molecule-CENTRE connectivity is wrong for a bilayer and wrong again for a long chain: the two
     leaflets touch at their tails, not their centres, and a 4-bead lipid puts its centre two units
@@ -399,7 +432,18 @@ def largest_cluster(X, mols, L, cut=1.4):
                     lab[j] = c
                     q.append(j)
         c += 1
-    return int(np.bincount(lab).max())
+    return lab
+
+
+def largest_cluster(X, mols, L, cut=1.4):
+    """Size of the largest aggregate, in molecules."""
+    return int(np.bincount(_cluster_labels(X, mols, L, cut)).max())
+
+
+def largest_members(X, mols, L, cut=1.4):
+    """Indices of the molecules in the largest aggregate."""
+    lab = _cluster_labels(X, mols, L, cut)
+    return np.flatnonzero(lab == int(np.bincount(lab).argmax()))
 
 
 if __name__ == "__main__":
@@ -431,7 +475,12 @@ if __name__ == "__main__":
 
     X, species, bonds, mols, wi, chains = build(n_short, n_long, n_water, L, d, plant=plant,
                                                 branched=True, seed=seed)
-    f = Field(species, bonds, L)
+    # With phi = 0 there are no water beads, so the explicit chi is the WRONG table: it puts the
+    # hydrophobic drive in head-water, and with the water deleted nothing makes a buried head costly.
+    # The solvent-averaged (exchange-energy) chi restores that drive by integrating the solvent out
+    # instead of dropping it. See `solvent_averaged_chi`.
+    chi = solvent_averaged_chi() if phi == 0.0 else None
+    f = Field(species, bonds, L, chi=chi)
     # INERTIAL at the validated dt = 8e-3: same energy, same equilibrium ensemble (verified against
     # the overdamped run over 5 seeds per rung), 28x more reduced time per minute end to end.
     dt = 8e-3
@@ -452,4 +501,5 @@ if __name__ == "__main__":
             print(f"{t:>8}{f.energy(X) / n_lip:>9.2f}{largest_cluster(X, mols, L):>9}"
                   f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['lumen']:>7.2f}{g['lumen_w']:>8}"
                   f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)
-            shot(X, species, L, f"mix{d}d_{plant}_N{n_lip}_sd{seed}_s{t:07d}")
+            shot(X, species, L, f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}"
+                 f"_sd{seed}_s{t:07d}")

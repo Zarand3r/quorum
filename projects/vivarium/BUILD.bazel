@@ -752,13 +752,6 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
-    name = "_chk",
-    srcs = ["_chk.py"],
-    main = "_chk.py",
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
     name = "_oracle_render",
     srcs = ["_oracle_render.py"],
     main = "_oracle_render.py",
@@ -915,4 +908,11 @@ py_test(
         ":vivarium",
         requirement("pytest"),
     ],
+)
+py_binary(
+    name = "_cvcontrol",
+    srcs = ["_cvcontrol.py"],
+    main = "_cvcontrol.py",
+    imports = ["."],
+    deps = [":vivarium"],
 )

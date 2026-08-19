@@ -2011,3 +2011,73 @@ question can be re-answered on the same trajectory that produced the original cl
 reading stands and 3-D aggregates really are solid. If it shows rings, the aggregates were hollow all
 along and the 3-D negative result is wrong -- which would also undo the conclusion that dimensionality
 is excluded.
+
+---
+
+## 2026-08-19b — the shell-CV metric was wrong in the direction that flatters us; implicit solvent was different physics
+
+Chasing the blank frame from the previous entry turned up two more defects, both load-bearing.
+
+### The shell-CV metric had two defects (`_cvcontrol.py`, gated in `tests/test_geometry_metric.py`)
+
+Planted control: a shell at real membrane density (area/lipid 1.2 sigma^2, Fibonacci-sampled), three
+bead layers at radii 6/7/8, so its CV is known analytically as 0.117. Scored three ways:
+
+| configuration | legacy | fixed | legacy error |
+|---|---|---|---|
+| centred shell alone | 0.117 | 0.117 | 0% |
+| SAME shell straddling a corner | **0.035** | 0.117 | **70% LOW** |
+| centred shell + 180 loose lipids | **0.595** | 0.117 | **411% HIGH** |
+
+* **The centre was a plain mean of WRAPPED coordinates.** For a straddling cluster that lands in empty
+  space; radii become about L/2*sqrt(3) and the spread is divided by that inflated mean. Minimum-image
+  wrapping of the displacement HIDES it, because every radius still comes out below L/2. The bias is
+  toward LOW CV, which is the direction that reads as a tight vesicle.
+* **It averaged over every lipid, not the largest cluster.** In the 3-D runs the largest cluster held
+  119-126 of 300, so two thirds of the beads scored sat in other aggregates.
+
+**Withdrawn:** every shell CV from a multi-cluster emergent run. That includes the 3-D implicit-solvent
+series "rising 0.182 -> 0.319" and last tick's "seed 1 at 0.154, the lowest yet." Seed 1's number is
+confounded twice over and is exactly what a straddling aggregate produces.
+
+**Not withdrawn:** single-aggregate planted runs at the box centre, where the legacy path is exact
+(0% error above). That covers the planted-ring stability series and the critical-size sweep.
+
+**My stated expectation was also wrong** and is recorded as such: the control first predicted ~0.05 for
+the planted shell. 0.05 is the ORACLE's vesicle value; this construction is three beads thick and its
+true CV is 0.117. The measurement was right and the prediction was wrong.
+
+### The corrected render answers the filled-versus-hollow question, and raises a worse one
+
+With the slab recentred, the aggregate is a **filled disc** -- so the original reading stands and the
+falsification stated last entry resolves in favour of "solid, not hollow." But the heads (blue) are
+scattered THROUGH the tail mass rather than sitting on the surface, which is not merely "not a
+vesicle": it is not even an amphiphile aggregate.
+
+**Cause: deleting the water deleted the hydrophobic drive.** Amphiphilicity here lives entirely in
+`chi`, and a head is driven to the surface because it gains `chi_HW = 0.75` from water. At `phi = 0`
+there is no water, while head-head (0.20) and head-tail (0.20) both remain ATTRACTIVE, so nothing
+makes a buried head costly. The implicit-solvent runs were not a cheaper version of the same physics.
+
+**Fix by derivation, not by tuning.** Integrate the solvent out instead of dropping it. In the
+mean-field limit the potential of mean force is the exchange energy,
+
+    chi_eff_ij = chi_ij + chi_WW - chi_iW - chi_jW
+
+which on `default_chi` gives **tail-tail +1.70, head-tail +0.45, head-head -0.30**. That ordering --
+cohesive tails, mutually repulsive heads -- is what implicit-solvent membrane models (Cooke-Deserno)
+are built on, and it arrives from the explicit table with no new free parameter. The negative entry is
+representable because `qk_factors` already carries eigenvalue signs, so a repulsive affinity is still
+a query-key inner product and the transformer-only constraint holds.
+
+**Consequence: every 3-D implicit-solvent result is void**, including the claim that 3-D reproduces
+the 2-D phenotype and therefore that dimensionality is excluded. That claim rested on runs whose
+lipids were not amphiphiles.
+
+**Falsification, stated before the run.** Two seeds, 400k steps, identical but for the derived chi.
+If heads segregate to the aggregate surface and shell CV (now measured correctly, on the largest
+cluster) falls toward 0.117 or below, the implicit-solvent physics was the blocker and the 3-D
+negative was an artefact of the wrong chi. If heads stay buried, the derived chi is not sufficient and
+the defect is elsewhere in the model.
+
+Suite: 178 passed, including 3 new metric gates.

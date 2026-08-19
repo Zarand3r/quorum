@@ -81,6 +81,39 @@ def default_chi():
     return chi
 
 
+def solvent_averaged_chi(chi=None):
+    """The chi an IMPLICIT-solvent run must use, derived from the explicit one rather than tuned.
+
+    Deleting the water beads does not just make the run cheaper -- it deletes the term that makes
+    burying a head expensive. Amphiphilicity here lives entirely in chi, and a head is driven to the
+    surface because it gains chi_HW = 0.75 from water. With no water, nothing punishes a buried head,
+    and head-head 0.20 and head-tail 0.20 are both ATTRACTIVE, so heads are free to sit in the core.
+    That is what the corrected 3-D renders show: blue heads scattered through the tail mass instead of
+    on the surface. The implicit-solvent runs were not a cheaper version of the same physics; they
+    were different physics.
+
+    The standard fix is to integrate the solvent out rather than to drop it. In the mean-field
+    (regular-solution) limit the potential of mean force between two solutes is the EXCHANGE energy:
+    bringing i and j into contact creates one i-j and one water-water contact, and destroys one i-water
+    and one j-water contact.
+
+        chi_eff_ij = chi_ij + chi_WW - chi_iW - chi_jW
+
+    On `default_chi` that gives tail-tail +1.70, head-tail +0.45, head-head -0.30. The ordering is the
+    one implicit-solvent membrane models are built on (Cooke-Deserno: attractive tails, repulsive
+    heads), and it arrives by derivation from the explicit table, with no new free parameter.
+
+    The negative head-head entry is representable: `qk_factors` carries signs through the
+    eigendecomposition, so a repulsive affinity is a real query-key inner product like any other.
+    """
+    chi = default_chi() if chi is None else np.asarray(chi, float)
+    eff = np.zeros_like(chi)
+    for i in (HEAD, TAIL):
+        for j in (HEAD, TAIL):
+            eff[i, j] = chi[i, j] + chi[WATER, WATER] - chi[i, WATER] - chi[j, WATER]
+    return eff
+
+
 def qk_factors(chi):
     """Split chi into query and key matrices so the content term is an inner product.
 
