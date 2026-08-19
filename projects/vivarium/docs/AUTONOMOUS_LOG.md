@@ -495,3 +495,47 @@ with the branched lipid at fluid temperature, then geometry was not the blocker 
 remaining candidates are nucleation rate and the critical-size threshold. If a ring does appear, it
 will be the first emergent closed structure in this project and must be confirmed by render before it
 is claimed -- five false HOLLOW verdicts precede it.
+
+---
+
+## 2026-08-19 tick — ring-favourable geometry also fails; the window may not exist
+
+**Ring-favourable run, every known fix applied at once** (N = 70 branched, L = 40 so a stripe needs 80
+and is unaffordable, kT = 0.45 fluid, fixed assay, 150000 steps, dispersed):
+
+**HOLLOW 0 of 41**, and still classified "spanning" at the end (R_mid 15.24 in L = 40).
+
+Two things follow.
+
+**The affordability formula is too crude.** It costs a stripe at 2L lipids, assuming one lipid per unit
+arc per leaflet. The system spanned with 70 anyway, so real packing is tighter than that or the
+spanning object is a thin percolating network rather than a two-leaflet stripe. The estimate should
+come from the MEASURED area per lipid, not from an assumed spacing -- the same lesson as every other
+inherited constant in this project.
+
+**The morphology is macroscopic demixing, not a membrane.** The render shows dense lipid blobs with
+water pushed to one side. So: too concentrated gives a spanning stripe, too dilute gives a droplet,
+and neither is a ring. The window between them may be very narrow at this system size, or absent.
+
+That is consistent with the 2-D literature found earlier -- in 2-D lattice amphiphile models, above the
+CMC monomers form circular micelles and adding more amphiphile "simply results in more micelles, the
+micelles retaining their characteristic size".
+
+**Bug fixed.** Render filenames omitted L and kT, so the L = 40 run OVERWROTE the L = 28 branched
+frames and the two could not be told apart. Now `em2d_{topology}_N{n}_L{L}_kT{kT}_s{step}`.
+
+**Next: the standing critical-size test, at last.** Planted arcs at N = 70, 120, 200, 300, branched,
+kT = 0.45, fixed assay, 60000 steps each. Edge saved is constant at 2*lambda; bending paid falls as
+pi*kappa/R; so a threshold must exist unless the continuum picture is wrong.
+
+**Falsification, stated before the run.** If all four sizes unroll, then either lambda does not act as
+measured or bending does not fall with size, and the continuum framing behind every interpretation in
+this line is wrong -- which would also mean the +40.7 kT line tension, the one number that survived its
+error bar, does not do what we think it does. If instead there is a threshold, its location gives kappa
+directly via pi*kappa/R = 2*lambda, with no spectrum.
+
+**Approaching the stuck criterion.** Closure has now failed in five distinct regimes (gel, too hot,
+fluid, stripe-favoured, ring-favourable), each time with a NEW mechanism proposed, so criterion (b)
+-- same hypothesis falsified three times with no new mechanism -- has not strictly fired. But the
+critical-size test is the last idea in the current frame. If it fails too, this warrants a reviewer
+prompt rather than a sixth regime.

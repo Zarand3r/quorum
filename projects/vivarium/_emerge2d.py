@@ -78,5 +78,7 @@ if __name__ == "__main__":
             hollow += (v == "HOLLOW")
             print(f"{t:>8}{f.energy(X) / n_lip:>9.2f}{largest_cluster(X, mols, L):>9}"
                   f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['lumen_w']:>8}   {v}", flush=True)
-            shot(X, species, L, f"em2d_{'br' if branched else 'lin'}_N{n_lip}_s{t:07d}")
+            shot(X, species, L,
+                     f"em2d_{'br' if branched else 'lin'}_N{n_lip}_L{int(L)}_kT{int(kT*100)}"
+                     f"_s{t:07d}")
     print(f"\nHOLLOW at {hollow} of {checks} checkpoints ({100.0 * hollow / checks:.0f}%)", flush=True)
