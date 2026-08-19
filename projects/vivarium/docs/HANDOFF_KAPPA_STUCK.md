@@ -28,8 +28,20 @@ therefore end-free) ribbon at identical N, density and temperature, 5 seeds, 200
 Positive at 2.6 sigma. Both arms flat, so bending contributes to neither. Closure therefore has
 about **81 kT** to gain, and is favoured whenever **kappa < ~150 kT**. Real membranes are 10-30 kT.
 
-So: if kappa is ordinary, our three closure failures are KINETIC and we should attack nucleation. If
-kappa is enormous, they are THERMODYNAMIC and no sampling will help. We cannot tell which.
+**CORRECTION (2026-08-19), and it changes what this document should have asked.** The comparison
+above -- "real membranes are 10-30 kT" -- is dimensionally void. In 2-D,
+`E = (kappa/2) integral (u'')^2 dx` gives `[kappa] = energy * LENGTH`; in 3-D,
+`E = (kappa/2) integral (2H)^2 dA` gives `[kappa] = energy`. An energy*length cannot be compared with
+an energy, so no statement of the form "our kappa is enormous / ordinary versus real membranes" was
+ever meaningful, and all of them are withdrawn.
+
+The critical-size logic is unaffected, since it balances two 2-D energies against each other and is
+self-consistent. It has since been run and DID find a threshold: planted arcs unroll at N = 70 and
+retain a lumen at N = 120, 200 and 300, with shell CV falling monotonically 0.370 / 0.353 / 0.218 /
+0.194. From `2*lambda = pi*kappa/R` at the threshold this gives **kappa ~ 90 eps*sigma** (bracketed
+65-111), which is the first bending-rigidity estimate in this project.
+
+So question 3 below is now answered by our own data, and the remaining questions are about method.
 
 ## 2. What was tried, and how it failed
 

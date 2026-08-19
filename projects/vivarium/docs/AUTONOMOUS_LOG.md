@@ -628,3 +628,39 @@ and mislabelled in units.
 brackets the threshold consistently, kappa ~ 90 eps*sigma stands and the ordering is monotonic. If
 N = 300 unrolls where N = 200 did not, the ordering is non-monotonic, the continuum picture fails, and
 the +40.7 kT line tension goes with it.
+
+---
+
+## 2026-08-19 tick — threshold CONFIRMED and monotonic; falsification did not fire
+
+**Critical-size test complete** (planted arc0.75, branched, kT = 0.45, 60000 steps, box scaled to N):
+
+| N | R_mid | shell CV | lumen ratio | lumen water | outcome |
+|---|---|---|---|---|---|
+| 70 | 9.79 | 0.370 | **0.00** | 0 | unrolls, lumen lost |
+| 120 | 11.72 | 0.353 | 1.40 | 85 | retained |
+| 200 | 17.04 | 0.218 | 1.12 | 45 | retained |
+| 300 | 23.26 | **0.194** | 0.93 | 158 | retained |
+
+Shell CV falls MONOTONICALLY with size and only N = 70 loses its lumen. The stated falsification --
+all sizes unroll, ordering non-monotonic -- did not fire. The N = 300 render confirms the metric: a
+thick annulus with a large water-filled lumen, heads clearly lining the inner boundary, one seam at
+the bottom.
+
+So the threshold sits between 70 and 120, the continuum picture holds, and lambda = +40.7 kT per end
+survives as the only measurement in this line to have done so twice.
+
+**Reviewer prompt corrected.** `HANDOFF_KAPPA_STUCK.md` asked a reviewer to help measure kappa while
+comparing it against dimensionally different values. The correction is now in the document, along with
+the threshold result, since question 3 of that prompt has been answered by our own data.
+
+**No new emergent render this tick.** `em_big` (emergence at N = 200, ABOVE the critical size) is
+still queued behind the N = 150 arc. Nothing sent, and no planted frame substituted.
+
+**Falsification for `em_big`, stated before it runs.** Every emergence run in this project used
+N = 45-70, i.e. BELOW the threshold where even a planted arc unrolls, so none of them could have
+closed. If N = 200 dispersed also gives HOLLOW 0 of 41, then being above the critical size is not
+sufficient either, and the blocker is nucleation -- reaching a single large aggregate at all -- rather
+than the stability of the closed state. If it produces a closed structure, it will be the first
+emergent one in this project and must be confirmed by render before any claim: five false HOLLOW
+verdicts precede it.
