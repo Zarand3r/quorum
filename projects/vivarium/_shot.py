@@ -136,3 +136,21 @@ if __name__ == "__main__":
                parts[4] if len(parts) > 4 else "xy",
                None,
                tuple(float(v) for v in parts[5].split(",")) if len(parts) > 5 else None)
+
+
+def render_initial(X, species, L, tag):
+    """Render the planted initial condition, always.
+
+    Every harness in this project that plants a configuration WITHOUT rendering it has produced a
+    silent geometry error, and every harness that renders has been caught by eye within one cycle:
+
+      * `_pfuse` placed two 31.5-sigma patches in a 40-sigma box, so they wrapped through the periodic
+        boundary and were merged before the run began. It would have returned a plausible P_fuse.
+      * `_kappa` binned 120 lipids into 24 bins, so each bin mean carried the scatter of five lipids
+        and the "undulation spectrum" was the estimator's own sampling noise.
+
+    Both were caught by arithmetic after the fact rather than by looking. An image of the starting
+    state costs nothing and makes that class of error visible immediately, so it is no longer optional.
+    """
+    from _mixture import shot
+    shot(X, species, L, f"init_{tag}")

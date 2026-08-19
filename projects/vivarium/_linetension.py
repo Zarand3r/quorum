@@ -74,6 +74,10 @@ if __name__ == "__main__":
         vals = []
         for sd in range(n_seed):
             X, species, bonds, mol = plant(n_lip, n_tail, L, spanning, n_water, seed=sd)
+            if sd == 0:
+                from _shot import render_initial
+                render_initial(X, species, L,
+                               f"linetension_{'spanning' if spanning else 'finite'}")
             f = Field(species, bonds, L)
             ig = Inertial(f, kT, 8e-3, seed=300 + sd)
             acc = []

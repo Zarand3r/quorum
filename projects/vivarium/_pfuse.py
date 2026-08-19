@@ -110,6 +110,9 @@ if __name__ == "__main__":
         fracs = []
         for sd in range(n_seed):
             X, species, bonds, mol = two_patches(n_each, n_tail, L, gap, n_water, seed=sd)
+            if sd == 0:
+                from _shot import render_initial
+                render_initial(X, species, L, f"pfuse_gap{gap:g}")
             f = Field(species, bonds, L)
             ig = Inertial(f, kT, 8e-3, seed=500 + sd)
             for _ in range(steps):

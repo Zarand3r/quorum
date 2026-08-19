@@ -855,3 +855,36 @@ starting in contact means a fusion barrier that sampling cannot fix.
 produced a geometry error -- the first was the undulation spectrum measuring its own sampling noise.
 Every harness that plants a configuration should render its initial condition, and the ones that do
 not are exactly where the silent errors have been.
+
+---
+
+## 2026-08-19 tick — no new results; made initial-condition rendering the default
+
+**Runs.** P_fuse relaunched with corrected geometry, no rows yet (15 runs). `flat200` at 70000 of
+100000, PLANTED, not read. Emergence at N = 200 reached 170000, largest still 178/200 -- arrest spans
+130000 steps.
+
+**No screenshot.** The emergent system is frozen; its newest frame is indistinguishable from the one
+already sent.
+
+**Nothing new concluded.** Stated plainly rather than dressed up. Both decisive runs are mid-flight and
+launching a third would only make them contend.
+
+**Systematic fix instead.** Every harness in this project that plants a configuration WITHOUT
+rendering it has produced a silent geometry error, and every harness that renders has been caught by
+eye within one cycle:
+
+  * `_pfuse` put two 31.5-sigma patches in a 40-sigma box, wrapping through the periodic boundary so
+    the "two" patches were merged before the run began -- it would have returned a plausible P_fuse;
+  * `_kappa` binned 120 lipids into 24 bins, so each bin mean carried the scatter of five lipids and
+    the "undulation spectrum" was the estimator's own noise.
+
+Both were caught by arithmetic AFTER the fact, not by looking. `render_initial()` now exists in
+`_shot.py` and is wired into `_pfuse` and `_linetension`; an image of the starting state costs nothing
+and makes that class of error visible at once.
+
+**Falsifications outstanding, both stated earlier and unchanged.**
+  * P_fuse near 1 -> transport is the whole story; near 0 despite contact -> a fusion barrier that
+    sampling cannot fix.
+  * flat ribbon curls and closes -> closure is spontaneous given one aggregate; still flat at 100000
+    -> the 81 kT of edge energy sits behind a barrier and curvature nucleation is a distinct step.
