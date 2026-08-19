@@ -386,3 +386,37 @@ kT = 0.45. Edge saved is constant at 2*lambda, bending paid falls as pi*kappa/R,
 exist. If ALL sizes unroll, the continuum picture behind every interpretation in this line is wrong.
 That test also yields kappa via pi*kappa/R = 2*lambda at the threshold -- which now matters more,
 since the spectrum route is dead.
+
+---
+
+## 2026-08-19 — the lipid has been a DETERGENT, not a bilayer former
+
+**Structural assumption never questioned.** Every molecule in `field.py` is a single linear chain,
+HEAD-TAIL-TAIL-... The packing parameter is `P = v / (a0 * l)`, and for a SINGLE chain both `v` and
+`l` are proportional to the tail bead count, so **P is independent of tail length**. Lengthening the
+tail from 2 to 4 to 6 was moving a knob that mathematically cannot move the phase, which is exactly
+what the (kT, n_tail) sweep showed: every tail length gel or micelle, none bilayer.
+
+Single-chain amphiphiles sit near P ~ 1/3, the MICELLE band. That is a detergent. Real bilayer formers
+are phospholipids with TWO chains per head, doubling `v` at fixed `l` and putting P in the 1/2 to 1
+bilayer band.
+
+`polar_pack.py` already carried this: `branched=False  # two tails from one head (a real lipid) vs a
+linear chain`. The rewrite to `field.py` dropped it, and nothing since has questioned it -- micelles
+and percolating networks are precisely what a detergent should give.
+
+**Implemented** as a Y-topology: head with two chains of `n_tail/2`. The controlled comparison is
+1 head + 2 chains of 2 against 1 head + 4 linear -- IDENTICAL bead count, different topology, so any
+difference is the branching and not the size.
+
+**Bug caught in the process.** The branched placement loop used `for k in range(half)`, shadowing the
+outer bead counter `k`, which left the water index range 344 beads short. It crashed; with a different
+bead count it would have silently mislabelled species instead.
+
+**Falsification, stated before the run.** If branched and linear at matched bead count give the same
+morphology, fluidity and aggregate statistics, then the packing-parameter argument does not apply to
+this force field and the detergent framing is wrong. If branched gives extended bilayer sheets where
+linear gives micelles and networks, the tail-length sweeps were searching a parameter that could not
+have worked.
+
+**Running.** 150000 steps, 70 branched lipids (1 head + 2x2 tails), dispersed start, kT = 0.45.
