@@ -1138,3 +1138,35 @@ several aggregates rather than an arrested approach to one.
 is a window where patches are both mobile and stable and it sits below 0.45. If it stays near 0.5 at
 every temperature, patch splitting is not thermal and the interaction form is implicated -- the
 aggregate would be unstable at any temperature this model can run.
+
+---
+
+## 2026-08-19 tick — oracle-like cluster distribution reproduced; the aggregates are micelles
+
+**Emergence at N = 120, L = 60, dispersed, 80000 steps.** Largest 36/120 = 0.30, and the render shows
+roughly 8-9 SEPARATE small aggregates spread across the box rather than one percolating network.
+
+That is structurally the regime the oracle succeeds in -- 43 clusters, largest 0.18 of N -- and it is
+the first time this project has produced a POPULATION of aggregates instead of either one network or
+one blob. The reframing two ticks ago (the oracle never coalesces; we over-coarsen) predicted exactly
+this would be reachable by diluting, and it was.
+
+**But the aggregates are MICELLES, not vesicles.** Each blob is an orange tail core with blue heads
+around its rim -- filled, no lumen. So the cluster-size distribution has been reproduced without the
+closure. That separates two things that were previously conflated: getting the right POPULATION is now
+solved, and getting any member of it to CLOSE is not.
+
+It is also consistent with the 2-D literature found earlier -- above the CMC, 2-D amphiphiles form
+circular micelles and adding more amphiphile "simply results in more micelles, retaining their
+characteristic size". Our aggregates sit at 10-36 lipids, well below the planted-arc critical size of
+120, so on the arc evidence they are individually too small to hold a lumen even if they curved.
+
+**That is the tension to attack next:** dilution produces many small aggregates (good, oracle-like) but
+each is far below the size at which a 2-D ring is stable (bad). The oracle escapes this because in 3-D
+a closed shell is reachable at 40-54 molecules, while our 2-D threshold is 120.
+
+**Patch-stability temperature sweep running** (gap 0, 15 seeds, kT = 0.25/0.30/0.35/0.45), no rows yet.
+
+**Falsification unchanged for that sweep.** Merged fraction rising toward 15/15 as kT falls locates a
+window where patches are both mobile and stable; staying near 0.5 everywhere means splitting is not
+thermal and the interaction form is implicated.
