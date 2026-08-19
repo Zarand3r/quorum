@@ -1210,3 +1210,40 @@ and closes means closure is spontaneous given one aggregate. One still flat at 1
 **No emergent screenshot.** Nothing new since the micelle-population frame, which was correctly called
 out as not being progress: those aggregates hold 10-36 lipids against a critical size of 120 and have
 no bilayer character at all.
+
+---
+
+## 2026-08-19 tick — merging probability is monotonic in temperature and never reliable
+
+**Patch coalescence against temperature, gap 0, 15 seeds each, 15000 steps:**
+
+| kT | merged | largest frac (mean) |
+|---|---|---|
+| 0.25 | 0/15 | 0.559 |
+| 0.30 | 1/15 | 0.656 |
+| 0.35 | 3/15 | 0.651 |
+| 0.45 | 7/15 | 0.761 |
+
+Monotonic, and it never exceeds 47%. Two patches placed in direct contact fail to become one aggregate
+more than half the time at the best temperature tested.
+
+**The core tension is now quantified from both ends.** Merging requires mobility and rises with
+temperature; integrity requires cohesion and falls with it -- at kT = 0.55 a planted arc tore in two
+(70 -> 38 lipids). So the window where aggregates both merge reliably and hold together may be narrow
+or absent, and that is no longer an inference from one observable but a measured trend across four
+temperatures plus an independent failure above them.
+
+**Launched: kT = 0.55 and 0.70**, same protocol, to complete the curve.
+
+**Falsification, stated before the run.** If merged reaches ~15/15 at 0.55 or 0.70, a merging window
+exists and the question becomes whether integrity survives there -- testable directly against the arc
+result. If merged stays below ~10/15 even at 0.70, then two bilayer patches in contact do not reliably
+coalesce at ANY temperature this model can run, which would be a statement about the interaction form
+rather than about sampling or geometry.
+
+**Flat ribbon relaunched and progressing** (10000 of 100000, largest recovered 75 -> 107 of 120).
+PLANTED, not read.
+
+**No emergent screenshot.** Nothing new since the micelle-population frame, which was correctly
+identified as not progress: 10-36 lipids per aggregate against a critical size of 120, and no bilayer
+character.
