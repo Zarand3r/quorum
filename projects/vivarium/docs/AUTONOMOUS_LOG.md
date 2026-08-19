@@ -1638,3 +1638,33 @@ a question about membrane physics rather than about this code.
 supplying rigidity with `C_0 = 0`, which was ruled out earlier on the grounds that it might import
 curvature -- should NOT produce closure, while a signed `beta`-like term should. If an even term does
 produce closure, the claim is wrong and spontaneous curvature is not required after all.
+
+---
+
+## 2026-08-19 tick — rendering the ORACLE at beta=0 through our own renderer
+
+**No new results.** The dilute emergence run finished (HOLLOW 0 of 41, largest 23-27/200 throughout)
+and nothing else completed. No new emergent render, so no screenshot.
+
+**The gap in the synthesis.** Last tick concluded that our model reproduces the reference at beta = 0:
+coalescence, line tension, fluidity and cluster diffusion all measured comparable, curvature
+spontaneous in both. But the two are described differently in their own logs -- the oracle at beta = 0
+is classified "flat sheet/disc", ours as a branched network of strands. Those may be the same object
+under two different classifiers, or a genuine remaining difference.
+
+Every oracle result in this project so far has been read from its own shape column. Neither model's
+morphology has been viewed through the SAME renderer, which is the one comparison that would settle
+it -- and this project's record on trusting classifiers over images is poor.
+
+**Launched:** the oracle at beta = 0, N = 300, L = 25, 400000 steps, rendered with our slab renderer at
+the same settings used for our own 3-D frames.
+
+**Falsification, stated before the run.** If the oracle at beta = 0 renders as a branched network of
+bilayer strands like ours, the synthesis holds and the two models agree at beta = 0 -- meaning the
+vesicle target as specified (closure with no imposed C_0) is unmet by BOTH. If it renders as large
+clean flat sheets where ours makes strands and micelles, our model does NOT match the reference even
+at beta = 0, and the remaining gap is morphological rather than about spontaneous curvature.
+
+**Note on what this costs.** It is a 400000-step run of the reference model purely to produce pictures.
+That is justified only because the entire conclusion of the last two ticks rests on an equivalence
+that has been argued from numbers and never checked by eye.
