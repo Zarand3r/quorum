@@ -584,3 +584,47 @@ picture fails -- which would put the +40.7 kT line tension in question too.
 **Also queued:** an emergence run at N = 200, L = 52 -- ABOVE the newly found critical size. Every
 emergence run so far has been below it, so none of them could have closed. That is the single most
 important consequence of this tick.
+
+---
+
+## 2026-08-19 tick — kappa from the threshold, and a DIMENSIONAL ERROR in the standing criterion
+
+**Runs in flight.** N = 300 planted arc is at 36000 of 60000 (shell CV 0.183-0.192, the lowest yet,
+lumen water ~180). NOT read as a trend -- planted structure, read at the end. `crit_150` and the
+above-critical emergence run `em_big` have not started; the script is sequential.
+
+**No new emergent render this tick**, so none sent and no planted frame substituted.
+
+**kappa, derived from the threshold rather than from a spectrum.** At the critical size the two terms
+balance, `2*lambda = pi*kappa/R`, so `kappa = 2*lambda*R/pi`. With lambda = 18.31 eps and the
+threshold bracketed between N = 70 and N = 120:
+
+| N | contour | R | kappa |
+|---|---|---|---|
+| 70 | 35.0 | 5.57 | 64.9 eps*sigma |
+| 95 (midpoint) | 47.5 | 7.56 | 88.1 eps*sigma |
+| 120 | 60.0 | 9.55 | 111.3 eps*sigma |
+
+So kappa ~ 90 eps*sigma, bracketed 65-111. That is the first estimate of the bending rigidity in this
+project, and it came from a threshold rather than from the undulation spectrum that failed twice.
+
+**DIMENSIONAL ERROR, and it invalidates the criterion this whole line has been steering by.** The
+standing rule "closure is favoured whenever kappa < ~150 kT" compared a 2-D kappa against real
+membrane values of 10-30 kT. Those are not the same quantity:
+
+    2-D:  E = (kappa/2) * integral (u'')^2 dx    ->  [kappa] = energy * LENGTH
+    3-D:  E = (kappa/2) * integral (2H)^2 dA     ->  [kappa] = energy
+
+An energy*length cannot be compared to an energy. **Every statement of the form "our kappa is
+enormous / ordinary compared with real membranes" is withdrawn**, including the framing in the
+reviewer prompt `HANDOFF_KAPPA_STUCK.md`, which asks the reviewer to help measure a quantity while
+comparing it to a dimensionally different one.
+
+The critical-size logic itself is unaffected -- it is self-consistent within 2-D, balancing two 2-D
+energies -- and the retracted kappa = 0.7 kT from the spectrum was doubly wrong, being both a bad fit
+and mislabelled in units.
+
+**Falsification for the run in flight, restated.** If N = 300 retains its lumen at the end and N = 150
+brackets the threshold consistently, kappa ~ 90 eps*sigma stands and the ordering is monotonic. If
+N = 300 unrolls where N = 200 did not, the ordering is non-monotonic, the continuum picture fails, and
+the +40.7 kT line tension goes with it.
