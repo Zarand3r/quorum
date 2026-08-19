@@ -795,3 +795,32 @@ falsified three times with no new mechanism: each failure has produced a new mec
 consecutive attempts at the same measurement failing for instrument reasons: kappa already tripped
 this and a reviewer prompt was written. Not stuck, but the margin is thin, and if the flat-ribbon test
 comes back null the honest next move is the reviewer rather than a seventh regime.
+
+---
+
+## 2026-08-19 tick — P_fuse launched: does contact suffice, or is there a fusion barrier?
+
+**Runs.** Emergence at N = 200 reached 145000 steps, largest still 178/200 -- arrest now spans 105000
+consecutive steps. `flat200` at 45000 of 100000, PLANTED, not read.
+
+**No screenshot sent.** The newest emergent frame is visually indistinguishable from the one sent last
+tick, because the system is frozen. A frozen system produces no new picture, and resending a
+near-duplicate every half hour is noise rather than progress. Recorded instead.
+
+**The gap this fills.** `D_M = D_1/N_beads` explains why aggregates never MEET. It says nothing about
+what happens when they do, and those are different blockers with different cures:
+
+    rarely meet, merge on contact   -> pure transport limit; fix with concentration or seeding
+    meet often, bounce apart        -> a FUSION BARRIER; more sampling cannot help and the
+                                       interaction form is implicated
+
+**Launched.** Two 60-lipid flat patches placed deliberately IN CONTACT (gap 0.0, 1.0, 2.5 sigma),
+branched, kT = 0.45, 5 seeds each, 20000 steps. Diffusion is removed from the question entirely, which
+is what makes this cheap and decisive -- and it is the diagnostic the reviewer asked for several ticks
+ago that I had not run.
+
+**Falsification, stated before the run.** P_fuse near 1 means transport is the whole story and the
+emergence failures are a sampling problem with a known scaling. P_fuse near 0 DESPITE starting in
+contact means there is a barrier to merging two bilayer patches, no amount of running or concentration
+will produce one aggregate, and the work should redirect at the interaction form rather than at
+sampling.

@@ -759,6 +759,13 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_pfuse",
+    srcs = ["_pfuse.py"],
+    main = "_pfuse.py",
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_kappa",
     srcs = ["_kappa.py"],
     main = "_kappa.py",
