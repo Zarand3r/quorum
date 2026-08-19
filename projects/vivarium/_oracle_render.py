@@ -35,9 +35,16 @@ if __name__ == "__main__":
     for t in range(steps + 1):
         if t % every == 0:
             x, _ = s.positions_species()
-            # map to our renderer's species convention: head, tail interleaved
-            sp = np.empty(len(x), dtype=np.int64)
+            # COORDINATE CONVENTION. bilipid wraps positions into [0, L); our renderer assumes them
+            # centred on zero and cuts a slab about z = 0. Passing them through unchanged put the slab
+            # in a corner of the box and rendered ~20 beads out of 600. Recentre on the aggregate's
+            # own centre of mass under the minimum image, then slab through THAT -- a slab through a
+            # fixed plane is meaningless for a structure free to sit anywhere in a periodic box.
+            c = x - L * np.round((x - x[0]) / L)          # unwrap relative to one bead
+            com = c.mean(axis=0)
+            c = c - com
+            sp = np.empty(len(c), dtype=np.int64)
             sp[0::2], sp[1::2] = HEAD, TAIL
-            shot(x, sp, L, f"oracle_beta{int(beta * 100)}_s{t:07d}", slab=2.0)
+            shot(c, sp, L, f"oracle_beta{int(beta * 100)}_s{t:07d}", slab=2.0)
             print(f"  t={t:>8}  rendered", flush=True)
         s.step()

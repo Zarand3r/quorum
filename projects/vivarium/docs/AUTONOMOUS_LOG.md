@@ -1668,3 +1668,36 @@ at beta = 0, and the remaining gap is morphological rather than about spontaneou
 **Note on what this costs.** It is a 400000-step run of the reference model purely to produce pictures.
 That is justified only because the entire conclusion of the last two ticks rests on an equivalence
 that has been argued from numbers and never checked by eye.
+
+---
+
+## 2026-08-19 tick — oracle render was broken by a coordinate convention; caught by looking
+
+**The beta = 0 render is void.** It showed roughly 20 beads out of 600. Cause: `bilipid` wraps
+positions into `[0, L)` while our renderer assumes coordinates centred on zero and cuts a slab about
+z = 0. Passing them through unchanged put the slab in a corner of the box, so it sampled a thin sliver
+of empty space rather than a cut through the aggregate.
+
+**Caught by looking.** No metric would have flagged it -- the run completed, every checkpoint reported
+"rendered", and the images were produced on schedule. Only the picture was obviously wrong. That is the
+same lesson as the too-thick slab that turned a hollow shell into a filled ball, and it is the fourth
+render-or-geometry convention error this session.
+
+**Fixed properly rather than patched.** The frame is now unwrapped relative to one bead under the
+minimum image, then recentred on the aggregate's own centre of mass, and the slab cut through THAT. A
+slab through a fixed plane is meaningless for a structure free to sit anywhere in a periodic box --
+which is true of every 3-D render in this project, not just this one.
+
+**Relaunched with a positive control.** beta = 0 (400000 steps) AND beta = 0.15 (800000 steps). The
+beta = 0.15 arm is the control that makes the comparison interpretable: it is known to produce vesicles
+by 625000 steps, so if our renderer shows clean hollow shells there and strands at beta = 0, the
+renderer is trustworthy and the beta = 0 morphology can be believed. Without it, a disappointing
+beta = 0 image could just be another broken view.
+
+**No new results, nothing concluded.** No emergent render since the dilute run finished, so no
+screenshot.
+
+**Falsification, restated.** beta = 0 rendering as branched bilayer strands like ours means the two
+models agree at beta = 0 and the vesicle target as specified is unmet by both. Rendering as large clean
+flat sheets means our model does not match the reference even at beta = 0, and the gap is
+morphological. The beta = 0.15 arm must show vesicles, or neither reading can be trusted.
