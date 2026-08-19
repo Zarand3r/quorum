@@ -1545,3 +1545,50 @@ different question.
 conclusion. This one tests it. Running the control that can demolish a result before building further
 on it is cheaper than discovering the same thing after a reviewer points it out -- and this project has
 already withdrawn roughly twenty results, most of them for exactly this reason.
+
+---
+
+## 2026-08-19 — RETRACTION: the coalescence conclusion is void. The oracle scores identically.
+
+**The control fired.** Identical protocol, two flat two-leaflet patches planted in contact, 15 seeds,
+gap 0:
+
+| | merged | largest frac (mean) |
+|---|---|---|
+| our model | **7/15** | 0.761 |
+| **oracle (`bilipid.py`)** | **7/15** | 0.910 |
+
+The oracle produces vesicles from a dispersed start (237 clusters -> 43, two vesicles by 875000 steps).
+It merges patches in direct contact at EXACTLY the rate ours does. On the binary criterion the entire
+coalescence argument was built on, the two models are indistinguishable.
+
+**RETRACTED IN FULL:**
+
+* "Two bilayer patches in contact do not reliably coalesce at ANY temperature this model can run" as
+  evidence of a defect -- it is evidence of nothing, since a working model behaves the same;
+* "the interaction form is at fault", stated as firm two ticks ago after the tail-length sweep;
+* the framing of `docs/HANDOFF_COALESCENCE.md`, whose central question presumed the defect it was
+  asking about.
+
+The measured numbers stand -- the coalescence curve, its maximum at kT = 0.45, the tail-length sweep --
+but they no longer mean what was claimed. They describe normal behaviour, not pathology.
+
+**What survives, and it is a different signal.** The mean largest fraction differs: **0.910 for the
+oracle against 0.761 for ours.** The binary threshold at 0.9 is too coarse to see it -- the oracle sits
+right at the threshold so noise pushes it either side, while ours sits well below. So there IS a gap,
+it is continuous rather than binary, and the criterion chosen hid it. That is worth pursuing where the
+binary claim is not.
+
+**Why this happened.** The criterion "merged means largest fraction > 0.9" was invented here without
+any reference to what a working model does. Two ticks were then spent concluding the interaction form
+was broken on the strength of it, and a reviewer prompt was written around the conclusion. The control
+that would test the assumption was available the whole time and cost one run.
+
+**Gaps 1.0 and 2.5 pending.** No conclusion until they land, but they cannot rescue the retracted
+claim -- the positive control alone settles it.
+
+**Falsification for what comes next.** If the oracle's mean largest fraction stays materially above
+ours at gaps 1.0 and 2.5 as well, the continuous measure is a real discriminator and the question
+becomes what produces that difference. If the two converge, then our aggregates behave like the
+oracle's in every respect measured here, and the failure to form vesicles must lie somewhere the
+coalescence protocol does not probe at all.
