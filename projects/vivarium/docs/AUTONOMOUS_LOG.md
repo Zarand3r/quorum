@@ -1889,3 +1889,36 @@ closure. That removes the objection rather than arguing against it.
 If largest stays frozen and shell CV keeps rising, the "not long enough" objection is closed and the
 negative result stands as stated: our force field reproduces the reference at beta = 0, and closure
 requires the spontaneous-curvature term excluded by design.
+
+---
+
+## 2026-08-19 — 3-D IMPLICIT RUN COMPLETE: dimensionality excluded
+
+**Endpoint, 400000 steps, 300 branched lipids, 3-D, implicit solvent, dispersed:**
+
+| | start | end |
+|---|---|---|
+| largest | 13/300 | **126/300**, frozen since step 20000 |
+| shell CV | 0.264 | **0.319** |
+
+Shell CV rose monotonically 0.182 -> 0.319 over the second half, against 0.045-0.057 for the
+reference's genuine vesicles. **The stated falsification is met**: shell CV did not fall toward 0.05
+and no lumen appeared, so 3-D does not help and dimensionality is excluded as the difference.
+
+**That leaves `beta` alone.** Our force field now matches the reference at beta = 0 on eight
+independent measurements: coalescence at three gaps, line tension, fluidity, cluster diffusion,
+spontaneous curling of a flat ribbon, 3-D morphology by render, aggregate fraction, and shell CV.
+
+**Limitation of the 1.2M continuation, stated plainly.** `_mixture` fixes both the build seed and the
+integrator seed, so the long run reproduces the 400000-step trajectory exactly -- it has already hit
+largest = 126 at step 60000, the same value. It therefore tests DURATION only, not seed variability.
+The conclusion rests on one trajectory per condition in 3-D, which is thinner than the 15-seed
+coalescence work and should be described that way. Multiple seeds at 1.2M steps each is not affordable
+here; if the duration test comes back negative, the honest statement is "one trajectory, run to twice
+the reference's time to closure", not "3-D cannot close".
+
+**No screenshot.** Structure unchanged from the frame already sent: largest frozen, same filled blobs.
+
+**Falsification for the 1.2M run, unchanged.** A lumen with shell CV falling toward 0.05 before 1.2M
+steps overturns the equivalence. Largest frozen with shell CV rising closes the duration objection for
+this trajectory.
