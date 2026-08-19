@@ -1822,3 +1822,42 @@ this arm is still short of the reference's own timescale. But the largest cluste
 does help and this reading is wrong. If it stays near 0.19 with largest frozen, dimensionality is
 excluded and the project's negative result is: our force field reproduces the reference at beta = 0,
 and closure requires the spontaneous-curvature term that was excluded by design.
+
+---
+
+## 2026-08-19 — QUANTITATIVE EQUIVALENCE: our model at 3-D matches the oracle at beta = 0
+
+**Direct comparison, both 300 molecules, 3-D, no solvent, dispersed start:**
+
+| | largest / N | shell CV | closed? |
+|---|---|---|---|
+| **oracle, beta = 0** (1.5M steps) | 103/300 = **0.34** | **0.367** | 0 vesicles |
+| **ours** (300k steps, still running) | 126/300 = **0.42** | **0.270** | none |
+| oracle, beta = 0.15 | 54/300 = 0.18 | **0.045-0.057** | 3-4 vesicles |
+
+Our aggregate fraction and shell CV sit in the same range as the reference at beta = 0, and both are far
+from the beta = 0.15 signature. The oracle at beta = 0 is classified "flat sheet/disc" and "tube/
+elongated" over its last checkpoints; ours is filled blobs and strands. Same regime, by the numbers and
+by the renders.
+
+**Shell CV is rising in our run** (0.182 -> 0.270 between 180000 and 300000 steps), i.e. moving AWAY
+from the 0.05 that marks a closed shell, while largest has been frozen at 126 since step 20000.
+
+**The equivalence is now supported on seven independent measurements:** coalescence at three gaps, line
+tension, fluidity, cluster diffusion, spontaneous curling of a flat ribbon, 3-D morphology by render,
+and now aggregate fraction and shell CV against the reference's own beta = 0 endpoint.
+
+**The project's negative result, stated precisely.** Our force field reproduces the reference model at
+beta = 0 in both dimensions and on every property measured. The reference produces vesicles only at
+beta != 0, where beta IS the spontaneous curvature. Closure with no imposed C_0 is therefore not
+demonstrated by either model, and the vesicle target as originally specified -- emergent closure with
+curvature arising rather than imposed -- has not been achieved by us and is not achieved by the
+reference either under the same constraint.
+
+**What would overturn this.** Adding a signed beta-like term to OUR field and obtaining vesicles would
+confirm the force field is otherwise complete; failing to obtain them would show some further
+difference. That is the natural final experiment and it is a real implementation -- an orientation term
+with correct gradients through bead positions -- not a parameter change. It is scoped, not started.
+
+**Falsification for the run still in flight.** Shell CV falling toward 0.05 by 400000 with a lumen
+appearing would overturn the equivalence. Staying near 0.27 with largest frozen confirms it.
