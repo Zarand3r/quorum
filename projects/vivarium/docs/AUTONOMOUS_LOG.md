@@ -344,3 +344,45 @@ model -- exactly the sort of thing that should have been computed before spendin
 kT = 0.45, then either lambda does not act as measured or the bending cost does not fall with size,
 and the continuum picture used to interpret every result in this line is wrong. If instead there is a
 threshold, its location gives kappa directly via `pi*kappa/R = 2*lambda`, without any spectrum.
+
+---
+
+## 2026-08-18 tick — kappa is NOT measurable by undulations; emergence run past the crash point
+
+**kappa on the doubled membrane: the gate fired, correctly this time.** 120 two-tail lipids, L = 60,
+24 bins, 6 modes, 399 samples, kT = 0.45.
+
+| mode | q | <\|u_q\|^2> | kappa |
+|---|---|---|---|
+| 1 | 0.105 | 0.282 | 491.9 kT |
+| 2 | 0.209 | 0.547 | 15.8 kT |
+| 3 | 0.314 | 0.830 | 2.1 kT |
+| 4 | 0.419 | 0.479 | 1.1 kT |
+| 5 | 0.524 | 0.772 | 0.3 kT |
+| 6 | 0.628 | 0.255 | 0.4 kT |
+
+Spread **1712x**, WORSE than the 16.7x at 60 lipids. The diagnosis is in the raw column, not the
+derived one: `<|u_q|^2>` is FLAT in q (0.25-0.83 across a sixfold range of q), where a genuine q^-4
+spectrum would fall by 6^4 = 1296x. A flat spectrum is white noise, i.e. the estimator is measuring
+its own sampling error rather than undulations -- with 120 lipids in 24 bins each bin mean carries the
+scatter of only 5 lipids.
+
+**Conclusion: kappa cannot be obtained from undulations at any system size affordable here, and
+doubling the membrane made it worse rather than better.** No kappa is reported. The earlier
+kappa = 0.7 kT stands retracted.
+
+**Emergence run cleared the crash point.** The `ring_assay` empty-slice fix works: the run passed
+18750 steps, where the previous one died, and at that checkpoint the largest aggregate reached
+**70/70** from a dispersed start (was 53/70). The render shows a percolating tail network with heads
+at the interfaces -- not a vesicle, not a clean bilayer, but the first fully connected EMERGENT
+aggregate in the fluid regime. Sent to the user.
+
+**Loop updated.** The tick prompt now requires showing the user an EMERGENT screenshot each cycle
+(self-assembly frames only, never a planted ring/arc/sphere) and keeping at least one emergence run in
+flight so there is always something emergent to show. Old job 12d0ce06 cancelled, replaced by c072ec5e.
+
+**Next, falsification unchanged.** The critical-size test: sweep planted arc length 70/120/200/300 at
+kT = 0.45. Edge saved is constant at 2*lambda, bending paid falls as pi*kappa/R, so a threshold must
+exist. If ALL sizes unroll, the continuum picture behind every interpretation in this line is wrong.
+That test also yields kappa via pi*kappa/R = 2*lambda at the threshold -- which now matters more,
+since the spectrum route is dead.
