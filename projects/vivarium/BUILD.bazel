@@ -752,6 +752,14 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
+    name = "_closure_energy",
+    srcs = ["_closure_energy.py"],
+    main = "_closure_energy.py",
+    data = [":configs"],
+    imports = ["."],
+    deps = [":vivarium"],
+)
+py_binary(
     name = "_regime",
     srcs = ["_regime.py"],
     main = "_regime.py",

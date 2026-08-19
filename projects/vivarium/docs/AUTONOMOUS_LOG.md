@@ -169,3 +169,36 @@ were.
 time, ~15x the longest previous 2-D assembly run) is classified HOLLOW, and the largest aggregate
 stays below 0.9 of the lipids, then fluidity alone does not produce emergence either, and the next
 question is nucleation rate rather than membrane phase.
+
+---
+
+## 2026-08-18 tick — third closure failure, and a crash that killed a run
+
+**Arc at the fluid regime (kT = 0.45, two tails), 100000 steps — PREDICTION FALSIFIED.**
+
+| step | largest | R_mid | shell CV | lumen water |
+|---|---|---|---|---|
+| 0 | 70/70 | 5.68 | 0.283 | 22 |
+| 50000 | 68/70 | 7.53 | 0.510 | 5 |
+| 100000 | 68/70 | 8.93 | 0.412 | 4 |
+
+The render at 100000 shows the arc UNROLLED into a broad shallow band with the ends far apart and one
+detached fragment. It did not close; it flattened. Lumen water 22 -> 4.
+
+Three closure attempts have now failed in three different regimes -- gel (kT 0.17, sits open), too hot
+(kT 0.55, tears in two), fluid-and-intact (kT 0.45, unrolls). **Fluidity is not sufficient for
+closure.** In every case the arc EXPANDED, which is what a membrane does when its preferred curvature
+is flatter than the planted one.
+
+**RUN LOST TO A LATENT CRASH.** The 150000-step assembly run died at 18750 steps:
+`ring_assay.classify` does `rh[outer].max()` where `outer = slice(i_core + 1, len(rr))`, which is
+EMPTY when the tail-density peak lands in the outermost radial bin -- routine for any aggregate that
+reaches rmax, i.e. dispersed or spanning configurations. Latent for the whole life of the assay
+because its three calibration gates all use COMPACT aggregates whose tail peak is never at the edge.
+Guarded, and gated by a new test that plants exactly that geometry.
+
+**Next, falsification stated first.** The 74 kT preference for the closed ring was measured at
+kT = 0.17 with FOUR-tail lipids -- in the gel, with a different lipid, one seed per arm. Re-measuring
+ring vs arc at (kT = 0.45, two tails) over 5 seeds. If E(ring) - E(arc) is not resolvably negative at
+2 sigma, then closure is NOT preferred for this lipid at this temperature, the three failures need no
+kinetic explanation, and the earlier 74 kT is a property of the gel phase rather than of the model.

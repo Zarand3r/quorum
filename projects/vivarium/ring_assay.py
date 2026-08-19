@@ -118,8 +118,12 @@ def classify(e, sel=None, min_frac=0.90, lumen_min=3.0):
 
     inner = slice(0, i_core)
     outer = slice(i_core + 1, len(rr))
-    have_inner_heads = rh[inner].max() > 0.25 * rh.max() if i_core > 0 else False
-    have_outer_heads = rh[outer].max() > 0.25 * rh.max()
+    # Both slices can be EMPTY: `inner` when the tail peak is in the first radial bin, `outer` when it
+    # is in the last. The second case crashed a 150000-step assembly run at 18750 steps with
+    # "zero-size array to reduction operation maximum", losing the run. It fires whenever the aggregate
+    # reaches rmax, which a dispersed or spanning configuration does routinely.
+    have_inner_heads = bool(i_core > 0 and rh[inner].size and rh[inner].max() > 0.25 * rh.max())
+    have_outer_heads = bool(rh[outer].size and rh[outer].max() > 0.25 * rh.max())
 
     # lumen: water inside the innermost head band, expressed against bulk water density
     bulk = np.median(rw[rw > 0]) if (rw > 0).any() else 0.0

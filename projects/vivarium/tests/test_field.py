@@ -158,3 +158,34 @@ def test_net_force_vanishes():
     f = Field(species, bonds, L)
     X = rng.uniform(-L / 2, L / 2, size=(40, 2))
     assert np.abs(f.forces(X).sum(axis=0)).max() < 1e-9
+
+
+def test_ring_assay_survives_a_core_peak_in_the_outermost_bin():
+    """classify() crashed on an empty radial slice, killing a 150000-step run at 18750 steps.
+
+    The `outer` slice is empty whenever the tail-density peak lands in the last radial bin, which any
+    aggregate reaching rmax produces -- routine for dispersed or spanning configurations. The bug was
+    latent for the whole life of the assay because its three calibration gates all use COMPACT
+    aggregates, whose tail peak is never at the edge.
+    """
+    import numpy as np
+
+    from ring_assay import classify
+
+    class View:
+        def __init__(self, X, mol, wi, L, pd):
+            self.X, self._mol, self._wi, self.L, self.pd = X, mol, wi, L, pd
+
+    rng = np.random.default_rng(0)
+    L = 20.0
+    # lipids pushed out to the box edge so the tail peak sits in the final bin
+    n_lip, nb = 12, 3
+    th = np.linspace(0, 2 * np.pi, n_lip, endpoint=False)
+    X = np.zeros((n_lip * nb + 40, 2))
+    mol = np.arange(n_lip * nb).reshape(n_lip, nb)
+    for b in range(nb):
+        X[mol[:, b]] = np.stack([np.cos(th), np.sin(th)], 1) * (0.5 * L - 0.2 - b * 0.4)
+    wi = np.arange(n_lip * nb, n_lip * nb + 40)
+    X[wi] = rng.uniform(-L / 2, L / 2, size=(40, 2))
+    verdict, _ = classify(View(X, mol, wi, L, 2))      # must not raise
+    assert verdict in {"HOLLOW", "filled", "other", "fragmented", "no tails"}
