@@ -1474,3 +1474,44 @@ applied to one filename rather than to the habit. Tags now carry every swept var
 **Falsification unchanged.** Merged fraction rising materially above 7/15 at longer tails means
 cohesion and mobility are separable and longer lipids are the route; staying near 7/15 at n_tail = 8
 means they cannot be decoupled by any lever available in this model.
+
+---
+
+## 2026-08-19 — TAIL LENGTH FAILS TOO: the last lever is exhausted
+
+**Branched tail length at fixed kT = 0.45, gap 0, 15 seeds each:**
+
+| n_tail | merged | largest frac (mean) |
+|---|---|---|
+| 4 | 7/15 (0.47) | 0.761 |
+| 6 | 8/15 (0.53) | 0.832 |
+| 8 | 5/15 (0.33) | 0.819 |
+
+**The stated falsification fired.** Merged fraction does not rise materially above 7/15; at n_tail = 8
+it is lower. With 15 seeds the binomial standard error is 0.13, so 7, 8 and 5 sit within about
+1.5 sigma of each other and the ordering is non-monotonic. The mean largest fraction improves slightly
+from 4 to 6 (0.761 -> 0.832) and then stops, which is a weak hint that longer tails hold marginally
+more together without ever crossing the threshold.
+
+**This exhausts the levers.** Cohesion and mobility are both set by `eps/kT`:
+
+* temperature, well depth, `chi` -- all move that single ratio, so they trade one against the other
+  by construction;
+* chain stiffness -- does not move it, and changed nothing;
+* coherent rescaling of the interaction vector -- leaves it invariant by definition;
+* **tail length** -- the one mechanism that raises binding per lipid at FIXED per-contact energy, and
+  the only one with a distinct mechanism. It does not help.
+
+**Standing conclusion, now firm rather than provisional.** In this interaction form, an aggregate
+cannot be made to hold together at a temperature where it can still rearrange. Curvature is
+spontaneous and the bilayer structure is clean (flat-ribbon endpoint), so the model bends membranes
+correctly; it cannot maintain one while it bends. No further parameter search is warranted, and
+`docs/HANDOFF_COALESCENCE.md` is finalised with this result in its "what has been tried" section,
+including the argument for why that list is exhaustive rather than merely long.
+
+**Dilute emergence unchanged** at largest 23/200 across 70000-155000 steps. No screenshot.
+
+**Falsification for anything further.** Any proposed fix must either (a) raise binding per lipid
+without raising per-contact energy by a mechanism other than tail length, or (b) show that reliable
+coalescence is not required for vesicle formation in the first place -- which is question 2 of the
+reviewer prompt and the one that could invalidate this entire line of reasoning.

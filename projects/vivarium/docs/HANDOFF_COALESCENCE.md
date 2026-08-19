@@ -68,7 +68,19 @@ diffusion **D_M = D_1/N_beads exactly** (alpha = 1, confirmed to 0.98 at M = 64)
 * concentration, from spanning-stripe-favoured to very dilute -- gives a network at one end and ~20
   micelles of <= 23 lipids at the other;
 * box geometry, stripe-affordable vs ring-affordable;
-* run length -- coarsening arrested at 178/200 for 150000 consecutive steps.
+* run length -- coarsening arrested at 178/200 for 150000 consecutive steps;
+* **branched tail length 4/6/8 at fixed kT** -- 7/15, 8/15, 5/15 merged (means 0.761, 0.832, 0.819).
+  This was the last lever with a mechanism distinct from the others: binding per lipid scales with
+  tail bead count while per-contact energy is unchanged, so it should raise cohesion WITHOUT moving
+  `eps/kT` toward the gel. It does not. At 15 seeds the binomial standard error is 0.13, so the three
+  values are within ~1.5 sigma and non-monotonic.
+
+**Why that list is exhaustive rather than merely long.** Cohesion and mobility are both set by
+`eps/kT`. Temperature, well depth and `chi` all move that single ratio, so they trade one for the
+other by construction. Chain stiffness does not move it and correspondingly changed nothing. Coherent
+rescaling leaves it invariant by definition. Tail length was the one mechanism that could raise
+binding per lipid at fixed per-contact energy, and it did not help. We are not aware of another lever
+in this interaction form.
 
 ## 5. The question
 
