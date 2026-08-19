@@ -1022,3 +1022,38 @@ the flat script. No new emergent render since the last tick.
 **Reporting note.** `E/lipid` is not comparable across runs with different solvent counts: it divides
 TOTAL energy, water-water included, by the lipid count. The finite flat run shows -178.74 against -26
 elsewhere purely because it carries 5072 waters. Not an anomaly, and not a quantity to compare.
+
+---
+
+## 2026-08-19 tick — THREE RUNS STALLED: 32 threads per process, load 100 on 32 cores
+
+**All three runs showed zero progress across a full tick.** Dilute emergence still at step 0, P_fuse
+still without rows, flat ribbon still at 5000. Three simultaneous stalls is an operational fault, not
+a coincidence.
+
+**Diagnosis.** Load average **100 on 32 CPUs**, from two compounding causes:
+
+1. **Zombie runs accumulated across ticks.** Still alive were a `_pfuse 20000` believed killed two
+   ticks ago, the VOID `flat` run at L = 44 (the spanning-ribbon configuration already superseded),
+   and the completed `em_big` whose arrest result was established 150000 steps earlier. I have been
+   launching each tick without retiring the previous one.
+2. **Each numpy process spawned 32 threads.** Confirmed by counting `/proc/<pid>/task`. The workload
+   is O(n) pair arithmetic over a neighbour list, which BLAS threading does not help, so four
+   concurrent runs put 128 threads on 32 cores and every run crawled.
+
+**Fixed.** All runs stopped; the two that matter relaunched SEQUENTIALLY with
+`OMP_NUM_THREADS=OPENBLAS_NUM_THREADS=MKL_NUM_THREADS=NUMEXPR_NUM_THREADS=1`. Load already falling
+(100 -> 55). Single-threaded should be FASTER here, not slower.
+
+**Nothing scientific concluded this tick.** The content is that a whole tick of compute was wasted and
+why. Recording it because "three runs in flight" was reported as progress in the previous two ticks
+when in fact nothing was advancing.
+
+**Standing falsifications unchanged.** P_fuse: gap 0 must merge (positive control); gaps 1.0 and 2.5
+near 1 mean transport is the whole story, near 0 mean a fusion barrier. Dilute emergence: many small
+separate aggregates with at least one closing confirms the reframing that the oracle succeeds through
+a POPULATION of small vesicles rather than one large aggregate.
+
+**Operational rules added:** retire the previous tick's runs before launching new ones; pin thread
+counts; run sequentially rather than in parallel; never use `bazel run` while a script is issuing its
+own.
