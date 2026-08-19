@@ -2132,3 +2132,63 @@ had been writing the same filenames.
 `hollow` near 0 with heads at the surface, they are vesicles and every "filled blob" verdict was an
 instrument artefact. If `hollow` stays near 1, they are genuinely solid and the negative stands -- this
 time on an instrument with power to say so.
+
+---
+
+## 2026-08-19d tick — critical-size test launched; derived chi restores head segregation
+
+**Running:** 23 processes. Three 3-D arms under the solvent-averaged chi (planted vesicle control,
+emergent seeds 0 and 1) plus the 20-run critical-size arc series below. Nothing is read as a trend yet;
+the 3-D arms had run 90 seconds at tick time and the planted arm is at step 0.
+
+### The derived chi works, visibly
+
+Emergent 3-D seed 1 at step 20000, first frame under the solvent-averaged chi: heads sit on the RIM of
+each tail core instead of scattered through it, which is what the earlier corrected render showed and
+what the derived chi was introduced to fix. Largest 48/300 (from 11), E/lipid -86.9, `hollow` 2.92.
+
+`hollow` above 1 means the core is DENSER than the shell region, i.e. a solid micelle -- correct for an
+aggregate this small. **Caveat recorded now rather than after it misleads:** at R_mid 1.54 the inner
+third spans about 1 sigma and holds very few beads, so `hollow` is noisy below a few hundred beads. It
+is a large-aggregate instrument, and small-cluster values should not be read as structure.
+
+### Today's blindness finding is bounded to 3-D
+
+In 2-D the same ratio argument gives a ring of thickness 5 at R_mid 8.90 a CV of 0.162 against a filled
+disc's 0.354 -- a gap of **0.192**, against 0.016 in 3-D. So shell CV retains discriminating power in
+2-D, and the 2-D ring-stability and critical-size conclusions do NOT fall with the 3-D ones.
+
+### The critical-size test, launched
+
+The standing plan: edge saved is 2*lambda and constant; bending paid is pi*kappa/R and falls with size;
+so a threshold ribbon length exists, and all three earlier failed closure attempts used ~70 lipids and
+may have sat below it.
+
+Sizes N = 70, 120, 200, 300 at kT = 0.45, arc0.75, explicit solvent phi = 0.55 (matching the conditions
+lambda = 18.31 eps was measured in, so no new baseline is needed), **5 seeds each, 20 runs**, 150 000
+steps.
+
+**Box sized from the UNROLLED contour, not the arc.** Measured R_mid per size, then L = max(5R, 1.3 x
+contour):
+
+| N | R_mid | contour if straightened | L used | water |
+|---|---|---|---|---|
+| 70 | 6.74 | 31.8 | 42 | ~1200 |
+| 120 | 9.88 | 46.6 | 61 | ~2600 |
+| 200 | 15.33 | 72.2 | 94 | ~6200 |
+| 300 | 22.49 | 106.0 | 138 | ~7800 |
+
+A first attempt used L = 115 for N = 300, where the straightened ribbon of 106 sigma nearly spans the
+box. That would have confined the OPEN state and biased the test toward closure -- the same failure as
+the flat ribbon that spanned L = 52. Caught before launch by computing the contour rather than the
+diameter.
+
+The N = 300 plant was rendered and checked: a clean C, heads on both faces, tails in the core, two
+exposed ends, box comfortably larger than the arc.
+
+**FALSIFICATION, STATED BEFORE ANY RESULT IS READ.** If closure fraction rises with N -- arcs staying
+open at 70 and closing at 200 or 300 -- a critical size exists, kappa follows from the threshold as
+kappa = 2*lambda*R*/pi, and the three earlier failures were undersized rather than physically blocked.
+If ALL four sizes unroll at 5 seeds each, the continuum picture behind every interpretation in this
+project is wrong, including the line-tension argument for closure. If all four CLOSE, the earlier
+70-lipid failures were caused by something other than size and the threshold framing is also wrong.
