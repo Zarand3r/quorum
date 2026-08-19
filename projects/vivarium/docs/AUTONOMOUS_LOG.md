@@ -730,3 +730,37 @@ closure is spontaneous once a single large aggregate exists, and everything now 
 which `D_M = D_1/N` says is the hard part. If it stays flat for 100000 steps, then closure needs a
 curvature nucleation event that thermal fluctuation does not supply on these timescales, and the
 81 kT of available edge energy is separated from the closed state by a barrier rather than a slope.
+
+---
+
+## 2026-08-19 tick — arrested coarsening now well sampled; flat-ribbon test in flight
+
+**Emergence at N = 200 (above the critical size) ran to 105000 steps.** Largest aggregate 178/200,
+UNCHANGED from step 40000 through 105000 -- sixty-five thousand steps without a single merge, shell CV
+flat near 0.40 throughout. The render shows a branched bilayer-strand network with two satellite
+aggregates that never join.
+
+This upgrades last tick's reading from a snapshot to a well-sampled result: **coarsening is arrested,
+not merely slow.** It is precisely what the measured `D_M = D_1 / N_beads` predicts -- a 178-lipid
+aggregate of 5-bead lipids has 890 beads and therefore ~1/890 of a monomer's mobility, so the final
+merges cannot happen on any affordable timescale.
+
+**Not read as a trend:** `flat200` is at 10000 of 100000 and is a PLANTED structure. Deferred to its
+endpoint.
+
+**Where the problem now sits, stated plainly.** Three sub-problems were conflated for most of this
+project and are now separated:
+
+1. *Nucleation into one aggregate* -- BLOCKED. Arrested at 178/200 for 65000 steps.
+2. *Closure of a curved aggregate* -- WORKS. Planted arcs at N >= 120 retain their lumen, shell CV
+   falling monotonically 0.353 / 0.312 / 0.218 / 0.194 for N = 120 / 150 / 200 / 300.
+3. *Closure of a FLAT aggregate* -- UNTESTED until now, and the subject of the run in flight.
+
+Only (1) and (3) remain. If (3) works, the whole problem reduces to (1), which is a known and
+quantified transport limit rather than a mystery about the force field.
+
+**Falsification for the flat-ribbon runs, restated before their endpoints.** A flat ribbon above the
+critical size that curls and closes means closure is spontaneous given one large aggregate. A flat
+ribbon that stays flat for 100000 steps means the 81 kT of available edge energy is separated from the
+closed state by a BARRIER, and curvature nucleation is a distinct missing step -- a different problem
+from anything attacked so far.
