@@ -30,6 +30,7 @@ import numpy as np
 
 from _mixture import build, geometry, largest_cluster, shot
 from field import Field
+from integrate import Inertial
 from ring_assay import classify
 
 
@@ -52,9 +53,9 @@ if __name__ == "__main__":
     X, species, bonds, mols, wi, chains = build(0, n_lip, n_water, L, d, plant="random")
     mol = np.array([m for m in mols])
     f = Field(species, bonds, L)
-    gamma, dt = 1.0, 2e-4
-    rng = np.random.default_rng(1)
-    amp = np.sqrt(2.0 * kT * dt / gamma)
+    # inertial at the validated dt = 8e-3: same equilibrium ensemble, 28x more reduced time per minute
+    dt = 8e-3
+    ig = Inertial(f, kT, dt, seed=1)
 
     print(f"EMERGENCE 2-D: {n_lip} lipids (1 head + {n_tail} tails) + {n_water} water, L={L}, "
           f"kT={kT}, dispersed start, {steps} steps", flush=True)
@@ -66,8 +67,7 @@ if __name__ == "__main__":
     hollow = 0
     checks = 0
     for t in range(steps + 1):
-        X += (f.forces(X) / gamma) * dt + amp * rng.normal(size=X.shape)
-        X -= L * np.round(X / L)
+        X = ig.step(X)
         if t % every == 0:
             v, dd = classify(View(X, mol, wi, L, 2))
             g = geometry(X, mols, wi, chains, L, d)

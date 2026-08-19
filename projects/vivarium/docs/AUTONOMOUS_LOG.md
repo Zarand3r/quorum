@@ -141,3 +141,31 @@ can produce. Verdicts from the first pass are withdrawn.
 cell -- 100000 inertial steps. Prediction: it closes, or at least the ends approach rather than tear.
 Falsification: if it tears like the kT = 0.55 four-tail arc (largest 70 -> 38) or sits open like the
 kT = 0.17 one, then fluidity is not sufficient for closure and the blocker is elsewhere.
+
+---
+
+## 2026-08-18 tick — two runs in flight in the fluid regime
+
+**Verified the planted initial condition by render.** `mix2d_arc0.75_N70_s0000000.png` shows a clean
+three-quarter bilayer ring: heads on both the outer and inner surfaces, tails between. The plant is
+what it claims to be, which matters because the arc result depends on starting from a real bilayer.
+
+**Running, both at the one qualifying regime (kT = 0.45, two tails):**
+
+1. Planted arc0.75, 70 lipids, L = 40, 100000 inertial steps. Falsification stated last entry: if it
+   tears like the kT = 0.55 four-tail arc (70 -> 38) or sits open like the kT = 0.17 one, fluidity is
+   not sufficient for closure. At 40000 steps R_mid has gone 5.68 -> 7.96 and shell CV 0.283 -> 0.455,
+   i.e. expanding and losing shell character, with largest fluctuating 47-70. NOT read as a trend --
+   this is a planted structure and early checkpoints mostly show the plant relaxing.
+
+2. Self-assembly from dispersed, 70 lipids, L = 28, 150000 inertial steps. This is the actual target
+   rather than a diagnostic. At 15000 steps: largest 53/70, fragmented, no ring.
+
+**Fixed.** `_emerge2d` still carried the hand-rolled overdamped loop and would have run 28x slower
+than necessary. Switched to the validated inertial integrator, as `_mixture` and `_sizing3d` already
+were.
+
+**Falsification for the assembly run, stated now.** If no checkpoint in 150000 steps (1200 reduced
+time, ~15x the longest previous 2-D assembly run) is classified HOLLOW, and the largest aggregate
+stays below 0.9 of the lipids, then fluidity alone does not produce emergence either, and the next
+question is nucleation rate rather than membrane phase.
