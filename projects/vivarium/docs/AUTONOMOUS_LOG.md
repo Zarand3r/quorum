@@ -1283,3 +1283,39 @@ of 120. PLANTED, not read until the endpoint. Verified it is a single run with n
 **Falsification for the runs in flight, unchanged.** kT = 0.55 and 0.70 reaching ~15/15 locates a
 merging window; staying below ~10/15 means two patches in contact do not reliably coalesce at any
 temperature this model can run.
+
+---
+
+## 2026-08-19 tick — FALSIFICATION FIRED: patches do not reliably merge at ANY temperature
+
+**Complete coalescence curve**, two 30-lipid patches in direct contact, 15 seeds each, 15000 steps:
+
+| kT | 0.25 | 0.30 | 0.35 | **0.45** | 0.55 | 0.70 |
+|---|---|---|---|---|---|---|
+| merged | 0/15 | 1/15 | 3/15 | **7/15** | 5/15 | 4/15 |
+| largest frac | 0.559 | 0.656 | 0.651 | 0.761 | 0.716 | 0.704 |
+
+**The curve has a MAXIMUM at kT = 0.45 and the maximum is 47%.** Below it the gel cannot rearrange;
+above it thermal disruption dominates. The stated falsification -- "staying below ~10/15 even at 0.70
+means two bilayer patches in contact do not reliably coalesce at any temperature this model can run" --
+is met at both 0.55 (5/15) and 0.70 (4/15).
+
+**This is a statement about the INTERACTION FORM, not about sampling, geometry or protocol.** It is
+not fixable by longer runs, bigger boxes, different concentrations, or the branched topology, all of
+which have been tried. Two patches placed in contact -- with diffusion removed from the question
+entirely -- fail to become one aggregate more than half the time at the best temperature available.
+
+**Consequence for the vesicle target.** A 2-D ring needs >= 120 lipids in ONE aggregate (planted-arc
+critical size). Dispersed runs produce aggregates of 10-36 lipids. Reaching 120 requires many merge
+events, each succeeding at most 47% and typically 13-20% at realistic separations. The 2-D vesicle is
+therefore not reachable in this model as it stands, and that now rests on a measured curve rather than
+on repeated failures to observe one.
+
+**Stuck criterion (b) has fired** -- the same target has failed across gel, hot, fluid,
+stripe-favoured, ring-favourable and dilute regimes, and the mechanism proposed each time has now been
+measured and found insufficient. Per the standing instruction, a reviewer prompt is warranted rather
+than a seventh regime.
+
+**Flat ribbon at 35000 of 100000**, PLANTED, not read: largest 89/120 with lumen falling 0.56 -> 0.30.
+It is the one experiment still capable of changing the picture, so it runs to its endpoint before the
+reviewer prompt is finalised.
