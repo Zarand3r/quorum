@@ -888,3 +888,32 @@ and makes that class of error visible at once.
     sampling cannot fix.
   * flat ribbon curls and closes -> closure is spontaneous given one aggregate; still flat at 100000
     -> the 81 kT of edge energy sits behind a barrier and curvature nucleation is a distinct step.
+
+---
+
+## 2026-08-19 tick — P_fuse was silently killed; rerun outside bazel
+
+**P_fuse did not run.** The relaunched job printed its header at 04:11 and then died with no traceback
+and no rows, and no process remained an hour later. Cause: it was launched with `bazel run` while the
+`flat.sh` script was mid-sequence issuing its own `bazel run` invocations, and the two contended for
+the bazel server. The run was lost silently -- no error, no output, just an absent process.
+
+That is the same class of loss as the `ring_assay` crash that killed a 150000-step run: a long job
+disappearing without an error visible in the place I look. Relaunched directly from
+`bazel-bin/projects/vivarium/_pfuse`, which needs no server and cannot contend.
+
+**Note for future ticks:** never issue `bazel run` while another script is doing the same. Use the
+built binary with `BUILD_WORKSPACE_DIRECTORY` set, as the render path requires.
+
+**Other runs.** `flat200` at 80000 of 100000, PLANTED, not read -- close to its endpoint, which is the
+result this whole line now waits on. `flat120` not started.
+
+**No screenshot.** The emergent system remains frozen at 178/200 and its newest frame is
+indistinguishable from the one already sent.
+
+**Nothing concluded this tick.** The only content is the recovery of a lost run and the reason it was
+lost.
+
+**Falsifications outstanding, unchanged.** P_fuse near 1 -> transport is the whole story; near 0
+despite contact -> a fusion barrier sampling cannot fix. Flat ribbon curls -> closure spontaneous
+given one aggregate; still flat at 100000 -> the 81 kT sits behind a barrier.
