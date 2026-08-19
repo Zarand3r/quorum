@@ -97,7 +97,12 @@ if __name__ == "__main__":
     # patch 31.5 wide, two spanning 63 + gap in a 40 box, so they wrapped through the periodic
     # boundary and overlapped. That would have produced a meaningless P_fuse rather than an obviously
     # broken one, which is the dangerous kind.
-    kT, n_tail, n_each, L, phi = 0.45, 4, 30, 40.0, 0.55
+    # kT is now swept: the gap-0 arm is a PATCH STABILITY test, not just a fusion control. At 15
+    # seeds only 7/15 joined patches stayed joined at kT = 0.45, so a bilayer patch splits more often
+    # than not at the temperature chosen for fluidity. Too cold is a gel that cannot rearrange; too
+    # warm is a patch that falls apart. This maps the window between.
+    kT = float(sys.argv[3]) if len(sys.argv) > 3 else 0.45
+    n_tail, n_each, L, phi = 4, 30, 40.0, 0.55
     width = (n_each // 2) * 1.05
     assert 2 * width + 2.5 + 4.0 < L, (
         f"two patches of width {width:.1f} plus the largest gap do not fit in L={L}")
@@ -106,7 +111,7 @@ if __name__ == "__main__":
     print(f"P_fuse: two {n_each}-lipid patches placed IN CONTACT, branched, kT={kT}, "
           f"{n_seed} seeds, {steps} steps")
     print(f"{'gap':>6}{'merged':>9}{'largest frac (mean)':>22}   verdict", flush=True)
-    for gap in (0.0, 1.0, 2.5):
+    for gap in ([0.0] if len(sys.argv) > 3 else [0.0, 1.0, 2.5]):
         fracs = []
         for sd in range(n_seed):
             X, species, bonds, mol = two_patches(n_each, n_tail, L, gap, n_water, seed=sd)

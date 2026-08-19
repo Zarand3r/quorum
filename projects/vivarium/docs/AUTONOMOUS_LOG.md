@@ -1099,3 +1099,42 @@ dispersing; a frame of near-random lipids is not progress.
 a joined patch is real and the aggregate-size problem is one of stability, not assembly. If gaps 1.0
 and 2.5 stay below ~0.5 with tighter error bars, there is a genuine fusion barrier and more sampling
 will not deliver one aggregate.
+
+---
+
+## 2026-08-19 tick — the positive control FAILS: joined patches split at kT = 0.45
+
+**15-seed rerun overturns the 5-seed reading.** Gap 0.0, where the two patches start geometrically
+JOINED (confirmed by the initial-condition render as one continuous slab):
+
+| seeds | merged | fraction |
+|---|---|---|
+| 5 | 4/5 | 0.80 |
+| **15** | **7/15** | **0.47** |
+
+The 5-seed value was an over-estimate by a factor of nearly two, which is what a binomial standard
+error of 0.2 at n = 5 permits. This is the reason the rerun was stated as mandatory before drawing any
+conclusion, and it is the second time this session that a small-n difference has evaporated.
+
+**A joined bilayer patch splits more often than not at kT = 0.45.** That is not a fusion barrier and
+not a transport limit -- it is patch INSTABILITY. Two patches placed in contact end up apart because
+one aggregate spontaneously becomes two.
+
+**This collides with why kT = 0.45 was chosen.** It was picked as the fluid regime: at kT = 0.17 the
+membrane is a gel (neighbours kept 0.80, MSD/a 0.29) that cannot rearrange, and 0.45 was the lowest
+temperature measured to be fluid AND intact on a spanning ribbon. But a SPANNING ribbon cannot split --
+it is periodic. The stability test that mattered was never run on a FINITE patch, which is the object
+emergence actually produces.
+
+**Reinterpretation of the emergence record.** Runs ending as several pieces (178/200 with satellites,
+the dilute runs, the 45-lipid slab) were attributed to slow diffusion via `D_M = D_1/N`. At least part
+of that is now better explained by patches splitting as fast as they merge, giving a steady state of
+several aggregates rather than an arrested approach to one.
+
+**Launched: patch stability against temperature**, gap 0 only, 15 seeds each, kT = 0.25 / 0.30 / 0.35 /
+0.45.
+
+**Falsification, stated before the run.** If the merged fraction rises toward 15/15 as kT falls, there
+is a window where patches are both mobile and stable and it sits below 0.45. If it stays near 0.5 at
+every temperature, patch splitting is not thermal and the interaction form is implicated -- the
+aggregate would be unstable at any temperature this model can run.
