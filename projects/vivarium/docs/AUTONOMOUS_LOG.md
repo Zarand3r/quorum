@@ -420,3 +420,37 @@ linear gives micelles and networks, the tail-length sweeps were searching a para
 have worked.
 
 **Running.** 150000 steps, 70 branched lipids (1 head + 2x2 tails), dispersed start, kT = 0.45.
+
+---
+
+## 2026-08-19 tick — my own branched-vs-linear comparison was confounded
+
+**Both emergence runs finished, and neither is usable as a comparison.**
+
+| run | topology | n_tail | beads/lipid | HOLLOW | end state |
+|---|---|---|---|---|---|
+| em45b | linear | 2 | 3 | 1/41 (2%) | other, 70/70 |
+| embr | branched | 4 | 5 | 12/41 (29%) | filled, 70/70 |
+
+**Confounded twice over.** The two runs differ in BEAD COUNT (3 vs 5 per lipid) as well as topology,
+so the 2% against 29% cannot be attributed to branching -- which is precisely the matched-bead-count
+control I designed one entry earlier and then failed to run. And both predate the spanning-network
+fix, so every HOLLOW verdict in both is suspect by construction.
+
+Recording this as an error of mine rather than a result: having written down that the clean comparison
+is "1 head + 2 chains of 2 against 1 head + 4 linear, IDENTICAL bead count", I then launched
+`n_tail=2 linear` against `n_tail=4 branched`.
+
+**Relaunched properly.** Both arms at n_tail = 4 (5 beads per lipid), 70 lipids, L = 28, kT = 0.45,
+150000 steps, dispersed start, with the fixed assay that rejects spanning aggregates before any radial
+reasoning. Branched first, then linear, sequentially so they do not contend for CPU -- which is also
+what made the performance gate flake earlier this session.
+
+**Falsification, stated before the run.** If branched and linear at matched bead count give the same
+HOLLOW fraction and the same final morphology, the packing-parameter argument does not apply to this
+force field and the detergent framing is wrong. If branched gives materially more closed structures,
+then the tail-length sweeps were searching a parameter that mathematically could not have worked, and
+the topology is the lever.
+
+**No new emergent render this tick.** The newest is the branched endpoint already sent last cycle;
+not resending it, and not substituting a planted frame.
