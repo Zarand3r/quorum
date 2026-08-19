@@ -241,3 +241,28 @@ cheaper than ring-versus-arc.
 **Falsification, stated before the run.** lambda must be POSITIVE and resolvable at 2 sigma, because
 an exposed edge puts tails against water. If it is not, the model does not penalise an edge at all,
 and every closure failure is explained directly -- there would be nothing to gain by closing.
+
+---
+
+## 2026-08-18 tick — line tension in progress, spanning control measured
+
+**Running.** lambda = [E(finite flat ribbon) - E(spanning flat ribbon)] / 2, 60 two-tail lipids,
+L = 30, kT = 0.45, 5 seeds, 20000 steps each arm.
+
+Spanning arm complete: **E = -2115.13 +- 6.04**, i.e. 0.3% precision on an absolute energy of ~2115.
+That matters for feasibility: if lambda is of order 10 eps per end the difference between arms is
+~20 eps against a combined error near 8.5, which is resolvable at about 2.4 sigma. If lambda is much
+smaller than that, this estimator will be blind too and the result must be reported as blind rather
+than as zero -- the same failure the ring-versus-arc run made, and the reason its -0 +- 81 kT was
+recorded as uninformative rather than as evidence against closure.
+
+Finite arm still running. Nothing concluded yet.
+
+**No new render this tick.** The energy runs do not render; the newest image remains the arc endpoint
+already examined (`mix2d_arc0.75_N70_s0100000.png`, the unrolled band). Noted rather than skipped,
+because "looked at the render" should mean an actual look, not a box ticked.
+
+**Standing falsification, unchanged.** lambda must be positive and resolvable at 2 sigma. If it is
+not resolvable, that is a statement about the instrument. If it is resolvable and NEGATIVE or zero,
+the model does not penalise an exposed edge and all three closure failures are explained without any
+kinetic argument.
