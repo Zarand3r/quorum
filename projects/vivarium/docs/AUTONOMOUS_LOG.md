@@ -917,3 +917,31 @@ lost.
 **Falsifications outstanding, unchanged.** P_fuse near 1 -> transport is the whole story; near 0
 despite contact -> a fusion barrier sampling cannot fix. Flat ribbon curls -> closure spontaneous
 given one aggregate; still flat at 100000 -> the 81 kT sits behind a barrier.
+
+---
+
+## 2026-08-19 tick — initial-condition render pays off immediately; P_fuse running
+
+**The render_initial fix worked as intended on its first use.** `init_pfuse_gap0.png` shows a proper
+two-leaflet slab: heads on both faces, tails between, solvent around, and the two patches seamlessly
+joined at gap = 0. Geometry confirmed by eye in seconds, where the previous version's overlap took an
+arithmetic check after an hour of wasted run.
+
+It also exposed something about the design: at gap = 0 the two patches are INDISTINGUISHABLE from a
+single slab, so that arm is a trivial positive control (it must merge, and if it does not the harness
+is broken). The informative arms are gap = 1.0 and 2.5.
+
+**Runs.** P_fuse running from the built binary, no rows yet. `flat200` at 85000 of 100000, PLANTED,
+not read. Emergence at N = 200 reached 190000 with largest still 178/200 -- arrest now spans 150000
+consecutive steps.
+
+**No screenshot.** The 190000 emergent frame differs from the 130000 one already sent only in noise:
+largest identical at 178/200, shell CV 0.407 against 0.418, lumen water 207 against 202. Sending it
+would imply change where there is none.
+
+**Nothing concluded.** Both decisive results are still pending.
+
+**Falsifications outstanding, unchanged.** P_fuse: gap 0 must merge or the harness is broken; gaps 1.0
+and 2.5 near 1 mean transport is the whole story, near 0 mean a fusion barrier. Flat ribbon: curls
+means closure is spontaneous given one aggregate, still flat at 100000 means the 81 kT sits behind a
+barrier.
