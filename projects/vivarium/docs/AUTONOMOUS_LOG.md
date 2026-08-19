@@ -2192,3 +2192,69 @@ kappa = 2*lambda*R*/pi, and the three earlier failures were undersized rather th
 If ALL four sizes unroll at 5 seeds each, the continuum picture behind every interpretation in this
 project is wrong, including the line-tension argument for closure. If all four CLOSE, the earlier
 70-lipid failures were caused by something other than size and the threshold framing is also wrong.
+
+---
+
+## 2026-08-19e tick — the arc test was not too expensive; the machine was oversubscribed
+
+### The measurement that changed the plan
+
+The explicit-solvent arc series looked unaffordable: after ~37 minutes the N = 120/200/300 arms were
+still at step 0, and a timing probe gave about 7 steps/s, implying 14-24 hours per run. I killed those
+arms on that basis.
+
+Then I profiled the same configuration **with nothing else running**:
+
+    N = 300 arc, implicit solvent, 1500 beads, L = 138    100.5 steps/s
+
+A **14x** discrepancy, entirely CPU contention: 23 concurrent numpy processes on 32 cores. The design
+was affordable all along, and I nearly abandoned a valid experiment because of a number produced by my
+own scheduling. Lesson recorded as a standing rule: **cap concurrency at 8 and never time anything
+while a batch is running.** This is the second scheduling self-injury in this project, after the
+32-threads-per-process oversubscription that stalled three runs for a full tick.
+
+**What is NOT established:** the explicit-solvent cost. Both probes ran under contention, so the honest
+statement is that explicit N = 300 carries 14 800 beads against implicit's 1500 and is roughly an order
+of magnitude dearer, with no clean measurement of the constant.
+
+### Profile, for the record
+
+At 100 steps of N = 300 implicit: `_rebuild` 0.249 s, `numpy.ufunc.at` 0.225 s, `content` 0.146 s,
+`_well` 0.088 s, `_pairs` 0.082 s. **`np.add.at` is 22% of runtime** and is the known-slow scatter-add;
+`np.bincount` per axis is the standard replacement and is the next performance item. Not done this tick
+because 26 runs now depend on the hot path and it must not change under them.
+
+The rebuild rate (50 rebuilds per 100 steps) was measured 20 steps after a planted start, i.e. during
+the overlap transient, so it says nothing about steady state and no conclusion is drawn from it.
+
+### 3-D emergence, both seeds
+
+| seed | step | largest | E/lipid | hollow |
+|---|---|---|---|---|
+| 0 | 20000 | 60/300 | -119.0 | 2.61 |
+| 1 | 20000 | 48/300 | -86.9 | 2.92 |
+
+Heads on the rim of each tail core in both, so the derived chi's restoration of head segregation
+**replicates across seeds**. `hollow` above 1 means solid cores: these are micelles. Coarsening to a
+single aggregate is untouched. The planted 3-D control is still at step 0 and is not read.
+
+### Relaunched: the critical-size test in implicit solvent
+
+N = 70/120/200/300, arc0.75, kT = 0.45, **5 seeds each**, 150 000 steps, implicit solvent with the
+solvent-averaged chi, concurrency capped at 8.
+
+**Plus six planted-RING controls** (N = 70 and 300, 3 seeds each). Implicit solvent with the derived chi
+is a NEW condition, and "arcs do not close" is uninterpretable if the closed state is not even stable
+there. This is the control the earlier explicit-solvent series did not need and this one does.
+
+**Caveat stated now, not after the fact:** lambda = 18.31 eps was measured in EXPLICIT solvent. A
+threshold radius from this series converts to kappa only with lambda measured in the same condition,
+which has not been done. The falsification below does not depend on lambda -- it asks only whether
+closure fraction varies with size -- but any kappa quoted from it would be unearned until lambda is
+re-measured at phi = 0.
+
+**FALSIFICATION, STATED BEFORE ANY RESULT IS READ.** If closure fraction rises with N across 5 seeds, a
+critical size exists and the three earlier ~70-lipid failures were undersized. If all four sizes unroll,
+the continuum picture behind every interpretation in this project is wrong. If all four close, size was
+never the variable. And if the planted RING controls fail to hold at either size, the whole series is
+void and the result is about implicit solvent rather than about size.
