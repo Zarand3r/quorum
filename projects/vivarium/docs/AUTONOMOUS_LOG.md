@@ -664,3 +664,36 @@ sufficient either, and the blocker is nucleation -- reaching a single large aggr
 than the stability of the closed state. If it produces a closed structure, it will be the first
 emergent one in this project and must be confirmed by render before any claim: five false HOLLOW
 verdicts precede it.
+
+---
+
+## 2026-08-19 tick — first EMERGENT ring-like morphology, above the critical size
+
+**N = 150 arc completes the threshold sweep.** shell CV 0.312, lumen ratio 1.17, 92 waters, retained.
+Slots between N = 120 (0.353) and N = 200 (0.218), tightening the monotonic trend. Full series:
+
+| N | 70 | 120 | 150 | 200 | 300 |
+|---|---|---|---|---|---|
+| shell CV | 0.370 | 0.353 | 0.312 | 0.218 | 0.194 |
+| lumen | **lost** | kept | kept | kept | kept |
+
+**Emergence ABOVE the critical size, in progress.** N = 200 branched, L = 52, kT = 0.45, dispersed,
+at 45000 of 200000 steps: largest 178/200, verdict `fragmented` (0.89 connectivity, below the assay's
+0.9 gate).
+
+The render shows a ring-like closed loop of tails with heads on both faces enclosing a dark region,
+plus several separate aggregates elsewhere. **This is the first emergent ring-like morphology in this
+project.** It is NOT claimed as closure: the run is a quarter done, the assay says fragmented, and five
+false HOLLOW verdicts precede it. Recorded here so that if it does not survive to the endpoint, the
+early optimism is on the record alongside the outcome.
+
+What makes it worth noting rather than dismissing: it appeared in the FIRST emergence run ever placed
+above the size at which a planted arc stops unrolling. Every previous emergence run used N = 45-70,
+below that threshold, where even a hand-built arc flattens.
+
+**Falsification for the endpoint, stated now.** If at 200000 steps the aggregate is a single connected
+object (>= 0.9) and `classify` returns HOLLOW with the render showing heads lining an enclosed lumen,
+that is an emergent vesicle. If it returns to a slab or the loop dissolves, then being above the
+critical size is necessary but not sufficient, and the blocker is nucleation into ONE aggregate rather
+than the stability of a closed state -- note the run currently has several separate aggregates, which
+is exactly that failure mode.
