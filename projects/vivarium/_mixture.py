@@ -70,7 +70,32 @@ def shot(X, species, L, tag, slab=1.2):
 C_D = {2: np.pi, 3: 4.0 * np.pi / 3.0}
 
 
-def build(n_short, n_long, n_water, L, d, tails=(2, 4), seed=0, plant="random"):
+def chain_bonds(idx, n_tail, branched):
+    """Bond list for one molecule.
+
+    LINEAR is a single chain: head-t1-t2-... A single-chain amphiphile is a DETERGENT. Its packing
+    parameter P = v/(a0*l) has both v and l proportional to the tail bead count, so P is INDEPENDENT
+    of tail length -- which is why lengthening the tail from 2 to 4 to 6 never moved the phase. Single
+    chains sit near P ~ 1/3, the micelle band, and micelles are what this project keeps producing.
+
+    BRANCHED is two chains from one head, which is what a real phospholipid is. It doubles v at fixed
+    l and puts P in the 1/2 to 1 bilayer band. `polar_pack.py` already carried this distinction
+    ("two tails from one head (a real lipid) vs a linear chain"); the rewrite to `field.py` dropped it.
+    """
+    if not branched or n_tail < 2:
+        return [[idx[b], idx[b + 1]] for b in range(len(idx) - 1)]
+    half = n_tail // 2
+    out, head = [], idx[0]
+    for c in range(2):
+        prev = head
+        for k in range(half):
+            nxt = idx[1 + c * half + k]
+            out.append([prev, nxt])
+            prev = nxt
+    return out
+
+
+def build(n_short, n_long, n_water, L, d, tails=(2, 4), seed=0, plant="random", branched=False):
     """`random` disperses everything; `ring` plants a curved two-leaflet bilayer.
 
     The ring start exists because partitioning and nucleation are different questions. From a random
@@ -95,10 +120,22 @@ def build(n_short, n_long, n_water, L, d, tails=(2, 4), seed=0, plant="random"):
         c = rng.uniform(-L / 2, L / 2, size=d)
         u = rng.normal(size=d)
         u /= np.linalg.norm(u)
-        for b in range(1 + t):
-            X[idx[b]] = c + u * b
+        if branched and t >= 2:
+            half = t // 2
+            perp = np.array([-u[1], u[0]] + [0.0] * (d - 2))[:d]
+            X[idx[0]] = c
+            for ch in range(2):
+                sgn = 1.0 if ch == 0 else -1.0
+                # NOT `k`: that is the outer bead counter, and shadowing it left the water index
+                # range 344 beads short. It crashed here; with a different bead count it would have
+                # silently mislabelled species instead.
+                for j in range(half):
+                    X[idx[1 + ch * half + j]] = c + u * (j + 1) + perp * sgn * 0.45
+        else:
+            for b in range(1 + t):
+                X[idx[b]] = c + u * b
         mols.append(idx)
-        bonds += [[idx[b], idx[b + 1]] for b in range(t)]
+        bonds += chain_bonds(idx, t, branched)
         k += 1 + t
     if plant == "ring":
         _plant_ring(X, mols, np.array(chains), d)

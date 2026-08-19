@@ -45,19 +45,22 @@ if __name__ == "__main__":
     L = float(sys.argv[3]) if len(sys.argv) > 3 else 28.0
     kT = float(sys.argv[4]) if len(sys.argv) > 4 else 0.35
     n_tail = int(sys.argv[5]) if len(sys.argv) > 5 else 2
+    branched = (sys.argv[6] if len(sys.argv) > 6 else "linear") == "branched"
     phi, d = 0.55, 2
 
     n_water = int(round(phi * L ** 2 / (np.pi * 0.25))) - (1 + n_tail) * n_lip
     if n_water < 0:
         raise ValueError(f"L={L} too small for {n_lip} lipids at packing fraction {phi}")
-    X, species, bonds, mols, wi, chains = build(0, n_lip, n_water, L, d, plant="random")
+    X, species, bonds, mols, wi, chains = build(0, n_lip, n_water, L, d, plant="random",
+                                                branched=branched)
     mol = np.array([m for m in mols])
     f = Field(species, bonds, L)
     # inertial at the validated dt = 8e-3: same equilibrium ensemble, 28x more reduced time per minute
     dt = 8e-3
     ig = Inertial(f, kT, dt, seed=1)
 
-    print(f"EMERGENCE 2-D: {n_lip} lipids (1 head + {n_tail} tails) + {n_water} water, L={L}, "
+    print(f"EMERGENCE 2-D: {n_lip} {'BRANCHED' if branched else 'linear'} lipids "
+          f"(1 head + {n_tail} tails) + {n_water} water, L={L}, "
           f"kT={kT}, dispersed start, {steps} steps", flush=True)
     print(f"a spanning stripe costs about {2 * L:.0f} lipids, so a ring is affordable "
           f"{'BELOW' if n_lip < 2 * L else 'ABOVE -- stripe wins'} this count", flush=True)
@@ -75,5 +78,5 @@ if __name__ == "__main__":
             hollow += (v == "HOLLOW")
             print(f"{t:>8}{f.energy(X) / n_lip:>9.2f}{largest_cluster(X, mols, L):>9}"
                   f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['lumen_w']:>8}   {v}", flush=True)
-            shot(X, species, L, f"em2d_N{n_lip}_L{int(L)}_s{t:07d}")
+            shot(X, species, L, f"em2d_{'br' if branched else 'lin'}_N{n_lip}_s{t:07d}")
     print(f"\nHOLLOW at {hollow} of {checks} checkpoints ({100.0 * hollow / checks:.0f}%)", flush=True)
