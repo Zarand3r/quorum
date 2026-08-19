@@ -1794,3 +1794,31 @@ where they mostly show the plant.
 **No conclusion yet. Falsification unchanged:** vesicles here mean 2-D was the blocker and the model is
 otherwise complete; flat sheets and compact blobs mean dimensionality is not the difference and `beta`
 is the only remaining candidate.
+
+---
+
+## 2026-08-19 tick — 3-D with implicit solvent gives the SAME phenotype as 2-D
+
+**At 200000 of 400000 steps:** largest 126/300, unchanged since step 20000 -- **180000 steps frozen**.
+Shell CV oscillating 0.182-0.217 against the oracle's 0.045-0.057 for genuine vesicles. The render
+shows filled blobs with heads and tails intermixed, no hollow interior at a slab that would reveal one.
+
+**Dimensionality is not the difference.** Moving to 3-D and removing the solvent defect entirely --
+the two changes that were supposed to matter -- reproduces the 2-D phenotype exactly: rapid
+condensation into a few aggregates, then arrest, with filled interiors rather than shells. Same
+arrested coarsening, same filled aggregates, same shell CV far from the oracle's.
+
+**Which leaves `beta` as the only remaining candidate**, and the oracle's own scan already establishes
+what it does: 0 vesicles at beta = 0 over 1.5M steps, 3-4 sustained at beta = 0.15. Our model now
+matches the reference at beta = 0 in BOTH dimensions, on every property measured -- coalescence at all
+three gaps, line tension, fluidity, cluster diffusion, spontaneous curling of a flat ribbon, and now
+3-D morphology.
+
+**Not final until the run ends.** 200000 of 400000, and the oracle needed 625000 steps to close, so
+this arm is still short of the reference's own timescale. But the largest cluster has not moved in
+180000 steps, which is what arrest looks like rather than slow progress.
+
+**Falsification for the endpoint.** If shell CV falls toward 0.05 and a lumen appears by 400000, 3-D
+does help and this reading is wrong. If it stays near 0.19 with largest frozen, dimensionality is
+excluded and the project's negative result is: our force field reproduces the reference at beta = 0,
+and closure requires the spontaneous-curvature term that was excluded by design.
