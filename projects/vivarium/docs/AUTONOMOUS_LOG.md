@@ -4182,3 +4182,53 @@ these runs rather than a hypothesis -- it was raised as the bubble-coating confo
 is now visible directly. It does not invalidate seed 3's enclosure, which was measured to contain water
 at 1.73x bulk density rather than vacuum, but it does mean curvature in explicit solvent has two possible
 sources and the water-content check is required for every future closure claim.
+
+---
+
+## 2026-08-20i tick — restart-from-state added; the enclosure holds so far under 5 independent thermal seeds
+
+### Rate: no enclosure in 10 fresh seeds yet, but not yet at the right step
+
+Ten seeds at N = 120 explicit, `lumen_c` printed every checkpoint. Through step ~160 000 of 400 000, **all
+ten read 0**. That is not yet evidence of a low rate: seed 3's enclosure appeared at step **400 000**, and
+these runs have not reached it. Recorded as incomplete rather than as a negative.
+
+### Persistence, attacked from the other end
+
+Waiting for a fresh enclosure costs 400 000 steps per attempt and may not sample one at all. So I added a
+**restart-from-saved-state** capability (`plant="state:<path>"`) and restarted from the one configuration
+that HAS the 63 sigma^2 water-filled enclosure, with five different thermal seeds.
+
+Verified through its own control first: the restart reproduces the source state's enclosure at
+**255 cells** against 253 measured standalone.
+
+`lumen_c` after restart, five independent thermal seeds, checkpoints every 5000 steps:
+
+| seed | t=0 | 5k | 10k |
+|---|---|---|---|
+| 0 | 262 | 243 | 263 |
+| 1 | 252 | 272 | 246 |
+| 2 | 265 | 262 | 273 |
+| 3 | 269 | 254 | 252 |
+| 4 | 254 | 254 | -- |
+
+**The enclosure holds in all five, with no decay trend**, fluctuating between 243 and 273 cells. That is
+the first evidence that it is a stable object rather than a snapshot artefact.
+
+**Why this is not yet the answer.** The source enclosure was OPEN at step 380 000 and closed at 400 000,
+so it changes on a scale of ~20 000 steps; surviving 10 000 steps is inside that window and proves little.
+The run continues to 100 000 steps, five times the timescale on which the original changed.
+
+### Two bugs of mine, both caught by their own output
+
+* The restart's `plant` string is a filesystem path, and the state-save code embeds `plant` in the output
+  filename, producing a nested nonsense path. Fixed by tagging restarts by their origin seed.
+* The launch script set `ST=<path>` and exported only the shell FUNCTION, so `$ST` was empty inside the
+  `xargs` subshell and every run failed with `FileNotFoundError: ''`. Caught because the logs contained a
+  traceback rather than data.
+
+**FALSIFICATION, STATED BEFORE THE REST OF THE RUN IS READ.** If `lumen_c` stays in the 240-280 band
+through 100 000 steps in all five seeds, the enclosure is a stable structure -- a small vesicle -- and the
+milestone becomes growing it and raising its formation rate. If it decays to 0 in most seeds within
+20 000-40 000 steps, it is a long-lived fold and the enclosure result is downgraded accordingly. If it
+decays in some seeds and not others, the enclosure is metastable and the seed spread gives its lifetime.

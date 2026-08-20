@@ -56,6 +56,10 @@ def _env_tag():
 
 def _save_state(X, species, chains, mols, L, d, phi, kT, frac_short, plant, n_lip, seed, steps):
     """Write the current configuration, overwriting any previous one for this run."""
+    # A restart's plant string is a filesystem path; using it verbatim in the output name produced a
+    # nonsense nested path. Restarts are tagged by their origin instead.
+    if plant.startswith("state:"):
+        plant = "restart" + pathlib.Path(plant.split(":", 1)[1]).stem.split("_sd")[-1]
     root = os.environ.get("BUILD_WORKSPACE_DIRECTORY", ".")
     out = pathlib.Path(root) / "projects" / "vivarium" / "docs" / "states"
     out.mkdir(parents=True, exist_ok=True)
@@ -728,15 +732,25 @@ if __name__ == "__main__":
     if n_water < 0:
         raise ValueError(f"L={L} too small for {n_lip} lipids at packing fraction {phi}")
 
-    X, species, bonds, mols, wi, chains = build(n_short, n_long, n_water, L, d, plant=plant,
+    X, species, bonds, mols, wi, chains = build(n_short, n_long, n_water, L, d,
+                                                plant=("random" if plant.startswith("state:") else plant),
                                                 branched=True, seed=seed)
+    if plant.startswith("state:"):
+        # Continue from a saved configuration. Needed to measure PERSISTENCE: the only enclosure this
+        # project has found appeared at one checkpoint and was absent at the previous one, and waiting
+        # for a fresh run to produce another takes 400000 steps. Restarting from the state that HAS the
+        # enclosure, with different thermal seeds, measures directly how long it survives.
+        _z = np.load(plant.split(":", 1)[1], allow_pickle=True)
+        if len(_z["X"]) != len(X):
+            raise ValueError(f"state has {len(_z['X'])} beads, this configuration has {len(X)}")
+        X = _z["X"].copy()
     # With phi = 0 there are no water beads, so the explicit chi is the WRONG table: it puts the
     # hydrophobic drive in head-water, and with the water deleted nothing makes a buried head costly.
     # The solvent-averaged (exchange-energy) chi restores that drive by integrating the solvent out
     # instead of dropping it. See `solvent_averaged_chi`.
     chi = solvent_averaged_chi() if phi == 0.0 else None
     f = Field(species, bonds, L, chi=chi)
-    if plant != "random":
+    if plant != "random" and not plant.startswith("state:"):
         e0, r0 = f.energy(X) / n_lip, float(f._pairs(X)[1].min())
         X = relax_overlaps(X, f, L)
         print(f"steric push-off: E/lipid {e0:.1f} -> {f.energy(X) / n_lip:.1f}, "
@@ -763,7 +777,9 @@ if __name__ == "__main__":
                   f"{lumen_cells(X, [mols[i] for i in largest_members(X, mols, L)], L):>9d}"
                   f"{g['lumen']:>7.2f}{g['lumen_w']:>8}"
                   f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)
-            shot(X, species, L, f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}"
+            _ptag = ("restart" + pathlib.Path(plant.split(":", 1)[1]).stem.split("_sd")[-1]
+                     if plant.startswith("state:") else plant)
+            shot(X, species, L, f"mix{d}d_{_ptag}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}"
                  f"_kT{kT}_fs{frac_short}{_env_tag()}_sd{seed}_s{t:07d}")
             # Save state at EVERY checkpoint, overwriting. State was previously written only at the end,
             # so any new observable could be applied to a running experiment only by waiting for it to
