@@ -4130,3 +4130,55 @@ NOT read this tick. If lumen area at N = 300 or 500 reaches a substantial fracti
 and persists across checkpoints rather than flickering, closure is size-limited and real. If lumen stays
 at zero or at the same transient 1% seen at N = 120, size is not the limitation and the model produces
 only fluctuating pockets, never a vesicle.
+
+---
+
+## 2026-08-20h tick — lumen wired into the simulation; measuring rate and persistence instead of anecdotes
+
+### What was NOT read
+
+The N = 300 and N = 500 size arms are at steps 220 000 and 120 000 of 400 000, with largest 64-97 and
+66-95 -- a smaller FRACTION of their systems than N = 120 reached, so they are still coarsening. **Not
+read as a size result this tick.**
+
+They also cannot be measured mid-run: periodic state saving was added last tick, but these runs started
+before it and still write state only at completion. The infrastructure improvement helps only runs
+launched after it, which I should have anticipated when I added it.
+
+### Lumen is now measured inside the simulation
+
+The validated detector is wired into the driver and prints at every checkpoint. Verified against its
+positive control through the new path: a planted N = 300 ring reads **25621 cells**, matching the 25626
+measured standalone.
+
+This matters because the only positive result this project has is a single anecdote: seed 3's
+**63 sigma^2** water-filled enclosure, which was OPEN at step 380 000 and closed again at 400 000. One
+seed in five, fluctuating, is not a measurement.
+
+### The experiment that turns it into one
+
+10 fresh seeds at N = 120 in explicit solvent, 400 000 steps, with `lumen_c` printed every checkpoint.
+That yields two numbers the anecdote lacks:
+
+* **rate** -- what fraction of seeds ever form an enclosure above the detector's threshold
+* **persistence** -- how many consecutive checkpoints an enclosure survives once formed
+
+A structure that appears in one checkpoint and vanishes in the next is a fold; one that persists over
+many is a vesicle, however small.
+
+**FALSIFICATION, STATED BEFORE THE RUN.** If several of the 10 seeds form enclosures that persist over
+many consecutive checkpoints, the model does produce vesicles at the small end and the milestone is a
+question of stabilising and growing them. If enclosures appear in a few seeds but never survive more than
+a checkpoint or two, the model produces transient folds and not vesicles, and seed 3 was a fluctuation
+caught at the right moment -- which would make the enclosure result an artefact of when the snapshot was
+taken rather than a property of the system. If no seed ever encloses, seed 3 was a rare outlier and the
+rate is below 1 in 10.
+
+### Observation recorded for later
+
+In the N = 300 render the amphiphile ribbons **preferentially line the vapour voids** created by our
+two-phase water. That is surfactant adsorption at a liquid-vapour interface, and it is a real effect in
+these runs rather than a hypothesis -- it was raised as the bubble-coating confound three ticks ago and
+is now visible directly. It does not invalidate seed 3's enclosure, which was measured to contain water
+at 1.73x bulk density rather than vacuum, but it does mean curvature in explicit solvent has two possible
+sources and the water-content check is required for every future closure claim.
