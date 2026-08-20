@@ -258,7 +258,7 @@ def _plant_sphere(X, mols, chains, d):
         k += count
 
 
-def _plant_flat_ribbon(X, mols, chains, d, gap=1.05, L=None):
+def _plant_flat_ribbon(X, mols, chains, d, gap=1.05, L=None, branched=True):
     """Two flat leaflets, tails meeting, heads out on both faces. No curvature planted.
 
     MUST BE FINITE. The point of this plant is to give the aggregate two exposed ENDS whose edge
@@ -269,6 +269,8 @@ def _plant_flat_ribbon(X, mols, chains, d, gap=1.05, L=None):
     """
     n = len(mols)
     nb = len(mols[0])
+    if branched and nb - 1 >= 2:
+        gap = max(gap, 2.05)                # lateral footprint of a two-tailed lipid
     per = n // 2
     width = per * gap
     if L is not None and width > 0.8 * L:
@@ -276,16 +278,37 @@ def _plant_flat_ribbon(X, mols, chains, d, gap=1.05, L=None):
                          f"L={L}: it would have no ends, so closure has nothing to gain. "
                          f"Need L > {width / 0.8:.0f}.")
     xs = (np.arange(per) - (per - 1) / 2.0) * gap
+    nt = nb - 1
+    half = nt // 2 if branched and nt >= 2 else nt
     k = 0
     for sgn in (+1.0, -1.0):
         for j in range(per):
             idx = mols[k]
-            for b in range(len(idx)):
-                off = 0.5 + (len(idx) - 1 - b) * 1.0
-                pos = np.zeros(d)
-                pos[0] = xs[j]
-                pos[1] = sgn * off
-                X[idx[b]] = pos
+            # Head on the outer face, tails pointing inward. For a BRANCHED lipid the two tails go SIDE
+            # BY SIDE (lateral +-0.5, first bead 0.866 in), not end to end: laying all beads along one
+            # line put the bond from the head to the second branch 3 sigma from it against a rest length
+            # of 1, which is the same defect that left the ring plant at ~800 eps/lipid of spring strain.
+            # This function was missed when the ring plant was fixed, so its "planted bilayer" reference
+            # was still an exploding configuration.
+            reach = (0.866 + (half - 1)) if (branched and nt >= 2) else float(nt)
+            head_off = 0.5 + reach
+            pos = np.zeros(d)
+            pos[0] = xs[j]
+            pos[1] = sgn * head_off
+            X[idx[0]] = pos
+            if not branched or nt < 2:
+                for b in range(1, len(idx)):
+                    p2 = np.zeros(d)
+                    p2[0] = xs[j]
+                    p2[1] = sgn * (head_off - b)
+                    X[idx[b]] = p2
+            else:
+                for c in range(2):
+                    for b in range(half):
+                        p2 = np.zeros(d)
+                        p2[0] = xs[j] + (c - 0.5)
+                        p2[1] = sgn * (head_off - (0.866 + b))
+                        X[idx[1 + c * half + b]] = p2
             k += 1
 
 
@@ -314,7 +337,15 @@ def _plant_ring(X, mols, chains, d, span=1.0, branched=True):
     half = nt // 2 if branched and nt >= 2 else nt
     reach = (0.866 + (half - 1)) if (branched and nt >= 2) else float(nt)
     half_gap = 0.5                                  # tail tips of the two leaflets TOUCH, not overlap
-    R_mid = n / (4.0 * np.pi)
+    # A branched lipid puts its two tails side by side at +-0.5, so its lateral footprint is about
+    # 2 sigma, not 1. Spacing the leaflets for a single-file chain left neighbouring lipids' tails
+    # 0.03-0.05 sigma apart -- 600 pairs inside 0.8 sigma on the ring -- which the push-off then fought
+    # against the attractive well, driving E/lipid from 21 to 1548 on the flat plant.
+    lat = 2.0 if (branched and nt >= 2) else 1.0
+    # An arc spreads the same lipid count over `span` of the circle, so its radius must grow by 1/span
+    # or the lipids are compressed: at span 0.75 the arc still had 596 pairs inside 0.8 sigma when the
+    # ring had none.
+    R_mid = n * lat / (4.0 * np.pi * max(span, 1e-9))
     R_out = R_mid + half_gap + reach
     R_in = max(R_mid - half_gap - reach, 0.6)
     n_out = int(round(n * R_out / (R_out + R_in)))
@@ -458,7 +489,7 @@ def geometry(X, mols, wi, chains, L, d, members=None):
     if float(span.max()) > 0.5 * L:
         return dict(f_out=f_out, f_in=f_in, n_out=int(outer.sum()), n_in_leaf=int(inner.sum()),
                     R_mid=R_mid, shell_cv=float("nan"), hollow=float("nan"), mix=float("nan"),
-                    seg=float("nan"),
+                    seg=float("nan"), burial=float("nan"),
                     lumen=float("nan"), lumen_w=0, r_in=float("nan"))
     shell_cv = float(rt.std() / max(rt.mean(), 1e-9))
 
@@ -518,13 +549,28 @@ def geometry(X, mols, wi, chains, L, d, members=None):
     #
     # Assigning the leaflet by the HEAD's own radius and then measuring the head's offset is circular:
     # a first version did that and its scrambled control scored 2.950 against an ordered 1.534.
+    # BURIAL: are tails inside and heads at the surface? Geometry-agnostic -- no mid-surface, no radius,
+    # no centre. Local neighbour count within 2 sigma for every aggregate bead; interior beads have more
+    # neighbours than boundary ones, so <n_tail> - <n_head> is positive for ANY amphiphile aggregate:
+    # ring, ribbon, micelle or vesicle. Calibrated: planted bilayer 7.178, still 5.220 under 1 sigma of
+    # jitter, and 0.673 with every lipid rigidly rotated about its own centre.
+    #
+    # Needed because `seg` assumes a radial mid-surface and is therefore undefined for a flat RIBBON,
+    # which is the morphology the corrected field actually produces, and meaningless for small solid
+    # micelles (it returned negative values of -0.24 to -0.45 for 13-20 lipid clusters).
+    Pc_all = X[lipid_beads]
+    dd_b = _wrap(Pc_all[:, None, :] - Pc_all[None, :, :], L)
+    nnb = (np.linalg.norm(dd_b, axis=2) < 2.0).sum(axis=1) - 1
+    head_mask = np.isin(lipid_beads, np.concatenate([m[:1] for m in mols]))
+    burial = float(nnb[~head_mask].mean() - nnb[head_mask].mean())
+
     rc_mol = np.array([rt_all[m].mean() for m in mols])
     rh_mol = np.array([rt_all[m[0]] for m in mols])
     rtl_mol = np.array([rt_all[m[1:]].mean() for m in mols])
     seg = float((np.where(rc_mol > R_mid, 1.0, -1.0) * (rh_mol - rtl_mol)).mean())
 
     return dict(f_out=f_out, f_in=f_in, n_out=int(outer.sum()), n_in_leaf=int(inner.sum()),
-                R_mid=R_mid, shell_cv=shell_cv, hollow=hollow, mix=mix, seg=seg,
+                R_mid=R_mid, shell_cv=shell_cv, hollow=hollow, mix=mix, seg=seg, burial=burial,
                 lumen=lumen, lumen_w=n_in, r_in=r_in)
 
 
@@ -630,7 +676,7 @@ if __name__ == "__main__":
           f"L={L}, packing fraction {phi}, kT={kT}, start={plant}", flush=True)
     print("enrichment = (short fraction of OUTER leaflet) - (short fraction of INNER leaflet); "
           "0 = no partitioning", flush=True)
-    print(f"{'step':>8}{'E/lip':>9}{'largest':>9}{'R_mid':>7}{'shellCV':>9}{'hollow':>8}{'mix':>7}{'seg':>7}"
+    print(f"{'step':>8}{'E/lip':>9}{'largest':>9}{'R_mid':>7}{'shellCV':>9}{'hollow':>8}{'mix':>7}{'seg':>7}{'burial':>8}"
           f"{'lumen':>7}{'lumenW':>8}{'shortOUT':>10}{'shortIN':>9}   enrichment", flush=True)
     every = max(steps // 20, 1)
     for t in range(steps + 1):
@@ -639,7 +685,7 @@ if __name__ == "__main__":
             g = geometry(X, mols, wi, chains, L, d)
             enr = g["f_out"] - g["f_in"]
             print(f"{t:>8}{f.energy(X) / n_lip:>9.2f}{largest_cluster(X, mols, L):>9}"
-                  f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['hollow']:>8.3f}{g['mix']:>7.3f}{g['seg']:>7.3f}"
+                  f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['hollow']:>8.3f}{g['mix']:>7.3f}{g['seg']:>7.3f}{g['burial']:>8.3f}"
                   f"{g['lumen']:>7.2f}{g['lumen_w']:>8}"
                   f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)
             shot(X, species, L, f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}"

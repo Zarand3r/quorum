@@ -2712,3 +2712,75 @@ before it, it needs a size floor, and values from aggregates below roughly 50 li
 rather than interpreted. The 2-D arm additionally hit the span guard (`seg` NaN at largest 107/300 in
 L = 60): a condensed 1500-bead 2-D aggregate is about 44 sigma across, above the L/2 = 30 limit, and the
 target ring is 48 across, so 2-D emergence was relaunched at L = 120 with 5 seeds.
+
+---
+
+## 2026-08-19l tick — emergent BILAYER RIBBONS on the corrected field; planting infrastructure fixed end to end
+
+### Bilayer order is temperature-robust in implicit solvent
+
+Planted ring, implicit, `seg` (planted 1.53, disorder 0.028), 5 seeds except where noted:
+
+| kT | 0.0 (n=1) | 0.15 | 0.35 | 0.45 | 0.60 |
+|---|---|---|---|---|---|
+| seg | 0.879 | 0.778 +- 0.046 | 0.764 +- 0.041 | **0.722 +- 0.036** | **0.723 +- 0.038** |
+
+Flat from 0 to 0.60, so emergence can be run hot -- faster diffusion -- without losing the bilayer.
+Suite PASSED (253 s) with the branch-angle and `content_pairs` changes in.
+
+### The headline: emergent bilayer strips
+
+2-D emergence relaunched at N = 120, L = 56, kT = 0.60, 5 seeds. The earlier arms were crawling because
+I had both cooled them to kT = 0.30 and been forced into dilute boxes by the span guard (2-D packing
+0.10, 3-D 0.032); largest reached only 12-20 lipids in 20 000 steps.
+
+**The render shows elongated slabs with heads lining both long edges and tails filling the interior --
+bilayer strips.** Every previous emergence run in this project produced solid micelles with no leaflet
+structure. The difference is the corrected molecule: the 1-3 spring centred on the head had been pinning
+the two tails at 180 degrees, making every lipid a straight chain with its head in the middle.
+
+### A third metric, because the first two do not apply to ribbons
+
+`seg` assumes a radial mid-surface, so it is undefined for a flat ribbon and meaningless for small solid
+micelles. Added `burial`: local neighbour count within 2 sigma, tails minus heads. No centre, no radius,
+no mid-surface. Calibrated: planted bilayer **7.178**, still 5.220 under 1 sigma jitter, **0.673** with
+every lipid rigidly rotated about its own centre.
+
+| | burial |
+|---|---|
+| dispersed start | 1.000 |
+| orientations randomized | 0.673 |
+| **emergent, steps 20-60k** | **3.5 - 4.0** |
+| planted flat bilayer, N = 20/30/40 | 2.475 / 2.483 / 2.500 |
+
+**What this does NOT establish.** Emergent burial (3.5-4.0) exceeds a size-matched planted flat bilayer
+(2.48), and that is not evidence of superior order: burial rises with COMPACTNESS, and a compact
+aggregate buries more tails than a thin ribbon whatever its organization. The control that would settle
+it is randomizing orientations of the EMERGENT structure in place -- shape matched, order destroyed --
+and it has not been run. No quantitative order claim is made for the emergent structures in this entry;
+the ribbon morphology rests on the render alone, and is stated as such.
+
+### Planting infrastructure fixed end to end
+
+`_plant_flat_ribbon` was missed when the ring plant was fixed, so the "planted bilayer" reference used
+for the size-matched control was itself an exploding configuration at +778 eps/lipid. Fixing it exposed
+a second defect in all three plants: a branched lipid puts its two tails side by side at +-0.5, giving a
+lateral footprint near 2 sigma, but the leaflets were spaced for a single-file chain. Neighbouring
+lipids' tails sat 0.03-0.05 sigma apart -- 600 pairs inside 0.8 sigma on the ring -- and the push-off
+then fought the attractive well, driving the flat plant from E/lipid 21 to **1548**.
+
+| plant | before | after |
+|---|---|---|
+| ring | E/lip 800, springs 800, min r 0.000 | **E/lip -7.77**, springs 0.93, min r 0.931, 0 overlaps |
+| flat | E/lip 778, springs 800, min r 0.050 | **E/lip -7.25**, springs 0.93, min r 1.000, 0 overlaps |
+| arc0.75 | E/lip 811, springs 800, min r 0.000 | **E/lip -7.75**, springs 0.93, min r 0.938, 0 overlaps |
+
+Energies are now NEGATIVE, i.e. bound rather than strained. This is the first valid planted bilayer this
+project has had, and every planted result before it was measured on a configuration that exploded.
+
+**FALSIFICATION, STATED BEFORE THE CONTROL IS RUN.** Randomize lipid orientations in place on the
+emergent aggregates and re-measure burial. If emergent burial stays near 3.5-4.0 while the randomized
+control drops toward 0.7, the ribbons carry genuine amphiphilic order and the morphology in the render is
+real. If the randomized control also reads 3-4, burial is measuring compactness alone at these sizes, the
+metric is void in this regime, and the ribbon claim rests on the render only until a better observable
+exists.
