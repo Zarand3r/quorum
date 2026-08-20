@@ -245,9 +245,24 @@ class Field:
     # ---- the attention view -------------------------------------------------
 
     def content(self):
-        """The per-pair chemistry as a query-key inner product, (n, n)."""
+        """The per-pair chemistry as a query-key inner product, (n, n).
+
+        The FULL attention matrix. Kept because it is the clearest statement of what this model is and
+        because the tests compare against it, but it must not be called per step: at 13 336 beads it is
+        178 million entries, and materializing it to read the ~150 000 neighbour pairs cost 92% of the
+        entire runtime (1.01 steps/s explicit against 100 steps/s implicit, i.e. ~70x worse than linear
+        in bead count). Use `content_pairs` in the hot path.
+        """
         Q, K = self.q[self.species], self.k[self.species]
         return Q @ K.T
+
+    def content_pairs(self, pi, pj):
+        """The same query-key inner product, evaluated ONLY on the pairs that can contribute.
+
+        Identical values to `content()[pi, pj]` -- the attention view is unchanged, it is simply not
+        computed where the distance cutoff already guarantees a zero contribution.
+        """
+        return np.einsum("ic,ic->i", self.q[self.species[pi]], self.k[self.species[pj]])
 
     def check_identity(self):
         """Max |q_i.k_j - chi_ij| over all species pairs. Proves the factorization is exact."""
@@ -396,7 +411,7 @@ class Field:
         s = r / self.sigma
         uc, _ = _core(s, self.core_height)
         uw, _ = _well(s, self.rc)
-        chi = self.content()[iu]
+        chi = self.content_pairs(*iu)
         u = self.eps * (uc + uw * chi)
         e = float(u[r < self.rc * self.sigma].sum())
         for pairs, k, r0 in self._springs():
@@ -420,7 +435,7 @@ class Field:
         s = r / self.sigma
         _, duc = _core(s, self.core_height)
         uw, duw = _well(s, self.rc)
-        chi = self.content()[iu]
+        chi = self.content_pairs(*iu)
         # dU/dr, guarding r = 0 where the direction is undefined
         dudr = self.eps * (duc + duw * chi) / self.sigma
         dudr = np.where(r < self.rc * self.sigma, dudr, 0.0)

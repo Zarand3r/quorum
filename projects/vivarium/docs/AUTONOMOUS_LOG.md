@@ -2333,3 +2333,71 @@ work must stay explicit -- with the arc series re-run there. If explicit ALSO ri
 bilayer is simply unstable at kT = 0.45 and the fault is temperature, not solvent, which would also
 call into question every 2-D result measured at this temperature. If explicit rises only partway, the
 effect is real but shared, and the ranking of causes needs a temperature sweep.
+
+---
+
+## 2026-08-19g tick — the force field was O(n^2) per step: 9.4x speedup, explicit solvent now affordable
+
+### The blocker was never the physics
+
+The explicit-solvent arm sat at step 0 for ~50 minutes, under 1 step/s, against 100 steps/s for a
+1500-bead implicit run -- **superlinear**, so not simply "more beads." Profiled alone:
+
+    explicit, 13 336 beads:  1.01 steps/s
+    of which `content`    :  18.1 s of 19.7 s  = 92% of runtime
+
+`Field.content()` builds the **full (n, n) attention matrix every step** and then indexes only the
+neighbour pairs out of it. At 13 336 beads that is 178 million entries, about 1.4 GB, to obtain roughly
+150 000 pair values.
+
+`content_pairs(pi, pj)` evaluates the same query-key inner product only on pairs that can contribute:
+
+| | before | after |
+|---|---|---|
+| explicit N = 300 ring, 13 336 beads | 1.01 steps/s | **9.54 steps/s** |
+
+**9.4x**, values identical to **2.8e-17**, full suite PASSED (186 tests, 558 s). The attention view is
+unchanged -- `content()` still exists and the tests still compare against it; it is simply not computed
+where the distance cutoff already guarantees zero. This is the single largest speedup this project has
+had, and it makes explicit-solvent membrane work affordable: 60 000 steps drops from ~16 hours to ~1.
+
+**Why the existing performance test missed it.** `test_performance_field.py` pins throughput at ONE
+system size, and a quadratic term is invisible until the system is large. Added
+`tests/test_field_scaling.py`: 4x the beads at fixed density must cost far less than 16x. Comparing two
+sizes is the only way a scaling defect can show up at all.
+
+### The implicit-solvent result is now complete, all 5 seeds
+
+Planted N = 300 ring, L = 138, kT = 0.45, 60 000 steps, `mix` (1.0 = randomly mixed, planted perfect
+bilayer = 0.536):
+
+| seed | step 0 | 3000 | end (60000) |
+|---|---|---|---|
+| 0 | 0.625 | 0.934 | 0.928 |
+| 1 | 0.625 | 0.942 | 0.909 |
+| 2 | 0.625 | 0.950 | 0.938 |
+| 3 | 0.625 | 0.934 | 0.921 |
+| 4 | 0.625 | 0.933 | 0.909 |
+
+Scrambles within 3000 steps in **every** seed and stays there for the remaining 57 000, while the ring
+holds its shape (hollow 0.000, shell CV 0.12). Mean end value **0.921 +- 0.012**.
+
+The explicit arm produced nothing except step 0 before the fix, so **the comparison that decides
+solvent-versus-temperature is still open** and is relaunched on the fast binary. No conclusion is drawn
+about the derived chi until it lands.
+
+### 3-D emergence: coarsening has stalled
+
+Seed 1: largest 69/300 at step 120 000 and still 69/300 at 140 000, E/lipid -129.3, hollow 2.92.
+Seed 0: 61/300 at 100 000, hollow 2.90. Solid micelles, arrested.
+
+**Render limitation recorded:** `shot` centres the slab on the whole system's centre of mass, which is
+meaningless when several separate aggregates exist -- the step-140 000 frame therefore catches one
+aggregate and looks emptier than the step-100 000 frame. Not a collapse, an artefact of where the plane
+falls. Centring on the largest cluster is the fix and is not done yet.
+
+**FALSIFICATION, STATED BEFORE THE RELAUNCHED EXPLICIT ARM IS READ.** If explicit holds `mix` near 0.54
+while implicit sits at 0.921 +- 0.012, the solvent-averaged chi is disqualified for dense phases and all
+membrane work stays explicit -- now affordable. If explicit also rises to ~0.92, the bilayer is unstable
+at kT = 0.45 regardless of solvent, and every 2-D result measured at this temperature is in question. If
+it rises partway, both contribute and a temperature sweep is required to rank them.
