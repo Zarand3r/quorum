@@ -3402,3 +3402,60 @@ are equal within error, there is **no drive at all**, lambda's positive value do
 closed state, and every closure experiment in this project has been chasing a force that is not there. If
 the ring is HIGHER, the open ribbon is the preferred state and closure is thermodynamically forbidden
 here, which would settle the milestone as unreachable without a new term in the model.
+
+---
+
+## 2026-08-19w tick — THERE IS NO CLOSURE DRIVE: ring and arc are isoenergetic
+
+### The direct measurement
+
+Planted closed ring against planted arc0.97, same N = 300, relaxed identically, 5 seeds each, 60 000
+steps. Energies **time-averaged over the equilibrated half** of each trajectory:
+
+| | endpoint only | time-averaged |
+|---|---|---|
+| ring | -6267.6 +- 6.2 | **-6230.7 +- 3.2** |
+| arc0.97 | -6259.8 +- 11.4 | **-6231.2 +- 5.1** |
+
+    ring - arc = +0.5 +- 6.0 eps   (0.1 sigma)
+    predicted if closure favoured: -20.2 eps   -> EXCLUDED at more than 3 sigma
+
+**The closed and open states are isoenergetic.** The falsification resolves to its second branch: there
+is no thermodynamic drive to close. This explains roughly 60 failed runs across every size (R = 11.5 to
+65.6), every gap (2.2 to 60 sigma), and every head-head value tried.
+
+The endpoint-only comparison would have been reported as `-7.8 +- 13.2`, which is consistent with both
+-20.2 and 0 and settles nothing. Time-averaging the SAME data cut the error by a factor of two and made
+the answer unambiguous -- worth recording as a method note, since three of this project's inconclusive
+results were single-snapshot comparisons.
+
+### What this does to lambda
+
+`lambda = +10.12 +- 5.08 eps` was measured from the intercept of `E(N) = N*e_bulk + 2*lambda` on finite
+ribbons, and it is a real feature of that fit. But **it does not survive into a closure gain.** Whatever
+the intercept represents, removing the two ends by closing the ribbon does not lower the energy. Any
+argument in this project of the form "closure has 2*lambda to gain" is therefore withdrawn -- including
+the "~81 kT" and the revised "~45 kT" figures, and the critical-radius arithmetic
+`R* = pi*kappa/(2*lambda)` that depends on it. kappa itself (269.5 +- 69.0 eps*sigma) is unaffected,
+being measured independently from bending energy against 1/R^2.
+
+### The physical reason, and what it implies
+
+**In implicit solvent an exposed edge costs almost nothing.** A tail at the rim simply has fewer
+neighbours. Real vesicles close because the edge places tails in contact with WATER -- in this model's
+own table, tail-water is 0.00 against tail-tail 0.70 -- and the water was deleted when the solvent was
+integrated out. The solvent-averaged chi correctly reproduces bulk cohesion but cannot reproduce the
+cost of an INTERFACE with a solvent that is no longer represented.
+
+That makes the earlier rejection of explicit solvent worth revisiting: it was rejected at `seg = 0.194`,
+but that was measured with the 800-eps/lipid plant, before the branch-angle fix and before the head-tail
+sign change. All three defects are now repaired.
+
+**FALSIFICATION, STATED BEFORE THE RUN.** Explicit solvent (phi = 0.55) on the corrected field, head-tail
+at 0.20 and -0.25, planted ring against planted arc0.97 at N = 300, 5 seeds each, scored on `core` for
+the bilayer and on the ring-minus-arc energy for the drive. If explicit solvent now holds a bilayer
+(core near 1.467) AND makes the ring lower by something near 20 eps, the missing ingredient is the
+solvent interface and closure should follow. If it holds a bilayer but the ring is still isoenergetic,
+the absent drive is not about water and the model lacks the ingredient entirely. If the bilayer still
+fails in explicit solvent, the earlier rejection stands on repaired foundations and implicit solvent is
+the only regime this force field supports -- in which case a vesicle needs a term this model does not have.
