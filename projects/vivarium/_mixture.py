@@ -174,7 +174,29 @@ def build(n_short, n_long, n_water, L, d, tails=(2, 4), seed=0, plant="random", 
         _plant_ring(X, mols, np.array(chains), d, span=float(plant[3:] or 0.75))
     wi = np.arange(k, n)
     species[wi] = WATER
-    X[wi] = rng.uniform(-L / 2, L / 2, size=(n_water, d))
+    # Water on a jittered lattice with lipid sites EXCLUDED, not uniformly at random. Random placement
+    # drops water on top of the planted membrane -- minimum separation 0.007 sigma -- and the steric
+    # push-off then resolves those overlaps by DEFORMING the membrane: a planted N=300 ring came out at
+    # R_mid 58.3 against a planted 47.7, inflated 22%, already missing 10 lipids at step 0, and
+    # fragmented to largest=50 by step 3000. The structure has to be intact before dynamics starts, or
+    # the run measures the plant's destruction rather than the physics.
+    if n_water:
+        # oversample so that excluding the membrane's sites still leaves enough free ones
+        per = int(np.ceil((n_water * 1.6) ** (1.0 / d))) + 2
+        grid = np.stack(np.meshgrid(*[np.linspace(-L / 2, L / 2, per, endpoint=False)] * d,
+                                    indexing="ij"), axis=-1).reshape(-1, d)
+        grid = grid + rng.uniform(-0.15, 0.15, size=grid.shape)
+        lip = X[:n_lip_beads] if n_lip_beads else np.zeros((0, d))
+        if len(lip):
+            dd = grid[:, None, :] - lip[None, :, :]
+            dd -= L * np.round(dd / L)
+            free = np.linalg.norm(dd, axis=2).min(axis=1) > 0.9
+        else:
+            free = np.ones(len(grid), bool)
+        cand = grid[free]
+        if len(cand) < n_water:
+            raise ValueError(f"only {len(cand)} free water sites for {n_water} waters at L={L}")
+        X[wi] = cand[rng.choice(len(cand), n_water, replace=False)]
     if plant in ("ring", "sphere"):
         # FILL THE LUMEN AT BULK DENSITY. Water placed uniformly at random almost never lands inside a
         # planted vesicle: in 3-D at packing fraction 0.10 a lumen of radius 3.7 should hold ~16 waters

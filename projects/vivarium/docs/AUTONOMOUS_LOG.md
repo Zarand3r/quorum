@@ -3637,3 +3637,61 @@ not have. If the ring is HIGHER, the open ribbon is genuinely preferred and clos
 The last three emergence relaunches used seeds 0-4 with identical parameters and therefore reproduced
 the same deterministic trajectories, producing no new structures -- which is why there was no new
 emergent render to show last tick. Relaunched on **seeds 5-9**.
+
+---
+
+## 2026-08-19aa tick — the explicit-solvent runs were destroying their own plant; fixed before reading them
+
+### The bug
+
+Every explicit-solvent planted run began by wrecking the structure it was supposed to measure. Water was
+placed **uniformly at random**, so it landed on top of the planted membrane -- minimum separation
+**0.007 sigma** -- and the steric push-off then resolved those overlaps by deforming the membrane:
+
+| | before | after |
+|---|---|---|
+| planted ring, largest at step 0 | 290/300 | **300/300** |
+| core at step 0 | 1.417 | **1.467** (= the bilayer reference) |
+| E/lipid at step 0 | +182.2 | **-9.29** |
+| largest by step 3000 | **50/300 (fragmented)** | run in progress |
+| R_mid at step 0 | 58.3 against a planted 47.7 | -- |
+
+Water is now placed on a jittered lattice with the membrane's sites excluded. **The earlier explicit
+runs were measuring the destruction of the plant, not the physics**, which retroactively explains the
+fragmentation I was about to interpret.
+
+Caught by reading step-0 values rather than waiting: `largest = 290/300` before a single step of dynamics
+is not something a correct plant can produce.
+
+### Why the previous explicit conclusions are now doubly void
+
+Last tick I retracted "explicit solvent destroys the bilayer" because I had read the `lumen` column as
+`core`. The corrected numbers (core 1.33-1.37) came from runs that ALSO had the overlapping-water defect.
+They happened to show an intact bilayer anyway, so the retraction stands, but the values themselves are
+superseded by the runs now in flight.
+
+### Emergence, on genuinely new trajectories
+
+Seeds 5-9, 300 000 steps, implicit, head-tail -0.50:
+
+| seed | 5 | 6 | 7 | 8 | 9 |
+|---|---|---|---|---|---|
+| largest | 74 | 39 | 50 | 48 | 64 |
+| core | 1.458 | 1.463 | 1.459 | 1.462 | 1.451 |
+| burial | 5.588 | 5.564 | 5.460 | 5.297 | 5.449 |
+
+**Every one an intact bilayer** (reference 1.467). The render shows a sharp kink where two ribbons meet,
+consistent with the measured stiffness: this membrane bends by forming defects rather than curving
+smoothly.
+
+### The decisive measurement, relaunched
+
+Ring against arc0.97, N = 300, explicit phi = 0.55, kT = 0.45, 5 seeds, 60 000 steps, solvent-excluded
+energy, time-averaged over the equilibrated half -- now starting from an intact plant.
+
+**FALSIFICATION, UNCHANGED FROM LAST TICK AND RESTATED BEFORE READING.** If the ring sits about 20 eps
+below the arc, explicit solvent supplies the closure drive that implicit lacks (implicit gave
++0.5 +- 6.0 eps) and the milestone becomes a question of running emergence in explicit solvent. If ring
+and arc are isoenergetic here too, the absent drive belongs to the force field rather than to the solvent
+treatment. If the ring is higher, the open ribbon is genuinely preferred and closure is forbidden in this
+model.
