@@ -4311,3 +4311,56 @@ already visible between the two regimes -- the requirements are in direct confli
 and a vesicle needs a term the model does not have. If `core` does not rise in explicit solvent at all,
 then whatever degrades the bilayer there is the solvent itself rather than the head-tail term, and the
 repulsive term is not the missing ingredient.
+
+---
+
+## 2026-08-20k tick — formation rate measured (rare); repulsive head-tail fixes the bilayer in explicit solvent
+
+### The rate run finished, and the answer is clean
+
+Ten seeds, N = 120, explicit solvent, 400 000 steps, `lumen_c` at all 20 checkpoints each:
+
+| seed | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| largest | 87 | 78 | 108 | 117 | 61 | 120 | 93 | 66 | 79 | 54 |
+| max lumen_c over the run | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+
+**Zero enclosures in 200 checkpoint samples.** Not one seed enclosed at any point. Checking the whole
+series rather than the final state matters here: seed 3's enclosure fluctuated, so "zero at the end"
+would not have settled it. "Never, in 200 samples" does.
+
+Combined with the single enclosure among the original five seeds, **formation is a rare nucleation event
+of roughly 1 in 15 runs**. Once formed it is stable -- the restart experiment excluded decay at about
+130x. So the picture is coherent: rare to nucleate, durable once nucleated.
+
+### The untried combination works, on the bilayer at least
+
+Explicit solvent with the repulsive head-tail term, at step ~190 000 of 400 000:
+
+| chi_HT | core (bilayer ref 1.467) | lumen |
+|---|---|---|
+| +0.20 (default) | 1.277 - 1.323 | 252 in seed 3 |
+| **-0.25** | **1.386 - 1.435** | 0 in 3 seeds so far |
+
+**Core rises from ~1.29 to ~1.40 in explicit solvent.** The render agrees: thinner ribbons with heads
+more consistently on the faces. This settles one sub-question outright -- **the head-tail term, not the
+solvent, was degrading the bilayer in explicit solvent**, so the third branch of last tick's
+falsification is excluded.
+
+The lumen question is not settled: 3 of 5 seeds reporting, at half the run length, all zero. Given the
+measured formation rate of about 1 in 15, seeing zero in 3 seeds is exactly what a rate that unchanged
+would predict, so this is **not** yet evidence of anti-correlation. The arm must finish, and even then
+5 seeds cannot distinguish 1-in-15 from 0.
+
+### Deterministic reproduction, noted
+
+Seed 3 at `chi_HT = 0.20` reproduces its enclosure at 252 cells, matching the 253 measured from the
+original run's saved state. Same seed, same parameters, same trajectory -- a useful check that the
+enclosure is a property of the trajectory rather than of a particular analysis.
+
+**FALSIFICATION, STATED BEFORE THE ARM FINISHES.** If `chi_HT = -0.25` or -0.50 produces an enclosure in
+any seed while holding core above 1.40, the two requirements are compatible and the milestone is within
+reach. If both repulsive arms finish with zero enclosures, that is consistent with the 1-in-15 base rate
+and settles nothing about compatibility -- the honest next step would then be many more seeds at the best
+core setting, not a new hypothesis. Only a rate measured at comparable seed count in both arms can
+establish anti-correlation, and that needs of order 30 seeds per arm to distinguish 1-in-15 from zero.
