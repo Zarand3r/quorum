@@ -4364,3 +4364,53 @@ reach. If both repulsive arms finish with zero enclosures, that is consistent wi
 and settles nothing about compatibility -- the honest next step would then be many more seeds at the best
 core setting, not a new hypothesis. Only a rate measured at comparable seed count in both arms can
 establish anti-correlation, and that needs of order 30 seeds per arm to distinguish 1-in-15 from zero.
+
+---
+
+## 2026-08-20l tick — the trade is visible: good bilayer with a marginal lumen, or a stable lumen with a poor bilayer
+
+### The combination scan, at step ~300 000 of 400 000
+
+| chi_HT | core (ref 1.467) | max lumen over the run |
+|---|---|---|
+| +0.20 (default), 5 seeds | 1.236 - 1.342 | **274** in seed 3, 0 elsewhere |
+| **-0.25**, 3 seeds so far | **1.403 - 1.424** | **69** in seed 1, 0 elsewhere |
+
+**Repulsive head-tail raises core from ~1.29 to ~1.41 in explicit solvent** and one seed produced an
+enclosure, so the two are not obviously exclusive.
+
+### But the enclosures are not equivalent, and the raw numbers show it
+
+The reported `lumen_c` has a hard threshold at 40 cells, which turns a fluctuating quantity into a
+binary one. Measured RAW (threshold removed), restarting five thermal seeds from each source enclosure:
+
+| source | source size | restart raw sizes |
+|---|---|---|
+| chi_HT = +0.20, seed 3 | 255 | 242 - 280 over 10 checkpoints, slope +6.1 +- 9.9 per 1e5 steps |
+| chi_HT = -0.25, seed 1 | 69 | **78, 20, 59, 37, 15** |
+
+The default-chi enclosure is **large and stable**; the repulsive-chi one **fluctuates fivefold around
+the detection threshold** and does not hold. Reading only the thresholded value would have shown
+"59, 0, 78, 0, 0" and hidden that the object is marginal rather than absent.
+
+**So the trade is: a good bilayer with a marginal lumen, or a stable lumen with a poor bilayer.** That is
+one seed on each side, so it is suggestive and not established.
+
+### What was verified rather than assumed
+
+The restart state was checked independently before its results were read: the file on disk really did
+contain the 69-cell enclosure, so the restarts began from the intended configuration and seed 1's early
+loss is a real decay rather than a mis-copied state.
+
+### Running
+
+* 15 more fresh seeds at `chi_HT = -0.25`, for 20 total. The base rate is ~1 in 15, so 3 seeds could never
+  distinguish "as often as default" from "never"; 20 can.
+* 5 persistence restarts from the -0.25 enclosure, continuing.
+
+**FALSIFICATION, STATED BEFORE THE 20-SEED ARM IS READ.** If enclosures appear in the -0.25 arm at a rate
+comparable to default (roughly 1-2 in 20) AND any of them reaches the 240-280 size band that the default
+enclosure occupies, the requirements are compatible and the milestone is reachable. If enclosures appear
+but all stay in the marginal 15-80 raw band, size and bilayer quality are anti-correlated and this force
+field trades one for the other. If no enclosure appears in 20 seeds while default gives 1 in 15, the
+repulsive term suppresses enclosure outright, which is the strongest form of the conflict.
