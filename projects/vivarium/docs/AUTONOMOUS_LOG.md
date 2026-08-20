@@ -4232,3 +4232,41 @@ through 100 000 steps in all five seeds, the enclosure is a stable structure -- 
 milestone becomes growing it and raising its formation rate. If it decays to 0 in most seeds within
 20 000-40 000 steps, it is a long-lived fold and the enclosure result is downgraded accordingly. If it
 decays in some seeds and not others, the enclosure is metastable and the seed spread gives its lifetime.
+
+**Persistence resolved, and the structure is NOT a vesicle.**
+
+Five thermal seeds restarted from the enclosure state, checkpoints every 5000 steps, linear fit of
+`lumen_c` against step:
+
+| seed | n | steps | mean | slope per 1e5 steps |
+|---|---|---|---|---|
+| 0 | 9 | 40000 | 252.8 | -23.3 |
+| 1 | 10 | 45000 | 256.4 | +6.5 |
+| 2 | 11 | 50000 | 261.8 | -6.9 |
+| 3 | 10 | 45000 | 262.1 | +22.2 |
+| 4 | 10 | 45000 | 256.4 | +32.2 |
+
+    mean slope +6.1 +- 9.9 cells per 100000 steps   (0.6 sigma from zero)
+
+A fold decaying on the source structure's own ~20 000-step timescale would show about **-1275**. Decay is
+excluded by roughly two orders of magnitude. **The enclosure is stable**, and the falsification's first
+branch is met on that point.
+
+**But the render answers the question I had not checked, and it answers against the vesicle reading.**
+The boundary is a **thick disordered amphiphile mass with a hole in it** -- heads scattered through the
+interior rather than lining two faces -- and `core` reads **1.278** against the bilayer reference of
+1.467. A vesicle requires a bilayer boundary. This has a stable water-filled lumen and a boundary that is
+not a bilayer.
+
+**Recorded as: a stable, water-filled, enclosed pocket in a thick aggregate.** Not a vesicle. The
+milestone is not reached. Both facts are real and neither is allowed to stand in for the other -- the
+lumen is measured by a detector that passes one positive and three negative control classes, and the
+boundary is disqualified by a metric calibrated on planted bilayers plus the render.
+
+**FALSIFICATION FOR THE NEXT STEP.** The gap is now specific: the model makes bilayers (core 1.45-1.47 in
+implicit) and separately makes stable enclosures (in explicit, core 1.28), but not both at once. Explicit
+solvent supplies the enclosure and degrades the bilayer; implicit preserves the bilayer and supplies no
+enclosure. If a solvent condition exists where core stays above about 1.40 AND a lumen persists, the
+milestone is reachable by tuning between the two regimes. If core and lumen remain anti-correlated across
+that scan, the two requirements are in direct conflict in this force field and a vesicle needs a term the
+model does not have.
