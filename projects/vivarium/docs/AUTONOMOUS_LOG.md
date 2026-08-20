@@ -3278,3 +3278,71 @@ vesicle and the opposition is only apparent. If every value that closes the arc 
 (core falling toward the 1.22 of the attractive setting), the opposition is real and this force field
 cannot produce a vesicle without a further term. If nothing closes at any head-head value, the
 obstruction is not head-head repulsion and the mechanism above is wrong.
+
+---
+
+## 2026-08-19u tick — kappa MEASURED at last; last tick's falsification is RETRACTED
+
+### My proposed mechanism was wrong
+
+The head-head sweep, N = 70 arc0.92, 5 seeds per arm, end gap (planted 6.0, closed means < 3):
+
+| chi_HH | implicit HH | end gaps | mean | core (emergent) |
+|---|---|---|---|---|
+| 0.20 | -0.30 | 19.0 19.8 11.0 12.8 10.7 | 14.7 | 1.457 1.472 1.451 |
+| 0.50 | +0.00 | 11.9 19.6 11.1 10.7 15.9 | 13.8 | 1.415 1.450 1.445 |
+| 0.90 | **+0.40** | 21.1 21.2 10.3 10.7 11.7 | **15.0** | 1.449 1.443 1.425 |
+
+**Flat.** Making heads ATTRACT each other does not help closure at all, and the bilayer survives
+throughout (core 1.42-1.47 against a reference of 1.467). The third branch of the falsification: head-head
+repulsion is not the obstruction, and last tick's mechanism -- "the term that creates the membrane forbids
+closing it" -- is **wrong and withdrawn**.
+
+### What the render showed instead
+
+The relaxed arc is a **polygon**: straight facets joined by sharp kinks, not a smooth curve. A ribbon that
+localizes bending into defects rather than curving uniformly is a STIFF ribbon.
+
+### kappa, measured
+
+At fixed lipid count the arc's contour length is exactly N for every span --
+`R * 2*pi*span = [N/(2*pi*span)] * 2*pi*span = N` -- so varying span sweeps curvature at constant length
+and `E_bend = kappa*N/(2R^2)` can be fitted directly against `1/R^2`, at the planted geometry, with no
+dynamics and no spectrum:
+
+| span | 0.50 | 0.60 | 0.75 | 0.85 | 0.92 | 0.97 |
+|---|---|---|---|---|---|---|
+| R | 22.28 | 18.57 | 14.85 | 13.11 | 12.11 | 11.49 |
+| E_total | -1279.6 | -1288.0 | -1244.6 | -1256.5 | -1231.3 | -1236.2 |
+
+    kappa = 269.5 +- 69.0 eps*sigma  (R^2 = 0.79, 3.9 sigma from zero) = 599 kT*sigma
+
+**This is the first kappa this project has measured.** The undulation spectrum was abandoned as
+unusable -- per-mode spread 16.7x at 60 lipids and 1712x at 120, a flat-in-q spectrum meaning the
+estimator was reading its own sampling noise. The energetic route works because it compares planted
+geometries rather than fluctuations.
+
+### RETRACTION: the continuum picture was not falsified
+
+Last tick I concluded from the span sweep that "the closed state is not preferred despite a positive
+lambda, so the continuum picture is falsified for this model." **That is withdrawn.** With kappa now
+measured, the criterion `kappa < 2*lambda*R/pi` gives
+
+    R* = pi*kappa/(2*lambda) = pi*269.5/(2*10.12) = **41.8 sigma**,  critical contour = 263 lipids
+
+and every closure test run so far sat below or barely at that threshold: the span sweep was at
+**R = 11.5**, a quarter of R*, and the size sweep reached R = 42.4 only at N = 200, and there with a
+60-sigma gap for the ends to cross. **The arcs opening was the theory's own prediction.** I tested the
+regime where the theory says nothing closes, and read the result as though it said something closes.
+
+### Launched: the first test actually above threshold
+
+N = 300 (R = 49.2) and N = 400 (R = 65.6) at span 0.97, so the radius is above R* AND the gap is only
+9-12 sigma. 5 seeds each, 150 000 steps, boxes 150 and 200. Two emergence runs continue alongside.
+
+**FALSIFICATION, STATED BEFORE ANY RESULT IS READ.** If these close -- end gap falling below about 3
+sigma -- the continuum picture holds, kappa and lambda are quantitatively right, and closure was only ever
+a question of size. If they open like every smaller arc, the picture fails where it makes its clearest
+prediction, and that is a real falsification rather than the mis-scoped one withdrawn above. If they
+close in some seeds and not others, R* is right but the barrier is stochastic, and the closure fraction
+against N gives its height.
