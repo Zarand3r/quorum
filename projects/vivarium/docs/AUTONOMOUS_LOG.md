@@ -4772,3 +4772,61 @@ milestone is reachable at that setting and the remaining work is sampling. If ag
 stability remain anti-correlated across the whole axis, they are in direct conflict through the water
 term, and a vesicle needs something this force field does not have. If both degrade at intermediate
 values, the two ends are separate optima and the axis is the wrong knob.
+
+---
+
+## 2026-08-20t tick — my aggregation comparison was unfair; redone properly, chi_WW = 0.85 is the interesting point
+
+### Correcting last tick's comparison
+
+Last tick I reported that repairing the water weakens aggregation, comparing largest **22-81 at step
+380 000** against a baseline of **87-120 at step 400 000**. Different run lengths against different
+baselines is not a fair test, and I should not have stated it as a confirmed branch.
+
+Redone at the **same step** (120 000), chi_HT = -0.25 throughout:
+
+| chi_WW | n | largest at 120k | core |
+|---|---|---|---|
+| 1.00 | 15 | 57.3 +- 16.7 | 1.412 +- 0.023 |
+| **0.85** | 5 | **64.0 +- 19.0** | 1.417 +- 0.021 |
+| 0.70 | 5 | 44.6 +- 12.5 | 1.421 +- 0.024 |
+| 0.50 | 5 | 32.0 +- 11.9 | 1.411 +- 0.017 |
+
+At this step chi_WW = 0.85 aggregates **as well as the original water** (0.7 sigma apart), and the
+0.50 deficit is only **1.2 sigma** -- not significant.
+
+Redone at the **end** of each run, properly powered:
+
+    chi_WW = 1.00   n=15   largest 94.8 +- 5.5
+    chi_WW = 0.50   n=5    largest 54.2 +- 5.7
+    difference +40.6 +- 7.9   (5.1 sigma)
+
+**So the claim survives but with a correction**: the aggregation penalty at chi_WW = 0.50 is real and
+large, but it **develops late in the run** rather than being present throughout. Last tick's statement was
+right in direction and wrong in evidence.
+
+### The water axis so far
+
+| chi_WW | aggregation (end) | planted vesicle survival |
+|---|---|---|
+| 1.00 | **94.8 +- 5.5** | 1 of 5 |
+| 0.85 | **as good as 1.00 at 120k** | **running -- the decisive point** |
+| 0.70 | 44.6 at 120k | 1 of 5 (lumen 2305, 0, 0, 0, 0) |
+| 0.50 | 54.2 +- 5.7 | **4 of 5** (lumen 2766-3746) |
+
+0.70 is the worst of both -- weaker aggregation AND poor vesicle survival -- so the axis is not simply
+monotone, and an intermediate optimum is possible rather than excluded.
+
+### Priority error, corrected
+
+The chi_WW = 0.85 planted arm -- the measurement the whole axis turns on -- had been queued behind five
+400 000-step emergence runs in the same `xargs` batch and had not started at all. Relaunched as its own
+batch. Verified at step 0: 120/120, core 1.465, lumen 3436.
+
+**FALSIFICATION, STATED BEFORE THE 0.85 PLANTED ARM IS READ.** If the vesicle survives at chi_WW = 0.85
+in a majority of seeds with core above 1.40 and lumen above 1500, that setting has full aggregation
+strength AND a stable vesicle, and the milestone reduces to nucleation sampling at a single known
+condition. If it fails there as it did at 0.70 and 1.00, then vesicle survival requires water cohesion at
+or below 0.50, which costs 40 lipids of final aggregate size, and the two requirements are genuinely
+opposed along this axis. If it survives but aggregation at 0.85 falls at long times the way 0.50 did, the
+120 000-step comparison was too early to judge and the axis needs end-of-run data at every setting.
