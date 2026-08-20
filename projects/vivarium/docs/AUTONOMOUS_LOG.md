@@ -3005,3 +3005,34 @@ separated, repulsive head-tail is established as the fix for head penetration. I
 drifts ABOVE 1.6 as aggregates grow, the structures are thickening with clean surfaces -- which core
 depth cannot see -- and a genuine thickness measure is still required before any bilayer claim. If the
 arms converge by 200 000 steps, the step-30 000 separation was a transient of the aggregation stage.
+
+**Sweep completed, 200 000 steps, 5 seeds per arm.** Core depth against the planted-bilayer reference of
+1.467:
+
+| implicit HT | core depth | n | burial |
+|---|---|---|---|
+| +0.45 | **1.216 +- 0.028** | 4 | 3.33 |
+| 0.00 | 1.379 | 2 | 4.81 |
+| -0.50 | **1.460 +- 0.009** | 3 | 5.41 |
+
+**The falsification resolves to its first branch.** At -0.50 core depth is statistically
+indistinguishable from a planted bilayer (1.460 against 1.467), separated from +0.45 by **8.4 sigma**,
+with burial separated in the same direction. Core depth did NOT drift above 1.6, so the second branch --
+aggregates thickening behind clean surfaces, which core depth cannot see -- is excluded by this data.
+Repulsive head-tail is established as the fix for head penetration.
+
+**A bias in those means, stated rather than averaged over.** Every NaN is a LARGE aggregate: 85 and 89,
+and 58, 62, 95. The span guard fires when a cluster exceeds half the box, so at L = 56 the metric
+systematically discards the biggest structures and the means above describe only the smaller ones. Since
+thickening is a phenomenon that grows with size, that is a bias toward the favourable case, and the arms
+have n = 4, 2 and 3 rather than 5.
+
+**Rerun launched at L = 120**, where a 120-lipid aggregate cannot reach half the box, at +0.45 and -0.50,
+5 seeds, 300 000 steps.
+
+**FALSIFICATION, STATED BEFORE IT IS READ.** If the separation survives with every seed reporting -- core
+near 1.46 at -0.50 and near 1.22 at +0.45 -- the result stands on unbiased data. If the large aggregates
+that were previously discarded show core depth well above 1.467 at -0.50, they are thickening behind
+clean surfaces, the effect was hidden by the guard, and a direct thickness measure is still needed. If
+the separation vanishes when the big clusters are included, it was an artefact of scoring only small
+aggregates.
