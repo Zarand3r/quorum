@@ -7027,3 +7027,63 @@ run at which the earlier false positives still looked convincing.
 ### Still in flight
 
 Persistence test (5 seeds), emergence continuation to 2.4 million.
+
+---
+
+## Tick: the persistence test passes. An emergent vesicle, with its limits stated.
+
+### PERSISTENCE, read at the end (200 000 steps, 5 fresh thermal seeds from the frozen candidate)
+
+| seed | largest | perc | n_enclosed @ 1.0/1.5/2.0/3.0 | vesicle_call | ratio |
+|---|---|---|---|---|---|
+| 20 | 159 | n | [1, 1, 1, 1] | **True** | 0.272 |
+| 21 | 160 | n | [1, 1, 1, 1] | **True** | 0.285 |
+| 22 | 160 | n | [1, 1, 1, 1] | **True** | 0.281 |
+| 23 | 123 | n | [1, 1, 1, 1] | True -- **fragmented, excluded** | 0.454 |
+| 24 | 160 | n | [0, 0, 0, 1] | False (opened) | -- |
+
+**3/5 intact and True**, against the pre-registered bar of >= 3/5. Seed 23 was excluded exactly as
+written ("largest < 152 -> the test says nothing"), even though it too held a closed loop; seed 24 opened.
+
+Independently, the SOURCE run continued 400 000 steps further to **2.4 million total** and still reads
+`vesicle_call = True`, largest 160/160, ratio 0.292. The closure survived both a further 400 000 steps in
+its own trajectory and re-solvation with three different thermal seeds.
+
+The render was checked and agrees: a closed bilayer ring, unbroken around its circumference, heads on
+both faces, tails in the core, enclosing a water-filled lumen.
+
+### The claim, and its limits
+
+**This is an emergent vesicle by the two-gate criterion**, and the first this project has produced. The
+lineage is entirely dispersed-start -- random start, continued twice, nothing planted at any point.
+
+Stated plainly, what it is NOT:
+
+* **It is a vesicle with appendages.** The stub at top-left and the corner fragments belong to the same
+  cluster, joined through the periodic boundary. That is why the lumen ratio is ~0.28 rather than the
+  ~0.88 of a planted vesicle: appendage lipids count in the expectation and contribute no lumen.
+* **It is 2-D.** Nothing here transfers to three dimensions, where the known-void still stands.
+* **It did not form by curvature.** Every parameter test says this force field cannot curve a flat
+  bilayer -- chi_TW, chi_HH, lipid shape, leaflet thickness asymmetry and leaflet area asymmetry are all
+  measured nulls with the membrane intact. This closed because two ends of a long meandering ribbon met,
+  the encounter-limited route the gap scan quantified (3 sigma 5/5, 6 sigma 3/5, 9 sigma 2/5).
+* **One occurrence.** It appeared in 1 of 5 emergence seeds. The rate is unmeasured.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+The single most important open question is now whether this reproduces, and how often. One occurrence in
+five seeds could be anything from a common outcome to a fluke.
+
+Launched: **10 fresh dispersed starts**, N = 160, L = 65, kT = 0.45, 1.6 million steps each, new seeds
+30-39, no restarts and no shared history with the run that produced the candidate.
+
+* **>= 2/10 reach `vesicle_call` True with largest >= 152** -> formation is reproducible at a measurable
+  rate, and the rate itself becomes the quantity to report.
+* **1/10** -> consistent with the single prior occurrence; the rate is roughly 1 in 5 to 1 in 10 and
+  needs more seeds to pin down, which should be said rather than rounded up.
+* **0/10** -> the prior occurrence was a rare fluke at a rate below about 1 in 10, and the claim above
+  should be restated as "observed once in fifteen dispersed runs" rather than as a reproducible result.
+
+### Still in flight
+
+Formation-rate measurement, 10 seeds. The emergence continuation has finished at 2.4 million.
