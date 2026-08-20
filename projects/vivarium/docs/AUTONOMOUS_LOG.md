@@ -3573,3 +3573,67 @@ circumstantial.
 The newest emergent renders are step-15 000 frames of deterministic replicates of trajectories already
 shown at step 300 000, so there is no new emergent result to show. Per the standing rule, no planted
 structure is sent in their place.
+
+---
+
+## 2026-08-19z tick — RETRACTION: explicit solvent does NOT destroy the bilayer. I read the wrong column, twice.
+
+### The error
+
+For two ticks I reported that explicit solvent collapses the membrane, quoting core depths of 0.462,
+0.377, 0.386 and 0.265 against a reference of 1.467. Those numbers are **the `lumen` column**, not
+`core`. The analysis scripts indexed `r[10]` in Python, which is 0-based, while `core` is at index **9**;
+index 10 is `lumen`. The `awk` one-liners used `$10`, which IS core because awk is 1-based, so the same
+quantity was printed correctly in the terminal and incorrectly in the Python summaries -- and I trusted
+the Python.
+
+Recomputed with the correct column, all five seeds, time-averaged over the equilibrated half:
+
+| condition | CORE (correct) | what I reported (lumen) |
+|---|---|---|
+| explicit kT = 0.45, ring | **1.352 +- 0.013** | 0.462 |
+| explicit kT = 0.45, arc | **1.365 +- 0.020** | 0.377 |
+| explicit kT = 0.90, ring | **1.328 +- 0.014** | 0.386 |
+| explicit kT = 0.90, arc | **1.333 +- 0.008** | 0.265 |
+
+Bilayer reference 1.467; implicit solvent gives about 1.45. **Explicit solvent holds the bilayer.**
+
+### What this retracts
+
+* **"Explicit solvent destroys the bilayer"** -- withdrawn, both instances.
+* **"Implicit is the only regime this force field supports"** -- withdrawn.
+* **The no-overlapping-window hypothesis** -- withdrawn before it was tested. The window sweep
+  (kT = 0.45 to 1.10) was launched to find a temperature where water is liquid AND the membrane holds;
+  its premise was an artefact. Its partial data shows core 1.31-1.42 at every temperature, consistent
+  with the corrected numbers above.
+* Last tick's claim that a step-12 000 checkpoint was "mid-collapse" -- there was no collapse. The
+  caution was right in principle and the diagnosis was wrong.
+
+### How it was caught
+
+Two supposedly identical runs disagreed: last tick's kT = 0.90 ring reported core 0.386, while this
+tick's sweep showed 1.33 at the same temperature. Printing both full series showed them agreeing exactly
+at every shared step -- deterministic, identical runs -- which meant the disagreement had to be in the
+analysis, not the physics. **The check that found it was comparing two runs that should have matched.**
+
+### What it reopens
+
+Explicit solvent is where the edge cost should live: an exposed edge puts tails against water, and in
+this model's own table tail-water is 0.00 against tail-tail 0.70. Implicit solvent was shown to have no
+closure drive (ring minus arc = +0.5 +- 6.0 eps). **The explicit case has never been measured with a
+usable estimator** -- the earlier attempts used TOTAL energy and carried +-80 to +-105 eps of
+water-water noise, and `energy_solute` was written but not wired into the driver until this tick.
+
+**FALSIFICATION, STATED BEFORE THE RUN.** Planted ring against planted arc0.97, N = 300, explicit
+phi = 0.55, kT = 0.45, 5 seeds each, 60 000 steps, energies **excluding water-water pairs** and
+time-averaged over the equilibrated half. If the ring sits about 20 eps below the arc, explicit solvent
+supplies the closure drive that implicit lacks, and the vesicle milestone becomes a question of running
+emergence in explicit solvent. If ring and arc are isoenergetic here too, the absence of a drive is a
+property of the force field rather than of the solvent treatment, and closure needs a term the model does
+not have. If the ring is HIGHER, the open ribbon is genuinely preferred and closure is forbidden.
+
+### Emergence
+
+The last three emergence relaunches used seeds 0-4 with identical parameters and therefore reproduced
+the same deterministic trajectories, producing no new structures -- which is why there was no new
+emergent render to show last tick. Relaunched on **seeds 5-9**.
