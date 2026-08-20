@@ -4270,3 +4270,44 @@ enclosure. If a solvent condition exists where core stays above about 1.40 AND a
 milestone is reachable by tuning between the two regimes. If core and lumen remain anti-correlated across
 that scan, the two requirements are in direct conflict in this force field and a vesicle needs a term the
 model does not have.
+
+---
+
+## 2026-08-20j tick — the untried combination: explicit solvent WITH repulsive head-tail
+
+### The gap, stated precisely
+
+Two capabilities exist in this model and have never coexisted:
+
+| regime | chi_HT | core (bilayer ref 1.467) | lumen |
+|---|---|---|---|
+| implicit | **-0.50** (repulsive) | **1.45 - 1.47** | never |
+| explicit | +0.20 (attractive, default) | 1.28 - 1.34 | stable 63 sigma^2 in 1 of 5 |
+
+The repulsive head-tail term is what produced good bilayers, and it was only ever applied in IMPLICIT
+solvent. Explicit solvent is what produced the enclosure, and it has only ever run with the DEFAULT
+attractive term. **The combination has never been run**, which is an omission rather than a result --
+`VIVARIUM_CHI_HT` sets the raw `chi[HEAD, TAIL]` in both solvent modes, so nothing prevented it.
+
+Launched: N = 120, explicit phi = 0.55, kT = 0.45, `chi_HT` at 0.20, -0.25 and -0.50, **5 seeds each**,
+400 000 steps, scored on `core` and `lumen_c` together.
+
+### Rate, still incomplete
+
+The ten-seed rate run is at step 300 000-320 000 of 400 000 and all ten read `lumen_c = 0`. Seed 3's
+enclosure appeared at 400 000, so these have not reached the step where it showed up. **Still recorded as
+incomplete, not as a low rate** -- this is the third tick these have been in flight and the temptation to
+call 0/10 a result grows each time; it is not one until they finish.
+
+### Size arms
+
+N = 300 is at step 340 000 with largest 137/300; N = 500 at 180 000 with largest 67/500. Neither has
+reached a fraction comparable to N = 120's, so neither is read.
+
+**FALSIFICATION, STATED BEFORE THE SCAN IS READ.** If any `chi_HT` gives `core` above about 1.40 AND a
+persistent lumen, the two requirements are compatible and the milestone is reachable by tuning between
+the regimes. If `core` rises with repulsive head-tail while `lumen_c` falls to zero -- the anti-correlation
+already visible between the two regimes -- the requirements are in direct conflict in this force field,
+and a vesicle needs a term the model does not have. If `core` does not rise in explicit solvent at all,
+then whatever degrades the bilayer there is the solvent itself rather than the head-tail term, and the
+repulsive term is not the missing ingredient.
