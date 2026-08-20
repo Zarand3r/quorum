@@ -6875,3 +6875,79 @@ itself restarted.
 ### Still in flight
 
 4-tail/6-tail asymmetry test, emergence continuation to 2.4 million under seeds 10-14.
+
+---
+
+## Tick: leaflet thickness asymmetry is excluded; a near-ring appears in the emergence run
+
+### 4-tail against 6-tail imposed asymmetry: the decisive negative
+
+| seed | largest | core | R_mid | closed |
+|---|---|---|---|---|
+| 0 | 80 | 1.722 | 18.23 | never |
+| 1 | 80 | 1.722 | 18.07 | never |
+| 2 | 80 | 1.721 | 18.18 | never |
+| 3 | 80 | 1.709 | 18.06 | never |
+| 4 | 80 | 1.714 | 17.89 | never |
+
+**5/5 fully intact** (largest 80/80, core 1.709-1.722 against a 1.755 baseline) and **0/5 closed.** The
+ribbon held where the 2/4 mixture tore, so this is the second pre-registered branch, not the third.
+
+R_mid fell 27.52 -> ~18.1, the same signature misread as "curling" several ticks ago. **The render was
+checked and shows a straight, gently undulating flat bilayer.** Render and metric agree.
+
+### What is now excluded, and the reason
+
+| candidate | result |
+|---|---|
+| chi_TW (tail-water) | null WITH POWER: lambda +2.8 +- 2.8 against -5.2 +- 4.2 |
+| chi_HH (head-head) | 0/5 at two values, 10 runs, membranes intact |
+| lipid shape, 2-tail | dissolves to micelles, largest 7-11 of 80 |
+| leaflet asymmetry, 2/4 tails | fragments, largest 33-79, untestable |
+| **leaflet asymmetry, 4/6 tails** | **0/5, intact, render straight** |
+
+The 4/6 test varied leaflet **THICKNESS**. Spontaneous curvature comes from an **AREA** mismatch between
+leaflets, not a thickness one, so that arm was answering a different question than intended -- a
+distinction worth stating plainly rather than filing the result as another null.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Added `VIVARIUM_LEAFLET_SPLIT`: both leaflets span the same length, so putting more lipids in one packs
+it tighter and it wants to expand relative to the other. **Verified rather than assumed** -- and the
+first attempt at the edit silently failed to apply, which the verification caught before any run was
+launched:
+
+    SPLIT=0.50: upper 40 at spacing 2.050 | lower 40 at 2.050 | area ratio 1.00  (control)
+    SPLIT=0.65: upper 52 at spacing 1.577 | lower 28 at 2.929 | area ratio 1.86
+
+Launched: flat ribbon, N = 80, L = 110, implicit, **SPLIT = 0.58 and 0.65**, 5 seeds each, 200 000 steps
+-- the protocol that gave 0/5 at SPLIT = 0.50, changing only the leaflet area balance.
+
+* **Curls or closes in >= 1/5 at either split with largest >= 76** -> leaflet AREA asymmetry generates
+  spontaneous curvature, and the earlier asymmetry arms failed because they varied thickness.
+* **Flat 0/5 at both with largest >= 76** -> even area asymmetry does not curve this membrane. Every
+  candidate is then excluded and an emergent vesicle needs a new force term, not a new parameter value.
+* **largest < 76** -> the split tore the ribbon and that value is untestable rather than answered.
+
+### The emergence run produced a near-ring
+
+Seed 11 at step 280 000 (1.88 million total): largest 115/160, core 1.430, perc = n. The render shows a
+large, near-closed RING enclosing a water-filled region -- not a branched network.
+
+    bead 1.0: n_enclosed = 0
+    bead 1.5: n_enclosed = 1, lumen 2042
+    bead 2.0: n_enclosed = 1, lumen 2042
+    bead 3.0: n_enclosed = 1, lumen 1818
+
+`vesicle_call` returns **False**, correctly: the call is unstable across dilation, so a residual gap
+leaks at the finest resolution. **But the lumen is 2042 cells against 4210 expected, a ratio of 0.485**,
+where every previous false positive sat at 0.01-0.044. This is a near-ring with a real lumen and one
+gap, not a network with a pinhole -- qualitatively different from everything before it, and the first
+time the size gate has been passed while only the stability gate fails.
+
+The gap-scan curve (3 sigma closes 5/5, 6 sigma 3/5, 9 sigma 2/5) says a gap of that size can still
+close. The run continues to 800 000.
+
+### Still in flight
+
+Leaflet-area-split test at 0.58 and 0.65, emergence continuation to 2.4 million under seeds 10-14.

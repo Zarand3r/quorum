@@ -349,11 +349,22 @@ def _plant_flat_ribbon(X, mols, chains, d, gap=1.05, L=None, branched=True, span
         raise ValueError(f"flat ribbon of {n} lipids is {width:.1f} wide and would span a box of "
                          f"L={L}: it would have no ends, so closure has nothing to gain. "
                          f"Need L > {width / 0.8:.0f}.")
-    xs = (np.arange(per) - (per - 1) / 2.0) * gap
+    # LEAFLET AREA ASYMMETRY. Both leaflets span the same length, so putting more lipids in one packs
+    # it tighter -- smaller area per lipid -- and it wants to expand relative to the other. That
+    # differential is the classic source of spontaneous curvature, and it is a difference in AREA, not
+    # in thickness. The 4-tail against 6-tail test varied leaflet THICKNESS and came back flat 0/5 with
+    # the ribbon fully intact, which is why area is what this varies rather than repeating that.
+    width_fixed = per * gap
+    _f = float(os.environ.get("VIVARIUM_LEAFLET_SPLIT", "0.5"))
+    _hi = int(round(n * _f))
+    per_side = (_hi, n - _hi)
+    xs_side = [((np.arange(m) - (m - 1) / 2.0) * (width_fixed / m)) if m > 1 else np.zeros(max(m, 0))
+               for m in per_side]
     nt = nb - 1
     half = nt // 2 if branched and nt >= 2 else nt
     k = 0
-    for sgn in (+1.0, -1.0):
+    for _si, sgn in enumerate((+1.0, -1.0)):
+        per, xs = per_side[_si], xs_side[_si]
         for j in range(per):
             idx = mols[k]
             # Tail count comes from THIS molecule, not from one scalar for the ribbon. A mixed
