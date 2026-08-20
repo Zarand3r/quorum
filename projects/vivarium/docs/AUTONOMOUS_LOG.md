@@ -2944,3 +2944,64 @@ aggregate size as the term goes negative, head-tail attraction is what permits l
 fix is to make internal interfaces costly. If thickness is flat across the sweep, this candidate joins
 packing in the falsified column and the cause is neither the molecule's shape nor its cross-term. If the
 aggregates instead fragment at -0.75, the term has overshot and the usable window lies between.
+
+---
+
+## 2026-08-19p tick — REPULSIVE head-tail gives clean bilayer ribbons; the thickness metric was wrong, not the physics
+
+### The result
+
+Making the head-tail term repulsive produces the cleanest membrane morphology this project has had. At
+implicit head-tail **-0.50** the emergent aggregates are thin ribbons, uniformly about two leaflets
+thick, heads lining both long edges, tails inside -- and several are CURVED. At +0.45 the same
+configuration gives thick blobs with heads buried.
+
+Metrics moved together with the render:
+
+| implicit HT | burial | hollow | core depth (bilayer ref 1.467) |
+|---|---|---|---|
+| +0.45 | 3.33 | 2.0 - 2.5 | 1.208 - 1.275 |
+| 0.00 | ~4.8 | - | 1.381 - 1.413 |
+| -0.50 | 5.1 - 5.6 | **0.50 - 0.62** | 1.421 - 1.433 |
+
+Core depth is at step 30 000 with the runs continuing; burial and hollow are end-of-run.
+
+### The thickness metric was measuring the wrong thing
+
+The PCA minor-axis thickness reported **16.8 sigma at -0.50 against 11.3 at +0.45**, i.e. it called the
+visibly cleaner structures worse. It takes the narrow extent of the WHOLE aggregate, and for a CURVED
+ribbon that spans the entire arc -- a closed or bent sheet has both principal axes spanning its diameter.
+The metric assumed an elongated straight slab, which is the one shape the good structures are not.
+
+Replaced by **core depth**: mean distance from each tail bead to the nearest head bead. Local, so
+curvature cannot affect it, and it is **size-independent** on the reference -- a planted flat bilayer
+reads 1.466 at N = 20 and 1.467 at N = 40.
+
+**What core depth actually measures, stated so it is not over-read:** head PENETRATION, not thickness.
+Low means heads are mixed into the interior, which is the +0.45 defect. It cannot distinguish a clean
+bilayer from an over-thick slab whose heads sit only on the outside, since both keep interior tails far
+from any head. So it is necessary but not sufficient, and the thin-ribbon claim rests on the render plus
+burial plus hollow together.
+
+### Retracted
+
+* **Last tick's thickness numbers** (11.27 +- 1.96 for 4-tail, 9.04 +- 0.66 for 2-tail) are withdrawn as
+  a measure of bilayer quality. They are still a correct minor-axis extent, but that quantity conflates
+  thickness with curvature, so the 1.94x and 2.38x "overshoot" figures should not be used.
+* The **packing-parameter falsification stands** -- it compared two lipids under the same metric, and
+  the burial and cohesion differences (1.643 +- 0.083 against 3.333 +- 0.437; E/lipid -9.6 against
+  -21.0) do not depend on the thickness measure at all.
+
+### Sixth and seventh filename collisions
+
+`chi_HT` was not in the state or render tag, so the three sweep arms overwrote each other; the surviving
+states were attributable only because their burial values matched one arm's log exactly. That is the
+sixth time a swept variable has been missing from the tag -- after L, n_tail, seed, kT and frac_short --
+and the seventh fix now adds `chi_HT`. The sweep is re-running with all parameters in the filename.
+
+**FALSIFICATION, STATED BEFORE THE COMPLETED RUNS ARE READ.** Five seeds per arm to 200 000 steps. If
+core depth at -0.50 holds near the 1.467 reference while +0.45 stays near 1.25, and burial stays
+separated, repulsive head-tail is established as the fix for head penetration. If core depth at -0.50
+drifts ABOVE 1.6 as aggregates grow, the structures are thickening with clean surfaces -- which core
+depth cannot see -- and a genuine thickness measure is still required before any bilayer claim. If the
+arms converge by 200 000 steps, the step-30 000 separation was a transient of the aggregation stage.
