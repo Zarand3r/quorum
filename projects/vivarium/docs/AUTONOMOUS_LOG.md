@@ -5219,3 +5219,64 @@ can come to the milestone without a discriminator that passes its control. If co
 cohesion does not control membrane order at high concentration and the two knobs interact. If enclosures
 disappear at chi_WW = 0.50 even at L = 38, weak cohesion suppresses nucleation independently of
 concentration, and the opposition is fundamental rather than a matter of finding the right corner.
+
+---
+
+## 2026-08-21b tick — best-scoring condition found, and the detector's false-positive rate measured
+
+### The combination: highest persistence yet
+
+L = 38 (nucleation) crossed with `chi_WW` (membrane order), 5 seeds each, matched step 120 000:
+
+| chi_WW | any lumen | **>=4 consec** | max | core |
+|---|---|---|---|---|
+| 1.00 | 5 of 5 | 2 | 206 | 1.394 |
+| 0.70 | 4 of 5 | 1 | 925 | 1.412 |
+| **0.50** | **5 of 5** | **4 of 5** | 686 | 1.407 |
+
+`chi_WW = 0.50` **doubles the persistence rate** to 4 of 5. Seed 54 held ~370 cells for all twenty
+checkpoints, water-filled at **1.58x bulk density**; seed 51 reached 686.
+
+Scored against the criterion set before the run -- enclosures at the L = 38 rate AND core >= 1.42 --
+this is the **second branch**: the rate target is exceeded, but core reaches only 1.407. The two knobs
+partially interact; weak water cohesion does not deliver at high concentration the membrane order it
+gives at L = 56.
+
+### The render undercuts the metric, again
+
+The structure is a **crowded amphiphile network with irregular water-filled gaps**, not a vesicle. The
+365-cell enclosure is one of those gaps.
+
+**That exposes a confound in the concentration trend itself.** Crowding makes gaps trivially more likely,
+which is why 5 of 5 seeds "enclose" at L = 38 -- and it explains why three separate discriminators all
+failed. The trend may be measuring gap frequency rather than nucleation.
+
+### The detector's false-positive rate, measured rather than assumed
+
+Step 0 is a random configuration where no enclosure can exist, so any score there is spurious:
+
+| configuration | random configurations scoring an enclosure |
+|---|---|
+| N = 120, L = 38 and 56 | **0 of 3** |
+| N = 300, L = 60 and 90 | 0 of 3 |
+| **N = 300, L = 60, 12 seeds** | **3 of 12**, all ~50 cells (51, 50, 51) |
+
+The rate is **seed-dependent and only visible with enough samples** -- the first three seeds I tried gave
+zero. So `min_cells = 40` is too low at N = 300, where the noise sits at ~50 cells.
+
+**Consequence, applied going forward:** the N = 120 results stand, sitting far above their own zero noise
+floor (206-686 against 0 of 3 spurious). At N = 300 nothing below **~100 cells** counts.
+
+### Launched
+
+N = 300 at L = 60 -- the same 0.42 lipid area fraction as L = 38, but 2.5x more lipids, so a single
+aggregate can be large relative to the box while empty space remains and a closed structure would be
+unambiguous rather than a gap between crowded arms.
+
+**FALSIFICATION, STATED BEFORE THE RUN.** Scored on enclosures above **100 cells** (the measured N = 300
+noise floor) persisting four or more consecutive checkpoints, with core and water content reported
+alongside. If such enclosures appear and the render shows an isolated closed object rather than a gap in
+a network, that is the strongest emergent result this project can produce and the milestone is in reach.
+If enclosures appear only in the 50-100 cell band, they are indistinguishable from the measured noise and
+the concentration trend is confirmed as a crowding artefact. If aggregates remain space-filling even at
+this size, the model cannot make an isolated closed object at any concentration that nucleates one.
