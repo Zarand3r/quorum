@@ -198,7 +198,12 @@ def build(n_short, n_long, n_water, L, d, tails=(2, 4), seed=0, plant="random", 
     # the run measures the plant's destruction rather than the physics.
     if n_water:
         # oversample so that excluding the membrane's sites still leaves enough free ones
-        per = int(np.ceil((n_water * 1.6) ** (1.0 / d))) + 2
+        # Oversample enough that excluding the membrane's sites still leaves room. 1.6x was sufficient
+        # at moderate density but not at L = 38, where lipids cover ~42% of the box: four of five runs
+        # died with "only 394 free water sites for 411 waters". Scaling with the lipid fraction rather
+        # than a fixed factor makes the placement work at any concentration.
+        _occ = min(0.9, n_lip_beads / max(L ** d / C_D[d] * (2 ** d), 1.0))
+        per = int(np.ceil((n_water * (1.6 + 3.0 * _occ)) ** (1.0 / d))) + 2
         grid = np.stack(np.meshgrid(*[np.linspace(-L / 2, L / 2, per, endpoint=False)] * d,
                                     indexing="ij"), axis=-1).reshape(-1, d)
         grid = grid + rng.uniform(-0.15, 0.15, size=grid.shape)

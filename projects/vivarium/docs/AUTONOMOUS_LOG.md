@@ -5103,3 +5103,62 @@ encounter-limited across the range and the milestone is a sampling problem. If i
 is an optimum concentration and crowding interferes below it -- the third branch stated last tick. If
 L = 45's 2-of-5 does not reproduce in the added seeds, the apparent rise was a small-sample artefact and
 the encounter-limited reading is withdrawn.
+
+---
+
+## 2026-08-20z tick — the concentration trend is real, but I cannot yet tell a LUMEN from a PACKING GAP
+
+### The trend, at matched step
+
+| L | area | seeds | any lumen | >=4 consec | max |
+|---|---|---|---|---|---|
+| 38 | 1444 | 1 | 1 | 1 | 633 |
+| 42 | 1764 | 5 | 3 | 1 | 334 |
+| 45 | 2025 | 10 | 4 | 2 | 250 |
+| 50 | 2500 | 5 | 0 | 0 | 0 |
+| 56 | 3136 | 5 | 0 | 0 | 0 |
+
+Monotone in both rate and size. The L = 38 seed nucleated by step **20 000** against L = 45's ~60 000 and
+L = 56's ~220 000.
+
+### Two false alarms of mine, both checked rather than assumed
+
+* I read sd34's series as showing a 633-cell enclosure **at step 0**, which would have meant the detector
+  fires on random configurations. It does not: `awk 'NR>4'` had skipped the step-0 row, and the 633 is at
+  step 20 000. A direct control confirms **lumen = 0 at step 0 for every box size**.
+* I judged from the render that the L = 45 enclosure was a **vapour void**. Measurement said water-filled
+  at 1.50x bulk. Recorded last tick.
+
+### The failure that matters, and it qualifies the last two ticks
+
+The L = 38 render shows a **dense percolating jumble** filling the box, heads and tails intermixed, whose
+dark regions look like **packing gaps in a crowded network** rather than lumens inside a membrane. That is
+the exact false positive the original `_lumen.py` was written to avoid.
+
+**I tried twice to build a discriminator and both failed their positive control:**
+
+| attempt | planted vesicle | L = 38 jumble | verdict |
+|---|---|---|---|
+| randomize lipid orientations in place | 4014 -> **4049** | 194 -> 163 | useless: the metric is positional, so rotation cannot move it |
+| fraction of lining lipids with head inward | **0.54** | **0.70** | backwards -- the jumble scores higher |
+| same, restricted to the inner leaflet | **0.54** | **0.70** | unchanged; the shell still catches outer-leaflet lipids |
+
+**So `lumen_cells` measures a geometric enclosure and nothing more.** The concentration trend stands as a
+count of geometric enclosures. It does **not** currently stand as evidence of vesicles, and the last two
+ticks' framing is qualified accordingly. The one enclosure independently shown to hold water at 1.50x
+bulk (L = 45) remains the strongest single case, because that check does not depend on the failed
+discriminator.
+
+### Also fixed
+
+Four of five L = 38 runs had **crashed**: `only 394 free water sites for 411 waters`. The water lattice
+oversampled by a fixed 1.6x, which is insufficient when lipids cover ~42% of the box. It now scales with
+the lipid fraction. The densest point of the concentration sweep therefore rested on the single seed that
+survived, which is now being remeasured with 5 fresh seeds at L = 38 and 5 matched controls at L = 45.
+
+**FALSIFICATION, STATED BEFORE THE RERUN IS READ.** Two things are being tested. If the L = 38 rerun
+reproduces enclosures in a majority of its 5 seeds, the concentration trend is real at the densest point
+rather than resting on one survivor. And separately, any claim that these are vesicles requires a
+discriminator that scores a planted vesicle ABOVE a jumble -- both of mine did the reverse, so until one
+passes that control, every enclosure here is reported as a geometric pocket of stated area and water
+content, never as a vesicle.
