@@ -5526,3 +5526,87 @@ n_enclosed 1) and would flatter the vesicle if read as a trend.
 
 * N = 300, L = 120 dispersed-start emergence runs to 800 000 steps (an EMERGENCE arm is always running).
 * Dilution quench to 300 000 steps.
+
+---
+
+## Tick: both arms of the vesicle/sponge fork are equilibrated, and neither is read yet
+
+### What ran
+
+Three arms in flight. **The fork arm is deliberately NOT concluded this tick** -- the planted vesicle is
+at step 20 000 of 100 000, and reading a planted structure's early checkpoints as a trend is the
+specific error this log exists to prevent.
+
+**Equilibration check (this is a methodological check on WHEN to read, not a result):**
+
+| step | vesicle sd0 E/lip | | step | sponge sd0 E/lip |
+|---|---|---|---|---|
+| 0 | -8.78 | | 0 | -6.15 |
+| 5 000 | -7.75 | | 15 000 | -6.62 |
+| 10 000 | -7.68 | | 60 000 | -6.73 |
+| 15 000 | -7.41 | | 105 000 | -6.71 |
+| 20 000 | -7.49 | | 135 000 | -6.86 |
+
+The vesicle's -8.78 at step 0 was an unthermalized plant; it relaxes UPWARD and is flat at about -7.45
+from step 5 000. The sponge relaxes DOWNWARD and is flat at about -6.70 from step 15 000. Both arms sit
+on their plateaus, so the step-100 000 comparison will be between two equilibrated states rather than
+between a plant and a plateau. **The apparent 0.75 eps/lipid gap is recorded here as provisional and is
+not being interpreted.**
+
+### Emergence arm: coarsening is the binding constraint, not closure
+
+The N = 300, L = 120 dispersed-start runs at step 280 000 have **largest cluster = 20-27 lipids** out of
+300. The closure threshold is a contour of 2*pi*R* = 145 lipids. These aggregates are a fifth of the
+size at which closure becomes energetically possible, so they are not failing to close -- they have not
+yet assembled anything that COULD close.
+
+Their energies are the surprise:
+
+| seed | largest | E/lip | core |
+|---|---|---|---|
+| 70 | 27 | -6.82 | 1.422 |
+| 71 | 25 | -6.58 | 1.441 |
+| 72 | 24 | -6.96 | 1.434 |
+| 73 | 20 | -6.63 | 1.433 |
+| 74 | 25 | -6.69 | 1.448 |
+
+A 25-lipid blob sits at -6.7 eps/lipid, indistinguishable from the 300-lipid sponge's -6.70. **There is
+almost no energetic gradient driving small clusters to merge**, which explains the measured
+`largest ~ t^0.63` coarsening directly: the drive is interfacial, not per-lipid, so it weakens as
+clusters grow.
+
+### Render, at 135 000
+
+Seed 2 of the quench, the seed with the largest compartment (2431 cells). Sixty thousand steps on from
+the last tick and the topology is unchanged: a branched tangle, not a shell retracting. The large dark
+pocket is one compartment among several. `perc = n` in every seed, as before, and as before that fact
+alone means nothing.
+
+### FALSIFICATION, STATED BEFORE THE RESULT IS READ
+
+If the vesicle arm does come in below the sponge at step 100 000, the sponge is a kinetic trap held
+shut by junction-removal barriers. A barrier is escapable by temperature; a ground state is not. So the
+anneal tests the trap hypothesis from the opposite side, and it is informative under BOTH branches of
+the fork, which is why it is launched before the fork is read.
+
+Launched: the 5 quench sponges restarted at **kT = 0.60 and kT = 0.75** (their own kT was 0.45),
+100 000 steps, 5 seeds per temperature, 10 runs. Seed-to-source mapping was written to
+`/tmp/anneal_mapping.txt` AT LAUNCH rather than reconstructed afterwards from render tags.
+
+* **n_enclosed falls toward 1 at either temperature while `core` stays above 1.35** -> the sponge is an
+  escapable kinetic trap, the membrane survived the anneal, and the route to an emergent vesicle is
+  annealing rather than any change to chi.
+* **n_enclosed stays >= 3 at both temperatures with `core` above 1.35** -> the membrane was intact and
+  still would not resolve its junctions. The trap is not thermal, and a 225 eps gap that survives
+  450 kT of nothing happening needs re-examination, starting with whether a perfectly planted ring is
+  a fair stand-in for any reachable state.
+* **`core` drops below 1.35 at both temperatures** -> the bilayer melted before the junctions moved, the
+  anneal window is empty, and this test says nothing either way. Report that, do not read the
+  n_enclosed values from a melted membrane.
+
+### Still in flight
+
+* Planted vesicle N = 300, 5 seeds, to 100 000 (the fork; read at the end).
+* Dilution quench, 5 seeds, to 300 000.
+* Dispersed-start emergence, 5 seeds, to 800 000 (an EMERGENCE arm is always running).
+* Anneal ladder, 10 runs, to 100 000.
