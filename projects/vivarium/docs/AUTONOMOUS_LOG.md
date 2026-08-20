@@ -4937,3 +4937,58 @@ underpowered. If it stays at zero, the quench is excluded as a route and the rem
 larger systems, longer runs, or an ingredient the model does not have. If persistent enclosures appear
 only in seeds whose pre-quench aggregate was largest, the limitation is aggregate size rather than the
 protocol, which is testable directly.
+
+---
+
+## 2026-08-20w tick — the two stages do different jobs: strong cohesion nucleates, weak cohesion sustains
+
+### The full quench arm, on the persistence criterion
+
+| arm | seeds | ever >0 | >=2 consec | >=4 consec | max lumen |
+|---|---|---|---|---|---|
+| fixed chi_WW = 1.00 | 15 | 2 | 1 | **1** | 158 |
+| fixed chi_WW = 0.85 | 5 | 1 | 0 | 0 | 41 |
+| fixed chi_WW = 0.50 | 5 | 0 | 0 | 0 | 0 |
+| quench 1.00 -> 0.50 | 20 | 8 | 3 | **1** | **208** |
+
+At four consecutive checkpoints the quench gives **1 of 20** against **1 of 15** fixed. **The quench does
+not increase nucleation**, confirming the second branch on the full arm.
+
+### An attribution failure, and its recovery
+
+The one persistent quench result held **158-208 cells for eighteen consecutive checkpoints**, and I could
+not initially say whether it was created or inherited: the source-to-seed mapping had been left to glob
+ordering and never recorded, and the state file I checked showed lumen 0 -- because bash glob and Python
+`sorted()` order `sd1, sd10, sd18, sd19...` differently, so I was reading the wrong source.
+
+**The render filename carried the mapping**: the frames are tagged `restart19`, which identifies the
+source exactly. The tag was added many ticks ago for a different reason and happened to preserve what the
+launch script discarded.
+
+### The recovered history, and what it means
+
+Source `sd19` at fixed chi_WW = 1.00:
+
+    0 0 0 0 0 0 0 0 0 0 0 154 137 130 112 144 133 158 124 125
+
+An enclosure **nucleated spontaneously** at about step 220 000 and held nine checkpoints. Quenched to
+chi_WW = 0.50, the same structure persisted **eighteen more** checkpoints and **grew from 125 to
+158-208**, before dissolving in the final two.
+
+**So the two stages do different jobs.** Strong cohesion is what nucleates; weak cohesion is what
+sustains and enlarges. That is consistent with every other measurement: the planted vesicle survives only
+at chi_WW <= 0.50, and enclosures only ever nucleate at chi_WW >= 0.85.
+
+### What it is not
+
+An enclosed pocket in an irregular aggregate, **208 cells = 52 sigma^2, about 6% of a planted vesicle's
+859 sigma^2**, and it dissolved by the end. The render shows a hole in a lumpy aggregate, not a bilayer
+shell. **No vesicle. The milestone is not reached.**
+
+**FALSIFICATION, STATED BEFORE THE RE-RUN IS READ.** The quench is repeating with the source-to-seed
+mapping written to `/tmp/qmap.txt` at launch, plus four fresh dispersed-start runs at chi_WW = 0.85 so
+nucleation continues to be sampled. Scored on four consecutive checkpoints AND on whether the source had
+a lumen at read time. If quenched seeds whose sources had NO lumen produce persistent enclosures, the
+quench nucleates after all and the 1-of-20 was underpowered. If every persistent quench enclosure traces
+to a source that already had one, the quench is purely a stabiliser, and raising the yield means raising
+the nucleation rate at strong cohesion -- a different experiment from anything run so far.
