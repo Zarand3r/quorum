@@ -5041,3 +5041,65 @@ and run length, both cheap. If the rate is flat across a 1.55x range in area, nu
 encounter-limited and something else gates it -- most likely a barrier in the closure step itself, which
 would point back at the isoenergetic ring-versus-arc result. If the smallest box suppresses nucleation,
 crowding interferes with closure and the optimum is at lower concentration than tested.
+
+---
+
+## 2026-08-20y tick — nucleation looks ENCOUNTER-LIMITED; best emergent enclosure yet, and it holds water
+
+### The concentration sweep, compared at a matched step
+
+Nucleation rate against box size, N = 120, chi_WW = 1.00, all compared at **step 160 000** because L = 45
+had run further and raw counts would have flattered it:
+
+| L | area | seeds | any lumen | >=2 consec | >=4 consec | max |
+|---|---|---|---|---|---|---|
+| **45** | 2025 | 5 | **2** | **1** | **1** | **187** |
+| 50 | 2500 | 5 | 0 | 0 | 0 | 0 |
+
+The L = 45 series are structures, not flickers:
+
+    sd31:  0 x8  then 44 53 54 55 57          (persistent, growing)
+    sd32:  0 0   then 187 177 170 180 172 182 175 164 191 192
+
+**sd32 nucleated de novo at about step 60 000 and has held ~180 cells for ten consecutive checkpoints.**
+For comparison, at L = 56 the rate was 1-2 in 15 with nucleation only at step ~220 000.
+
+This is the **first branch** of the falsification: the rate rises as the box shrinks, so nucleation is
+encounter-limited -- which makes it improvable by concentration and run length, both cheap.
+
+### A visual misread of my own, corrected by measurement
+
+Looking at the render I judged the enclosed region to be a **vapour void lined by surfactant** -- the
+bubble-coating confound I had recorded as mandatory to check in this solvent, since chi_WW = 1.00 water is
+two-phase and does contain voids.
+
+The measurement says otherwise:
+
+    204 cells = 51 sigma^2
+    44 water beads inside, density 0.216/cell
+    773 outside, density 0.144/cell
+    rho_in / rho_out = 1.50
+
+**It is water-filled at 1.5x bulk density, not a void.** The interior water simply looks sparser than the
+surroundings at render scale. Had I trusted the image, I would have discarded the best emergent result
+this project has produced.
+
+### What it is and is not
+
+**Is:** a persistent, water-filled, de novo enclosure from a dispersed start -- 51 sigma^2, ten-plus
+consecutive checkpoints, at raised concentration.
+
+**Is not:** a vesicle. 51 sigma^2 is **6%** of a planted vesicle's 859 sigma^2 lumen, and the boundary is
+a lumpy aggregate rather than a clean bilayer shell. The milestone is not reached.
+
+### Launched
+
+Two cheap extensions: **L = 38 and 42** to see whether the rate keeps rising with concentration, and
+**five more seeds at L = 45** so the rate carries an error bar instead of being 2 of 5.
+
+**FALSIFICATION, STATED BEFORE THE EXTENSION IS READ.** Scored on enclosures persisting four or more
+consecutive checkpoints, at matched step. If the rate keeps rising from L = 45 to 42 to 38, nucleation is
+encounter-limited across the range and the milestone is a sampling problem. If it peaks and falls, there
+is an optimum concentration and crowding interferes below it -- the third branch stated last tick. If
+L = 45's 2-of-5 does not reproduce in the added seeds, the apparent rise was a small-sample artefact and
+the encounter-limited reading is withdrawn.
