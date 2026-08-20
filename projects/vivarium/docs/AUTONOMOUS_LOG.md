@@ -6197,3 +6197,78 @@ single compartment, as predicted before they were read.
 ### Still in flight
 
 chi_TW ring and arc (35 000-40 000/100 000), bend rungs, gap scan, N = 160 and N = 300 emergence.
+
+---
+
+## Tick: closure happens at every gap; "never closed" was wrong
+
+### RETRACTED: "N = 300 arc0.97 never closed, ~60 runs"
+
+Written last tick, and wrong. Two of the five N = 300 arc0.97 seeds closed, at steps 60 000 and 90 000,
+with lumens of 27 596 and 27 642 -- essentially the whole interior of an R = 44 ring. **The data was in
+the output I was reading when I wrote the claim.** I had the nenc column in front of me showing sd2 = 1
+and sd3 = 1 and described the arm as never closing.
+
+### The gap scan, at fixed N = 300
+
+Closure time per seed, first step at which n_enclosed = 1:
+
+| arm | gap | closed by 10 000 | closed by 100 000 | closure steps |
+|---|---|---|---|---|
+| N = 80 arc0.97 | 2.4 sigma | **5/5** | 5/5 | all at 5 000 |
+| N = 300 arc0.99 | 3.0 sigma | 3/5 | still running | 5 000, 5 000, 5 000 |
+| N = 300 arc0.98 | 6.0 sigma | 1/5 | still running | 10 000 |
+| N = 300 arc0.97 | 9.0 sigma | 0/5 | **2/5** | 60 000, 90 000 |
+
+The rate falls monotonically with gap, and **there is no hard capture radius**: even a 9 sigma gap
+closes given enough time. The pre-registered second branch fires -- "both close, the capture radius is
+at least 6 sigma" -- not the first.
+
+Corrected reading: closure is a **thermally activated encounter process**. Its rate falls steeply with
+initial gap, but it is never forbidden. Last tick's phrasing, "beyond contact range nothing brings them
+together", is withdrawn; they do come together, slowly.
+
+This is more encouraging than the version it replaces. Closure at N = 300 is achievable, not blocked.
+
+### A false positive, caught by its own gate
+
+em160 seed 3 reached n_enclosed = 1 at largest = 78 -- a single-compartment EMERGENT enclosure, which
+would be the first candidate vesicle this project has produced from a dispersed start. **It is not one.**
+
+    bead 1.0: n_enclosed = 1, sizes [69]
+    bead 1.5: n_enclosed = 0
+    bead 2.0: n_enclosed = 0
+    bead 3.0: n_enclosed = 0
+
+The call is UNSTABLE across the dilation knob, which by the rule set several ticks ago disqualifies it.
+The pocket is 69 cells against 4014 for a real planted vesicle, and the render shows it is the gap
+between the branches of a Y-shaped assembly. It vanishes as soon as beads are dilated, because a pocket
+that small is filled in by the dilation itself.
+
+**Reporting the driver's raw nenc column would have announced an emergent vesicle.** This is exactly
+what the robustness rule was written for, and it is the first time it has actually caught something.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Every arc in this project was HANDED its curvature. Emergent ribbons are flat. So the question the arc
+results cannot answer is whether this model curls a flat bilayer at all -- and `_plant_flat_ribbon`
+exists for precisely that, per its own comment: "planting FLAT hands it a single aggregate with no
+curvature at all, so whether it curls is the closure question asked cleanly."
+
+Launched: **flat ribbon, N = 80, L = 110**, 5 seeds, 200 000 steps. N = 80 is the size where a handed arc
+closed 5/5, so a failure here isolates curling from encounter. L = 110 satisfies the plant's own guard
+(a ribbon of 80 lipids is ~82 wide and needs L > ~103, or it spans the box and has no ends at all).
+Confirmed at step 0: n_enclosed = 0, largest 80, core 1.467, 8073 waters.
+
+* **The ribbon curls and closes in >= 1/5 seeds** -> curling is spontaneous, and emergent closure is a
+  matter of time and of avoiding branches, not of a missing force.
+* **It stays open in 5/5 while the same N closed 5/5 from an arc** -> the arc results depend entirely on
+  being handed curvature. A flat emergent ribbon will never close, and the blocker is curling rather
+  than encounter.
+* **It fragments (largest < 76) or core < 1.35** -> the plant is unstable at this box size and the run
+  says nothing either way.
+
+### Still in flight
+
+chi_TW ring and arc, bend rungs 0.25/0.50, gap scan 0.99 and 0.98 to 100 000, flat-ribbon curling test,
+N = 160 emergence (480 000-520 000/800 000, largest 118 in seed 0).
