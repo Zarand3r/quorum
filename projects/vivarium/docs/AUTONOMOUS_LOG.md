@@ -3132,3 +3132,65 @@ open at 40 and closing at 120 or 200 -- a critical size exists, kappa follows as
 sizes unroll across 5 seeds, the continuum picture behind every interpretation in this project is wrong,
 and that conclusion now rests on a force field that demonstrably makes bilayers rather than on one that
 did not. If all four close, size was never the variable and the historical failures had another cause.
+
+---
+
+## 2026-08-19s tick — the critical-size test resolves NEGATIVE: arcs open further at every size
+
+### The result
+
+Arcs of N = 40, 70, 120, 200 at kT = 0.45, implicit solvent, head-tail -0.50, 5 seeds each, 150 000
+steps, on valid plants (E/lipid -17.78, core 1.462 at plant, fully connected). Distance between the
+arc's two exposed ends:
+
+| N | planted gap | final gap (mean of 5) |
+|---|---|---|
+| 40 | 12.0 | **16.56** |
+| 70 | 21.1 | **25.72** |
+| 120 | 36.1 | **44.84** |
+| 200 | 60.0 | **74.30** |
+
+**The gap grew in all 20 runs.** Not one arc at any size moved toward closure; they opened by 24-38%.
+The falsification resolves to its second branch, and it does so on a force field that demonstrably makes
+bilayers (core depth 1.448 +- 0.017 against a planted reference of 1.467, 7.4 sigma above the attractive
+setting) rather than on the broken one that produced the three historical failures.
+
+### A reading I nearly published, caught by the render
+
+`R_mid` contracted in exactly the way closure predicts. An arc spanning 0.75 of a circle that closes at
+fixed lipid count must shrink to 0.75x its planted radius:
+
+| N | planted R | predicted if closed | observed |
+|---|---|---|---|
+| 70 | 14.9 | 11.2 | 10.0 - 12.3 |
+| 120 | 25.5 | 19.1 | 19.4 - 21.6 |
+| 200 | 42.4 | 31.8 | 31.5 - 35.7 |
+
+Three sizes matching a quantitative prediction to within a few percent. `hollow` agreed -- 0.000 in most
+seeds at N = 120 and 200. **The render shows a wide-open C.** The arcs contract while staying open, and
+`hollow` cannot tell a closed ring from an open C because both have empty middles. Fourth time in this
+project a plausible metric reading has been overturned by looking, and the first where the metric had a
+quantitative prediction behind it.
+
+### What this does and does not establish
+
+It does NOT yet falsify the continuum picture, because the number that picture rests on is suspect.
+**lambda = +18.31 +- 7.07 eps was measured on the OLD force field** -- before the branch-angle fix that
+was pinning every lipid straight with its head in the middle, and before the head-tail sign change. The
+claim "closure has ~81 kT to gain" therefore comes from a model that did not make bilayers. If the edge
+is cheap on the corrected field -- plausible, since a repulsive head-tail term lets heads cap an exposed
+edge comfortably -- then there is little to gain by closing and the arcs opening is the correct physics
+rather than a contradiction.
+
+**Launched: lambda on the corrected field.** Finite flat ribbons of N = 20, 30, 40, 60, 80, 5 seeds each,
+40 000 steps, L = 200 so no ribbon spans the box. For a ribbon with two ends
+`E(N) = N*e_bulk + 2*lambda`, so a straight-line fit of total energy against lipid count gives 2*lambda
+as the intercept.
+
+**FALSIFICATION, STATED BEFORE THE FIT IS READ.** If lambda comes out near the historical +18.31 eps per
+end, the edge really is expensive, closure really is favoured by ~81 kT, and arcs opening at every size
+means the barrier is kinetic or the continuum picture is wrong -- a genuine negative. If lambda is near
+zero or negative on the corrected field, the historical value was an artefact of the broken lipid, there
+was never a driving force for closure, and every closure experiment in this project has been chasing a
+number that does not exist. If lambda is positive but small -- under about 5 eps -- closure is weakly
+favoured and the 150 000-step window is simply too short to see it.
