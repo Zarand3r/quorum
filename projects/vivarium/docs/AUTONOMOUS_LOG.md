@@ -3346,3 +3346,59 @@ a question of size. If they open like every smaller arc, the picture fails where
 prediction, and that is a real falsification rather than the mis-scoped one withdrawn above. If they
 close in some seeds and not others, R* is right but the barrier is stochastic, and the closure fraction
 against N gives its height.
+
+---
+
+## 2026-08-19v tick — closure fails ABOVE the critical radius too; the drive is now measured directly
+
+### The properly-scoped test
+
+N = 300 (R = 49.2) and N = 400 (R = 65.6) at span 0.97, both above the measured R* = 41.8 sigma and both
+planted with small gaps. 5 seeds each, 150 000 steps:
+
+| N | R planted | gap planted | final end gaps | mean |
+|---|---|---|---|---|
+| 300 | 49.2 | 9.3 | 44.4 33.3 36.0 37.5 36.4 | **37.5** |
+| 400 | 65.6 | 12.4 | 49.2 39.1 44.1 44.8 44.4 | **44.3** |
+
+**All 10 opened**, by roughly fourfold, and the arcs STRAIGHTENED (R_mid 49.2 -> 54.7 and 65.6 -> 72.8).
+The bilayer itself is perfect throughout (core 1.470-1.479 against a reference of 1.467), so this is not
+a structural failure. N = 400 additionally fragmented in 3 of 5 seeds (largest 355, 221, 246); N = 300
+stayed whole in all five.
+
+### How far this falsifies the continuum picture
+
+Honestly: **less than it looks, because the inputs are loose.** At R = 49.2 the criterion
+`kappa < 2*lambda*R/pi` gives 269.5 against 317, favoured by a margin of 0.85; at R = 65.6, 269.5 against
+423, margin 0.64. But kappa carries +-69 and lambda carries +-5.08 on a value of 10.12 -- a **50%** error
+-- so one standard deviation on lambda alone flips R = 65.6 from favoured to not. The prediction at these
+sizes is marginal, and a marginal prediction cannot be strongly falsified.
+
+What IS established without theory: **closure has never occurred, at any size from R = 11.5 to 65.6, at
+any gap from 2.2 to 60 sigma, at any head-head value, across roughly 60 runs.** No trend toward closure
+appears as R crosses R*.
+
+### The direct test, which needs no theory
+
+Rather than refine kappa and lambda further, compare the two states directly: a planted closed **ring**
+and a planted **arc0.97** at the same N = 300, both relaxed identically, 5 seeds each, 60 000 steps. If
+closure is favoured the ring must sit lower by about `2*lambda` = 20 eps in total energy. This replaces
+an inference through two uncertain constants with a single measured energy difference.
+
+An equivalent comparison was made before the rewrite -- ring -28.91 against arc -28.54 eps/lipid, "ring
+lower by ~74 kT" -- but that was on the force field with the 180-degree branch-angle pin, which did not
+make bilayers, so it carries no weight now.
+
+### The contrast worth recording
+
+Emergent ribbons adopt strong curvature freely -- the step-300 000 frame shows a deep horseshoe -- while
+planted arcs unbend. Curvature per se is not what the membrane resists. That points away from bending
+rigidity as the obstruction and toward the edge term being weaker than measured.
+
+**FALSIFICATION, STATED BEFORE THE RESULT IS READ.** If the ring is lower than the arc by close to
+20 eps, the closure drive is real and the failure is kinetic -- the ends never find each other -- which
+would make the next question how to nucleate contact rather than whether closure is favoured. If the two
+are equal within error, there is **no drive at all**, lambda's positive value does not survive into the
+closed state, and every closure experiment in this project has been chasing a force that is not there. If
+the ring is HIGHER, the open ribbon is the preferred state and closure is thermodynamically forbidden
+here, which would settle the milestone as unreachable without a new term in the model.
