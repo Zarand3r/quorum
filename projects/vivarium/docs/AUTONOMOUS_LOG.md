@@ -3082,3 +3082,53 @@ size reached and the bilayer result is unbiased. If core depth at -0.50 falls wi
 aggregates admit heads into the interior after all and the fix only works while structures are small. If
 core depth rises well above 1.467 for the big clusters, they are thickening behind clean surfaces --
 which core depth cannot detect -- and a direct local thickness measure is still owed.
+
+---
+
+## 2026-08-19r tick — repulsive head-tail confirmed on unbiased data at every size reached; critical-size test launched
+
+### The result, with the largest aggregates now included
+
+L = 56 (the box that permits growth), 200 000 steps, 5 seeds per arm, `core` and `burial` computed
+before the span guard so nothing is discarded:
+
+| implicit HT | core depth (ref 1.467) | burial | largest |
+|---|---|---|---|
+| +0.45 | 1.219 +- 0.026 | 3.348 +- 0.389 | 31 - 85 |
+| **-0.50** | **1.448 +- 0.017** | **5.349 +- 0.157** | 38 - 95 |
+
+**7.4 sigma** on core depth, **4.8 sigma** on burial, with every seed reporting.
+
+**The size question is answered.** Core depth at -0.50 by aggregate size: 38 -> 1.472, 47 -> 1.451,
+50 -> 1.457, 58 -> 1.424, 95 -> 1.437. No decline with size beyond about two standard deviations, and no
+rise above the 1.467 reference, so the third branch -- large aggregates thickening behind clean surfaces,
+which core depth cannot detect -- is excluded at every size reached. The +0.45 arm shows the opposite,
+drifting slightly UP with size (31 -> 1.192, 85 -> 1.231) while remaining far below the reference.
+
+The renders match: long, thin, curved bilayer ribbons with heads lining both edges along their whole
+length. **The thickening problem is solved**, and the fix is a single sign change in one chi entry.
+
+### What this cost, recorded because the pattern repeats
+
+Reaching this took three attempts, and the first two failed for opposite reasons. The L = 56 sweep gave a
+clean separation but the span guard silently discarded exactly the largest aggregates. The L = 120 rerun
+included every seed but was so dilute that nothing coarsened, so it tested only 13-23 lipid clusters. The
+fix was neither box: `core` and `burial` never needed the centroid, so the guard should not have applied
+to them at all. **Two runs were spent adjusting the experiment when the instrument was at fault** -- the
+same failure mode as `mix`, shell CV, and the PCA thickness measure before it.
+
+### Launched: the critical-size test
+
+The standing plan, runnable for the first time on a sound basis -- valid plants (E/lipid -7.8, zero
+overlaps, verified core 1.462 at plant), a bilayer-forming field, and calibrated metrics. Arcs of
+**N = 40, 70, 120, 200** at kT = 0.45, implicit solvent, head-tail -0.50, **5 seeds each**, 150 000
+steps. Boxes 60/90/145/230, sized from each arc's own radius `R = 2N/(4*pi*0.75)` plus lipid reach and
+multiplied by 2.5, so the OPEN state is never confined -- the error that invalidated the first attempt at
+this test. Three emergence runs continue alongside so there is always a dispersed-start structure to show.
+
+**FALSIFICATION, STATED BEFORE ANY RESULT IS READ.** If closure fraction rises with N -- arcs staying
+open at 40 and closing at 120 or 200 -- a critical size exists, kappa follows as
+`kappa = 2*lambda*R*/pi`, and the three historical failures at ~70 lipids were undersized. If ALL four
+sizes unroll across 5 seeds, the continuum picture behind every interpretation in this project is wrong,
+and that conclusion now rests on a force field that demonstrably makes bilayers rather than on one that
+did not. If all four close, size was never the variable and the historical failures had another cause.
