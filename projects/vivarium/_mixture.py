@@ -718,7 +718,7 @@ if __name__ == "__main__":
         if t % every == 0:
             g = geometry(X, mols, wi, chains, L, d)
             enr = g["f_out"] - g["f_in"]
-            print(f"{t:>8}{f.energy(X) / n_lip:>9.2f}{largest_cluster(X, mols, L):>9}"
+            print(f"{t:>8}{f.energy_solute(X) / n_lip:>9.2f}{largest_cluster(X, mols, L):>9}"
                   f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['hollow']:>8.3f}{g['mix']:>7.3f}{g['seg']:>7.3f}{g['burial']:>8.3f}{g['core']:>7.3f}"
                   f"{g['lumen']:>7.2f}{g['lumen_w']:>8}"
                   f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)

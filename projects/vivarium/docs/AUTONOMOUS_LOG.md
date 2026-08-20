@@ -3518,3 +3518,58 @@ last tick: the direct ring-versus-arc measurement gave **+0.5 +- 6.0 eps** where
 about -16 to -20, excluding it at roughly 3 sigma. The critical-size plan that the brief describes rests
 on that drive and is therefore no longer the live question; what replaces it is whether ANY configuration
 of this model has a closure drive at all.
+
+---
+
+## 2026-08-19y tick — explicit solvent fails at kT = 0.90 too; testing whether a usable window exists at all
+
+### The result
+
+Ring and arc0.97 at N = 300, phi = 0.55, **kT = 0.90** -- the one temperature at which our water was
+measured to be a homogeneous liquid rather than a two-phase network with vacuum voids -- 5 seeds each:
+
+| | core (ref 1.467) |
+|---|---|
+| ring | **0.386 +- 0.217** |
+| arc0.97 | **0.265 +- 0.128** |
+
+**The bilayer collapses here as well.** With kT = 0.45 already failing, explicit solvent is unusable at
+both temperatures tested, and the falsification resolves to its third branch: implicit is the only regime
+this force field supports, and implicit has no edge cost.
+
+**A checkpoint I refused to read, correctly.** At step 12 000 these same runs showed core 1.31-1.37, and
+I noted them as promising but explicitly declined to treat early checkpoints of a PLANTED structure as a
+result. They were mid-collapse. Had I reported them, this tick would have claimed explicit solvent works.
+
+### Two of my own measurement faults, one fixed
+
+* The energy comparison here still read `ring - arc = -161.8 +- 104.5 eps`, because **`energy_solute` was
+  added to `Field` last tick but never wired into the driver** -- the run was still printing TOTAL
+  energy, water-water noise included. Now wired: the driver reports solvent-excluded energy. An
+  observable that exists but is not called changes nothing, and I recorded it as fixed when it was only
+  written.
+* The comparison is void regardless, since both structures had collapsed. No closure conclusion is drawn
+  from it.
+
+### The specific hypothesis this leaves
+
+Two requirements pull the temperature in opposite directions. The water must be **hot enough** to sit
+above its liquid-vapour coexistence -- it was two-phase at 0.45 and homogeneous only by 0.90. The
+membrane must be **cold enough** that ordering energies of order 1 eps beat kT -- and at kT = 0.90,
+kT/eps ~ 0.9, so the membrane melts. **If those windows do not overlap, explicit solvent is unusable in
+this model by construction rather than by accident**, and the vesicle milestone needs a term the model
+does not have.
+
+**FALSIFICATION, STATED BEFORE THE SWEEP IS READ.** Planted ring, explicit solvent, phi = 0.55,
+kT = 0.45, 0.60, 0.75, 0.90, 1.10, 3 seeds each, 30 000 steps, scored on `core` against the 1.467
+reference. If some intermediate temperature holds core near 1.467, a window exists, explicit solvent is
+usable there, and the closure question reopens at that temperature. If core is low at every temperature,
+there is no window: the membrane cannot survive in this solvent at any temperature where the solvent is
+worth having, which closes explicit solvent for good and makes the negative structural rather than
+circumstantial.
+
+### No emergent screenshot this tick
+
+The newest emergent renders are step-15 000 frames of deterministic replicates of trajectories already
+shown at step 300 000, so there is no new emergent result to show. Per the standing rule, no planted
+structure is sent in their place.
