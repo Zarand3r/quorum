@@ -4550,3 +4550,66 @@ needs implicit solvent plus a nucleation mechanism -- since implicit has never n
 in implicit too, no configuration of this force field holds a vesicle, planted or otherwise, and the
 model needs a term it does not have. If it holds only at `chi_HT = 0.20`, the repulsive term is
 incompatible with closure regardless of solvent.
+
+---
+
+## 2026-08-20p tick — IMPLICIT holds a good-bilayer vesicle; the "trade" hypothesis is REFUTED
+
+### The control, read at the end of the run
+
+Planted ring, N = 120, **implicit** solvent, 150 000 steps, 5 seeds per setting, identical box, packing,
+duration and metric to the explicit arms. Planted: largest 120/120, core 1.465, lumen 3436.
+
+| solvent | chi_HT | largest | core | lumen |
+|---|---|---|---|---|
+| **implicit** | **-0.75** | **120/120 in 5 of 5** | **1.442 - 1.462** | **1828 - 1996** |
+| implicit | +0.20 | 120/120 in 5 of 5 | 1.384 - 1.403 | 1542 - 1596 |
+| explicit | -0.25 | 55 - 74 | 1.431 - 1.449 | 0 in 5 of 5 |
+| explicit | +0.20 | 80 - 120 | 1.289 - 1.321 | 0 in 4 of 5 |
+
+**First branch of the falsification.** The vesicle survives in implicit solvent and fails in explicit, so
+**the solvent is what destroys vesicles here**, not the membrane physics.
+
+### RETRACTION: the trade hypothesis
+
+Three ticks ago I proposed that bilayer quality and lumen stability are anti-correlated in this force
+field -- "a good bilayer with a marginal lumen, or a stable lumen with a poor bilayer." **That is
+refuted.** In implicit solvent the BETTER bilayer setting gives the LARGER lumen:
+
+    chi_HT = -0.75:  lumen 1924 +- 68     core 1.442 - 1.462
+    chi_HT = +0.20:  lumen 1569 +- 21     core 1.384 - 1.403
+    difference 355 +- 71, i.e. 5 sigma, in the POSITIVE direction
+
+The two requirements are compatible and mutually reinforcing. The apparent trade was an artefact of
+explicit solvent, where the membrane is being degraded by the fluid rather than by the head-tail term.
+
+### The diagnosis is now coherent with everything measured
+
+* Ring and arc are **isoenergetic** in implicit (+0.5 +- 6.0 eps, measured directly) -- so there is no
+  thermodynamic drive to close.
+* The ring is nonetheless **metastable**: planted, it holds at 120/120 with a 1900-cell lumen.
+* Two states of equal energy with a barrier between them: **the vesicle survives if handed to the model
+  and never forms on its own.** That is exactly what ~60 failed closure runs showed.
+* Explicit solvent HAS the water that supplies edge tension in reality, but our water is two-phase at
+  kT = 0.45 and destroys the membrane before it can drive anything.
+
+**The missing ingredient is an edge penalty without a destructive solvent.**
+
+### The next experiment, and why not a fudge term
+
+Adding an explicit edge-energy term would import the answer, the same objection that ruled out porting
+the oracle's `beta`. The principled route is to fix the solvent instead. `chi_WW` sets both the
+hydrophobic effect and water's own critical point; at 1.00 the fluid is two-phase at our temperature.
+Lowering it moves water toward supercritical but weakens the hydrophobic drive, so the two effects pull
+opposite ways and the usable window must be measured.
+
+Launched: planted vesicle in explicit solvent at `chi_WW` = 1.00, 0.70, 0.50, 5 seeds each. The planted
+vesicle is the fast decisive readout because it already fails at chi_WW = 1.00.
+
+**FALSIFICATION, STATED BEFORE THE SCAN IS READ.** If some `chi_WW` lets the planted vesicle survive in
+explicit solvent with core above 1.40 and lumen above ~1500, that condition has both a real solvent and a
+stable vesicle, and the milestone reduces to nucleation in a regime that now has an edge cost. If the
+vesicle fails at every `chi_WW`, explicit solvent cannot host a vesicle in this force field at any water
+cohesion, and the only remaining routes are a different solvent model or accepting implicit solvent plus
+an externally imposed nucleation event. If lowering `chi_WW` saves the vesicle but flattens head/tail
+segregation, the hydrophobic drive has been traded away and the fix is illusory -- `core` will show it.

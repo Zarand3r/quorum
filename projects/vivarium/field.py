@@ -74,7 +74,13 @@ def default_chi():
     Demixing still requires chi_TW below the mean of the self terms, which holds: 0 < (1.0+0.7)/2.
     """
     chi = np.zeros((N_SPECIES, N_SPECIES))
-    chi[WATER, WATER] = 1.00                     # strongest: water coheres and expels the tail
+    # Water self-attraction sets both the hydrophobic effect AND water's own liquid-vapour critical
+    # point. At 1.00 the solvent is two-phase at kT = 0.45 -- a percolating network with vacuum voids --
+    # and that is what destroys a planted vesicle in explicit solvent, which the implicit runs hold
+    # intact at 120/120 with a 1900-cell lumen. Lowering it moves water toward supercritical, at the cost
+    # of weakening the hydrophobic drive; the two effects pull opposite ways, so the usable window (if
+    # any) has to be measured rather than argued.
+    chi[WATER, WATER] = float(os.environ.get("VIVARIUM_CHI_WW", 1.00))
     chi[TAIL, TAIL] = 0.70                       # dispersion between alkane-like tails
     # Head-head is the term that decides whether two EDGES can fuse. The solvent-averaged value is
     # 0.20 + 1.00 - 0.75 - 0.75 = -0.30, i.e. repulsive, which is what holds heads apart on a surface --
