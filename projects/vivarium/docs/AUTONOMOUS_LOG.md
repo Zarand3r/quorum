@@ -5874,3 +5874,80 @@ needs no extension.
 Ring (95 000/100 000), short arc (50 000/100 000), long arc (fresh), anneal ladder (70 000/100 000),
 dilution quench (210 000/300 000), N = 300 dispersed emergence (360 000/800 000), N = 160 dispersed
 emergence (80 000/800 000).
+
+---
+
+## Tick: the fork is resolved. The vesicle is the ground state by 583 kT and heat cannot reach it.
+
+### THE FORK, both arms equilibrated and read at the end
+
+N = 300, L = 120, 8584 waters, chi_HT = -0.25, chi_WW = 0.50, kT = 0.45, 5 seeds each:
+
+| arm | E_solute/lipid | seeds |
+|---|---|---|
+| VESICLE (planted, step 100 000) | **-7.572 +- 0.046** | -7.59 -7.48 -7.55 -7.50 -7.74 |
+| SPONGE (emergent, step 240 000) | **-6.698 +- 0.034** | -6.77 -6.71 -6.77 -6.60 -6.64 |
+
+    sponge - vesicle = +0.874 +- 0.058 eps/lipid = +262 +- 17 eps total = +583 kT   (15.2 sigma)
+
+The vesicle arm held 300/300 lipids with core 1.440-1.448 in every seed. **The sponge is not the ground
+state; it is a kinetic trap, and a deep one.** This is the first branch of the fork stated three ticks
+ago, and it is not marginal.
+
+### The anneal, concluded: the trap is NOT thermal
+
+Pre-registered criterion: n_enclosed falling toward 1 while core stays above 1.35 means an escapable
+trap. At step 100 000:
+
+| kT | E/lip | largest | core | n_enclosed | seeds at 1 | melt control |
+|---|---|---|---|---|---|---|
+| 0.60 | -5.54 | 193-285 | 1.382-1.398 | 2, 2, 3, 3, 9 | **0/5** | passed 5/5 |
+| 0.75 | -4.49 | 95-233 | 1.355-1.389 | 0, 2, 2, 4, 5 | **0/5** | passed 5/5 |
+
+**The membrane survived and the junctions still did not resolve.** The melt control passed at both
+temperatures, so this is not a case of the test window being empty. Instead the aggregate FRAGMENTED --
+1/5 intact at kT = 0.60, 0/5 at kT = 0.75, against 300/300 before heating.
+
+The physical statement: **the barrier to resolving a junction is higher than the barrier to tearing the
+aggregate apart.** Heat destroys the sponge before it anneals it. Raising temperature is therefore
+excluded as a route, and this closes the second branch of the anneal falsification exactly as written.
+
+### Emergence, N = 160 L = 65, step 200 000
+
+largest 38-66 of 160 (against 20-27 at step 280 000 in the L = 120 box), core 1.417-1.446. The render
+shows the round micelles of step 40 000 have coarsened into **elongated bilayer ribbons**, one curved
+into a horseshoe. Ribbons are the object that can close, and the dilute box never produced them. Still
+short of the ~145-lipid threshold, and `largest ~ t^0.63` projects only about 120 by the 800 000-step
+end, so this run is likely to fall just short of its own criterion.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+With the vesicle established as the ground state and heat excluded as a way to reach it, the barrier has
+to be LOWERED rather than climbed. The remaining lever is kappa: the sponge survives because a junction
+network eliminates free edges without paying long-range curvature, so making curvature cheap should
+remove its advantage. Predicted threshold radius R* = pi*kappa/(2*lambda) falls from 23 sigma at
+kappa = 269.5 to about 5.7 sigma at a quarter of that, far below these aggregates' R_mid of ~22.
+
+`VIVARIUM_BEND` was added to scale the 1-3 spring that sets chain stiffness. `_env_tag()` enumerates
+every `VIVARIUM_*` variable, so the arms tag themselves apart automatically -- verified on disk as
+`..._bend0.25_...` and `..._bend0.50_...` rather than assumed.
+
+Launched: the 5 quench sponges restarted at **bend_frac 0.25 and 0.50** against the default 1.0,
+kT = 0.45, 150 000 steps, 5 seeds per rung, 10 runs. Seed-to-source mapping written at launch to
+`/tmp/bend_mapping.txt`. All ten start from n_enclosed = 6, largest 300, core 1.420.
+
+* **The call becomes VESICLE (n_enclosed = 1 across bead 1.0-3.0) with largest >= 285 and core > 1.35 in
+  >= 3/5 seeds at either rung** -> kappa is the controlling variable, the sponge is a stiffness artifact,
+  and the route to an emergent vesicle is a softer chain.
+* **The call stays TANGLE at both rungs with the membrane intact** -> kappa is not the lever either.
+  Neither temperature nor bending cost dissolves the junction network, and what needs measuring next is
+  the junction energy itself rather than another global parameter.
+* **`core` collapses below 1.35 or `largest` falls below 285** -> softening destroyed the bilayer instead
+  of unbending it, the rung says nothing about closure, and its n_enclosed values must be discarded --
+  the same trap the anneal fell into, where the seeds reading 1 were the fragmented ones.
+
+### Still in flight
+
+Short arc (85 000/100 000), long arc (30 000/300 000, for the lambda convergence question),
+dilution quench (240 000/300 000), N = 300 dispersed emergence, N = 160 dispersed emergence
+(200 000/800 000), and the two bend rungs.

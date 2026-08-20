@@ -225,7 +225,12 @@ class Field:
         # Every coarse-grained lipid force field (Cooke-Deserno, MARTINI, and the pre-oracle engine
         # here via polar_pack's bend_frac) includes one. Unlike a spontaneous-curvature parameter this
         # is a property of the MOLECULE and carries no preferred membrane curvature.
-        self.bend_frac = float(bend_frac)
+        # The 1-3 spring sets the chain's stiffness and therefore the bilayer's bending rigidity.
+        # Exposed as an override because kappa is the only remaining lever on the vesicle/sponge
+        # competition: annealing was measured to fail (heating fragments the aggregate before its
+        # junctions resolve), while the vesicle sits 262 +- 17 eps below the sponge, so the barrier
+        # has to be lowered rather than climbed.
+        self.bend_frac = float(os.environ.get("VIVARIUM_BEND", bend_frac))
         self.angles = (self._infer_13() if angles is None else
                        np.asarray(angles, dtype=np.int64).reshape(-1, 2))
         self.chi = default_chi() if chi is None else np.asarray(chi, dtype=float)
