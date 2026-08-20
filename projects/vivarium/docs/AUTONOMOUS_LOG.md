@@ -3850,3 +3850,58 @@ explicit run is under-sampled and says nothing either way.
 
 Implicit emergence continues in parallel (seeds 10-13; seed 11 at step 225 000 has largest 45/120,
 core 1.448, burial 5.589).
+
+---
+
+## 2026-08-20c tick — first emergence in EXPLICIT solvent: strong curvature, one closed loop, and a confound
+
+### What the run shows
+
+Self-assembly from a dispersed start in explicit solvent, N = 120, L = 56, phi = 0.55, kT = 0.45,
+5 seeds, at step 180 000 of 400 000. **This had never been run** -- every emergence run in this project
+was implicit.
+
+| seed | 0 | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|---|
+| largest | 66 | 94 | 46 | 65 | **103** |
+| core | 1.300 | 1.277 | 1.359 | 1.291 | 1.323 |
+
+**Aggregation is markedly stronger than implicit**, which reached 38-74 over comparable runs, and here
+reaches 46-103 of 120. The morphology is different too: the large aggregate in seed 4 is a long ribbon
+swept round into a near-closed horseshoe, and **seed 3 contains an actually closed loop** -- more
+curvature than implicit solvent ever produced.
+
+### The confound, stated before any claim
+
+Our explicit water is a **two-phase fluid at kT = 0.45** -- measured several ticks ago as a percolating
+network with vacuum voids. Vapour voids therefore exist, and an amphiphile will line a void because that
+is what a surfactant does at a liquid-vapour interface. **A membrane coating a bubble is visually
+indistinguishable from a vesicle**, and would produce exactly the curvature and closure seen here without
+any of the physics the milestone is about.
+
+The two instruments disagree, so neither settles it: the `lumen` metric reports 1.43x bulk density for
+seed 3's loop, meaning water-filled, while the render shows few water beads inside it. That disagreement
+is itself the reason not to claim anything yet.
+
+**No closure claim is made this tick.**
+
+### The control, launched
+
+The same emergence run at **kT = 0.90**, where the water was measured to be homogeneous and there are no
+bubbles to coat. The bilayer is known to survive there (core 1.33), so the condition is viable. 5 seeds,
+400 000 steps.
+
+**FALSIFICATION, STATED BEFORE THE CONTROL IS READ.** If curved and closed structures appear at kT = 0.90
+as well, they are not bubble artefacts and explicit solvent genuinely drives closure -- the milestone
+would then rest on running long enough and confirming a water-filled lumen. If the structures revert to
+the straight open ribbons that implicit solvent gives, the kT = 0.45 curvature was the solvent's phase
+separation and not membrane physics, and the apparent progress is withdrawn. If aggregation itself
+collapses at kT = 0.90, the temperature is too hot for a fair comparison and the control is
+uninformative rather than negative.
+
+### Note on the two failed estimators
+
+Last tick's finite-minus-spanning estimator remains discarded. The multi-size `lambda_explicit` fit is
+also now suspect: N = 40 showed largest 35.2/40, so ribbons shed lipids in explicit solvent, and an
+`E(N)` intercept is only meaningful if every ribbon stays whole. Both are superseded by testing the
+milestone directly, which is what the emergence runs above do.
