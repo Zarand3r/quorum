@@ -6800,3 +6800,78 @@ branched network.
 Emergence continuation (400 000/800 000, 1.2 million total), imposed-asymmetry test (170 000/200 000 at
 the time of writing, largest 33-80 -- partial fragmentation already visible, so the third branch is in
 play).
+
+---
+
+## Tick: the emergence run's pre-registered negative, at 1.6 million steps
+
+### The emergence continuation, complete
+
+| seed | largest | n_enclosed | lumen | ratio |
+|---|---|---|---|---|
+| 0 | 99 | 2 | 137 | 0.044 |
+| 1 | 92 | 0 | 0 | 0 |
+| 2 | 128 | 0 | 0 | 0 |
+| 3 | **160** | **0** | 0 | 0 |
+| 4 | 121 | 0 | 0 | 0 |
+
+Seed 3 still has every lipid in one aggregate, and **the single enclosure it reported at 1.2 million has
+vanished** -- more evidence that those `n_enclosed = 1` readings were transient pockets in a network
+rather than a lumen. No seed comes near the 0.10 threshold. The render is the same branched network of
+straight segments.
+
+**This fires the second pre-registered branch: emergent vesicle formation does not occur in this model
+on accessible timescales.** The runtime has now been doubled twice, 800 000 -> 1.2 million -> 1.6
+million, without changing the topology.
+
+### The imposed-asymmetry test: inconclusive, by its own third branch
+
+| seed | largest | core | closed |
+|---|---|---|---|
+| 0 | 55 | 1.279 | never |
+| 1 | 75 | 1.293 | never |
+| 2 | **79** | 1.272 | never |
+| 3 | 42 | 1.286 | never |
+| 4 | 33 | 1.260 | never |
+
+Four of five fragmented below the pre-registered `largest >= 76` bar. Only seed 2 held (79/80) and it
+stayed flat. **This is the third branch -- the route is untestable with these two lipid types, not
+answered.** One intact seed staying flat is weak evidence at n = 1 and is not being read as a result.
+
+The cause is identifiable and was already in the codebase's own docstring: the default pair (2, 4) mixes
+a DETERGENT with a bilayer former. A 2-tail lipid sits near P ~ 1/3, the micelle band, so mixing it in
+dissolves the ribbon -- measured at largest 20-49 shuffled and 33-79 sorted.
+
+### FALSIFICATION, STATED BEFORE THE RESULT IS READ
+
+Added `VIVARIUM_TAILS` so the two species can both be bilayer formers. **Verified rather than assumed:**
+
+    VIVARIUM_TAILS=2,4 -> distinct tail counts [2, 4], upper leaflet mean 2.0, lower 4.0
+    VIVARIUM_TAILS=4,6 -> distinct tail counts [4, 6], upper leaflet mean 4.0, lower 6.0
+
+Launched: **flat ribbon, imposed leaflet asymmetry, 4-tail against 6-tail**, N = 80, L = 110, implicit,
+5 seeds, 200 000 steps. Both species form bilayers, so the ribbon should hold where the 2/4 mixture
+tore. Starting core is 1.755, higher than any previous arm, as a thicker bilayer should be.
+
+* **Curls or closes in >= 1/5 with largest >= 76** -> imposed leaflet asymmetry generates spontaneous
+  curvature once both species form bilayers, and the earlier fragmentation was the confound.
+* **Stays flat 0/5 with largest >= 76** -> asymmetry does not generate curvature either. Every candidate
+  source is then excluded and an emergent vesicle is unreachable in this force field without a new term.
+* **largest < 76** -> even two bilayer formers will not hold an asymmetric ribbon, and the route stays
+  untestable rather than answered.
+
+### A filename collision, caught before it did real damage
+
+The emergence continuation restarts from `mix2d_restart{s}_...` states, and `_ptag` derives its tag from
+the same `_sd` suffix -- so the new run wrote to **exactly the filenames the previous one used**,
+overwriting the 1.6 million-step record frame by frame as it went, and overwriting its own source state.
+
+Caught after the step-0 frames were replaced; the final `s0800000` renders survived, so the record of
+the 1.6 million result is intact. Relaunched under seeds 10-14 so the `_sd` field separates them.
+`_env_tag()` enumerates every `VIVARIUM_*` variable and has held for many ticks, but it cannot help
+here: the collision is in the POSITIONAL fields, and `restart{s}` is not injective when a restart is
+itself restarted.
+
+### Still in flight
+
+4-tail/6-tail asymmetry test, emergence continuation to 2.4 million under seeds 10-14.

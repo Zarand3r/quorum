@@ -130,7 +130,7 @@ def chain_bonds(idx, n_tail, branched):
     return out
 
 
-def build(n_short, n_long, n_water, L, d, tails=(2, 4), seed=0, plant="random", branched=False):
+def build(n_short, n_long, n_water, L, d, tails=None, seed=0, plant="random", branched=False):
     """`random` disperses everything; `ring` plants a curved two-leaflet bilayer.
 
     The ring start exists because partitioning and nucleation are different questions. From a random
@@ -141,6 +141,12 @@ def build(n_short, n_long, n_water, L, d, tails=(2, 4), seed=0, plant="random", 
     sorting that appears happened during the run.
     """
     rng = np.random.default_rng(seed)
+    # The default (2, 4) pairs a DETERGENT with a bilayer former: a 2-tail lipid sits near P ~ 1/3, the
+    # micelle band, so mixing it in dissolves the ribbon -- measured, at largest 20-49 of 80 shuffled
+    # and 33-79 sorted. Testing leaflet asymmetry needs two species that BOTH form bilayers, which is
+    # what VIVARIUM_TAILS is for.
+    if tails is None:
+        tails = tuple(int(t) for t in os.environ.get("VIVARIUM_TAILS", "2,4").split(","))
     chains = [tails[0]] * n_short + [tails[1]] * n_long
     # Shuffled by default so leaflet assignment is not correlated with species. Skipping the shuffle
     # does the opposite deliberately: the flat and ring plants fill one leaflet before the other, so an
