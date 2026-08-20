@@ -5610,3 +5610,82 @@ Launched: the 5 quench sponges restarted at **kT = 0.60 and kT = 0.75** (their o
 * Dilution quench, 5 seeds, to 300 000.
 * Dispersed-start emergence, 5 seeds, to 800 000 (an EMERGENCE arm is always running).
 * Anneal ladder, 10 runs, to 100 000.
+
+---
+
+## Tick: two measurements of lambda disagree, and lambda is load-bearing for everything here
+
+### What ran (nothing concluded from these; all mid-run)
+
+* Planted vesicle N = 300: step 35 000-40 000 of 100 000. E/lip -7.37 to -7.63, largest 300/300,
+  n_enclosed 1 in all five. Planted, mid-run, **not read as a trend**.
+* Anneal ladder, step 10 000 of 100 000:
+
+| kT | E/lip | largest | core | n_enclosed |
+|---|---|---|---|---|
+| 0.60 | -5.22 to -5.60 | 240-300 | 1.383-1.409 | 2, 5, 5, 5, 7 |
+| 0.75 | -4.04 to -4.52 | 184-290 | 1.356-1.381 | 4, 5, 6, 6, 7 |
+
+Early, so provisional. Two things are already visible and both are warnings rather than results: the
+anneal is **roughening the membrane, not resolving its junctions** (n_enclosed unchanged from the
+sponge's 3-6), and at kT = 0.75 `core` has drifted to 1.356-1.381, against the 1.35 melt floor set
+before launch. The kT = 0.75 rung may fail its own control, in which case its n_enclosed values must be
+discarded rather than reported.
+
+### The contradiction
+
+The standing plan rests on lambda = +18.31 +- 7.07 eps, from the intercept of E(N). But the direct
+ring-versus-arc comparison at N = 300 measured the same quantity as **+0.5 +- 6.0 eps**:
+
+| route | 2*lambda | implied lambda |
+|---|---|---|
+| E(N) intercept | 36.6 | **+18.31 +- 7.07** |
+| direct ring - arc | +0.5 +- 6.0 | **+0.25 +- 3.0** |
+
+These differ by 18 eps against a combined error of about 7.7 -- roughly **2.3 sigma apart**, and they
+are measurements of the same constant. The direct route compares two states; the intercept route
+extrapolates a fit. When they disagree the direct one is the one to believe, and the direct one is
+**consistent with zero**.
+
+If lambda is really about zero then R* = pi*kappa/(2*lambda) is undefined rather than 23 sigma, closure
+has no edge drive at all, and the "closure has ~81 kT to gain" premise that has motivated a long run of
+experiments is wrong. That would also retire the critical-size framing: there would be no threshold
+ribbon length because the term that falls off with R has nothing to beat.
+
+It would NOT contradict the vesicle-versus-sponge gap. Neither a vesicle nor a sponge has free edges, so
+that comparison never depended on lambda; whatever separates them is junction cost.
+
+### Why the old number cannot simply be adopted
+
+The +0.5 +- 6.0 measurement was made in implicit solvent on the pre-rewrite force field. Every current
+result is explicit-solvent at chi_HT = -0.25, chi_WW = 0.50. Neither existing lambda was measured under
+the conditions the project now runs in, which is exactly how a load-bearing constant goes stale
+unnoticed.
+
+### FALSIFICATION, STATED BEFORE THE RESULT IS READ
+
+Launched: planted **arc0.97**, N = 300, L = 120, kT = 0.45, chi_HT = -0.25, chi_WW = 0.50, 5 seeds,
+100 000 steps -- matched in every parameter to the running ring arm, so `E_ring - E_arc = -2*lambda`
+comes out as one measured difference with no fit and no extrapolation.
+
+The matching is verified, not assumed: both arms built **8584 waters**, and both start at **exactly
+-8.78 eps/lipid at step 0**. Identical step-0 energy means the two plants carry the same internal
+strain, so a difference at step 100 000 is the closure term rather than a planting artifact.
+
+* **E_ring - E_arc close to -36.6 eps** -> the intercept lambda stands, edges are expensive, closure
+  has a real drive and its failure is kinetic.
+* **E_ring - E_arc consistent with 0 across 5 seeds** -> **lambda is retracted to ~0 for the current
+  model.** R* becomes undefined, the critical-size plan is withdrawn, and the only remaining candidate
+  drive is junction cost, measured by the vesicle/sponge arm.
+* **E_ring > E_arc** -> negative line tension: open edges are FAVOURED, which would make ribbons the
+  preferred state and would explain the arcs' fourfold opening directly. Report it rather than
+  explaining it away.
+
+Reading both arms at step 100 000, at the end.
+
+### Still in flight
+
+* Ring arm and arc arm, N = 300, 5 seeds each (the lambda measurement).
+* Anneal ladder, 10 runs.
+* Dilution quench, 5 seeds, to 300 000.
+* Dispersed-start emergence, 5 seeds, to 800 000 (an EMERGENCE arm is always running).
