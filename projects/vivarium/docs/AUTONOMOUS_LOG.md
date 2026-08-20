@@ -3796,3 +3796,57 @@ edge cost and the missing drive belongs to the force field rather than to the so
 explicit gives less, edges are cheaper in water than in vacuum and the edge-tension route to closure is
 dead for this model. The implicit arm must reproduce ~20 eps after relaxation or the estimator itself is
 in question and neither number counts.
+
+---
+
+## 2026-08-20b tick — the new estimator failed its own control; both its numbers discarded
+
+### The control did its job
+
+Direct `2*lambda = E(finite) - E(spanning)` at N = 60, matched spacing, 5 seeds, 40 000 steps:
+
+| solvent | 2*lambda |
+|---|---|
+| implicit (CONTROL) | **-60.1 +- 3.4** -- the independent `E(N)` fit says **+20.24** |
+| explicit | -7.2 +- 9.5 |
+
+Opposite sign, three times the magnitude. Last tick I pre-committed that "the implicit arm must reproduce
+~20 eps after relaxation or the estimator itself is in question and neither number counts." It does not,
+so **neither counts** and both are discarded.
+
+**Why it fails, which is visible in the data.** The finite ribbon reads LOWER than the end-free one,
+which is backwards. At step 0 the difference was +19.8, correct to within 2%. After 40 000 steps it is
+-60.1. The spanning ribbon **wraps the box and is topologically pinned**, so it cannot compact; the
+finite ribbon is free to. The comparison therefore measures relaxation freedom, not edge cost. Their
+`core` values confirm they are no longer matched states -- 1.415 against 1.385.
+
+The estimator is sound only at fixed matched geometry, which is exactly where it was validated and
+exactly where it is useless, since the quantity of interest is the relaxed one.
+
+### The other estimator is also in trouble
+
+`lambda_explicit` from the multi-size fit has N = 20 and N = 40 finished, and N = 40 shows
+**largest = 35.2/40**: the ribbon is shedding lipids in explicit solvent. If fragmentation grows with N,
+`E(N)` is no longer the energy of one ribbon with two ends and the intercept means nothing. That check
+has to be made before the fit is read, and it will be made on all four sizes.
+
+### Stepping back: test the milestone, not a proxy
+
+Three separate estimators have now failed to resolve a ~20 eps edge energy inside systems whose total
+energy is in the thousands and which relax and fragment. Rather than build a fourth, the direct question
+is available and has **never been asked**: every emergence run in this project has been in IMPLICIT
+solvent, the regime now known to have no edge cost. Explicit solvent holds the bilayer (core 1.33) and is
+where an exposed edge puts tails against water.
+
+**Launched: self-assembly from a dispersed start in EXPLICIT solvent**, N = 120, L = 56, phi = 0.55,
+kT = 0.45, 5 seeds, 400 000 steps. Cheap -- only ~2200 water beads at this box size.
+
+**FALSIFICATION, STATED BEFORE ANY RESULT IS READ.** If aggregates in explicit solvent close into rings
+-- `hollow` near 0 with a small end gap, confirmed by render -- the milestone is reached and the whole
+failure was running emergence in the solvent-free regime. If they form the same open ribbons as implicit,
+closure fails in both solvents and the missing drive is a property of the force field, which is a clean
+negative on the model rather than on the solvent treatment. If they fail to aggregate at all, the
+explicit run is under-sampled and says nothing either way.
+
+Implicit emergence continues in parallel (seeds 10-13; seed 11 at step 225 000 has largest 45/120,
+core 1.448, burial 5.589).
