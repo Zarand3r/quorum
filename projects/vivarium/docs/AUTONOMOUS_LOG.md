@@ -6951,3 +6951,79 @@ close. The run continues to 800 000.
 ### Still in flight
 
 Leaflet-area-split test at 0.58 and 0.65, emergence continuation to 2.4 million under seeds 10-14.
+
+---
+
+## Tick: a dispersed-start structure passes both gates for the first time
+
+### Leaflet AREA asymmetry: the last symmetric-parameter candidate, excluded
+
+| split | largest | core | closed |
+|---|---|---|---|
+| 0.58 (area ratio ~1.35) | 80, 80, 80, 80, 80 | 1.455-1.475 | **0/5** |
+| 0.65 (area ratio 1.86) | 58, 70, 78, 67, 77 | 1.430-1.455 | 0/5 |
+
+At 0.58 the ribbon is **fully intact in 5/5** and does not curl -- the second pre-registered branch. At
+0.65 three of five fell below the `largest >= 76` bar, so that rung is the inconclusive third branch:
+too much area mismatch tears the ribbon rather than bending it.
+
+**Every candidate source of spontaneous curvature is now excluded by measurement:**
+
+| candidate | result |
+|---|---|
+| chi_TW | null WITH POWER: lambda +2.8 +- 2.8 against -5.2 +- 4.2 |
+| chi_HH | 0/5 at two values, 10 runs, intact |
+| lipid shape (2-tail) | dissolves to micelles, largest 7-11 of 80 |
+| leaflet THICKNESS asymmetry (4/6 tails) | 0/5, intact, render straight |
+| leaflet AREA asymmetry (split 0.58) | 0/5, intact |
+
+A planted flat bilayer does not curl in this force field, by any parameter available to it.
+
+### And yet: a dispersed-start aggregate has closed
+
+Seed 11 of the emergence continuation, at step 400 000 of this leg (**2.0 million total**). Lineage is
+fully emergent -- random dispersed start, then continued twice, nothing planted anywhere.
+
+    largest = 160/160     perc = n     core = 1.430
+    bead 1.0: n_enclosed = 1, lumen 2191
+    bead 1.5: n_enclosed = 1, lumen 1947
+    bead 2.0: n_enclosed = 1, lumen 1947
+    bead 3.0: n_enclosed = 1, lumen 1710
+    vesicle_call -> True   (0.269 of expected, stable at 1)
+
+**This is the first structure from a dispersed start to pass both gates.** The ratio 0.269 sits close to
+the known-good closed implicit arc (0.295) and far above every previous false positive (0.010-0.044).
+
+**What the render actually shows, stated precisely:** a large closed membrane loop enclosing water,
+WITH appendages -- a protrusion at top-left and pieces at the right edge that must join through the
+periodic boundary, since all 160 lipids are one cluster. So a vesicle-with-appendages, not a clean
+isolated shell, and that is exactly why the ratio is 0.269 rather than the ~0.88 of a planted vesicle:
+the lipids in the appendages are counted in the expectation but contribute no lumen.
+
+**There is no contradiction with the section above.** Those runs show a FLAT ribbon will not curl. This
+aggregate never was flat -- it coarsened as a meandering ribbon and closed on itself, which is the
+encounter-limited route the gap scan already quantified (3 sigma closes 5/5, 6 sigma 3/5, 9 sigma 2/5).
+Closure here comes from two ends meeting, not from a membrane developing curvature.
+
+### FALSIFICATION, STATED BEFORE THE RESULT IS READ
+
+Earlier `n_enclosed = 1` readings in this same run vanished on their own -- seed 3 reported one at 1.2
+million and none at 1.6 million. A closure that dissolves is a fluctuation, not a vesicle.
+
+The candidate state was **copied to `vesicle_candidate_frozen.npz`** first, because the live file is
+overwritten by its own continuing run. Launched: **5 fresh thermal seeds restarted from the frozen
+state**, 200 000 steps each.
+
+* **`vesicle_call` stays True in >= 3/5 at step 200 000** -> the closure is stable against thermal noise
+  and this is a genuine emergent vesicle, by a two-gate criterion calibrated on four known structures.
+* **It opens in >= 3/5** -> a transient fluctuation, like the earlier readings, and the claim is
+  withdrawn.
+* **The aggregate fragments (largest < 152)** -> the state is not stable at all and the test says
+  nothing about closure.
+
+At step 10 000 the split is 3/5 closed, 2/5 open. **Not read as a result** -- this is the tenth of the
+run at which the earlier false positives still looked convincing.
+
+### Still in flight
+
+Persistence test (5 seeds), emergence continuation to 2.4 million.
