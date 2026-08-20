@@ -5443,3 +5443,86 @@ above the noise floor, render showing a single ring rather than a tangle -- that
 test this project has. If it stays a finite branched tangle, non-percolation was achieved trivially by
 enlarging the box and the topology test needs a shape criterion added. If it fragments into small flakes,
 the sponge was held together only by the crowding of its original box and dilution destroys it.
+
+---
+
+## Tick: the topology test needed a shape criterion, and now has one
+
+### What ran
+
+The dilution quench (L=60 percolating sponge, 300 lipids transplanted and re-solvated into L=120,
+chi_WW=0.50, chi_HT=-0.25, 5 seeds, 300 000 steps) reached step 75 000-90 000. **Provisional numbers,
+read mid-run, not concluded:**
+
+| seed | largest | core | lumen_c | perc |
+|---|---|---|---|---|
+| 0 | 300 | 1.413 | 714 | n |
+| 1 | 299 | 1.402 | 166 | n |
+| 2 | 300 | 1.405 | 407 | n |
+| 3 | 240 | 1.421 | 380 | n |
+| 4 | 289 | 1.413 | 1677 | n |
+
+Every seed non-percolating, aggregate intact, core in the bilayer range. That excludes the third branch
+of the pre-committed falsification: the sponge was not held together only by the crowding of its box.
+
+### The render decided what the metric could not
+
+`perc = n` in 5/5 is exactly the outcome I flagged before launch as **necessary but not sufficient**:
+"a finite BRANCHED network is also non-percolating, and would pass the topological test while being no
+more a vesicle than the sponge is." Looking at seed 4 (the largest lumen, 1677 cells) settles it. The
+frame shows a **finite branched tangle** floating in water, not a closed shell. Non-percolation was won
+trivially by enlarging the box.
+
+### The shape criterion, and its positive control
+
+A vesicle encloses exactly ONE region; a branched tangle encloses several. The flood-fill in
+`lumen_cells()` already found every interior component and threw all but the largest away, so the new
+`n_enclosed()` costs nothing extra. Both now come from one pass over `_interior_mask()`.
+
+| structure | perc | **n_enclosed** | component sizes |
+|---|---|---|---|
+| planted vesicle (POSITIVE CONTROL) | n | **1** | [4014] |
+| dilution quench sd0 | n | **4** | [714, 205, 151, 148] |
+| dilution quench sd1 | n | **3** | [166, 67, 52] |
+| dilution quench sd2 | n | **3** | [407, 96, 78] |
+| sponge at L=60 | Y | **6** | [509, 247, 244, 96] |
+
+The control passes at 1 and every tangle scores 3 or more. `lumen_cells` returns byte-identical values
+after the refactor (planted vesicle: 4014 before, 4014 after); the suite passes in 265 s.
+
+**Had I reported the 1677-cell lumen as a vesicle, it would have been one compartment out of four.**
+
+### The energetics say the competitor is the sponge, not the open ribbon
+
+With R(N) = N/2pi and the measured kappa = 269.5 +- 69.0 eps*sigma, lambda = +18.31 +- 7.07 eps:
+
+    R* = pi*kappa/(2*lambda) = 23.1 sigma      N=300 gives R = 47.7 sigma
+
+N = 300 is **twice** the closure threshold. A vesicle beats an open ribbon here by
+2*lambda - pi*kappa/R = 36.6 - 17.7 = +18.9 eps. And yet the system builds a branched network. The
+reason is a competitor neither number covers: **a junction network eliminates every free edge too, and
+pays no long-range curvature to do it.** The contest is vesicle vs sponge, and the sponge has been
+winning it in every emergent run.
+
+### FALSIFICATION, STATED BEFORE THE RESULT IS READ
+
+Launched: planted vesicle, N = 300, L = 120, chi_HT = -0.25, chi_WW = 0.50, kT = 0.45, 5 seeds,
+100 000 steps. The solvent matched the quench arm exactly without being tuned to (8584 waters in both),
+so `E_solute`/lipid is directly comparable against the 5 quench seeds at the same lipid count and box.
+
+* **E_vesicle < E_sponge beyond the seed spread** -> the sponge is a KINETIC TRAP. Closure is
+  thermodynamically preferred and the search moves to annealing and nucleation barriers.
+* **E_sponge < E_vesicle beyond the seed spread** -> the sponge is the GROUND STATE at these
+  parameters. No amount of sampling produces a vesicle, and the lever must be kappa or the junction
+  cost, not the protocol. `bend_frac` is the knob that moves kappa.
+* **The two overlap within spread** -> degenerate. Both metastable, the model has no preference, and
+  the premise that a vesicle is this model's target state is itself falsified at these chi.
+
+Reading at step 100 000, at the END, both arms. Not mid-run, and not from the planted arm's early
+checkpoints, which start relaxed by construction (step 0 already reads E/lip -8.78, core 1.467,
+n_enclosed 1) and would flatter the vesicle if read as a trend.
+
+### Still in flight
+
+* N = 300, L = 120 dispersed-start emergence runs to 800 000 steps (an EMERGENCE arm is always running).
+* Dilution quench to 300 000 steps.

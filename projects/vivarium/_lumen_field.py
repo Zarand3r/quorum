@@ -17,8 +17,8 @@ from __future__ import annotations
 import numpy as np
 
 
-def lumen_cells(X, mols, L, cell=0.5, min_cells=40, bead=1.0):
-    """Largest contiguous interior pocket, in grid cells. 0 if below `min_cells`.
+def _interior_mask(X, mols, L, cell=0.5, bead=1.0):
+    """Boolean grid of free cells the aggregate cuts off from the box boundary.
 
     The aggregate is shifted to the box centre by its RAW centroid first: the plant centres structures
     on the origin, and wrapping with `% L` alone splits them across the edge so no closed curve forms --
@@ -51,23 +51,13 @@ def lumen_cells(X, mols, L, cell=0.5, min_cells=40, bead=1.0):
             if 0 <= p < n and 0 <= q < n and free[p, q] and not seen[p, q]:
                 seen[p, q] = True
                 stack.append((p, q))
-    interior = free & ~seen
-    best, visited = 0, np.zeros_like(interior)
-    for i in range(n):
-        for j in range(n):
-            if interior[i, j] and not visited[i, j]:
-                st, c = [(i, j)], 0
-                visited[i, j] = True
-                while st:
-                    a, b = st.pop()
-                    c += 1
-                    for da, db in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                        p, q = a + da, b + db
-                        if 0 <= p < n and 0 <= q < n and interior[p, q] and not visited[p, q]:
-                            visited[p, q] = True
-                            st.append((p, q))
-                best = max(best, c)
-    return best if best >= min_cells else 0
+    return free & ~seen
+
+
+def lumen_cells(X, mols, L, cell=0.5, min_cells=40, bead=1.0):
+    """Largest contiguous interior pocket, in grid cells. 0 if below `min_cells`."""
+    _, sizes = n_enclosed(X, mols, L, cell=cell, bead=bead, min_cells=min_cells)
+    return sizes[0] if sizes else 0
 
 
 def lumen_headed(X, mols, L, cell=0.5, bead=1.0, min_cells=40):
@@ -250,3 +240,35 @@ def percolates(X, mols, L, cut=1.4):
                 pos[j] = new
                 q.append(j)
     return False
+
+def n_enclosed(X, mols, L, cell=0.5, bead=1.0, min_cells=40):
+    """How many SEPARATE regions does the aggregate enclose?
+
+    A vesicle encloses exactly one. A finite branched tangle encloses several, and passes the
+    percolation test for the trivial reason that it sits inside a box larger than itself. Percolation
+    alone cannot tell the two apart; this can. The flood-fill in lumen_cells() already finds every
+    interior component -- it just returned the largest and discarded the rest.
+
+    Returns (count, sizes) with sizes sorted descending.
+    """
+    interior = _interior_mask(X, mols, L, cell, bead)
+    n = interior.shape[0]
+    sizes, vis = [], np.zeros_like(interior)
+    for i in range(n):
+        for j in range(n):
+            if not interior[i, j] or vis[i, j]:
+                continue
+            stack, count = [(i, j)], 0
+            vis[i, j] = True
+            while stack:
+                a, b = stack.pop()
+                count += 1
+                for da, db in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    p, q = a + da, b + db
+                    if 0 <= p < n and 0 <= q < n and interior[p, q] and not vis[p, q]:
+                        vis[p, q] = True
+                        stack.append((p, q))
+            if count >= min_cells:
+                sizes.append(count)
+    sizes.sort(reverse=True)
+    return len(sizes), sizes
