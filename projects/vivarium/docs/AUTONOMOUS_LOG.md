@@ -5393,3 +5393,53 @@ every test this project has. Aggregates that percolate before they enclose would
 intrinsically a network phenomenon. Aggregates that stay small and never close would mean the dilution
 preventing percolation also prevents reaching closure size -- pointing to more lipids rather than
 different chemistry as the next move.
+
+---
+
+## 2026-08-21e tick — dilution buys geometric room at an unaffordable coarsening cost; building dense then diluting instead
+
+### The dilute run is too slow, quantified
+
+N = 300 at L = 120, step 120 000 of 800 000: largest **14-25 lipids**, core 1.407-1.472, lumen 0 in all
+five seeds.
+
+Largest grew from ~10 at step 40 000 to ~20 at 120 000 -- a factor of 2 over 3x the time, so
+`largest ~ t^0.63`. Reaching the ~200 lipids a closed ring needs would take
+`(200/20)^(1/0.63) = 39x` longer, about **4.7 million steps**. The 800 000-step budget cannot get there,
+and this is a projection from measured growth rather than an impression.
+
+**Dilution buys the geometric room for a finite closed object and charges for it in coarsening time.**
+
+### Build dense, then dilute
+
+The sponge phase at L = 60 already has all 300 lipids in one connected structure; its only defect is that
+it percolates. Re-solvating the same lipids in a box twice as wide removes the periodic self-contact.
+
+Verified at step 0 after the fixes below: **largest 297/300, core 1.422, lumen 579, `perc = n`** and
+E/lipid **-6.15**. That is exactly the configuration the dilute run would need 4.7M steps to reach.
+
+### Three bugs in the transplant, each caught by its own number
+
+Building this exposed a chain of errors, none of which would have been visible from the trajectory alone:
+
+| symptom | cause | fix |
+|---|---|---|
+| `state has 2521 beads, this configuration has 10084` | water count scales with box area, so a state saved at L = 60 cannot be loaded at L = 120 | transplant the LIPIDS, re-solvate |
+| E/lipid **37634** | water was placed avoiding the ORIGINAL random lipids, then the transplant put lipids on top of it | re-place water after the transplant |
+| E/lipid **37578 -> 29631** | saved coordinates are wrapped into the old box, so molecules whose bonds crossed the old boundary are torn by ~L_old in the new one | unwrap per molecule using the state's own L |
+| still **29631** | my own recentring shifted per BEAD about the centroid, re-tearing the molecules just unwrapped | recentre rigidly, no further wrapping |
+
+Final: **-6.15**. A physically sensible bound state, four fixes deep.
+
+### Caveat recorded before reading anything
+
+`perc = n` is **necessary but not sufficient**. A finite BRANCHED network is also non-percolating, and
+would pass the topological test while being no more a vesicle than the sponge is. The render must show an
+isolated closed shell, not a finite tangle.
+
+**FALSIFICATION, STATED BEFORE THE QUENCH IS READ.** 5 seeds, 300 000 steps, scored on `perc`, `lumen_c`
+and the render together. If the aggregate retracts into an isolated closed shell -- non-percolating, lumen
+above the noise floor, render showing a single ring rather than a tangle -- that is a vesicle by every
+test this project has. If it stays a finite branched tangle, non-percolation was achieved trivially by
+enlarging the box and the topology test needs a shape criterion added. If it fragments into small flakes,
+the sponge was held together only by the crowding of its original box and dilution destroys it.

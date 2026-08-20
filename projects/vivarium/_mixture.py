@@ -746,9 +746,50 @@ if __name__ == "__main__":
         # for a fresh run to produce another takes 400000 steps. Restarting from the state that HAS the
         # enclosure, with different thermal seeds, measures directly how long it survives.
         _z = np.load(plant.split(":", 1)[1], allow_pickle=True)
-        if len(_z["X"]) != len(X):
-            raise ValueError(f"state has {len(_z['X'])} beads, this configuration has {len(X)}")
-        X = _z["X"].copy()
+        _lipn = lip_beads
+        if len(_z["X"]) == len(X):
+            X = _z["X"].copy()
+        elif len(_z["X"]) >= _lipn:
+            # Different bead count means a different BOX: water scales with area, so a state saved at
+            # L = 60 has 1021 waters where L = 120 needs 8584. Transplant the LIPIDS and keep the freshly
+            # placed water -- i.e. re-solvate the same membrane in a larger volume, which is what a
+            # dilution quench physically is. The lipid configuration is carried over exactly.
+            # UNWRAP with the state's OWN box before transplanting. Saved coordinates are wrapped into
+            # the old box, so a molecule whose bonds crossed the old periodic boundary is torn apart by
+            # ~L_old in the new, larger box -- the minimum image no longer reconnects it, and the bond
+            # springs then dominate everything (E/lipid came out at 37578).
+            _Lold = float(_z["L"])
+            _Xs = _z["X"][:_lipn].copy()
+            for _m in mols:
+                _ref = _Xs[_m[0]]
+                _Xs[_m] = _ref + (_Xs[_m] - _ref) - _Lold * np.round((_Xs[_m] - _ref) / _Lold)
+            # No further wrapping. A per-BEAD shift about the centroid re-tears the molecules that were
+            # just unwrapped (E/lipid only fell 37578 -> 29631). Recentre rigidly instead, by molecule.
+            _c = _Xs.mean(axis=0)
+            _Xs = _Xs - _c
+            X[:_lipn] = _Xs
+            # The water was placed to avoid the ORIGINAL random lipids, so after transplanting it now
+            # overlaps them -- E/lipid came out at 37634. Re-place it on a jittered lattice avoiding the
+            # TRANSPLANTED positions, which is the same routine `build` uses.
+            _nw = len(X) - _lipn
+            if _nw:
+                _rng = np.random.default_rng(seed + 991)
+                _occ = min(0.9, _lipn / max(L ** d / C_D[d] * (2 ** d), 1.0))
+                _per = int(np.ceil((_nw * (1.6 + 3.0 * _occ)) ** (1.0 / d))) + 2
+                _g = np.stack(np.meshgrid(*[np.linspace(-L / 2, L / 2, _per, endpoint=False)] * d,
+                                          indexing="ij"), axis=-1).reshape(-1, d)
+                _g = _g + _rng.uniform(-0.15, 0.15, size=_g.shape)
+                _dd = _g[:, None, :] - X[:_lipn][None, :, :]
+                _dd -= L * np.round(_dd / L)
+                _free = np.linalg.norm(_dd, axis=2).min(axis=1) > 0.9
+                _cand = _g[_free]
+                if len(_cand) < _nw:
+                    raise ValueError(f"only {len(_cand)} free water sites for {_nw} after transplant")
+                X[_lipn:] = _cand[_rng.choice(len(_cand), _nw, replace=False)]
+            print(f"re-solvated: {_lipn} lipid beads transplanted, {_nw} fresh waters placed around them "
+                  f"(state had {len(_z['X']) - _lipn})", flush=True)
+        else:
+            raise ValueError(f"state has {len(_z['X'])} beads, fewer than {_lipn} lipid beads")
     # With phi = 0 there are no water beads, so the explicit chi is the WRONG table: it puts the
     # hydrophobic drive in head-water, and with the water deleted nothing makes a buried head costly.
     # The solvent-averaged (exchange-energy) chi restores that drive by integrating the solvent out
