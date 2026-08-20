@@ -4457,3 +4457,44 @@ the emergence runs.
 planted 3436 cells, with `core` reported alongside so a lumen preserved by a degraded membrane is not
 mistaken for success. Holding above about 2000 cells with core above 1.40 is survival; falling below ~400
 is collapse; anything between is partial and needs the seed spread to interpret.
+
+---
+
+## 2026-08-20n tick — planted vesicle at half-run: fragmenting at the good-bilayer setting
+
+### Not read as a result
+
+The planted-vesicle runs are at step 75 000-82 500 of 150 000. Per the standing rule, a planted structure
+is read at the END, not mid-run, so **no conclusion is drawn this tick**.
+
+One item is recorded because it is a structural state rather than a trend: at `chi_HT = -0.25` the ring's
+largest connected component has fallen from **120/120 to 41-73** across all five seeds. A ring that has
+broken into pieces is not going to re-form into one; but whether the final state is fragmentation or
+partial recovery is left to the end of the run.
+
+Current values, for the record only:
+
+| chi_HT | largest | core | lumen (planted 3436) |
+|---|---|---|---|
+| -0.25 | 41, 55, 62, 67, 73 | 1.401 - 1.444 | 0, 0, 0, 0, 0 |
+| +0.20 | 80, 84, 96, 111, 120 | 1.292 - 1.342 | 0, 0, 0, 0, **1839** |
+
+### The 20-seed emergence arm
+
+Seeds through sd13 report `core` 1.401-1.452 with max lumen 0. The renders show thin, well-resolved
+ribbons -- but broken into several pieces rather than one aggregate, which is the same fragmentation the
+planted ring is showing at this setting. That the two independent lines of evidence point the same way is
+worth noting now so it is not treated as a fresh discovery later.
+
+### What the shape of the answer will be
+
+If the planted result holds to the end, the finding is uncomfortable and specific: **the head-tail setting
+that produces the best bilayers is also the one that cannot keep a vesicle intact**, while the setting
+that holds a vesicle produces a mediocre bilayer. That is a property of the force field, not of sampling,
+because a planted structure removes the nucleation question entirely.
+
+**FALSIFICATION, RESTATED BEFORE READING THE FINAL STEP.** Judged on the final lumen against its planted
+3436 cells, with `core` alongside so a lumen preserved by a degraded membrane is not counted as success.
+Above ~2000 cells with core above 1.40 is survival; below ~400 is collapse; between is partial. The
+-0.25 arm is additionally judged on `largest`: a final value near 120 would mean the mid-run fragmentation
+was transient and this entry's caution was warranted.
