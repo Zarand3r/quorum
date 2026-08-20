@@ -51,6 +51,8 @@ model coherently instead of unbalancing it.
 
 from __future__ import annotations
 
+import os
+
 import numpy as np
 
 HEAD, TAIL, WATER = 0, 1, 2
@@ -76,7 +78,13 @@ def default_chi():
     chi[TAIL, TAIL] = 0.70                       # dispersion between alkane-like tails
     chi[HEAD, HEAD] = 0.20
     chi[HEAD, WATER] = chi[WATER, HEAD] = 0.75   # heads are solvated, comparable to bulk water
-    chi[HEAD, TAIL] = chi[TAIL, HEAD] = 0.20
+    # THE HEAD-TAIL CROSS TERM IS WHAT MAKES AN AMPHIPHILE. At 0.20 it equals head-head, so a head is
+    # indifferent between a head neighbour and a tail neighbour, and nothing holds a leaflet together.
+    # Measured consequence: from a strain-free planted bilayer at kT = 0, i.e. pure downhill descent,
+    # head/tail mixing goes 0.624 -> 0.899 within 150 steps while the energy falls monotonically. The
+    # ordered bilayer is not a local minimum. Swept via the environment so the value can be scanned
+    # without editing the source mid-experiment.
+    chi[HEAD, TAIL] = chi[TAIL, HEAD] = float(os.environ.get("VIVARIUM_CHI_HT", 0.20))
     chi[TAIL, WATER] = chi[WATER, TAIL] = 0.00   # tails gain nothing from water
     return chi
 
@@ -235,6 +243,18 @@ class Field:
             nbr.setdefault(int(b), []).append(int(a))
         out = set()
         for mid, ends in nbr.items():
+            # A 1-3 spring at rest length 2*r_bond holds a triple STRAIGHT, which is chain stiffness
+            # and is what this term is for. Centred on the HEAD of a branched lipid it means something
+            # else entirely: the head's two neighbours are the first beads of the two different tails,
+            # so pinning them 2 sigma apart with both bonds at 1 sigma forces the branch angle to 180
+            # degrees. The two-tailed lipid is then mechanically a LINEAR five-bead chain with the head
+            # in the MIDDLE of the tails -- a head that cannot reach a surface, which is why planted
+            # bilayers scrambled to mix ~0.9 under every solvent and temperature tried.
+            #
+            # A branch angle is set by sterics, not by a spring. Triples centred on a head are dropped.
+            # For a LINEAR lipid the head is an end and never a centre, so nothing changes there.
+            if self.species[mid] == HEAD:
+                continue
             for x in range(len(ends)):
                 for y in range(x + 1, len(ends)):
                     i, k = sorted((ends[x], ends[y]))

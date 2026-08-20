@@ -2469,3 +2469,85 @@ explicit-solvent result to date was measured in a two-phase fluid -- which would
 chi and not temperature, the reason bilayers do not hold. If the water is voided at ALL three, the
 solvent model is wrong at this density irrespective of temperature. If it is homogeneous at all three,
 then what I saw was a rendering or density artefact and this whole line is dropped.
+
+---
+
+## 2026-08-19i tick — ROOT CAUSE: the planted lipids were mechanically forced straight, and chi never made head-tail contact unfavourable
+
+Three explanations for the scrambled bilayer are now falsified with 5 seeds each, and the real cause is
+found. This entry supersedes the solvent and temperature lines of enquiry.
+
+### Falsified: solvent phase state
+
+Short runs at kT = 0.15, 0.45, 0.90 with kT now in the render tag. The water IS two-phase at 0.15 -- a
+percolating network with large vacuum voids at packing fraction 0.55 -- and nearly homogeneous at 0.90,
+so the solvent does have a liquid-vapour transition inside the working range. **But `mix` is 0.917,
+0.894 and 0.910 across that range**, so solvent phase state does not explain the scrambling either.
+Together with the previous tick, that is solvent type, temperature (6x range) and solvent phase state
+all excluded.
+
+### The planted structures were never valid configurations
+
+| plant | E/lipid | min non-bonded r | pairs < 0.8 sigma |
+|---|---|---|---|
+| ring | 800.6 | **0.000** | 225 |
+| arc0.75 | 811.4 | **0.000** | 1441 |
+| sphere | 795.7 | 0.057 | 622 |
+
+Equilibrium is about **-20** E/lipid. Decomposing the ring's +790 showed it was **not** steric at all:
+
+    non-bonded core   +0.81      non-bonded well  -10.41
+    1-2 springs     +400.00      (mean bond 1.500 against rest 1.0, max deviation 2.000)
+    1-3 springs     +400.00      (mean 2.667 against rest 2.0)
+
+**The plant laid a BRANCHED lipid out colinearly.** With `n_tail = 4` the second branch starts at
+`idx[3]`, which the plant placed 3 sigma from the head against a rest length of 1. Every planted lipid
+carried ~800 eps of spring strain, so every planted run began by snapping back rather than by doing
+dynamics -- and that is enough on its own to scramble leaflets. **Every planted-structure result in this
+project carried that confound.**
+
+### The deeper defect: the branch angle was pinned at 180 degrees
+
+`_infer_13` adds a 1-3 spring at rest length 2*r_bond for every angle in the bond graph. Centred on the
+HEAD of a branched lipid, the two neighbours are the first beads of the **two different tails**, so
+pinning them 2 sigma apart with both bonds at 1 sigma **forces the branch angle to 180 degrees**. The
+two-tailed lipid was mechanically a linear five-bead chain **with the head in the middle of the tails**.
+A head pinned between two outward-pointing tails cannot reach a surface, which is precisely `mix` ~0.9.
+
+Fixed: triples centred on a HEAD are dropped, since a branch angle is set by sterics rather than by a
+spring. For a LINEAR lipid the head is an end and never a centre, so nothing changes there.
+
+Fixed too: the ring/arc plant now places the two tails **side by side** (radial offset 0.866, lateral
++-0.5, so both first tail beads sit exactly 1 sigma from the head), and the leaflet radii use the BEAD
+count rather than the tail count with a 0.5 sigma gap, which also removed the 25 exactly-coincident bead
+pairs that no relaxation could separate (the push direction d/r is 0/0). A steric push-off now runs
+before dynamics for all planted starts.
+
+| | before | after |
+|---|---|---|
+| planted ring E/lipid | 790.4 | **53.0** |
+| 1-2 spring energy | 400.00 | **0.00** (max deviation 0.000) |
+| 1-3 spring energy | 400.00 | 0.93 |
+| min non-bonded r | 0.000 | 0.860 |
+
+### The result that survives all of it
+
+From a **strain-free, correctly planted** bilayer at **kT = 0** -- pure downhill descent, no thermal
+noise -- `mix` still goes **0.624 -> 0.899 within 150 steps** while the energy falls monotonically from
+158 to -20. **The ordered bilayer is not a local energy minimum of this force field.**
+
+The reason is in chi and is not subtle. Explicit: HEAD-HEAD 0.20 and HEAD-TAIL **0.20**, so a head is
+exactly indifferent between a head neighbour and a tail neighbour. Solvent-averaged: HEAD-HEAD -0.30 and
+HEAD-TAIL **+0.45**, so a head positively PREFERS a tail neighbour. In neither table is head-tail contact
+unfavourable relative to head-head -- and that is what amphiphilicity means. Emergent aggregates confirm
+it: `mix` 1.014 and 1.020, indistinguishable from random.
+
+**FALSIFICATION, STATED BEFORE THE SWEEP IS READ.** `chi_HT` scanned over 0.20 (current), 0.10, 0.00 and
+-0.20, explicit solvent, planted ring, kT = 0.35, 5 seeds each, 6000 steps. If `mix` falls toward the
+planted 0.54 as `chi_HT` drops, the missing head-tail penalty is the root cause and the force field has
+been non-amphiphilic in the one term that defines an amphiphile. If `mix` stays near 0.90 at every value
+including -0.20, the cause is elsewhere and the chi table is exonerated. A partial fall means chi_HT
+contributes but does not account for it.
+
+Emergence in flight at L = 36: largest 28/300 at step 80 000, much slower than L = 25 as expected from
+the lower concentration, `mix` 1.014.

@@ -289,7 +289,7 @@ def _plant_flat_ribbon(X, mols, chains, d, gap=1.05, L=None):
             k += 1
 
 
-def _plant_ring(X, mols, chains, d, span=1.0):
+def _plant_ring(X, mols, chains, d, span=1.0, branched=True):
     """Two leaflets sharing a tail core. Heads out on the outside, heads in on the inside.
 
     The mid-surface radius is set so both leaflets sit at roughly one bead of arc per lipid, and the
@@ -298,9 +298,18 @@ def _plant_ring(X, mols, chains, d, span=1.0):
     if d != 2:
         raise ValueError("ring planting is 2-D; use plant='random' in 3-D")
     n = len(mols)
-    lip = float(chains.mean())
+    # `chains` counts TAILS (4), but a lipid occupies 1 + n_tail = 5 beads. Using the tail count put
+    # the outer leaflet's innermost bead at R_mid + 4 - 4 = R_mid and the inner leaflet's at
+    # R_mid - 4 + 4 = R_mid, i.e. BOTH exactly on the mid-surface, so the two leaflets' tail tips
+    # coincided wherever their angles happened to line up: 25 pairs of beads at separation 0.000 and
+    # 225 pairs inside 0.8 sigma, giving a planted energy of ~+800 eps/lipid against an equilibrium
+    # near -20. No relaxation can repair exactly coincident beads, because the push direction d/r is
+    # 0/0, so this had to be fixed in the geometry.
+    nb = int(max(len(m) for m in mols))
+    half_gap = 0.5                                  # tail tips of the two leaflets TOUCH, not overlap
     R_mid = n / (4.0 * np.pi)
-    R_out, R_in = R_mid + lip, max(R_mid - lip, 0.6)
+    R_out = R_mid + half_gap + (nb - 1)
+    R_in = max(R_mid - half_gap - (nb - 1), 0.6)
     n_out = int(round(n * R_out / (R_out + R_in)))
     k = 0
     for count, R_head, sgn in ((n_out, R_out, +1.0), (n - n_out, R_in, -1.0)):
@@ -308,13 +317,29 @@ def _plant_ring(X, mols, chains, d, span=1.0):
             continue
         # the arc keeps the SAME arc spacing as the closed ring, so a shorter span means a smaller
         # subtended angle at the same radius, not a stretched membrane
-        th = (np.arange(count) + 0.5) / max(count / span, 1e-9) * 2 * np.pi / (2 * np.pi) * 2 * np.pi
-        th = (np.arange(count) + 0.5) / count * 2 * np.pi * span
+        # stagger the inner leaflet by half a spacing so the two leaflets never land on the same ray
+        th = ((np.arange(count) + 0.5) / count * 2 * np.pi * span
+              + (np.pi / count if sgn < 0 else 0.0))
         rhat = np.stack([np.cos(th), np.sin(th)], axis=1)
+        that = np.stack([-np.sin(th), np.cos(th)], axis=1)          # tangent, for the second tail
         for j in range(count):
             idx = mols[k + j]
-            for b in range(len(idx)):
-                X[idx[b]] = rhat[j] * (R_head - sgn * b)
+            nt = len(idx) - 1
+            half = nt // 2 if branched else nt
+            X[idx[0]] = rhat[j] * R_head
+            if not branched or nt < 2:
+                for b in range(1, len(idx)):
+                    X[idx[b]] = rhat[j] * (R_head - sgn * b)
+                continue
+            # Two tails SIDE BY SIDE, not end to end. Laying all beads along one ray made the bond from
+            # the head to the first bead of the SECOND branch span 3 sigma against a rest length of 1,
+            # so every planted lipid carried ~800 eps of spring strain and the run began by snapping
+            # back rather than by doing dynamics. The 0.866 radial offset with a +-0.5 lateral one puts
+            # both first tail beads at exactly 1 sigma from the head.
+            for c in range(2):
+                for b in range(half):
+                    X[idx[1 + c * half + b]] = (rhat[j] * (R_head - sgn * (0.866 + b))
+                                                + that[j] * (c - 0.5))
         k += count
 
 
@@ -337,6 +362,41 @@ def _unwrapped_centroid(P, L, rounds=2):
     for _ in range(rounds):
         c = (c + _wrap(P - c, L).mean(axis=0))
     return c
+
+
+def relax_overlaps(X, f, L, target=0.85, max_iter=4000, cap=0.02):
+    """Push coincident beads apart BEFORE dynamics starts, using the repulsive core only.
+
+    Every planted structure in this project was built with beads on top of one another: minimum
+    non-bonded separation 0.000 for the ring and the arc, 0.057 for the sphere, with 225, 1441 and 622
+    pairs inside 0.8 sigma. Planted energy was about +800 eps/lipid against an equilibrium near -20, so
+    the first few hundred steps were an explosion rather than dynamics -- which is enough on its own to
+    scramble the leaflets, and every planted-structure result had that confound baked in.
+
+    This is steepest descent on the CORE term alone with a per-step displacement cap: it separates
+    overlaps without letting the attractive well pull the structure into a new shape, so the planted
+    geometry is preserved while the artefact is removed. Attraction is excluded deliberately -- relaxing
+    the full energy would let the structure reorganize, which is the thing the experiment is supposed to
+    measure rather than to prearrange.
+    """
+    for _ in range(max_iter):
+        d, r, (pi, pj) = f._pairs(X)
+        bad = r < target
+        if not bad.any():
+            break
+        _, duc = _core_only(r[bad] / f.sigma, f.core_height)
+        step = np.clip(-duc / f.sigma, -cap, cap)[:, None] * (d[bad] / np.maximum(r[bad], 1e-12)[:, None])
+        # d = X[pi] - X[pj], so d/r points from j toward i: i moves ALONG it, j against it. The first
+        # version had these reversed, which pulled overlapping beads together and took planted energy
+        # from +800 to +2674 eps/lipid.
+        np.add.at(X, pi[bad], step)
+        np.add.at(X, pj[bad], -step)
+    return X
+
+
+def _core_only(s, height):
+    from field import _core
+    return _core(s, height)
 
 
 def geometry(X, mols, wi, chains, L, d, members=None):
@@ -531,6 +591,11 @@ if __name__ == "__main__":
     # instead of dropping it. See `solvent_averaged_chi`.
     chi = solvent_averaged_chi() if phi == 0.0 else None
     f = Field(species, bonds, L, chi=chi)
+    if plant != "random":
+        e0, r0 = f.energy(X) / n_lip, float(f._pairs(X)[1].min())
+        X = relax_overlaps(X, f, L)
+        print(f"steric push-off: E/lipid {e0:.1f} -> {f.energy(X) / n_lip:.1f}, "
+              f"min non-bonded r {r0:.3f} -> {float(f._pairs(X)[1].min()):.3f}", flush=True)
     # INERTIAL at the validated dt = 8e-3: same energy, same equilibrium ensemble (verified against
     # the overdamped run over 5 seeds per rung), 28x more reduced time per minute end to end.
     dt = 8e-3
