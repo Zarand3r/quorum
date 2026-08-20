@@ -1,0 +1,7 @@
+# Per-checkpoint renders and states are DEBUG OUTPUT, not deliverables. 16516 tracked PNGs
+# (397 MB) made `git push` take longer than the experiments. Curated result figures live in
+# docs/figures/ and are tracked; everything else regenerates from a seed.
+projects/vivarium/docs/images/*.png
+!projects/vivarium/docs/figures/*.png
+projects/vivarium/docs/states/*.npz
+!projects/vivarium/docs/states/vesicle_candidate_frozen.npz

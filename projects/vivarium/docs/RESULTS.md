@@ -1,156 +1,119 @@
-# Vivarium membrane results
+# Emergent vesicle in a 2-D transformer-only lipid model
 
-**Updated 2026-08-12.** Every number here is reproducible from the commands in §6 and locked by
-`tests/test_ylz.py`. Claims that were withdrawn are listed in §5 rather than deleted.
+**Claim.** A closed, water-filled bilayer vesicle self-assembles from a dispersed random start,
+persists under fresh thermal noise, and passes a two-gate criterion calibrated against known
+structures. Nothing was planted at any point in its lineage.
+
+**It formed by ends meeting, not by curvature.** That distinction is the main scientific content
+here, and it is measured, not assumed.
+
+![emergent vesicle](figures/01_emergent_vesicle_persistence_sd21.png)
 
 ---
 
-## 1. Headline
+## The criterion
 
-Vesicles now emerge, from a random start, in our own engine, from interactions that are **bounded**
-and **exactly expressible as one attention layer**. That is three of Vivarium's hard constraints
-satisfied simultaneously by a model that self-assembles the target structure.
+A single enclosure count is not sufficient — a branched network with an incidental pocket passes it.
+`vesicle_call()` requires both:
 
-| | result | evidence |
+1. **`n_enclosed == 1` at every dilation in bead 1.0–3.0.** The count is dilation-sensitive, so only a
+   call stable across the knob is reportable.
+2. **The lumen must be the right SIZE for the lipid count.** A closed vesicle of *n* lipids has contour
+   *n*, so *R = n/2π* and interior *πR²*. Threshold 0.10.
+
+Calibration, every entry verified against its render:
+
+| structure | lumen / expected | verdict |
 |---|---|---|
-| emergent vesicle, open-source reference | 129-particle shell | LAMMPS `pair_style ylz`, ~3 min |
-| emergent vesicle, **our engine** | 94 particles, R = 2.62 ± 0.12, zero inside 0.5R | stable over 1.05M–1.5M steps |
-| energy is **exactly** one attention layer | rel. error 1.6e-16 (r^-4 core), 2.1e-16 (bounded) | `attention_ylz.check_identity` |
-| vesicles with **no divergent kernel** | 10, 100, 300 eps contact all close | 1.5M-step scan |
-| vesicle from **two species** (head/tail) | 84 molecules, heads outward 1.000 | `bilipid`, closed at 750k |
+| planted vesicle, N = 120 | 0.876 | vesicle |
+| planted ring, N = 300 | 0.882 | vesicle |
+| implicit arc, N = 80, closed | 0.295 | vesicle (irregular) |
+| **emergent candidate** | **0.269–0.292** | **vesicle** |
+| emergent branched network | 0.028 | not a vesicle |
+| branched network, later reading | 0.010–0.044 | not a vesicle |
 
-## 2. The mechanism we were missing
+Gate 2 exists because the original pre-registered criterion had only gate 1, and a 160-lipid branched
+network passed it. The render caught that; the metric did not.
 
-Every failure before this was traceable to one absence: **nothing in our model referred to the
-molecular axis**. Interactions were isotropic between beads and depended only on species and
-distance. Spontaneous curvature is
+## The result
 
-    beta (u_i - u_j) . r_hat
+Lineage: random dispersed start → N = 160, L = 65 → continued twice. No planting anywhere.
 
-which is odd under `u -> -u` and therefore needs a signed per-molecule orientation. With `beta = 0` a
-finite membrane patch stays an open flat disc, because its radius sits below the closure threshold
-`2 kappa / Gamma`. With `beta = 0.1` it closes. `beta = 0.2` and `0.3` overshoot into 38- and
-24-particle shells.
-
-This was not a tuning failure. No amount of adjusting concentration, box size, tail length or the
-`a_ij` matrix could have produced closure, because the term that drives it was not representable.
-
-## 3. Two supporting results that transfer
-
-**Mass balance decides morphology.** Measured area per particle is exactly 1.50 sigma^2 (a 900
-sigma^2 spanning sheet held 600 particles). A morphology is only reachable if the particle count can
-afford it:
-
-| structure | cost |
+| | |
 |---|---|
-| box-spanning sheet | `L^2 / a` |
-| box-spanning tube | `2 pi r L / a` |
-| closed vesicle | `4 pi R^2 / a` |
+| largest cluster | **160/160** lipids |
+| percolating | no |
+| core depth | 1.430–1.440 |
+| `n_enclosed` @ bead 1.0/1.5/2.0/3.0 | 1, 1, 1, 1 |
+| lumen ratio | 0.269–0.292 |
 
-At L=30 six hundred particles tile a sheet; at L=34 they still afford a tube (498 needed), and a tube
-is what formed. Only when both are unaffordable does a finite aggregate close. LAMMPS obeys this rule
-exactly as our own engine does, which retroactively validates the geometric analysis done for DPD.
+**Persistence** — 5 fresh thermal seeds, 200 000 steps, read at the end:
 
-**The performance gap is mostly the model, not the code.** Per particle-step, LAMMPS runs 1.7e7
-against our 2.5e5 -- a 69x implementation gap. But YLZ needs 600 particles for one vesicle where an
-11-bead lipid with explicit rho=3 solvent needs 59049, a 98x difference in problem size. Three
-minutes against twenty hours is mostly the second factor.
+| seed | largest | vesicle_call | ratio |
+|---|---|---|---|
+| 20 | 159 | True | 0.272 |
+| 21 | 160 | True | 0.285 |
+| 22 | 160 | True | 0.281 |
+| 23 | 123 | True — **fragmented, excluded** | 0.454 |
+| 24 | 160 | False (opened) | — |
 
-## 4. Why this representation suits Vivarium
+**3/5 intact and True**, against a bar of ≥3/5 fixed before the run. The source trajectory
+independently held its closure for a further 400 000 steps (2.4 M total, ratio 0.292).
 
-| | Vivarium as built | this model |
-|---|---|---|
-| token | one bead (11/lipid + solvent) | one lipid patch, or one head/tail dimer |
-| token state | position + species label | position + orientation |
-| interaction | species-indexed repulsion matrix | inner products `<q_i, k_j>`, `<n, r_hat>` |
-| tokens per vesicle | ~59 000 | 300–600 |
+## Why it closed: encounter, not curvature
 
-A species label is a lookup; an orientation vector participates in inner products, which is what
-attention computes. The identity that makes M2 exact is
+**This force field cannot curve a flat bilayer.** Every candidate source was tested on the same
+planted-flat-ribbon protocol, and every one is a measured null with the membrane intact:
 
-    n_i . n_j - (n_i.r_hat)(n_j.r_hat)  ==  n_i^T (I - r_hat r_hat^T) n_j
-
-a query-key inner product under a metric fixed by the pair direction. The whole potential is then
-`U = A(r) + B(r) a_ij`: a radial gate (the distance penalty) times a content term. Attention is left
-**unnormalized** deliberately -- softmax would make each pair's contribution depend on a particle's
-other neighbours, destroying the pairwise additivity the potential relies on. `SPEC.md` asks for
-"local attention ... distance-penalized" and does not mandate softmax.
-
-## 5. Withdrawn claims
-
-Kept visible because the failure modes recur.
-
-| claim | why it fell |
+| candidate | result |
 |---|---|
-| `bilayer_frac > 0.5` as a success target | a thermalized healthy bilayer reads 0.12-0.31; target was calibrated on a zero-temperature lattice |
-| 2-D ribbons beat the 3-D slab by 1.7x | both inside a noise band whose own reference oscillates 0.117-0.312 |
-| planted R=9 vesicle "is stable" | 30% of amphiphiles shed; equilibrium stability unproven |
-| YLZ has no divergent core | it is `r^-4`; `u_R(0.01) ~ 1.6e8`. Stated twice before being checked |
-| our engine cannot reproduce the LAMMPS vesicle | diagnosed from a run truncated at 450k steps; it closes at 1.05M |
-| flood-fill lumen detection | five successive versions, each fixing one planted control and breaking another; replaced by percolation-gated shell metrics |
+| χ_TW (tail–water) | null **with power**: λ = +2.8 ± 2.8 vs −5.2 ± 4.2 ε |
+| χ_HH (head–head) | 0/5 at two values, 10 runs |
+| lipid shape (2-tail) | dissolves to micelles, largest 7–11 of 80 |
+| leaflet **thickness** asymmetry (4/6 tails) | 0/5, intact, render straight |
+| leaflet **area** asymmetry (split 0.58, ratio 1.35) | 0/5, intact |
 
-Two of these were reported to a reviewer as findings before being withdrawn. The instrument, not the
-simulation, has been the expensive part of this project throughout.
+The reason is structural: χ terms are symmetric pair interactions, and spontaneous curvature is by
+definition a difference between the two leaflets.
 
-## 6. Reproduction
+Closure instead happens when two ends of a ribbon meet. That route is quantified — planted arcs at
+fixed N = 300, varying only the end-gap:
+
+| end-gap | closed |
+|---|---|
+| 2.4 σ (N = 80) | 5/5, all by step 5 000 |
+| 3.0 σ | 5/5 |
+| 6.0 σ | 3/5 |
+| 9.0 σ | 2/5 |
+
+A rate that falls steeply with gap, with **no hard capture radius** — even 9 σ closes given time. The
+emergent vesicle is this process at work: a long meandering ribbon whose ends found each other.
+
+![flat stays flat](figures/04_flat_bilayer_does_not_curl.png)
+
+*A planted flat bilayer after 200 000 steps with imposed 4/6-tail leaflet asymmetry: still straight,
+fully intact. 0/5 closed.*
+
+## Limits
+
+- **It is a vesicle with appendages.** A stub and corner fragments belong to the same cluster, joined
+  through the periodic boundary. That is why the ratio is ~0.28 rather than the ~0.88 of a planted
+  vesicle: appendage lipids count in the expectation and contribute no lumen.
+- **It is 2-D.** Nothing transfers to 3-D, where explicit solvent at φ 0.15–0.35 is still fragmented
+  droplets rather than a liquid.
+- **The formation rate is unmeasured.** One occurrence in five emergence seeds. A 10-seed measurement
+  is in flight; until it reports, this is "observed once", not "reproducible at rate X".
+
+## Reproducing
 
 ```bash
-sudo apt-get install -y lammps lammps-examples
-cd projects/vivarium
-
-lmp -in lammps/in.b0.1                                   # M0: LAMMPS vesicles, ~3 min
-bazel run //projects/vivarium:ylz                        # force/torque gradient check
-bazel run //projects/vivarium:attention_ylz              # exact attention identity, both cores
-bazel run //projects/vivarium:bilipid                    # two-species chain-rule gradient check
-bazel run //projects/vivarium:_ylz_run -- 300 25 1500000 0.1 tag 30   # M3: bounded-core vesicle
-bazel test //projects/vivarium:test_suite
+bazel build //projects/vivarium:_mixture
+# dispersed start, N=160 in L=65
+OMP_NUM_THREADS=1 VIVARIUM_CHI_HT=-0.25 VIVARIUM_CHI_WW=0.50 \
+  bazel-bin/projects/vivarium/_mixture 1600000 2 160 0.0 65.0 0.45 0.55 random <seed>
 ```
 
-## 7. Open
+Score any saved state with `vesicle_call()` in `_lumen_field.py`. The frozen candidate is
+`docs/states/vesicle_candidate_frozen.npz`.
 
-* **Softmax normalisation** -- untested, and the substitution most likely to break vesiculation.
-* ~~Two-species closure (M4)~~ -- **DONE**, see below.
-* **The "one clock" spec** -- weight-tied per-tick block with a local learning rule: untouched.
-* **Strict 2-D closure** -- unsolved, and the open-source 2-D reference does not solve it either, so
-  it is a genuine research question rather than a defect.
-
-
-## 8. M4: the two-species vesicle
-
-Vivarium represents lipids as head/tail beads, so the single-species YLZ result had to be carried
-back to that representation. `bilipid.py` does it by DERIVING the orientation instead of storing one:
-
-    molecule = head h (species 1) + tail t (species 2), bonded
-    centre   c = (h + t)/2
-    axis     u = (h - t)/|h - t|
-
-Nothing beyond bead positions is stored -- no quaternion, no angular velocity. Molecular torque
-emerges as a force couple on the two beads through the chain rule `dc/dh = I/2`,
-`du/dh = (I - u u^T)/|d|`, verified against numerical gradients at 1.2e-8.
-
-Result at 750k steps, 300 molecules in L=25, beta=0.1, bounded core at 30 eps:
-
-| quantity | value |
-|---|---|
-| largest cluster | 84 molecules |
-| radius | 2.81 +/- 0.15 |
-| shell CV | 0.052 |
-| molecules inside 0.5R | 0 |
-| gyration spectrum e2/e1, e3/e1 | 0.89, 0.81 |
-| **heads pointing outward** | **1.000** |
-| axis-radial alignment `<abs(cos)>` | 0.983 |
-
-So the head/tail representation closes, and closes correctly: every head faces the solvent and the
-molecules stand normal to the shell.
-
-**Why two species were never the obstacle.** Spontaneous curvature is `beta (u_i - u_j) . r_hat`,
-which is odd under `u -> -u` and therefore requires a SIGNED molecular axis. The head/tail labels are
-exactly what supply that sign. Our earlier DPD amphiphile failed not because it had two species but
-because every interaction was isotropic between beads, so no term in the model referred to the
-molecular axis at all.
-
-**One measurement bug worth recording.** The first head-orientation readout returned exactly 0.51,
-which reads as "geometrically closed but chemically ambivalent". It was an index mismatch: positions
-came from one clustering pass and orientations from a second one with a different ordering, so the
-check compared unrelated molecules. Pairing them from a single traversal gives 1.000. Exactly-random
-values in a structural metric should be treated as suspected index errors, not findings.
+Full chronology, including every retraction, is in [AUTONOMOUS_LOG.md](AUTONOMOUS_LOG.md).
