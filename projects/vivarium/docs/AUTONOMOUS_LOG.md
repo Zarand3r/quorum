@@ -4613,3 +4613,50 @@ vesicle fails at every `chi_WW`, explicit solvent cannot host a vesicle in this 
 cohesion, and the only remaining routes are a different solvent model or accepting implicit solvent plus
 an externally imposed nucleation event. If lowering `chi_WW` saves the vesicle but flattens head/tail
 segregation, the hydrophobic drive has been traded away and the fix is illusory -- `core` will show it.
+
+---
+
+## 2026-08-20q tick — lowering water cohesion repairs the solvent; emergence relaunched in it
+
+### The solvent was the problem, and it is fixable
+
+Planted vesicle in explicit solvent, scanning water self-attraction. Planted: 120/120, core 1.465,
+lumen 3436.
+
+| chi_WW | largest | core | lumen | status |
+|---|---|---|---|---|
+| 1.00 | 80 - 120 | 1.288 - 1.334 | 0, 0, 0, 0, 1837 | complete |
+| 0.70 | **120/120 in all** | 1.304 - 1.345 | 2242, 0, 0, 0 | 4 of 5 complete |
+| 0.50 | 120/120 | **1.355 - 1.371** | -- | **only 30 000-52 500 of 150 000, NOT read** |
+
+Two things are already established from the complete arms:
+
+* **The ring stops fragmenting.** At chi_WW = 1.00 largest falls to 80-120; at 0.70 and 0.50 it stays at
+  **120/120 in every seed**.
+* **Core rises rather than falls** -- 1.29-1.33 at 1.00, 1.36-1.37 at 0.50. I had flagged the opposite as
+  the risk of this change ("saving the vesicle while flattening segregation... core will show it"), and
+  core shows the reverse. The hydrophobic drive was not traded away.
+
+**The render confirms the mechanism.** At chi_WW = 0.50 the water is a single homogeneous phase filling
+the box evenly, including the lumen -- not the percolating network with vacuum voids present in every
+explicit run to date. This is the first time this project has had a solvent that behaves like a fluid.
+
+The chi_WW = 0.50 lumen is **not read**: those runs are a third of the way through and a planted lumen
+starts at 3436, so any early value is its initial condition, not a result.
+
+### Emergence in a working solvent, launched
+
+Every emergence run in explicit solvent so far has been in the two-phase fluid. Explicit solvent is also
+the only regime that has ever nucleated an enclosure (~1 in 15). Running emergence at chi_WW = 0.50 for
+the first time, at both `chi_HT` settings, 5 seeds each, 400 000 steps.
+
+The completed repulsive-head-tail emergence arm gives core 1.437-1.442 with max lumen 0 and renders
+showing branched webs rather than closed shapes -- the baseline this new arm must beat.
+
+**FALSIFICATION, STATED BEFORE ANY RESULT IS READ.** If enclosures appear at a rate above the ~1-in-15
+baseline, or at sizes above the 255-cell best, the repaired solvent is what emergence was missing and the
+milestone is close. If the rate and sizes are unchanged, fixing the solvent's phase behaviour does not
+help nucleation, and the barrier is in the membrane mechanics rather than the fluid. If aggregation
+itself weakens -- largest falling well below the 87-120 this regime reaches -- then lowering water
+cohesion has weakened the hydrophobic drive after all, in a way the planted test could not reveal because
+a planted structure does not need to assemble.
