@@ -6036,3 +6036,86 @@ as `..._tw-0.50_...`, verified rather than assumed.
 
 Long arc (45 000/300 000), bend rungs 0.25 and 0.50 (15 000/150 000), chi_TW ring and arc arms,
 dilution quench (270 000/300 000), N = 300 and N = 160 dispersed emergence.
+
+---
+
+## Tick: a free shortcut that turned out to be underpowered, and a careless kill
+
+### The static assay: validated, then found too blunt
+
+Existing equilibrated ring and arc states were re-priced under two chi matrices with no dynamics at all.
+The method validates cleanly against the runs it is meant to predict:
+
+| | ring | arc | lambda |
+|---|---|---|---|
+| static, chi_TW = 0.00 | -7.5717 +- 0.0465 | -7.5786 +- 0.0480 | **-1.0 +- 10.0 eps** |
+| dynamic, same states, final checkpoint | -7.572 | -7.578 | -0.9 +- 10.0 eps |
+
+Agreement to 0.1 eps. The static route is sound.
+
+Then the paired test -- same configurations priced under both matrices, so bulk noise should cancel:
+
+| seed | 2*lambda @ tw=0 | 2*lambda @ tw=-0.50 | change |
+|---|---|---|---|
+| 0 | -16.8 | -25.6 | -8.8 |
+| 1 | -49.4 | -29.2 | +20.3 |
+| 2 | +7.1 | -25.1 | -32.2 |
+| 3 | +24.8 | -5.6 | -30.4 |
+| 4 | +23.9 | +90.3 | +66.4 |
+
+    change in 2*lambda = +3.07 +- 18.46 eps
+
+**Pairing did not help; it made the error bar worse.** Ring and arc are different configurations, so
+nothing cancels, and the per-seed 2*lambda values scatter over 140 eps. The quantity being measured is
+two lipid-ends' worth of energy buried in a 300-lipid aggregate.
+
+**This is an UNDERPOWERED test, not a null.** Detecting the effect sought needs about +31 eps in
+2*lambda and the error bar is +-18. Reading "0.2 sigma, therefore chi_TW does nothing" off this table
+would be wrong, and it is not being read that way. What supplies power is time-averaging over the
+plateau, which cut the dynamic error bar from +-10.0 to +-2.8; the running chi_TW arms will have that
+and this static shortcut cannot.
+
+### Launched: measure lambda where the edge is a larger fraction
+
+The N = 300 assay is noise-limited by construction -- 2*lambda is about 1.6% of the total energy, so
+configuration scatter swamps it. Halving N does not change lambda but scales the bulk noise with N.
+
+Launched: ring and arc0.97 at **N = 80, L = 60**, 5 seeds each, 100 000 steps, everything else matched.
+At N = 80 the same 2*lambda is roughly 6% of the total, a 3.75x better signal-to-noise before any
+time-averaging.
+
+* **lambda at N = 80 comes out tight and near zero** -> confirms the N = 300 result at much better
+  precision and the +18.31 intercept is retired for good.
+* **lambda at N = 80 comes out near +18** -> the N = 300 measurement was biased rather than merely
+  noisy, most likely by the arc fragmentation seen there (min largest 126-249), and the retraction of
+  the intercept value must itself be retracted.
+* **The N = 80 ring fails to hold (largest < 76 or core < 1.35)** -> a ring this small is not metastable
+  and the assay says nothing; report that rather than the number.
+
+### Emergence: a correction, and a hypothesis weakened
+
+Last tick I wrote that N = 160 coarsening had "plateaued", from seed 2 sitting at 56 for 120 000 steps.
+**That generalized one seed.** Seed 3 has since grown 66 -> 78. Coarsening here is slow and
+non-monotonic (seed 4 went 47 -> 40), not stalled.
+
+More important, seed 3's 78-lipid aggregate reads n_enclosed = 2 and the render shows a Y-shaped
+BRANCHED assembly. **Branching is present at 78 lipids, roughly half the closure threshold.** The
+hypothesis that the sponge topology comes from surplus material -- that N = 160 would leave nothing
+spare to branch with -- is weakened by its own run. Junctions appear as soon as ribbons meet.
+
+### A careless kill, reported
+
+Retiring the arclong arm, whose question was already answered, I matched on
+`_mixture.py 300000 2 300` -- a prefix the **dilution quench shares**, differing only in the plant
+argument. Fifteen processes matched where five were intended, and all five quench runs died at
+270 000-285 000 of 300 000.
+
+The loss is real but bounded: that arm's structural result was concluded several ticks ago (branched
+tangle, perc = n, n_enclosed 2-5) and its contribution to the fork was the step-240 000 sponge energy
+-6.698 +- 0.034, which is unaffected. States are on disk at 270 000, so it is restartable if ever
+needed. A kill pattern has to be anchored on the DISTINGUISHING argument, not a shared prefix.
+
+### Still in flight
+
+chi_TW ring and arc (10 000/100 000), bend rungs 0.25 and 0.50 (22 500-30 000/150 000), N = 80 lambda
+assay (fresh), N = 160 and N = 300 dispersed emergence.
