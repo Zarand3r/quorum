@@ -33,3 +33,9 @@ docs/plans/*.draft.md
 bazel-*
 .bazelrc.user
 MODULE.bazel.lock
+
+# Vivarium per-checkpoint renders are DEBUG OUTPUT, not deliverables. 16516 tracked PNGs
+# (397 MB) made pushing to origin take longer than most of the experiments. Curated result
+# figures live in docs/figures/ and stay tracked; the rest regenerate from a seed.
+# NOTE: this shrinks future checkouts, NOT history -- the objects remain in past commits.
+projects/vivarium/docs/images/*.png
