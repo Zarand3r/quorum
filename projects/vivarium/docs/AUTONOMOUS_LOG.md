@@ -3905,3 +3905,57 @@ Last tick's finite-minus-spanning estimator remains discarded. The multi-size `l
 also now suspect: N = 40 showed largest 35.2/40, so ribbons shed lipids in explicit solvent, and an
 `E(N)` intercept is only meaningful if every ribbon stays whole. Both are superseded by testing the
 milestone directly, which is what the emergence runs above do.
+
+---
+
+## 2026-08-20d tick — the bubble control is UNINFORMATIVE, not negative; and the closed loop reopened
+
+### The control failed to be a control
+
+Emergence at kT = 0.90, where the water is homogeneous and there are no vapour voids to coat, 5 seeds,
+against the kT = 0.45 arm:
+
+| | largest | core | burial |
+|---|---|---|---|
+| kT = 0.90 (homogeneous water) | 62 - 118 | 1.286 - 1.321 | **0.145 - 0.532** |
+| kT = 0.45 (bubbles present) | 64 - 104 | 1.252 - 1.289 | **1.303 - 2.351** |
+
+Aggregation is fine at kT = 0.90 -- seed 3 reaches 118 of 120 -- so the third branch's "fails to
+aggregate" did not happen. But **burial collapses to 0.145-0.532**, below even the dispersed start's
+1.000, and the render shows a loose ramified network with heads scattered through it rather than lining
+edges. **The membrane is melted at that temperature.** Its failure to produce closed structures therefore
+says nothing about whether the kT = 0.45 curvature was bubble-driven, and the control is recorded as
+**uninformative rather than negative**.
+
+Note that `core` reads 1.286-1.321 at kT = 0.90, close to its kT = 0.45 values, while `burial` and the
+render both say the structure is disordered. `core` measures head penetration depth and can stay
+respectable in a loose network; this is a case where two calibrated metrics disagree and the render
+breaks the tie against `core`.
+
+### The closed loop reopened
+
+Seed 3 at kT = 0.45 contained a closed loop at step 180 000. By step 380 000 that loop is a C again.
+**The apparent closure was transient**, which is consistent with every other closure attempt in this
+project and is recorded here so the earlier frame is not remembered as more than it was.
+
+### The direct test, running now
+
+Rather than another temperature control, the question is settled by asking what the enclosed region
+CONTAINS. Added a flood-fill analysis: rasterize the box, mark cells near lipid beads as membrane,
+flood-fill from the boundary to identify outside, and treat unreached non-membrane cells as enclosed.
+Then compare water density inside those cells against outside.
+
+* enclosed water at about bulk density -> a vesicle
+* enclosed region empty -> a surfactant film on a vapour void
+
+This distinguishes exactly the two cases that a render cannot, and that `lumen` and the render disagreed
+about last tick (1.43x bulk against a visually empty interior). First completed state (seed 2) has **no
+enclosed region at all**; the remaining four are still writing.
+
+**FALSIFICATION, STATED BEFORE THE REMAINING STATES ARE READ.** If any enclosed region holds water near
+bulk density, the model has produced a water-filled vesicle from a dispersed start, transient or not, and
+the milestone is within reach in explicit solvent. If every enclosed region is empty, the curvature seen
+in explicit solvent is surfactant adsorption onto vapour bubbles created by our two-phase water, the
+apparent progress is withdrawn, and explicit solvent offers nothing the implicit case did not. If no
+enclosed regions exist at the end of any run, nothing closed at all and the transient loop at 180 000 was
+a fluctuation.
