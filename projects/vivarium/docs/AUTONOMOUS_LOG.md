@@ -4882,3 +4882,58 @@ quenched structures behave exactly as fixed-condition ones -- no enclosures, or 
 ones -- then separating the two stages does not help, and the obstacle is not the ordering of conditions
 but something in the membrane mechanics. If the structures fall apart on quenching, the weak-cohesion
 solvent cannot hold what the strong one built, and the two regimes are incompatible even sequentially.
+
+---
+
+## 2026-08-20v tick — the quench raises FLICKERS, not vesicles; a persistence criterion applied to every arm
+
+### First reading, and why it was wrong
+
+The quench (assemble at chi_WW = 1.00, continue at 0.50) gave enclosures in **3 of 8** seeds against a
+~1-in-15 fixed-condition baseline. Read as a rate, that is the protocol working.
+
+The time series say otherwise:
+
+    sd1: 0 0 0 0 0 0 0 0 0 49 70 0 50 0 0
+    sd2: 0 0 0 0 0 0 0 0 0 0 0 40 0 0 0
+    sd4: 0 0 0 0 0 0 0 0 0 0 42 0 0
+
+These are **single-checkpoint flickers just above the 40-cell detection threshold**, not structures. The
+one genuinely persistent enclosure this project has found held **252-274 for eight consecutive
+checkpoints**. Counting "ever exceeded threshold" conflates the two.
+
+### One criterion, applied to every arm
+
+Longest run of consecutive checkpoints with a lumen:
+
+| arm | seeds | ever >0 | >=2 consecutive | >=4 consecutive | max lumen |
+|---|---|---|---|---|---|
+| fixed chi_WW = 1.00 | 15 | 2 | 1 | **1** | 158 |
+| fixed chi_WW = 0.85 | 5 | 1 | 0 | 0 | 41 |
+| fixed chi_WW = 0.50 | 5 | 0 | 0 | 0 | 0 |
+| **quench 1.00 -> 0.50** | 8 | **4** | 1 | **0** | 70 |
+
+**The quench doubles transient detections and produces no persistent structures.** By the criterion that
+matters -- four consecutive checkpoints -- it is 0 of 8 where fixed conditions managed 1 of 15. That is
+the **second branch** of the falsification written before the run: separating assembly and stability in
+time does not help, so the obstacle is not the ordering of conditions.
+
+### What the quench did establish
+
+The third branch is excluded: the structures **did not fall apart** when the solvent was weakened.
+Largest stayed at 119-120 in 7 of 8, with core 1.410-1.451. The weak-cohesion solvent holds what the
+strong one built -- it simply does not cause it to close.
+
+### Status and caution
+
+The quench arm is at 60-75% of its 200 000 steps and 12 more seeds are now running, so these numbers are
+provisional. The correction above is not: the flicker-versus-structure distinction is a property of the
+data already collected, not of how long it runs.
+
+**FALSIFICATION, STATED BEFORE THE FULL QUENCH ARM IS READ.** Scored on seeds reaching four consecutive
+checkpoints with a lumen, the same criterion applied to every arm above. If the full 20-seed quench gives
+a rate above the fixed-condition 1 in 15, the protocol helps and the earlier flicker reading was merely
+underpowered. If it stays at zero, the quench is excluded as a route and the remaining candidates are
+larger systems, longer runs, or an ingredient the model does not have. If persistent enclosures appear
+only in seeds whose pre-quench aggregate was largest, the limitation is aggregate size rather than the
+protocol, which is testable directly.
