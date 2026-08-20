@@ -3695,3 +3695,55 @@ below the arc, explicit solvent supplies the closure drive that implicit lacks (
 and arc are isoenergetic here too, the absent drive belongs to the force field rather than to the solvent
 treatment. If the ring is higher, the open ribbon is genuinely preferred and closure is forbidden in this
 model.
+
+---
+
+## 2026-08-19ab tick — the drive test cannot resolve its own signal; switching to a lower-variance estimator
+
+### Explicit solvent, ring against arc, from an intact plant
+
+At step 27 000 of 60 000, 5 seeds, solvent-excluded energy, time-averaged:
+
+| | core (ref 1.467) | E |
+|---|---|---|
+| ring | 1.334 +- 0.006 | -1983.6 +- 18.5 |
+| arc0.97 | 1.337 +- 0.013 | -1995.1 +- 10.5 |
+
+    ring - arc = +11.5 +- 21.3 eps   (0.5 sigma)
+
+Two things follow, and only one of them is a result.
+
+**The bilayer holds in explicit solvent** -- core 1.334 and 1.337, stable and equal between the two
+geometries, on runs that finally start from an intact plant. Last tick's retraction is confirmed on clean
+data.
+
+**The drive measurement cannot resolve its own signal.** Excluding water-water pairs cut the noise from
++-80 to +-18.5, which is a real improvement, but a 20 eps effect still sits inside a +-21.3 error. The
+seed-to-seed standard deviation is about 41 eps, so reaching +-5 by adding seeds alone would take roughly
+**69 seeds**. Reporting "no drive in explicit solvent" from this would be reading noise; reporting a
+drive would be too.
+
+### The switch
+
+`lambda` is the physical quantity that decides whether an edge is expensive, and it has a much better
+estimator: the intercept of `E(N) = N*e_bulk + 2*lambda` across several ribbon sizes, fitted per seed.
+That protocol gave `lambda_implicit = +10.12 +- 5.08 eps` -- an error four times smaller than the
+ring-versus-arc difference, from the same number of seeds, because a slope-and-intercept fit over four
+sizes uses far more information than one paired difference.
+
+Launched: finite flat ribbons N = 20, 40, 60, 80 in **explicit** solvent, phi = 0.55, kT = 0.45, L = 120,
+5 seeds each, 40 000 steps, solvent-excluded energy. The plant is verified intact -- N = 40 starts at
+E/lipid -8.78, largest 40/40, core **1.467**, exactly the reference.
+
+### Emergence
+
+Seeds 5-9 completed (largest 39-74, core 1.451-1.463, every one an intact bilayer). Seeds 10-11 launched
+so a dispersed-start run is always in flight.
+
+**FALSIFICATION, STATED BEFORE THE FIT IS READ.** If `lambda_explicit` is substantially larger than
+`lambda_implicit` = 10.12 -- say above 25 eps -- then water does make an exposed edge expensive, the
+closure drive exists in explicit solvent, and the failure to close in implicit was a direct consequence
+of deleting the solvent. If `lambda_explicit` matches the implicit value within error, water contributes
+nothing to the edge cost, and the absent closure drive is a property of the force field that no solvent
+treatment will repair. If `lambda_explicit` is near zero or negative, the edge is actually cheap in
+water, and the entire edge-tension route to closure is dead for this model.
