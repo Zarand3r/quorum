@@ -3959,3 +3959,64 @@ in explicit solvent is surfactant adsorption onto vapour bubbles created by our 
 apparent progress is withdrawn, and explicit solvent offers nothing the implicit case did not. If no
 enclosed regions exist at the end of any run, nothing closed at all and the transient loop at 180 000 was
 a fluctuation.
+
+---
+
+## 2026-08-20e tick — the enclosure detector failed its positive control; fixed, and the answer is a clean negative
+
+### Last tick's result was void
+
+Last tick I reported "no enclosed region" for all five explicit-solvent emergence seeds. Before accepting
+it I ran the control that result required: a **freshly planted, intact N = 300 ring**, which is enclosed
+by construction. The detector reported **no enclosed region** for it too. The instrument was broken and
+the five-seed result meant nothing.
+
+**The bug, and my first fix for it was also wrong.** The rasterizer wrapped coordinates with `% L`. The
+plant centres the ring on the origin, so `% L` splits it across the box edge and the membrane never forms
+a closed curve on the grid -- measured extent after wrapping was x 0.0-150.0, y 0.0-150.0 for a ring only
+96 sigma across. My first fix unwrapped relative to a reference bead under the minimum image, which
+**cannot** rescue a cluster wider than L/2, and this ring is 96 against L/2 = 75; the control still
+failed. The working fix shifts the aggregate to the box centre using its RAW centroid before wrapping.
+
+Positive control after the fix:
+
+    enclosed area 5904 sigma^2   (a ring of R_mid ~48 encloses about 6362)
+    n_water_in 4111              rho_in/rho_out 1.02
+
+Water at bulk density inside a planted ring, and the area within 7% of geometry. The detector now works,
+and is committed as `_lumen.py` rather than left in /tmp.
+
+### The answer, with a working instrument
+
+Explicit-solvent emergence, N = 120, 5 seeds, 400 000 steps, at the end of each run:
+
+| seed | enclosed area | water inside | rho_in/rho_out |
+|---|---|---|---|
+| 0 | 1 sigma^2 | 0 | 0.00 |
+| 1 | none | -- | -- |
+| 2 | none | -- | -- |
+| 3 | **21 sigma^2** | 26 | 1.92 |
+| 4 | none | -- | -- |
+
+Against the planted ring's 5904 sigma^2, the largest emergent enclosure is **21 sigma^2 -- 0.4%** -- a
+pocket of radius about 2.6 sigma. **Nothing closed.** The falsification resolves to its third branch: no
+persistent enclosed region, and the loop seen at step 180 000 in seed 3 was a fluctuation, as the
+step-380 000 render already showed by reopening into a C.
+
+The one non-empty pocket contains water at 1.92x bulk density rather than vacuum, so it is not a vapour
+bubble either -- it is a compressed water pocket in a fold of the membrane.
+
+### Where the bubble question stands
+
+Undecided, and now less important. The bubble-coating hypothesis mattered only if explicit solvent had
+produced closure; it produced none, so there is nothing to attribute to bubbles. What explicit solvent
+did produce that implicit did not is **stronger aggregation** (largest 46-104 of 120 against 38-74) and
+**more curvature**, both real and both short of closure.
+
+**FALSIFICATION FOR THE NEXT RUN.** Emergence in explicit solvent is the most promising regime found, but
+120 lipids may simply be too few: the measured critical radius before lambda was withdrawn was tens of
+sigma, and a 120-lipid ribbon is about 120 sigma of contour. Running N = 300 and N = 500 in explicit
+solvent, 3 seeds each, L scaled to keep packing constant. If enclosed area grows sharply with N and a
+lumen at bulk density appears, closure is size-limited and the milestone needs bigger systems. If
+enclosure stays near zero at 500 lipids, size is not the limitation and closure does not occur in this
+model in either solvent at any size tested.
