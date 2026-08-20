@@ -2846,3 +2846,52 @@ volume per head). If thickness falls toward ~5.8 sigma and stops growing with ag
 If thickness is unchanged, packing is not the cause and the defect is in the interactions rather than the
 shape. If the 2-tail lipid instead disperses or forms micelles without growing, its packing parameter has
 overshot into the detergent band and the answer lies between the two.
+
+---
+
+## 2026-08-19n tick — fifth filename collision contaminated the packing test; preliminary answer is "packing is not the cause"
+
+### The collision
+
+Both packing arms wrote to the same state and render filenames, because the tag carried `kT` but not
+`frac_short`. The tag has now been missing, in turn: **L, then n_tail, then seed, then kT, and now
+frac_short** -- five times, the same failure each time. Of the five saved states, three are 4-tail and
+two are 2-tail, whichever seed index finished last.
+
+It was caught because the `.npz` stores `chains`, so each surviving state could be attributed to its arm
+after the fact. That is luck, not method: the state file was added two ticks ago for a different reason.
+Fixed by putting `frac_short` in both the render tag and the state filename, and the whole test is
+**re-running with 5 seeds per arm**.
+
+### What the surviving states show, stated as preliminary
+
+Attributed by `chains`, so n = 3 for 4-tail and n = 2 for 2-tail -- below the 5-seed bar this project
+requires for a reported difference, hence preliminary:
+
+| lipid | largest | thickness (sigma) | burial |
+|---|---|---|---|
+| 4-tail | 42 | 8.98 | 2.780 |
+| 4-tail | 60 | 13.60 | 3.992 |
+| 4-tail | 31 | 9.64 | 3.250 |
+| 2-tail | 43 | 8.84 | 1.605 |
+| 2-tail | 49 | 10.29 | 1.571 |
+
+At comparable aggregate size (42 against 43, 49) the thickness is **essentially unchanged** -- 8.98
+against 8.84 and 10.29 -- while burial falls sharply, 2.78-3.99 down to 1.57-1.61, and cohesion with it,
+E/lipid -21.0 against -9.6.
+
+**Preliminary reading: the second branch of the falsification.** Halving the tail volume per head does
+not thin the aggregate, so thickening is not simply a packing-parameter problem in the tail-count knob,
+and the short lipid additionally loses the amphiphilic order the long one had. The render agrees: the
+2-tail arm makes many small compact clusters with heads scattered through them rather than lining the
+edges.
+
+**No conclusion is recorded until the 5-seed rerun lands.** The falsification stated last tick stands
+unchanged for it: thickness falling toward 5.8 sigma and ceasing to grow with size means packing is the
+cause; unchanged thickness means the defect is in the interactions rather than the shape; dispersal or
+micelles means the 2-tail lipid overshot into the detergent band.
+
+### What is not in doubt
+
+The 5.9 sigma order result from last tick is unaffected -- it was measured on the 4-tail states with a
+shape-matched null, before this sweep existed.

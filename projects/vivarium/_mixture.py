@@ -689,13 +689,13 @@ if __name__ == "__main__":
                   f"{g['lumen']:>7.2f}{g['lumen_w']:>8}"
                   f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)
             shot(X, species, L, f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}"
-                 f"_kT{kT}_sd{seed}_s{t:07d}")
+                 f"_kT{kT}_fs{frac_short}_sd{seed}_s{t:07d}")
     # Save the final state. Post-hoc analysis has had to RE-RUN the simulation three times in this
     # project because only images and printed metrics survived; a new observable then cannot be applied
     # to a finished experiment. Coordinates plus species and topology are enough to score anything.
     root = os.environ.get("BUILD_WORKSPACE_DIRECTORY", ".")
     out = pathlib.Path(root) / "projects" / "vivarium" / "docs" / "states"
     out.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(out / f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}_kT{kT}_sd{seed}.npz",
+    np.savez_compressed(out / f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}_kT{kT}_fs{frac_short}_sd{seed}.npz",
                         X=X, species=species, chains=chains, L=L, d=d, phi=phi, steps=steps,
                         mols=np.array([m for m in mols], dtype=object), allow_pickle=True)
