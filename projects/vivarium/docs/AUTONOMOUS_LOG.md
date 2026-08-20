@@ -4710,3 +4710,65 @@ good-bilayer vesicle and every remaining obstacle is nucleation. If core rises b
 the trade I retracted two ticks ago is real in explicit solvent specifically, and only implicit gives
 both. If the vesicle fragments as it did at chi_WW = 1.00 with repulsive chi_HT, the repulsive term is
 incompatible with an intact vesicle whenever water is present.
+
+---
+
+## 2026-08-20s tick — a stable bilayer VESICLE exists in explicit solvent; emergence there aggregates poorly
+
+### The combination passes its criterion
+
+Planted vesicle, explicit solvent, `chi_WW = 0.50` with repulsive `chi_HT`, 150 000 steps, 5 seeds.
+Planted: 120/120, core 1.465, lumen 3436.
+
+| chi_HT | largest | core | lumen |
+|---|---|---|---|
+| -0.25 | **120/120 in 5 of 5** | **1.419 - 1.459** | 2766, 0, 2791, **3746**, 3345 |
+| -0.50 | 120/120 | **1.455 - 1.470** | 0, **4014**, 3186 (3 complete) |
+
+The criterion set before the run -- **core above 1.40 AND lumen above ~1500** -- is met in 4 of 5 seeds
+at -0.25 and 2 of 3 at -0.50. Several lumens **exceed** the planted 3436, meaning the vesicle relaxed
+outward to a preferred radius rather than merely surviving.
+
+**The render confirms the structure**: a closed, roughly circular vesicle with a water-filled lumen,
+water outside, and heads on BOTH the outer and inner faces with tails between -- a genuine bilayer, not a
+thick aggregate with a hole. This is the first stable bilayer vesicle this project has had in a solvent
+that behaves like a fluid.
+
+### And the cost, which the planted test could not have shown
+
+Emergence at `chi_WW = 0.50`, near completion (340 000-380 000 of 400 000):
+
+| chi_HT | largest | core | max lumen |
+|---|---|---|---|
+| 0.20 | 22 - 81 | 1.264 - 1.317 | 0 |
+| -0.25 | 56 - 66 | 1.420 - 1.446 | 0 |
+
+Largest **22-81 against the old solvent's 87-120**. This is the **third branch** of the falsification
+written before that launch: weaker aggregation means lowering water cohesion cost part of the hydrophobic
+drive, invisible to a planted test because a planted structure never has to assemble. **It is now
+confirmed at comparable run length.**
+
+### Where this leaves the milestone
+
+The two requirements are now separated onto one axis, with complementary failures at its ends:
+
+| chi_WW | aggregation (largest) | planted vesicle |
+|---|---|---|
+| 1.00 | **87 - 120** | destroyed, lumen 0 in 4 of 5 |
+| 0.50 | 22 - 81 | **stable, core 1.42-1.47, lumen 2766-4014** |
+
+Neither end gives both. The target state is stable; the solvent that nucleates is the one that destroys
+it. That is a far sharper statement than "no closure", and it is a one-parameter question.
+
+### Launched
+
+`chi_WW` = 0.70 and 0.85, at `chi_HT = -0.25`, running **emergence and the planted vesicle at the same
+settings**, 5 seeds each, so both requirements are scored on the same axis rather than in separate
+experiments.
+
+**FALSIFICATION, STATED BEFORE THE SCAN IS READ.** If an intermediate water cohesion gives aggregation
+near the 87-120 band AND holds the planted vesicle with core above 1.40 and lumen above 1500, the
+milestone is reachable at that setting and the remaining work is sampling. If aggregation and vesicle
+stability remain anti-correlated across the whole axis, they are in direct conflict through the water
+term, and a vesicle needs something this force field does not have. If both degrade at intermediate
+values, the two ends are separate optima and the axis is the wrong knob.
