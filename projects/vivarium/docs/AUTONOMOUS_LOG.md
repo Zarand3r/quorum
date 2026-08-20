@@ -6352,3 +6352,71 @@ start. Open, branched, n_enclosed = 0, perc = n.
 
 chi_TW arms (55 000-60 000/100 000), bend rungs (67 500-75 000/150 000), gap scan to 100 000, explicit
 and implicit flat-ribbon curling tests, N = 160 emergence.
+
+---
+
+## Tick: the model does not curl a flat bilayer, and the metric said otherwise
+
+### The implicit flat-ribbon test, complete at 200 000
+
+| seed | largest | core | R_mid (step 0 -> 200 000) | n_enclosed |
+|---|---|---|---|---|
+| 0 | 80 | 1.464 | 27.52 -> 18.65 | 0 |
+| 1 | 80 | 1.473 | 27.53 -> 17.96 | 0 |
+| 2 | 80 | 1.474 | 27.52 -> 18.17 | 0 |
+| 3 | 80 | 1.483 | 27.53 -> 17.96 | 0 |
+| 4 | 80 | 1.481 | 27.52 -> 18.20 | 0 |
+
+**5/5 stayed open. The membrane is perfect throughout** (core 1.464-1.483 against a 1.467 reference), so
+this is not a structural failure. The trajectory settles fast: R_mid reaches 18.75 by step 20 000 and
+then sits at ~18.5 with flat energy (-12.4) for the remaining 180 000 steps.
+
+### CAUGHT BY THE RENDER: R_mid falling is NOT curling
+
+I read R_mid 27.52 -> 18.2 as the ribbon curling substantially without closing, and wrote that down.
+**The render shows a straight ribbon** -- a gently undulating flat bilayer, heads on both faces, tails
+in the core, no curvature at all. The R_mid drop is the ribbon CONTRACTING laterally as it relaxes from
+the planted spacing, not bending.
+
+Reporting the metric alone would have produced a claim -- "the ribbon curls but cannot close" -- that the
+picture flatly contradicts. This is the third time in this project a structural claim has needed the
+render to survive, and the first time the render has overturned a claim I had already formed.
+
+### What it means
+
+**This model does not curl a flat bilayer.** Curvature has to be handed to it. That is consistent with
+every result so far: the arcs that closed were all planted with curvature (N = 80 at 2.4 sigma closed
+5/5; N = 300 closes at every gap tested at rates falling with gap), while nothing that started flat has
+ever closed.
+
+It also fits the emergent renders directly -- the ribbons in the N = 160 box are long and STRAIGHT.
+
+### The matched control this needs, launched
+
+The flat arm is implicit solvent; the N = 80 arc that closed 5/5 was explicit. Comparing them would
+confound curvature with solvent. Launched: **arc0.97, N = 80, L = 110, phi = 0.0**, 5 seeds, 200 000
+steps -- identical to the flat arm in size, box and solvent, differing only in being handed curvature.
+Step 0 verified: n_enclosed = 0, largest 80, core 1.463.
+
+* **Implicit arc closes while implicit flat did not** -> handed curvature is the whole difference, in a
+  matched solvent, and the no-curling conclusion stands.
+* **Implicit arc also fails to close** -> closure in implicit solvent does not work at this size at all,
+  the flat result says nothing about curling, and the comparison must be redone in explicit solvent
+  (where the slow flat arm is still running).
+* **Both close** -> the flat arm's 5/5 failure was a fluke of the first 200 000 steps and needs longer.
+
+### Gap scan, still sharpening
+
+At step 45 000: arc0.99 (3.0 sigma) **4/5**, arc0.98 (6.0 sigma) **3/5** -- up from 1/5 at step 20 000.
+The gap dependence is a rate difference, not a threshold, exactly as revised two ticks ago.
+
+### RETRACTED: "new high, 129 lipids, 89% of threshold"
+
+Reported last tick as progress. Seed 0 has since fallen from 129 back to **83**. Aggregates merge and
+split; growth is not monotonic and 129 was a fluctuation, not a trend. Current largest across seeds:
+83, 81, 70, 104, 56. I framed a single high-water mark as progress and should not have.
+
+### Still in flight
+
+chi_TW arms (75 000-85 000/100 000), bend rungs (97 500/150 000), gap scan to 100 000, explicit flat
+ribbon (30 000/200 000), implicit arc control, N = 160 emergence (640 000/800 000).
