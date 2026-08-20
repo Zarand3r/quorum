@@ -2895,3 +2895,52 @@ micelles means the 2-tail lipid overshot into the detergent band.
 
 The 5.9 sigma order result from last tick is unaffected -- it was measured on the 4-tail states with a
 shape-matched null, before this sweep existed.
+
+---
+
+## 2026-08-19o tick — packing-parameter hypothesis FALSIFIED; head-tail attraction is the new candidate
+
+### The clean rerun
+
+The re-run with `frac_short` in the tag reproduced the contaminated run's numbers **exactly** -- same
+seeds, deterministic integrator -- so the physics was never in question, only the file attribution. Five
+seeds per arm, 200 000 steps, N = 120, L = 56, kT = 0.60, implicit solvent:
+
+| lipid | largest | thickness (sigma) | a bilayer would be | overshoot | burial |
+|---|---|---|---|---|---|
+| 4-tail | 42 60 31 85 52 | **11.27 +- 1.96** | 5.8 | **1.94x** | 3.333 +- 0.437 (n=4) |
+| 2-tail | 36 38 39 43 49 | **9.04 +- 0.66** | 3.8 | **2.38x** | 1.643 +- 0.083 |
+
+**The falsification resolves to its second branch.** Halving the tail volume per head makes the
+aggregate thinner in absolute terms but **relatively worse** -- 2.38x the bilayer thickness against
+1.94x -- and costs most of the amphiphilic order (burial 1.64 against 3.33) and most of the cohesion
+(E/lipid -9.6 against -21.0). So thickening is **not** a packing-parameter problem reachable through the
+tail-count knob, and the 4-tail lipid is the better molecule on every measure taken.
+
+One 4-tail seed (largest 85) returns NaN for burial: its aggregate spans more than half of L = 56, so
+the guard fires. Burial for that arm is n = 4, and is reported as such.
+
+### The render adds something the mean hides
+
+Within a single run, a thin bilayer strip with heads lining both long edges **coexists** with a thick
+slab whose heads are buried. The 11.27 +- 1.96 is an average over genuinely different objects, not a
+uniform morphology. Whatever prevents thickening evidently works sometimes.
+
+### New candidate, and the reason it is plausible
+
+In the solvent-averaged chi the head-tail term is **+0.45, attractive**. Nothing makes an internal
+head/tail interface costly, so stacking extra layers is free and a bilayer has no reason to stop at two
+leaflets. That fits every observation: strong surface order (the amphiphile works), no thickness control
+(nothing forbids buried interfaces), and thickening that grows with aggregate size.
+
+A chi_HT sweep was run three ticks ago and showed nothing, but it is not evidence here: it used the
+EXPLICIT solvent, the broken plant carrying ~800 eps/lipid of strain, and `mix`, which was later shown
+unable to distinguish roughness from disorder. All three defects are now fixed.
+
+**FALSIFICATION, STATED BEFORE THE RUN.** `VIVARIUM_CHI_HT` at 0.20, -0.25 and -0.75 -- implicit
+head-tail of +0.45, 0.00 and -0.50 -- implicit solvent, 5 seeds each, 200 000 steps, scored on thickness
+against the 5.8 sigma target and on burial. If thickness falls toward 5.8 and stops growing with
+aggregate size as the term goes negative, head-tail attraction is what permits layer stacking and the
+fix is to make internal interfaces costly. If thickness is flat across the sweep, this candidate joins
+packing in the falsified column and the cause is neither the molecule's shape nor its cross-term. If the
+aggregates instead fragment at -0.75, the term has overshot and the usable window lies between.
