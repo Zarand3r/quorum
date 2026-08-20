@@ -3459,3 +3459,62 @@ solvent interface and closure should follow. If it holds a bilayer but the ring 
 the absent drive is not about water and the model lacks the ingredient entirely. If the bilayer still
 fails in explicit solvent, the earlier rejection stands on repaired foundations and implicit solvent is
 the only regime this force field supports -- in which case a vesicle needs a term this model does not have.
+
+---
+
+## 2026-08-19x tick — explicit solvent cannot supply the drive either; and my measurement there was unusable
+
+### Explicit solvent on the fully repaired field
+
+N = 300, phi = 0.55, kT = 0.45, chi_HT = 0.20, ring against arc0.97, 5 seeds:
+
+| | value |
+|---|---|
+| core, ring | **0.462** |
+| core, arc | **0.377** |
+| core at plant | 1.417 |
+| bilayer reference | 1.467 |
+
+**The bilayer collapses.** Core depth falls from a correct 1.417 at planting to 0.38-0.46, meaning heads
+end up distributed through the tail region. The earlier rejection of explicit solvent (seg 0.194) was
+made with the 800-eps/lipid plant, before the branch-angle fix and before the head-tail sign change; all
+three are now repaired and **the rejection stands on repaired foundations**. This is the third branch of
+the falsification stated last tick.
+
+### The measurement was also unusable, which is my fault and is now fixed
+
+    ring - arc = -15.0 +- 79.8 eps
+
+The error is four times the signal. Total energy in explicit solvent is about **-61 000** because it
+counts ~10 000 water beads, and the water-water term's fluctuation is +-80 eps -- far larger than the
+~20 eps difference the comparison exists to detect. Comparing two lipid configurations by TOTAL energy in
+a solvent bath is simply the wrong estimator.
+
+Added `Field.energy_solute`: total energy **excluding water-water pairs**. Lipid-lipid and lipid-water
+terms are both kept, so the solvent's effect on the lipids is fully counted, while the term that is the
+same ensemble in both arms -- and carries all the noise -- is dropped. This is the same class of error as
+the endpoint-versus-time-average problem caught last tick: the physics was fine, the estimator was not.
+
+### The remaining possibility, and it is specific
+
+Our explicit water is **not a liquid at kT = 0.45**: it was measured several ticks ago as a percolating
+two-phase network with vacuum voids at packing 0.55, and was homogeneous only at kT = 0.90. A membrane
+immersed in a two-phase fluid is not a test of explicit-solvent membrane physics. That defect was logged
+and never acted on, and it is the obvious reason the bilayer fails in explicit mode.
+
+**FALSIFICATION, STATED BEFORE THE RUN.** Ring against arc0.97, N = 300, phi = 0.55, **kT = 0.90** where
+the water is homogeneous, 5 seeds each. If the bilayer survives (core near 1.467) AND ring minus arc is
+near -20 eps on the solvent-excluded energy, then explicit solvent supplies the missing edge cost, the
+whole failure was a broken solvent, and closure should follow. If the bilayer survives but ring and arc
+remain isoenergetic, water is not the missing ingredient and the model lacks the closure drive
+intrinsically. If the bilayer fails at kT = 0.90 as well, explicit solvent is unusable in this force
+field at any temperature, implicit is the only regime available, and -- since implicit has no edge cost --
+a vesicle is unreachable without adding a term the model does not currently have.
+
+### Note on the standing brief
+
+The tick brief still carries `lambda = 18.31 eps` and "closure has ~81 kT to gain". Both were withdrawn
+last tick: the direct ring-versus-arc measurement gave **+0.5 +- 6.0 eps** where a drive would have shown
+about -16 to -20, excluding it at roughly 3 sigma. The critical-size plan that the brief describes rests
+on that drive and is therefore no longer the live question; what replaces it is whether ANY configuration
+of this model has a closure drive at all.

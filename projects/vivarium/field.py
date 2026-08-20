@@ -288,6 +288,32 @@ class Field:
         """
         return np.einsum("ic,ic->i", self.q[self.species[pi]], self.k[self.species[pj]])
 
+    def energy_solute(self, X):
+        """Total energy EXCLUDING water-water pairs.
+
+        Comparing two lipid configurations in explicit solvent by TOTAL energy is hopeless: with ~10 000
+        water beads the total is about -61 000 and its fluctuation is +-80 eps, which buries the ~20 eps
+        difference the comparison exists to measure. The water-water term is the same ensemble in both
+        arms, so dropping it removes the noise without removing any signal -- lipid-lipid and
+        lipid-water pairs are both retained, so the solvent's effect on the lipids is fully counted.
+        """
+        d, r, (pi, pj) = self._pairs(X)
+        keep = ~((self.species[pi] == WATER) & (self.species[pj] == WATER))
+        s = r[keep] / self.sigma
+        uc, _ = _core(s, self.core_height)
+        uw, _ = _well(s, self.rc)
+        chi = self.content_pairs(pi[keep], pj[keep])
+        u = self.eps * (uc + uw * chi)
+        e = float(u[r[keep] < self.rc * self.sigma].sum())
+        for pairs, k, r0 in self._springs():
+            if not len(pairs):
+                continue
+            dd = X[pairs[:, 0]] - X[pairs[:, 1]]
+            dd -= self.L * np.round(dd / self.L)
+            rr = np.linalg.norm(dd, axis=1)
+            e += float(0.5 * k * ((rr - r0) ** 2).sum())
+        return e
+
     def check_identity(self):
         """Max |q_i.k_j - chi_ij| over all species pairs. Proves the factorization is exact."""
         Q, K = self.q, self.k
