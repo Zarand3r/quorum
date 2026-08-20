@@ -2635,3 +2635,70 @@ intermediate plateau, like the 0.76 seen at kT = 0.35, means the model has a par
 state and the question becomes why order is lost rather than whether.
 
 Emergence in flight at L = 36: largest 43/300 at step 140 000, still solid micelles.
+
+---
+
+## 2026-08-19k tick — the bilayer is stable in implicit solvent; the branch-angle bug was the blocker
+
+### The kT = 0 test resolves, and the render confirms it
+
+Correct plant, implicit solvent, `seg` (planted 1.53, disorder control 0.028):
+
+| condition | seg |
+|---|---|
+| kT = 0.0 (deterministic) | **0.879** |
+| kT = 0.15, 5 seeds | 0.778 +- 0.046 |
+| kT = 0.35, 5 seeds | 0.764 +- 0.041 |
+
+**Caveat on the kT = 0 row:** all five seeds returned 0.879 to three decimals, which is not agreement
+between independent samples -- with no thermal noise the trajectory is deterministic and the seed only
+sets initial velocities, which are zero. That row is n = 1 and is reported as such.
+
+**The render settles what the number means.** At kT = 0 the ring is a clean closed annulus with a real
+lumen and visible leaflet structure: heads on the outer rim, heads on the inner rim, tails in the middle
+band. So `seg` ~0.88 IS a bilayer, and the planted 1.53 is simply a more perfectly aligned configuration
+than any relaxed membrane can hold. The falsification resolves to its third branch: a partially ordered
+ground state, where "partially" reflects the idealization of the reference rather than a defect.
+
+### What this overturns
+
+* **"The ordered bilayer is not a local energy minimum"** -- withdrawn as stated. The planted
+  configuration does relax away at kT = 0, but it relaxes to a BILAYER at 0.879, not to the disordered
+  0.028 that `mix` implied. The claim was measuring the idealization of the plant, not a failure of the
+  physics.
+* **"Implicit solvent does not preserve bilayer order in 2-D"** (four ticks ago) -- withdrawn. That
+  verdict came from a render of a run started from the BROKEN plant carrying ~800 eps/lipid of spring
+  strain, whose first hundred steps were a snap-back rather than dynamics. With the branch-angle and
+  planting bugs fixed, the same configuration holds a bilayer.
+
+**So the blocker was the 180-degree branch-angle pin, not chi, not the solvent model, not temperature,
+not dimensionality.** Every one of those was investigated and cleared in turn; the defect was a 1-3
+spring applied where a branch angle belongs.
+
+### The standing picture, on validated instruments
+
+| condition | seg | verdict |
+|---|---|---|
+| planted, idealized | 1.53 | reference only |
+| implicit, kT 0.0-0.35 | 0.76-0.88 | **bilayer, lumen holds** |
+| explicit, kT 0.35 | 0.194 +- 0.040 | destroyed |
+| disorder control | 0.028 | floor |
+
+Explicit solvent remains the outlier, consistent with the earlier finding that our explicit water is a
+two-phase fluid with vacuum voids at these densities. Membrane work should stay implicit until the
+solvent's own phase behaviour is fixed.
+
+### Launched: emergence on the corrected force field
+
+Every emergence run to date used the force field WITH the branch-angle pin, i.e. lipids mechanically
+forced straight with the head between the two tails. Those runs produced solid micelles and nothing
+else, which is what such a molecule should produce. Relaunched from a dispersed start on the corrected
+field: 2-D at L = 60 with 5 seeds and 3-D at L = 36 with 3 seeds, implicit solvent, kT = 0.30, 400 000
+steps.
+
+**FALSIFICATION, STATED BEFORE ANY RESULT IS READ.** If emergent aggregates now reach `seg` in the
+0.7-0.9 band that planted bilayers hold, self-assembly produces bilayers and the milestone is within
+reach. If `seg` stays near the 0.17 of the dispersed start while clusters grow, the corrected molecule
+still does not self-assemble into a bilayer and the defect is in aggregation rather than in molecular
+geometry. If clusters do not grow at all at kT = 0.30, the run is under-sampled and says nothing either
+way.
