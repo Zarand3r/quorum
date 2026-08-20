@@ -2702,3 +2702,13 @@ reach. If `seg` stays near the 0.17 of the dispersed start while clusters grow, 
 still does not self-assemble into a bilayer and the defect is in aggregation rather than in molecular
 geometry. If clusters do not grow at all at kT = 0.30, the run is under-sampled and says nothing either
 way.
+
+**Amendment, same tick — `seg` has a validity domain and small micelles are outside it.** The 3-D
+emergent runs report `seg` of **-0.24, -0.45, -0.26** at largest 13-20 lipids. Negative means heads
+pointing inward, which is not credible; the cause is that `seg` assigns leaflets by comparing each
+molecule's centre with the aggregate's median radius, and a small SOLID micelle has no mid-surface for
+that comparison to mean anything. The metric is defined for shell and ring geometries. Like shell CV
+before it, it needs a size floor, and values from aggregates below roughly 50 lipids should be discarded
+rather than interpreted. The 2-D arm additionally hit the span guard (`seg` NaN at largest 107/300 in
+L = 60): a condensed 1500-bead 2-D aggregate is about 44 sigma across, above the L/2 = 30 limit, and the
+target ring is 48 across, so 2-D emergence was relaunched at L = 120 with 5 seeds.
