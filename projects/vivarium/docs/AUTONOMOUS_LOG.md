@@ -4660,3 +4660,53 @@ help nucleation, and the barrier is in the membrane mechanics rather than the fl
 itself weakens -- largest falling well below the 87-120 this regime reaches -- then lowering water
 cohesion has weakened the hydrophobic drive after all, in a way the planted test could not reveal because
 a planted structure does not need to assemble.
+
+---
+
+## 2026-08-20r tick — a planted vesicle SURVIVES in explicit solvent once the water is repaired
+
+### The result, read at the end of the run
+
+Planted vesicle, explicit solvent, 150 000 steps, 5 seeds per water setting. Planted: 120/120, core
+1.465, lumen 3436.
+
+| chi_WW | largest | core | lumen | seeds retaining a lumen |
+|---|---|---|---|---|
+| 1.00 | 80 - 120 | 1.288 - 1.334 | 0, 0, 0, 0, 1837 | 1 of 5 |
+| 0.70 | 120/120 | 1.304 - 1.345 | 2242, 0, 0, 0 | 1 of 4 |
+| **0.50** | **120/120 in 5 of 5** | 1.327 - 1.356 | **2781, 2794, 2802, 2763, 0** | **4 of 5** |
+
+At chi_WW = 0.50 the vesicle is fully intact and holds **81% of its planted lumen**, with the four
+surviving seeds agreeing to within 1.4% (2763-2802). At chi_WW = 1.00 the same structure fragmented and
+deflated to zero. **Repairing the solvent's phase behaviour is what saves the vesicle.**
+
+### Scored honestly against the stated criterion: PARTIAL
+
+The criterion set before the run was "core above 1.40 AND lumen above ~1500". Lumen passes at 2780;
+**core does not**, at 1.327-1.356 against the 1.467 reference and implicit solvent's 1.44-1.46. So this
+is a partial pass, not a success: **the vesicle survives, but on a mediocre bilayer.**
+
+### The combination that has not been tried
+
+Repulsive `chi_HT` is what raises core, and the emergence runs at chi_WW = 0.50 with chi_HT = -0.25
+already reach **core 1.375-1.447**. That combination has never been run on a planted vesicle, which is
+the fast readout for whether a good bilayer and a stable lumen can hold at once in explicit solvent.
+Launched at chi_HT = -0.25 and -0.50, 5 seeds each; verified at step 0 as 120/120, core 1.465, lumen 3436.
+
+### Emergence in the repaired solvent, NOT read
+
+At step 180 000 of 400 000: largest **22 - 81**, core 1.267 - 1.447, max lumen 0. The renders show
+excellent thin bilayers but small, numerous aggregates.
+
+Largest 22-81 is below the 87-120 the old solvent reached, which is the **third branch** of the
+falsification written before that launch: weaker aggregation would mean lowering water cohesion has cost
+part of the hydrophobic drive, invisible to the planted test because a planted structure never has to
+assemble. At 45% of the run and against a baseline measured at 400 000 steps, that comparison is not yet
+fair, so it is recorded as a watch item rather than a result.
+
+**FALSIFICATION, STATED BEFORE THE COMBINATION IS READ.** If chi_HT = -0.25 or -0.50 at chi_WW = 0.50
+holds the planted vesicle with core above 1.40 AND lumen above ~1500, then explicit solvent supports a
+good-bilayer vesicle and every remaining obstacle is nucleation. If core rises but the lumen collapses,
+the trade I retracted two ticks ago is real in explicit solvent specifically, and only implicit gives
+both. If the vesicle fragments as it did at chi_WW = 1.00 with repulsive chi_HT, the repulsive term is
+incompatible with an intact vesicle whenever water is present.
