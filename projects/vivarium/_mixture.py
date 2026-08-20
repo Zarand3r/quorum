@@ -306,10 +306,17 @@ def _plant_ring(X, mols, chains, d, span=1.0, branched=True):
     # near -20. No relaxation can repair exactly coincident beads, because the push direction d/r is
     # 0/0, so this had to be fixed in the geometry.
     nb = int(max(len(m) for m in mols))
+    nt = nb - 1
+    # How far the lipid actually reaches INWARD from its head. A branched lipid has nt//2 beads per
+    # branch, so it reaches 0.866 + (half - 1), not nb - 1. Using nb - 1 for a 4-tail branched lipid put
+    # the leaflets 5.26 sigma apart, leaving the two annuli disconnected: largest read 178/300 and the
+    # leaflet metric collapsed to 0.137 because it was measuring half a ring off-centre.
+    half = nt // 2 if branched and nt >= 2 else nt
+    reach = (0.866 + (half - 1)) if (branched and nt >= 2) else float(nt)
     half_gap = 0.5                                  # tail tips of the two leaflets TOUCH, not overlap
     R_mid = n / (4.0 * np.pi)
-    R_out = R_mid + half_gap + (nb - 1)
-    R_in = max(R_mid - half_gap - (nb - 1), 0.6)
+    R_out = R_mid + half_gap + reach
+    R_in = max(R_mid - half_gap - reach, 0.6)
     n_out = int(round(n * R_out / (R_out + R_in)))
     k = 0
     for count, R_head, sgn in ((n_out, R_out, +1.0), (n - n_out, R_in, -1.0)):
@@ -435,6 +442,7 @@ def geometry(X, mols, wi, chains, L, d, members=None):
 
     rel_all = _wrap(X[lipid_beads] - cen, L)
     rt = np.linalg.norm(rel_all, axis=1)
+    rt_all = np.linalg.norm(_wrap(X - cen, L), axis=1)      # per-bead radii, indexed by global id
     R_mid = float(np.median(rt))
 
     # A cluster wider than half the box has no unambiguous centroid under periodic boundaries: the
@@ -450,6 +458,7 @@ def geometry(X, mols, wi, chains, L, d, members=None):
     if float(span.max()) > 0.5 * L:
         return dict(f_out=f_out, f_in=f_in, n_out=int(outer.sum()), n_in_leaf=int(inner.sum()),
                     R_mid=R_mid, shell_cv=float("nan"), hollow=float("nan"), mix=float("nan"),
+                    seg=float("nan"),
                     lumen=float("nan"), lumen_w=0, r_in=float("nan"))
     shell_cv = float(rt.std() / max(rt.mean(), 1e-9))
 
@@ -498,8 +507,24 @@ def geometry(X, mols, wi, chains, L, d, members=None):
     frac = n_tail_nb[n_nb > 0].sum() / max(n_nb[n_nb > 0].sum(), 1)
     mix = float(frac / max(is_tail.mean(), 1e-9))
 
+    # LEAFLET ORDER as a LENGTH, in sigma: the signed radial offset of each head from its own tails,
+    # with the leaflet taken from the MOLECULE centre. Calibrated against two controls -- a planted
+    # bilayer reads 1.534 and is unchanged (1.518) under 1 sigma of positional jitter, while rigidly
+    # rotating every lipid about its own centre reads 0.028.
+    #
+    # This replaces `mix` as the order observable. `mix` counts head-tail contacts, and the same jitter
+    # control moves it 0.615 -> 0.840 with leaflet order fully intact, so it cannot separate a rough
+    # bilayer from a disordered one. `mix` is still reported, but conclusions come from `seg`.
+    #
+    # Assigning the leaflet by the HEAD's own radius and then measuring the head's offset is circular:
+    # a first version did that and its scrambled control scored 2.950 against an ordered 1.534.
+    rc_mol = np.array([rt_all[m].mean() for m in mols])
+    rh_mol = np.array([rt_all[m[0]] for m in mols])
+    rtl_mol = np.array([rt_all[m[1:]].mean() for m in mols])
+    seg = float((np.where(rc_mol > R_mid, 1.0, -1.0) * (rh_mol - rtl_mol)).mean())
+
     return dict(f_out=f_out, f_in=f_in, n_out=int(outer.sum()), n_in_leaf=int(inner.sum()),
-                R_mid=R_mid, shell_cv=shell_cv, hollow=hollow, mix=mix,
+                R_mid=R_mid, shell_cv=shell_cv, hollow=hollow, mix=mix, seg=seg,
                 lumen=lumen, lumen_w=n_in, r_in=r_in)
 
 
@@ -605,7 +630,7 @@ if __name__ == "__main__":
           f"L={L}, packing fraction {phi}, kT={kT}, start={plant}", flush=True)
     print("enrichment = (short fraction of OUTER leaflet) - (short fraction of INNER leaflet); "
           "0 = no partitioning", flush=True)
-    print(f"{'step':>8}{'E/lip':>9}{'largest':>9}{'R_mid':>7}{'shellCV':>9}{'hollow':>8}{'mix':>7}"
+    print(f"{'step':>8}{'E/lip':>9}{'largest':>9}{'R_mid':>7}{'shellCV':>9}{'hollow':>8}{'mix':>7}{'seg':>7}"
           f"{'lumen':>7}{'lumenW':>8}{'shortOUT':>10}{'shortIN':>9}   enrichment", flush=True)
     every = max(steps // 20, 1)
     for t in range(steps + 1):
@@ -614,7 +639,7 @@ if __name__ == "__main__":
             g = geometry(X, mols, wi, chains, L, d)
             enr = g["f_out"] - g["f_in"]
             print(f"{t:>8}{f.energy(X) / n_lip:>9.2f}{largest_cluster(X, mols, L):>9}"
-                  f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['hollow']:>8.3f}{g['mix']:>7.3f}"
+                  f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['hollow']:>8.3f}{g['mix']:>7.3f}{g['seg']:>7.3f}"
                   f"{g['lumen']:>7.2f}{g['lumen_w']:>8}"
                   f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)
             shot(X, species, L, f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}"

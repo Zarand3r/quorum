@@ -2551,3 +2551,87 @@ contributes but does not account for it.
 
 Emergence in flight at L = 36: largest 28/300 at step 80 000, much slower than L = 25 as expected from
 the lower concentration, `mix` 1.014.
+
+---
+
+## 2026-08-19j tick — `mix` was not a valid order metric; with a calibrated one, IMPLICIT solvent keeps the bilayer
+
+### chi_HT is exonerated: my own hypothesis from last tick is falsified
+
+Planted N = 300 ring, explicit, kT = 0.35, 6000 steps, 5 seeds per value:
+
+| chi_HT | mix at end | mean |
+|---|---|---|
+| 0.20 (default) | 0.879 0.859 0.868 0.881 0.873 | 0.872 |
+| 0.10 | 0.877 0.859 0.888 0.893 0.872 | 0.878 |
+| 0.00 | 0.874 0.872 0.865 0.893 0.908 | 0.882 |
+| -0.20 | 0.867 | 0.867 |
+
+Flat. Making head-tail contact **repulsive** changes nothing, so the missing head-tail penalty is NOT
+the root cause and the chi table is cleared.
+
+### Why nothing moved it: `mix` cannot measure order
+
+Control: take the planted bilayer, keep leaflet assignment **perfectly intact**, add only Gaussian
+positional jitter.
+
+| jitter | 0.0 | 0.2 | 0.5 | 1.0 |
+|---|---|---|---|---|
+| mix | 0.615 | 0.702 | 0.765 | **0.840** |
+
+Jitter alone reproduces almost the entire "scrambled" signal. **`mix` conflates thermal roughness with
+leaflet disorder**, so every conclusion drawn from it -- across the last four ticks -- was drawn from an
+instrument that could not distinguish the two.
+
+### The replacement, and the first version of it was circular
+
+`seg`: the signed radial offset of each head from its own tails, in sigma, with the leaflet assigned
+from the **molecule centre**. Calibrated against two controls:
+
+| configuration | seg |
+|---|---|
+| planted bilayer | **1.534** |
+| + 1.0 sigma jitter | 1.518 |
+| every lipid rigidly rotated about its own centre | **0.028** |
+
+A first version assigned the leaflet by the HEAD's own radius and then measured the head's offset, which
+is circular: its scrambled control scored **2.950** against an ordered 1.534, i.e. the negative control
+beat the positive one. Caught by running the control rather than trusting the construction.
+
+### Two bugs I introduced last tick, both caught here
+
+* The plant fix used `nb - 1` for how far a lipid reaches inward, but a BRANCHED lipid has `nt//2` beads
+  per branch and reaches `0.866 + (half - 1)` -- 1.866, not 4. The leaflets ended up **5.26 sigma apart**,
+  the ring was two disconnected annuli, `largest` read 178/300 and `seg` collapsed to 0.137 because it
+  was measuring half a ring about an off-centre centroid. Fixed; `largest` is 300/300 and seg 1.589.
+
+### The result, and it REVERSES the last three ticks
+
+Correctly planted ring, kT = 0.35, 8000 steps, **5 seeds each**:
+
+| solvent | seg at end | mean +- sd |
+|---|---|---|
+| explicit | 0.158 0.194 0.178 0.171 0.271 | **0.194 +- 0.040** |
+| implicit (solvent-averaged chi) | 0.758 0.770 0.828 0.756 0.706 | **0.764 +- 0.041** |
+
+Against 1.53 ordered and 0.028 disordered, that is a **10 sigma** separation between conditions.
+**Implicit solvent RETAINS half the leaflet order; explicit destroys it.** Under `mix` the two read 0.92
+and 0.90 and I concluded implicit was slightly worse -- exactly backwards.
+
+This is consistent with the previous tick's finding that our explicit water is a two-phase fluid with
+vacuum voids at these densities: the membrane is being disrupted by a solvent that is not a liquid.
+
+### Retracted
+
+* **"The ordered bilayer is not a local energy minimum of this force field"** (last tick) rested on `mix`
+  at kT = 0 and is withdrawn pending re-measurement with `seg`.
+* Every ordering claim from `mix`, in either direction, across four ticks.
+
+**FALSIFICATION, STATED BEFORE THE RUN.** kT = 0.0 and 0.15, implicit solvent, correct plant, 5 seeds,
+4000 steps. If `seg` holds near its planted value at kT = 0, the ordered bilayer IS a local energy
+minimum and last tick's claim was an artefact of the broken metric plus the strained plant. If `seg`
+still falls to ~0.03 at kT = 0, the claim stands on better evidence than it originally had. An
+intermediate plateau, like the 0.76 seen at kT = 0.35, means the model has a partially ordered ground
+state and the question becomes why order is lost rather than whether.
+
+Emergence in flight at L = 36: largest 43/300 at step 140 000, still solid micelles.
