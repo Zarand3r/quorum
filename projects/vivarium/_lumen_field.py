@@ -291,3 +291,39 @@ def n_enclosed(X, mols, L, cell=0.5, bead=1.0, min_cells=40):
                 sizes.append(count)
     sizes.sort(reverse=True)
     return len(sizes), sizes
+
+
+def vesicle_call(X, mols, L, cell=0.5):
+    """Is this aggregate a VESICLE? Returns (bool, reason).
+
+    Two gates, both needed, because each has passed something the other rejects.
+
+    1. n_enclosed == 1 at every dilation in 1.0-3.0. The count is dilation-sensitive, so only a call
+       stable across the knob is reportable. This alone rejected a 69-cell pocket that read 1 at bead
+       1.0 and 0 above it.
+
+    2. The lumen must be the right SIZE for the lipid count. A closed vesicle of n lipids has contour n,
+       hence R = n/2pi and interior pi*R^2. A branched network that happens to enclose one incidental
+       pocket passes gate 1 and fails here. Calibration, all verified against renders:
+
+           planted vesicle N=120          ratio 0.876   vesicle
+           planted ring    N=300          ratio 0.882   vesicle
+           implicit arc    N=80, closed   ratio 0.295   vesicle (irregular, so well under 1)
+           emergent N=160 branched net    ratio 0.028   NOT a vesicle
+
+       The threshold is 0.10: three times below the weakest true vesicle and three and a half times
+       above the branched network, inside a tenfold gap.
+
+    Gate 2 exists because the pre-registered emergence criterion had only gate 1, and a 160-lipid
+    branched network passed it. The render caught that, not the metric.
+    """
+    counts = [n_enclosed(X, mols, L, cell=cell, bead=b)[0] for b in (1.0, 1.5, 2.0, 3.0)]
+    if not all(c == 1 for c in counts):
+        return False, f"n_enclosed unstable across dilation: {counts}"
+    lumen = n_enclosed(X, mols, L, cell=cell)[1][0]
+    n = len(mols)
+    expected = np.pi * (n / (2.0 * np.pi)) ** 2 / (cell * cell)
+    ratio = lumen / expected
+    if ratio < 0.10:
+        return False, f"lumen {lumen} is {ratio:.3f} of the {expected:.0f} expected for {n} lipids"
+    return True, f"lumen {lumen}, {ratio:.3f} of expected, n_enclosed stable at 1"

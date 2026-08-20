@@ -6574,3 +6574,91 @@ per last tick's retraction these fluctuate and no single value is a trend.
 
 Gap scan (4/5 and 3/5 at step 75 000), bend rungs (120 000-127 500/150 000), explicit flat ribbon
 (60 000/200 000), 2-tail shape test, N = 160 emergence.
+
+---
+
+## Tick: the pre-registered emergence criterion produced a false positive
+
+### em160 finished at 800 000, and seed 3 PASSED the criterion
+
+| seed | largest | core | perc | n_enclosed @ bead 1.0/1.5/2.0/3.0 | call |
+|---|---|---|---|---|---|
+| 0 | 91 | 1.423 | n | 0,0,0,0 | open |
+| 1 | 85 | 1.439 | n | 0,0,0,0 | open |
+| 2 | 153 | 1.429 | n | 0,0,0,0 | open |
+| 3 | **160** | 1.429 | n | **1,1,1,1** | **passed** |
+| 4 | 123 | 1.430 | n | 0,0,0,0 | open |
+
+Seed 3 has every lipid in one aggregate, is non-percolating, and encloses exactly one region stably
+across the whole dilation range -- which is precisely the criterion registered when this run was
+launched: "largest >= 145 lipids AND n_enclosed = 1 across bead 1.0-3.0 -> an emergent vesicle, the
+first in this project."
+
+### It is not a vesicle
+
+The render shows a sprawling branched network -- a long arc on the right joined to a branched cluster on
+the left -- with one small hole between branches. The number that gives it away was in the output all
+along: **the lumen is 226 cells, against the ~8149 that a closed 160-lipid vesicle encloses. A ratio of
+0.028.**
+
+**The criterion was wrong, not the run.** It demanded a stable single enclosure and a large aggregate,
+and never checked that the enclosure was the right SIZE for the lipid count. A network with an
+incidental pocket satisfies it. The render caught this; the metric would have announced an emergent
+vesicle.
+
+### The gate that was missing, added and calibrated
+
+A closed vesicle of n lipids has contour n, so R = n/2pi and interior pi*R^2. The ratio of observed
+lumen to that expectation separates the cases cleanly:
+
+| state | nlip | lumen | expected | ratio | |
+|---|---|---|---|---|---|
+| planted vesicle N = 120 | 120 | 4014 | 4584 | **0.876** | vesicle |
+| planted ring N = 300 | 300 | 25263 | 28648 | **0.882** | vesicle |
+| implicit arc N = 80, closed | 80 | 601 | 2037 | **0.295** | vesicle (irregular) |
+| em160 sd3 branched network | 160 | 226 | 8149 | **0.028** | not a vesicle |
+
+Threshold set at **0.10** -- three times below the weakest true vesicle and three and a half times above
+the network, inside a tenfold gap. My first guess of 0.3 was wrong and would have rejected the closed
+implicit arc at 0.295, a structure verified by render last tick. `vesicle_call()` now applies both
+gates; 7 tests pass, including one that accepts a ring of its own contour and rejects a meander that
+pinches off a small pocket.
+
+### Three other arms finished, all as pre-registered
+
+**Bend rungs, at 150 000** -- confirming the prediction registered several ticks before reading them
+("with lambda = +2.8, closure needs kappa < 39 eps*sigma; bend_frac 0.25 gives ~67 and 0.50 gives ~135,
+so BOTH are predicted to FAIL"):
+
+    bend 0.25   largest 271-300   n_enclosed 3, 5, 7, 7, 8    0/5 closed
+    bend 0.50   largest 280-293   n_enclosed 4, 5, 5, 5, 8    0/5 closed
+
+**Gap scan, at 100 000** -- the closure-rate-versus-gap curve, at fixed N = 300:
+
+    3.0 sigma  ->  5/5        6.0 sigma  ->  3/5        9.0 sigma  ->  2/5
+
+**2-tail shape test** -- fired its third branch exactly as written: largest **7-11 of 80**, i.e. the
+ribbon dissolved into micelles. 2-tail lipids do not form a bilayer at this composition, so the test
+says nothing about curvature, and it confirms the detergent regime `chain_bonds` warns of. The core
+caveat recorded at launch mattered: this arm sits at core ~0.99 against a 1.000 baseline, and the 1.35
+threshold calibrated on 4-tail lipids would have read that as a melted membrane rather than a
+correctly-formed micelle phase.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Launched: the five em160 configurations **continued from their saved states for a further 800 000
+steps**, to 1.6 million total. Seed-to-source mapping written at launch. This asks directly whether the
+branched network is a long-lived intermediate or the end state.
+
+* **Any seed reaches `vesicle_call() == True`** -> an emergent vesicle, by a criterion that now has both
+  gates and has been calibrated against four structures.
+* **All five remain branched networks at 1.6 million steps** -> emergent vesicle formation does not
+  occur in this model on accessible timescales, and the reason is already measured: closure needs handed
+  curvature, no symmetric pair term supplies it, and the aggregates are networks rather than ribbons
+  with two ends.
+* **Aggregates shrink or fragment** -> the N = 160 box does not hold a single aggregate at equilibrium
+  and the 800 000-step sizes were transient.
+
+### Still in flight
+
+Explicit flat ribbon (140 000/200 000), emergence continuation.

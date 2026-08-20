@@ -86,3 +86,26 @@ def test_genuine_opening_is_not_sealed_shut():
         pts = np.stack([60.0 + R * np.cos(t), 60.0 + R * np.sin(t)], axis=1)
         count, _ = n_enclosed(pts, [np.arange(len(pts))], 120.0)
         assert count == 0, f"a {gap} sigma opening must read open, got {count}"
+
+
+def test_vesicle_call_rejects_a_network_with_an_incidental_pocket():
+    """Gate 2: a ring enclosing its own contour passes; a sprawling shape with a small hole does not.
+
+    The pre-registered emergence criterion had only the n_enclosed==1 gate, and a 160-lipid branched
+    network passed it with a lumen 0.028 of the size its own lipid count implies. The render caught
+    that; the metric did not.
+    """
+    from _lumen_field import vesicle_call
+
+    n = 160
+    R = n / (2.0 * np.pi)
+    t = np.linspace(0.0, 2.0 * np.pi, n, endpoint=False)
+    ring = np.stack([32.5 + R * np.cos(t), 32.5 + R * np.sin(t)], axis=1)
+    ok, why = vesicle_call(ring, [np.arange(len(ring))], 65.0)
+    assert ok, f"a closed ring of its own contour must be a vesicle: {why}"
+
+    # a long meander that pinches off one small pocket: closed, but nowhere near its contour's area
+    s = np.linspace(0.0, 1.0, n)
+    snake = np.stack([6.0 + 52.0 * s, 32.5 + 9.0 * np.sin(9.0 * np.pi * s)], axis=1)
+    ok2, why2 = vesicle_call(snake, [np.arange(len(snake))], 65.0)
+    assert not ok2, f"a meander is not a vesicle, but passed: {why2}"
