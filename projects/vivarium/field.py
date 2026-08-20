@@ -95,7 +95,14 @@ def default_chi():
     # ordered bilayer is not a local minimum. Swept via the environment so the value can be scanned
     # without editing the source mid-experiment.
     chi[HEAD, TAIL] = chi[TAIL, HEAD] = float(os.environ.get("VIVARIUM_CHI_HT", 0.20))
-    chi[TAIL, WATER] = chi[WATER, TAIL] = 0.00   # tails gain nothing from water
+    # TAIL-WATER IS THE TERM THAT PRICES A BILAYER EDGE. At 0.00 a tail is INDIFFERENT to water: it
+    # gains nothing and loses nothing by sitting at an exposed rim. That is measured, not supposed --
+    # the direct ring-versus-arc comparison at N = 300, time-averaged over the plateau, gives
+    # lambda = +2.8 +- 2.8 eps, consistent with zero, against the +18.31 +- 7.07 the intercept route
+    # claimed. With no cost to an exposed edge there is no drive to close one, which is why every arc
+    # in this project has unrolled. Negative is repulsive here (chi scales the attractive well), so
+    # making tails hydrophobic means driving this below zero.
+    chi[TAIL, WATER] = chi[WATER, TAIL] = float(os.environ.get("VIVARIUM_CHI_TW", 0.00))
     return chi
 
 

@@ -5951,3 +5951,88 @@ kT = 0.45, 150 000 steps, 5 seeds per rung, 10 runs. Seed-to-source mapping writ
 Short arc (85 000/100 000), long arc (30 000/300 000, for the lambda convergence question),
 dilution quench (240 000/300 000), N = 300 dispersed emergence, N = 160 dispersed emergence
 (200 000/800 000), and the two bend rungs.
+
+---
+
+## Tick: lambda is ~0, and the reason is one hardcoded number
+
+### RETRACTED: lambda = +18.31 +- 7.07 eps, and the "81 kT to gain" premise
+
+The ring and arc arms both reached step 100 000. At the pre-registered read:
+
+| analysis | ring | arc | diff | lambda |
+|---|---|---|---|---|
+| all 5 seeds, final checkpoint | -7.572 | -7.578 | +0.006 +- 0.067 | **-0.9 +- 10.0 eps** (0.1 sigma) |
+| intact arcs only (4/5) | -7.572 | -7.560 | -0.012 +- 0.074 | +1.8 +- 11.1 eps (0.2 sigma) |
+| **time-averaged over plateau (step >= 20 000, 17 checkpoints/seed)** | -7.5018 +- 0.0063 | -7.4831 +- 0.0177 | | **+2.8 +- 2.8 eps** (1.0 sigma) |
+
+Time-averaging cost nothing and cut the error bar 3.5x, from +-10.0 to +-2.8. The result is
+**lambda = +2.8 +- 2.8 eps: consistent with zero, and 2.0 sigma from the intercept's +18.31 +- 7.07.**
+
+Closure therefore gains 2*lambda = 5.6 eps = **12 kT, not 81 kT.** The standing figure was too large by
+about 6.5x. The arcs fragmented in several seeds (min largest 126-249) and fragmentation ADDS ends,
+which biases lambda upward, so +2.8 is if anything generous.
+
+### RETRACTED: last tick's explanation of the drift
+
+Last tick I read `E_ring - E_arc` moving +0.006, +0.018, -0.062, -0.082 across steps 35 000-50 000 as the
+arc still opening, and said the two lambda routes were "the same measurement stopped at different
+times." **That was a four-point drift read as a trend.** R_mid does not rise monotonically -- per seed it
+runs 45.08, 44.99, 44.88, 38.30 and 43.89, 42.83, 54.14, 43.75 -- it fluctuates. The swing was noise
+against a +-0.04-0.07 error bar. The reconciliation I offered was wrong; the disagreement is real, and it
+resolves against the intercept, not in its favour.
+
+### The mechanism, found in the source
+
+    chi[TAIL, WATER] = chi[WATER, TAIL] = 0.00   # tails gain nothing from water
+
+This is the term that prices a bilayer edge, and it was the only chi with no override. At 0.00 a tail is
+**indifferent** to water: it neither gains nor loses by sitting on an exposed rim. With no cost to an
+exposed edge there is no drive to close one -- which is why every arc in this project has unrolled, at
+every size from R = 11.5 to 65.6, across roughly 60 runs.
+
+### Everything measured now fits one picture, with no contradiction
+
+| observation | explanation |
+|---|---|
+| arcs always unroll, at every size | lambda ~ 0: closing gains nothing |
+| vesicle sits 262 +- 17 eps below the sponge | junction cost -- neither state has edges, so lambda is irrelevant to it |
+| heat fragments before it anneals | junction barrier exceeds cohesion barrier |
+| emergent aggregates are sponges | ribbons fuse into junctions kinetically and cannot undo it |
+
+lambda ~ 0 does NOT contradict the fork result. The vesicle's advantage was never edge elimination.
+
+### Emergence, N = 160 L = 65: coarsening has plateaued
+
+largest by step: 23, 26, 40, 56 at 160 000, then **56, 56, 56** through 280 000. Not frozen -- it grew,
+then stopped. Ribbons have ceased merging at about a third of the ~145-lipid threshold. Provisional
+against its 800 000-step criterion, but the third branch looks likely to fire.
+
+### PRE-REGISTERED PREDICTION for the bend rungs, before they are read
+
+With lambda = +2.8, closure needs `kappa < 2*lambda*R/pi` = 2(2.8)(22)/pi = **39 eps*sigma**. If kappa
+scales with the 1-3 spring, bend_frac 0.25 gives kappa ~ 67 and 0.50 gives ~135, both still above 39.
+**Both rungs are therefore predicted to FAIL to close**, and closing would need bend_frac <~ 0.15. At
+step 15 000 of 150 000 they sit at n_enclosed 4-7, largest 240-300, core 1.400-1.420 -- membrane intact,
+no retraction. If either rung DOES close, the kappa-scaling assumption behind this prediction is wrong
+and should be measured rather than assumed.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+`VIVARIUM_CHI_TW` added. Launched: ring and arc0.97, N = 300, L = 120, 5 seeds each, 100 000 steps, at
+**chi_TW = -0.50** (negative is repulsive here), everything else matched to the arms just read. lambda is
+extracted by the same time-averaged ring-minus-arc assay, now good to +-2.8 eps. Arms tag apart on disk
+as `..._tw-0.50_...`, verified rather than assumed.
+
+* **lambda rises above the old value by more than the combined error** -> tail-water contact is what
+  prices an edge, the model's edges were free by construction, and raising this term is the route to a
+  closure drive.
+* **lambda stays consistent with zero** -> edge cost is not set by tail-water contact and the reason
+  edges are free lies elsewhere; the assay is precise enough now that this would be a real null.
+* **core falls below 1.35 or largest below 285** -> -0.50 is too strong to test at, the bilayer is
+  damaged rather than re-priced, and the rung must be discarded rather than read.
+
+### Still in flight
+
+Long arc (45 000/300 000), bend rungs 0.25 and 0.50 (15 000/150 000), chi_TW ring and arc arms,
+dilution quench (270 000/300 000), N = 300 and N = 160 dispersed emergence.
