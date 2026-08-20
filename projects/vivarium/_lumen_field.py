@@ -144,3 +144,73 @@ def lumen_headed(X, mols, L, cell=0.5, bead=1.0, min_cells=40):
             if dh < dt:
                 faced += 1
     return faced / tot if tot else float("nan")
+
+
+def lumen_head_enrichment(X, species, mols, L, cell=0.5, bead=1.0, min_cells=40, shell=1.6):
+    """Head enrichment in the layer immediately lining the enclosure. THE vesicle test.
+
+    A lumen is bounded by a bilayer, so the first layer outside it is HEADS. A packing gap between jammed
+    aggregates is lined by whatever abuts it, i.e. the bulk head:tail ratio.
+
+    Per BEAD, not per lipid: the two previous attempts assigned lipids to leaflets and both failed their
+    positive control (a planted vesicle scored 0.54 against a jumble's 0.70), because a bilayer's outer
+    leaflet faces away by construction and any shell wide enough to catch the inner leaflet also catches
+    the outer one.
+
+    Returns (head fraction in the lining shell) / (head fraction overall). ~1 = packing gap; > 1 = heads
+    line the pocket, i.e. a membrane boundary. NaN if there is no enclosure above threshold.
+    """
+    from _lumen_field import lumen_cells as _lc
+    lip = np.concatenate(mols)
+    Xs = X - X[lip].mean(axis=0) + L / 2.0
+    n = max(8, int(L / cell))
+    occ = np.zeros((n, n), bool)
+    gi = (np.asarray(Xs[lip]) / L * n).astype(int) % n
+    r = max(1, int(round(bead / (2 * cell))))
+    for dx in range(-r, r + 1):
+        for dy in range(-r, r + 1):
+            if dx * dx + dy * dy <= r * r:
+                occ[(gi[:, 0] + dx) % n, (gi[:, 1] + dy) % n] = True
+    free = ~occ
+    seen = np.zeros_like(free)
+    st = [(i, j) for i in range(n) for j in (0, n - 1) if free[i, j]]
+    st += [(i, j) for j in range(n) for i in (0, n - 1) if free[i, j]]
+    for a, b in st:
+        seen[a, b] = True
+    while st:
+        a, b = st.pop()
+        for da, db in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            p, q = a + da, b + db
+            if 0 <= p < n and 0 <= q < n and free[p, q] and not seen[p, q]:
+                seen[p, q] = True
+                st.append((p, q))
+    interior = free & ~seen
+    best, vis = None, np.zeros_like(interior)
+    for i in range(n):
+        for j in range(n):
+            if interior[i, j] and not vis[i, j]:
+                stk, cells = [(i, j)], []
+                vis[i, j] = True
+                while stk:
+                    a, b = stk.pop()
+                    cells.append((a, b))
+                    for da, db in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                        p, q = a + da, b + db
+                        if 0 <= p < n and 0 <= q < n and interior[p, q] and not vis[p, q]:
+                            vis[p, q] = True
+                            stk.append((p, q))
+                if best is None or len(cells) > len(best):
+                    best = cells
+    if best is None or len(best) < min_cells:
+        return float("nan")
+    pts = np.array(best, dtype=float) * cell            # lumen cells in real units
+    P = Xs[lip]
+    is_head = np.isin(lip, np.concatenate([m[:1] for m in mols]))
+    # distance from each lipid bead to the NEAREST lumen cell
+    d = np.min(np.linalg.norm(P[:, None, :] - pts[None, :, :], axis=2), axis=1)
+    inshell = d < shell
+    if inshell.sum() < 10:
+        return float("nan")
+    f_shell = is_head[inshell].mean()
+    f_all = is_head.mean()
+    return float(f_shell / f_all)

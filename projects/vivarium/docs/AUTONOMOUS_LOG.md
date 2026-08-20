@@ -5162,3 +5162,60 @@ rather than resting on one survivor. And separately, any claim that these are ve
 discriminator that scores a planted vesicle ABOVE a jumble -- both of mine did the reverse, so until one
 passes that control, every enclosure here is reported as a geometric pocket of stated area and water
 content, never as a vesicle.
+
+---
+
+## 2026-08-21 tick — concentration trend reproduces at 5 of 5; third discriminator fails, but informatively
+
+### The rerun, with the water-placement bug fixed
+
+L = 38 with five fresh seeds, against matched L = 45 controls, at step 120 000:
+
+| L | seeds | any lumen | >=4 consec | max | core |
+|---|---|---|---|---|---|
+| **38** | 5 | **5 of 5** | 2 | 206 | 1.394 |
+| 45 | 5 | 2 of 5 | 1 | 394 | 1.406 |
+
+**Every seed at the densest concentration forms an enclosure.** The trend no longer rests on the single
+seed that survived the crash, and with L = 50 and L = 56 at 0 of 5 the ordering is
+38 > 45 > 50 = 56. **Nucleation is encounter-limited**, confirmed.
+
+### Third discriminator attempt, third failure
+
+Per-bead head enrichment in the layer lining the enclosure -- built specifically because the two previous
+attempts assigned lipids to leaflets and a bilayer's outer leaflet defeats that by construction:
+
+| | planted vesicle | L = 38 jumble |
+|---|---|---|
+| head enrichment | **1.19 - 1.31** | **1.63** |
+
+Backwards again. Small pockets have high surface-to-volume, so heads line them strongly; the measure is
+confounded by pocket size, not by membrane order.
+
+**But this failure carries information the others did not.** The jumble's pockets score 1.63, well above
+1.0 -- so they are **head-lined, amphiphile-bounded water pockets**, not raw gaps between random surfaces.
+The distinction I was chasing is therefore softer than assumed: what separates these from a vesicle is not
+whether a membrane bounds them, but how ORDERED that membrane is -- and `core` already measures exactly
+that. The enclosures sit at core 1.39-1.41 against a planted vesicle's 1.465.
+
+**Standing rule, unchanged:** no enclosure is called a vesicle. Each is reported as a geometric pocket
+with its area, water content and boundary order.
+
+### The combination not yet tried
+
+Every knob so far fixes one half and breaks the other -- except that **concentration and water cohesion
+act on different things**:
+
+* high concentration (L = 38) supplies nucleation, 5 of 5 seeds
+* weak water cohesion (chi_WW = 0.50) supplies membrane order (core 1.42-1.47) and vesicle stability, its
+  only cost being weak aggregation -- which concentration supplies independently
+
+Launched: L = 38 at `chi_WW` = 0.50 and 0.70, 5 seeds each, 400 000 steps.
+
+**FALSIFICATION, STATED BEFORE THE RUN.** If L = 38 with chi_WW = 0.50 gives enclosures at the L = 38 rate
+AND core at the chi_WW = 0.50 level (>= 1.42), the two knobs are independent and the result is a
+persistent, water-filled, well-ordered enclosure formed from a dispersed start -- the closest this project
+can come to the milestone without a discriminator that passes its control. If core stays at 1.39, water
+cohesion does not control membrane order at high concentration and the two knobs interact. If enclosures
+disappear at chi_WW = 0.50 even at L = 38, weak cohesion suppresses nucleation independently of
+concentration, and the opposition is fundamental rather than a matter of finding the right corner.
