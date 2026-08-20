@@ -6119,3 +6119,81 @@ needed. A kill pattern has to be anchored on the DISTINGUISHING argument, not a 
 
 chi_TW ring and arc (10 000/100 000), bend rungs 0.25 and 0.50 (22 500-30 000/150 000), N = 80 lambda
 assay (fresh), N = 160 and N = 300 dispersed emergence.
+
+---
+
+## Tick: the first closure this project has produced, from an assay that failed
+
+### The N = 80 assay is VOID, and why
+
+It was launched to measure lambda where the edge is a larger fraction of the total. It cannot, because
+**the arc closed.**
+
+| step | n_enclosed | lumen | R_mid |
+|---|---|---|---|
+| 0 | 0 | 0 | 13.47 |
+| 5 000 | 1 | 1637 | 13.99 |
+| 50 000 | 1 | ~1410 | 13.4 |
+| 100 000 | 1 | ~1400 | 13.2 |
+
+`n_enclosed = 0` at step 0 confirms the 2.4 sigma gap WAS resolvable, so this is a real transition and
+not the detector failing to see a gap it never could. The render at step 100 000 shows a closed ring
+with a water-filled lumen. **5/5 seeds closed by step 5 000 and held for the remaining 95 000 steps.**
+
+The time-averaged numbers are ring -7.3467 +- 0.0628 against arc -7.3880 +- 0.0205, giving an apparent
+lambda = -1.7 +- 2.6 eps. **That number is void**: both arms are rings, so it measures ring minus ring.
+The pre-registered branch about the ring failing to hold did not fire; an outcome I had not anticipated
+did.
+
+### What the failure found instead
+
+| N | R | planted end-gap | outcome |
+|---|---|---|---|
+| 80 | 12.7 | **2.4 sigma** | **closed 5/5, stable 95 000 steps** |
+| 300 | 47.7 | 8.4 sigma | never closed, ~60 runs |
+
+Closure looks **ENCOUNTER-LIMITED, not energy-limited.** Once the ends are within contact range they
+fuse, and the fused state is stable for as long as it has been watched. Beyond contact range nothing
+brings them together -- which is exactly what lambda ~ 0 means: no long-range drive across a gap.
+
+This also reframes every previous closure failure. They were not the membrane refusing to bend. Every
+one of them started with ends far apart, and nothing in this force field pulls distant ends together.
+
+**It cuts against the standing plan.** That plan predicts closure gets EASIER with size, because
+bending paid, pi*kappa/R, falls while edge saved, 2*lambda, is constant. The observation is the
+reverse: the SMALL arc closed and the large ones did not. But size and gap are confounded here -- the
+same span plants a smaller gap at smaller R -- so this is not yet a clean falsification, which is what
+the next run is for.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Launched: **arc0.99 and arc0.98 at fixed N = 300**, 5 seeds each, 100 000 steps, everything else matched
+to the arc0.97 arm already run. Holding N fixed removes the size confound and varies only the gap:
+
+    span 0.99 -> 3.0 sigma      span 0.98 -> 6.0 sigma      span 0.97 -> 9.0 sigma (never closed)
+
+Both new arms confirmed `n_enclosed = 0` at step 0, so both gaps are resolvable.
+
+* **arc0.99 closes and arc0.98 does not** -> a capture radius of a few sigma, closure is encounter-
+  limited, and the size effect seen at N = 80 was the gap all along.
+* **Both close** -> the capture radius is at least 6 sigma and the N = 300 arc0.97 failure sits just
+  beyond it; the picture holds with a wider radius.
+* **Neither closes** -> gap is NOT the controlling variable at N = 300 and size genuinely matters, which
+  supports the continuum picture and means the N = 80 closure has some other cause. The encounter-
+  limited reading would then be withdrawn.
+
+### Emergence: the largest aggregate yet
+
+N = 160, L = 65, seed 0 reached **largest = 118** at step 400 000, up from 52 at 320 000 -- 81% of the
+~145-lipid threshold and by far the biggest this project has assembled from a dispersed start. It is an
+open BRANCHED ribbon, n_enclosed = 0, with its ends far apart, which is precisely what the encounter-
+limited picture says will not close.
+
+### The bend rungs, still consistent with the prediction
+
+At 45 000-52 500 of 150 000: n_enclosed 4-9, largest 217-300, core 1.406-1.419. No retraction toward a
+single compartment, as predicted before they were read.
+
+### Still in flight
+
+chi_TW ring and arc (35 000-40 000/100 000), bend rungs, gap scan, N = 160 and N = 300 emergence.
