@@ -2401,3 +2401,71 @@ while implicit sits at 0.921 +- 0.012, the solvent-averaged chi is disqualified 
 membrane work stays explicit -- now affordable. If explicit also rises to ~0.92, the bilayer is unstable
 at kT = 0.45 regardless of solvent, and every 2-D result measured at this temperature is in question. If
 it rises partway, both contribute and a temperature sweep is required to rank them.
+
+---
+
+## 2026-08-19h tick — temperature is NOT the cause; the solvent itself is not a liquid
+
+### The temperature hypothesis is falsified
+
+Planted N = 300 ring, explicit solvent, L = 138, 20 000 steps, 5 seeds per temperature. `mix` at the
+end (1.0 = randomly mixed; planted perfect bilayer = 0.536):
+
+| kT | seeds | mean |
+|---|---|---|
+| 0.15 | 0.908 0.914 0.910 0.901 0.905 | **0.908** |
+| 0.25 | 0.895 0.892 0.898 0.911 0.911 | **0.901** |
+| 0.35 | 0.897 0.901 0.888 0.893 0.902 | **0.896** |
+| 0.45 | 0.900 (1 seed so far) | 0.900 |
+
+**Flat across a 3x temperature range.** Cooling from 0.45 to 0.15 changes `mix` by 0.008, well inside
+the seed spread. So the branch of last tick's falsification that said "explicit also rises to ~0.92, so
+kT = 0.45 is too hot" is itself **wrong in its diagnosis**: explicit does rise (0.90 against implicit's
+0.921), but temperature is not why. Both solvent conditions and every temperature give a scrambled
+bilayer.
+
+### What the render shows, and it is not what I was looking for
+
+The explicit ring at the end is intact and hollow -- a clear lumen with water inside -- but the lipids
+are intermixed, and **the water has phase-separated into a percolating network with large vacuum
+voids.** At packing fraction 0.55 it should be a homogeneous liquid.
+
+That is the 2-D counterpart of this project's own known-void finding, that 3-D explicit solvent at
+phi 0.15-0.35 is fragmented droplets rather than a liquid. The solvent is evidently below its
+liquid-vapour critical point over the range tested, so the "explicit solvent" arms have not been
+simulating a membrane in water; they have been simulating a membrane in a two-phase fluid.
+
+**This is a better candidate cause than either solvent-averaging or temperature**, and it was invisible
+in every metric because no observable in this project measures whether the SOLVENT is a liquid.
+
+### Retracted this tick
+
+* **The guard I added last tick was wrong** and rejected valid data. It tested `2 * max(radius)`, which
+  one lipid poking out of an otherwise intact ring is enough to trip: it NaN'd 3 of 5 explicit seeds
+  whose rings were whole at largest = 300, R_mid 25.98. It now tests the cluster's per-axis SPAN, which
+  is what unwrapping ambiguity actually depends on.
+* **Every 3-D shape metric at L = 25 is void.** With the corrected guard, the planted 300-lipid vesicle
+  fails the span test **at step 0**: the aggregate is wider than half the box. Re-run at L = 44 it is
+  measurable, and collapses -- hollow 0.000 -> 0.018 -> **1.163** and `mix` 0.837 -> 0.963 -> 0.992
+  within 200 steps. So a planted 3-D vesicle is not stable under the derived chi, and separately, the
+  emergent 3-D numbers reported in the last four ticks (R_mid, shellCV, hollow at L = 25) are
+  unverified. R_mid read a constant 1.57 for clusters of 61, 69 and 92 lipids, which cannot be right.
+  Cluster COUNTS remain sound, being connectivity rather than geometry.
+* **Fourth filename collision.** The render tag carried L, then n_tail, then seed, and still not kT, so
+  all four temperature arms overwrote the same frames and the phase-separated-water image above cannot
+  be attributed to a temperature. Metrics were unaffected (separate log files). kT is now in the tag
+  and in the saved-state filename.
+
+### Emergence
+
+The L = 25 runs ended: seed 1 frozen at 69/300 from step 120 000 to 180 000; seed 0 reached 92/300.
+No emergence run was left in flight, so three were relaunched at **L = 36**, chosen so a 300-lipid
+aggregate still spans less than half the box and the metrics stay valid if coarsening ever succeeds.
+
+**FALSIFICATION, STATED BEFORE THE WATER RUNS ARE READ.** Three short runs at kT = 0.15, 0.45 and 0.90,
+identical but for temperature, with kT now in the render tag. If the water is a homogeneous liquid at
+0.90 and voided at 0.15, the solvent has a liquid-vapour transition inside our working range and every
+explicit-solvent result to date was measured in a two-phase fluid -- which would make solvent state, not
+chi and not temperature, the reason bilayers do not hold. If the water is voided at ALL three, the
+solvent model is wrong at this density irrespective of temperature. If it is homogeneous at all three,
+then what I saw was a rendering or density artefact and this whole line is dropped.

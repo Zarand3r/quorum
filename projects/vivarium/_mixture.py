@@ -373,14 +373,21 @@ def geometry(X, mols, wi, chains, L, d, members=None):
     f_out = float(short[outer].mean()) if outer.any() else float("nan")
     f_in = float(short[inner].mean()) if inner.any() else float("nan")
 
-    rt = np.linalg.norm(_wrap(X[lipid_beads] - cen, L), axis=1)
+    rel_all = _wrap(X[lipid_beads] - cen, L)
+    rt = np.linalg.norm(rel_all, axis=1)
     R_mid = float(np.median(rt))
 
     # A cluster wider than half the box has no unambiguous centroid under periodic boundaries: the
     # minimum image cannot tell "one big ring" from "two pieces near opposite faces". Returning a
     # number anyway is how a planted, obviously hollow ring came back as hollow = 1.556 in a box of
     # L = 70 with a diameter of 50.7. Fail loudly instead of plausibly.
-    if 2.0 * float(rt.max()) > 0.5 * L:
+    #
+    # The test is the cluster's SPAN per axis, not 2*max(radius). The first version used the radius of
+    # the furthest bead, which one lipid poking out of an otherwise intact ring is enough to trip: it
+    # rejected 3 of 5 explicit seeds whose rings were whole at largest = 300, R_mid 25.98. The span is
+    # what unwrapping actually needs to be unambiguous.
+    span = (rel_all.max(axis=0) - rel_all.min(axis=0)) if len(rel_all) else np.zeros(1)
+    if float(span.max()) > 0.5 * L:
         return dict(f_out=f_out, f_in=f_in, n_out=int(outer.sum()), n_in_leaf=int(inner.sum()),
                     R_mid=R_mid, shell_cv=float("nan"), hollow=float("nan"), mix=float("nan"),
                     lumen=float("nan"), lumen_w=0, r_in=float("nan"))
@@ -546,13 +553,13 @@ if __name__ == "__main__":
                   f"{g['lumen']:>7.2f}{g['lumen_w']:>8}"
                   f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)
             shot(X, species, L, f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}"
-                 f"_sd{seed}_s{t:07d}")
+                 f"_kT{kT}_sd{seed}_s{t:07d}")
     # Save the final state. Post-hoc analysis has had to RE-RUN the simulation three times in this
     # project because only images and printed metrics survived; a new observable then cannot be applied
     # to a finished experiment. Coordinates plus species and topology are enough to score anything.
     root = os.environ.get("BUILD_WORKSPACE_DIRECTORY", ".")
     out = pathlib.Path(root) / "projects" / "vivarium" / "docs" / "states"
     out.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(out / f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}_sd{seed}.npz",
+    np.savez_compressed(out / f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}_kT{kT}_sd{seed}.npz",
                         X=X, species=species, chains=chains, L=L, d=d, phi=phi, steps=steps,
                         mols=np.array([m for m in mols], dtype=object), allow_pickle=True)
