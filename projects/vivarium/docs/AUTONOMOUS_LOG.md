@@ -6420,3 +6420,81 @@ split; growth is not monotonic and 129 was a fluctuation, not a trend. Current l
 
 chi_TW arms (75 000-85 000/100 000), bend rungs (97 500/150 000), gap scan to 100 000, explicit flat
 ribbon (30 000/200 000), implicit arc control, N = 160 emergence (640 000/800 000).
+
+---
+
+## Tick: the matched control lands, and chi_TW is a real null
+
+### THE MATCHED CONTROL: curvature must be handed to this model
+
+Identical implicit solvent, identical N = 80, identical L = 110. The only difference is the plant:
+
+| arm | closed | when | final state |
+|---|---|---|---|
+| **flat ribbon** | **0/5** | never | straight, largest 80, core 1.464-1.483 |
+| **arc0.97** | **5/5** | all at step 10 000 | closed, held to 200 000, core 1.452-1.466 |
+
+Both arms kept a perfect membrane, so neither result is a structural failure. This fires the first
+pre-registered branch: **handed curvature is the whole difference, in a matched solvent.**
+
+The no-curling conclusion stands. This model closes curvature it is given and never generates its own.
+It explains the entire history: every closure in this project came from a planted arc, and nothing that
+started flat has ever closed. It also explains the emergent renders directly -- the N = 160 aggregates
+are long STRAIGHT segments meeting at junctions, which is what a membrane that cannot curl will build.
+
+### chi_TW: a real null, not an underpowered one
+
+The arms completed at step 100 000. Time-averaged over the plateau, 5 seeds:
+
+| chi_TW | ring | arc | lambda |
+|---|---|---|---|
+| 0.00 | -7.5018 +- 0.0063 | -7.4831 +- 0.0177 | **+2.8 +- 2.8 eps** |
+| -0.50 | -6.2308 +- 0.0222 | -6.2653 +- 0.0175 | **-5.2 +- 4.2 eps** |
+
+    change = -8.0 +- 5.1 eps  (1.6 sigma)
+
+Making tails hydrophobic did NOT raise the edge cost. At +-4.2 eps this assay would detect the ~+15 eps
+needed to reach the old +18.31 at 3.6 sigma, so this is a **real null with adequate power**, unlike the
+static paired test discarded two ticks ago. The second pre-registered branch fires.
+
+**Why, most likely:** a bilayer edge heals by heads reorienting to cover the exposed tails, so tail-water
+contact never actually occurs at the rim and no tail-water term can price it. That would make lambda ~ 0
+a structural property of this lipid, not a tunable one.
+
+Caveat recorded: 1/5 chi_TW arcs closed, at step 90 000, which pulls that seed toward zero. Four of five
+stayed open.
+
+### A column error, caught
+
+The closure check first reported "0/5 chi_TW arcs closed" because it read `f[12]`, which is `perc`
+(Y/n), where `nenc` is `f[11]`. Corrected before use: the true count is 1/5. The awk one-liners use
+1-indexed `$12` for nenc and the Python uses 0-indexed `f[11]`; mixing the two conventions has now
+caused this twice.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+If curvature cannot come from tail-water contact and does not arise spontaneously, the remaining source
+is headgroup packing: a leaflet whose heads repel more strongly wants a larger head area per lipid,
+which is exactly a spontaneous curvature. chi_HH already has an override and its default is +0.20
+(attractive); negative is repulsive here.
+
+Launched: **flat ribbon, N = 80, L = 110, implicit, chi_HH = -0.30 and -0.60**, 5 seeds each, 200 000
+steps -- the identical protocol that just produced 0/5 closure at the default chi_HH, so the flat arm is
+its own control. Arms tag apart on disk as `..._hh-0.30_...` and `..._hh-0.60_...`, verified.
+
+* **The flat ribbon curls and closes in >= 1/5 at either value, with core > 1.35** -> head-head repulsion
+  generates spontaneous curvature, and it is the missing ingredient for emergent closure.
+* **It stays flat 0/5 at both values with the membrane intact** -> head repulsion does not generate
+  curvature either, and the source must be leaflet ASYMMETRY rather than any symmetric pair term.
+* **core < 1.35 or largest < 76** -> the value is too strong, the bilayer is damaged rather than curved,
+  and that rung says nothing.
+
+### Emergence
+
+N = 160 at step 680 000-720 000: largest by seed 91, 81, 70, 104, **123**. Still fluctuating rather than
+growing steadily, consistent with last tick's retraction. All n_enclosed = 0 except seed 3 at 2.
+
+### Still in flight
+
+Gap scan (4/5 and 3/5 at step 60 000), bend rungs (112 500/150 000), explicit flat ribbon
+(50 000/200 000), chi_HH scan, N = 160 emergence.
