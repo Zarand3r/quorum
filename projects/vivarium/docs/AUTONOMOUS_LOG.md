@@ -4830,3 +4830,55 @@ condition. If it fails there as it did at 0.70 and 1.00, then vesicle survival r
 or below 0.50, which costs 40 lipids of final aggregate size, and the two requirements are genuinely
 opposed along this axis. If it survives but aggregation at 0.85 falls at long times the way 0.50 did, the
 120 000-step comparison was too early to judge and the axis needs end-of-run data at every setting.
+
+---
+
+## 2026-08-20u tick — the water axis is closed; aggregation and vesicle survival are opposed along it
+
+### The decisive point, read at the end
+
+Planted vesicle at `chi_WW = 0.85`, the setting that aggregates as well as the original water, 150 000
+steps, 5 seeds. Planted: 120/120, core 1.465, lumen 3436.
+
+    largest 50, 68, 72, 73, 84      core 1.414 - 1.438      lumen 0, 0, 0, 0, 0
+
+**It fragments and loses the lumen in 5 of 5.** Second branch of the falsification.
+
+### The completed axis
+
+| chi_WW | aggregation (largest, end) | planted vesicle survives | emergent enclosure |
+|---|---|---|---|
+| 1.00 | **94.8 +- 5.5** (n=15) | 1 of 5 | ~1 in 15, up to 255 cells |
+| 0.85 | 80 - 120 | **0 of 5** | 41 cells in 1 of 5 (marginal) |
+| 0.70 | 44.6 at 120k | 1 of 5 | 0 of 5 |
+| 0.50 | 54.2 +- 5.7 | **4 of 5** (lumen 2766-3746) | 0 of 5 |
+
+**Vesicle survival requires water cohesion at or below 0.50, and that costs 40 lipids of final aggregate
+size (5.1 sigma).** The conditions that drive lipids together hard enough to build large closed
+structures are the same conditions that destroy a vesicle once it exists. The axis is closed as a route
+to holding both at fixed conditions.
+
+Confirmed at full run length: emergence at 0.85 reaches largest 80-120, matching the original water, which
+is what the step-120000 comparison predicted. That prediction is now validated rather than assumed.
+
+### The consequence, launched
+
+The two requirements are opposed **at fixed conditions** -- but they need not be applied at the same
+**time**. Real vesicle preparation is a two-stage protocol: detergent removal, temperature quench,
+dialysis. So: assemble at `chi_WW = 1.00`, where aggregation is strongest, then continue **the same
+configuration** at `chi_WW = 0.50`, where a closed structure is stable.
+
+Restarted 8 completed strong-cohesion emergence states (largest 60-120) into the weak-cohesion solvent,
+200 000 steps each. Verified at step 0: the configuration carries over intact at largest 120, core 1.407.
+
+**Nothing is imported by this.** Both stages use the model's own physics; only the solvent condition
+changes, and it changes to a value the model already runs at. This is not the `beta` objection -- no term
+is added that encodes the answer.
+
+**FALSIFICATION, STATED BEFORE THE QUENCH IS READ.** If enclosures appear after the quench at a rate above
+the ~1-in-15 baseline, or grow from the marginal sizes seen at fixed conditions, then assembly and
+stability simply needed to be separated in time and the milestone is reachable by protocol. If the
+quenched structures behave exactly as fixed-condition ones -- no enclosures, or the same rare marginal
+ones -- then separating the two stages does not help, and the obstacle is not the ordering of conditions
+but something in the membrane mechanics. If the structures fall apart on quenching, the weak-cohesion
+solvent cannot hold what the strong one built, and the two regimes are incompatible even sequentially.
