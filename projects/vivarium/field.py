@@ -76,7 +76,11 @@ def default_chi():
     chi = np.zeros((N_SPECIES, N_SPECIES))
     chi[WATER, WATER] = 1.00                     # strongest: water coheres and expels the tail
     chi[TAIL, TAIL] = 0.70                       # dispersion between alkane-like tails
-    chi[HEAD, HEAD] = 0.20
+    # Head-head is the term that decides whether two EDGES can fuse. The solvent-averaged value is
+    # 0.20 + 1.00 - 0.75 - 0.75 = -0.30, i.e. repulsive, which is what holds heads apart on a surface --
+    # and also what makes two head-capped arc ends spring apart rather than close. Swept so the question
+    # "is there a window where the bilayer forms AND edges can fuse" can be answered rather than assumed.
+    chi[HEAD, HEAD] = float(os.environ.get("VIVARIUM_CHI_HH", 0.20))
     chi[HEAD, WATER] = chi[WATER, HEAD] = 0.75   # heads are solvated, comparable to bulk water
     # THE HEAD-TAIL CROSS TERM IS WHAT MAKES AN AMPHIPHILE. At 0.20 it equals head-head, so a head is
     # indifferent between a head neighbour and a tail neighbour, and nothing holds a leaflet together.

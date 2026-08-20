@@ -44,6 +44,15 @@ from integrate import Inertial
 W, H = 760, 560
 
 
+def _env_tag():
+    """Every VIVARIUM_* override, in the filename. Seven times a swept variable has been missing from a
+    tag -- L, n_tail, seed, kT, frac_short, chi_HT, chi_HH -- and each time the arms silently overwrote
+    one another's frames and states. Enumerating the environment removes the failure mode instead of
+    patching it once more."""
+    return "".join(f"_{k.replace('VIVARIUM_', '').replace('CHI_', '').lower()}{v}"
+                   for k, v in sorted(os.environ.items()) if k.startswith("VIVARIUM_"))
+
+
 def shot(X, species, L, tag, slab=1.2):
     """A structural claim in this project is not allowed without looking at the picture.
 
@@ -714,14 +723,13 @@ if __name__ == "__main__":
                   f"{g['lumen']:>7.2f}{g['lumen_w']:>8}"
                   f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)
             shot(X, species, L, f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}"
-                 f"_kT{kT}_fs{frac_short}_ht{os.environ.get('VIVARIUM_CHI_HT','0.20')}"
-                 f"_sd{seed}_s{t:07d}")
+                 f"_kT{kT}_fs{frac_short}{_env_tag()}_sd{seed}_s{t:07d}")
     # Save the final state. Post-hoc analysis has had to RE-RUN the simulation three times in this
     # project because only images and printed metrics survived; a new observable then cannot be applied
     # to a finished experiment. Coordinates plus species and topology are enough to score anything.
     root = os.environ.get("BUILD_WORKSPACE_DIRECTORY", ".")
     out = pathlib.Path(root) / "projects" / "vivarium" / "docs" / "states"
     out.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(out / f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}_kT{kT}_fs{frac_short}_ht{os.environ.get('VIVARIUM_CHI_HT','0.20')}_sd{seed}.npz",
+    np.savez_compressed(out / f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}_kT{kT}_fs{frac_short}{_env_tag()}_sd{seed}.npz",
                         X=X, species=species, chains=chains, L=L, d=d, phi=phi, steps=steps,
                         mols=np.array([m for m in mols], dtype=object), allow_pickle=True)

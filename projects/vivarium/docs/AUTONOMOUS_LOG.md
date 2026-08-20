@@ -3220,3 +3220,61 @@ argument survives with a kinetic caveat. If the ends spring apart even from span
 about 3 sigma apart, then the closed state is not preferred despite a positive lambda and the continuum
 picture is falsified for this model. If closure is stochastic across seeds at intermediate spans, the
 barrier height can be read off the span at which the closure fraction crosses one half.
+
+---
+
+## 2026-08-19t tick — closure falsified directly: arc ends spring apart even from 2.2 sigma
+
+### The span sweep
+
+N = 70 arcs planted at four spans, kT = 0.45, implicit, head-tail -0.50, 5 seeds each, 100 000 steps.
+Gap between the two exposed ends:
+
+| span | planted gap | final gap (5 seeds) | mean |
+|---|---|---|---|
+| 0.75 | 21.0 | 28.0 27.2 28.8 22.8 24.7 | **26.3** |
+| 0.85 | 11.9 | 25.1 22.5 17.5 17.1 22.7 | **21.0** |
+| 0.92 | 6.0 | 19.0 19.8 11.0 12.8 10.7 | **14.7** |
+| 0.97 | **2.2** | 18.5 17.3 10.6 10.9 11.9 | **13.9** |
+
+**Every one of the 20 runs opened.** At span 0.97 the two ends start 2.2 sigma apart -- in contact for
+this model -- and still spring to 13.9. The falsification resolves to its **second branch**: the closed
+state is not preferred despite a positive lambda, so **the continuum picture is falsified for this
+model**. It is not a nucleation barrier; there is nothing to nucleate past.
+
+Note `hollow` reads 0.000 for most of these, and would have been read as "closed" by the metric that
+misled the previous tick. The end gap is the observable that decides, and it says the opposite.
+
+### The mechanism, and it is a genuine tension in the model
+
+The arc's ends are capped by **heads**, and the solvent-averaged head-head term is
+`0.20 + 1.00 - 0.75 - 0.75 = -0.30`, i.e. **repulsive**. That repulsion is precisely what drives heads
+onto the two surfaces and builds the bilayer -- and it is also what makes two head-capped edges push
+apart. **The term that creates the membrane forbids closing it.**
+
+That is a sharper statement than "closure does not happen here": it identifies a specific opposition
+between two requirements in one parameter, and it is testable.
+
+### Retracted
+
+* Nothing measured is retracted this tick. The **standing plan** is: the critical-size test was
+  predicated on closure being driven by edge energy once the ribbon is long enough, and both the size
+  sweep (all four sizes, 20 runs) and this span sweep (all four spans, 20 runs) contradict it. kappa
+  cannot be extracted from a threshold that does not exist, so `kappa = 2*lambda*R*/pi` is unavailable
+  by this route.
+
+### Seventh filename collision, averted and then fixed structurally
+
+The head-head sweep would have overwritten its own three arms, since `chi_HH` was not in the tag. Rather
+than adding a seventh variable by hand -- after L, n_tail, seed, kT, frac_short and chi_HT -- the tag now
+**enumerates every `VIVARIUM_*` override automatically**, so a new knob cannot be forgotten. The runs
+were killed and relaunched before they produced data.
+
+**FALSIFICATION, STATED BEFORE THE SWEEP IS READ.** `chi_HH` at 0.20, 0.50 and 0.90 -- implicit head-head
+of -0.30, 0.00 and +0.40 -- with head-tail held at -0.50. Two observables per arm: `core` on emergent
+runs, which must stay near 1.467 for the bilayer to survive, and the end gap on N = 70 arc0.92 plants,
+which must fall below about 3 sigma for closure. If some value gives both, the model can make a closed
+vesicle and the opposition is only apparent. If every value that closes the arc destroys the bilayer
+(core falling toward the 1.22 of the attractive setting), the opposition is real and this force field
+cannot produce a vesicle without a further term. If nothing closes at any head-head value, the
+obstruction is not head-head repulsion and the mechanism above is wrong.
