@@ -4020,3 +4020,49 @@ solvent, 3 seeds each, L scaled to keep packing constant. If enclosed area grows
 lumen at bulk density appears, closure is size-limited and the milestone needs bigger systems. If
 enclosure stays near zero at 500 lipids, size is not the limitation and closure does not occur in this
 model in either solvent at any size tested.
+
+---
+
+## 2026-08-20f tick — size scaling launched; the explicit-solvent negative is now final at N = 120
+
+### The N = 120 explicit result, complete
+
+All five seeds reached 400 000 steps. Final state, with the enclosure detector that now passes its
+positive control (planted ring: 5904 sigma^2 enclosed, water at 1.02x bulk):
+
+| seed | largest | core | burial | enclosed area | rho_in/rho_out |
+|---|---|---|---|---|---|
+| 0 | 66 | 1.252 | 1.303 | 1 sigma^2 | 0.00 |
+| 1 | 98 | 1.270 | 1.651 | none | -- |
+| 2 | 64 | 1.278 | 2.156 | none | -- |
+| 3 | 101 | 1.264 | 2.351 | 21 sigma^2 | 1.92 |
+| 4 | **104** | 1.289 | 2.163 | none | -- |
+
+**Explicit solvent beats implicit on aggregation and curvature and still does not close.** Largest
+reaches 104 of 120 against implicit's 38-74; the seed-4 render shows a ribbon sweeping most of the way
+round a large region with a wide mouth left open, unchanged since step 180 000. The largest enclosed
+region anywhere is 0.4% of a planted ring's.
+
+### Two stale arms killed
+
+The kT = 0.90 emergence arm was declared uninformative last tick -- the membrane melts there (burial
+0.145-0.532) -- so it was consuming CPU without being able to answer anything, and was stopped. A 3-D
+sphere run at L = 25 was also still alive from many ticks ago, in the configuration whose shape metrics
+are known-void because the aggregate spans more than half the box; also stopped.
+
+### The size question, launched
+
+Every closure attempt in explicit solvent has used 120 lipids, which is only about 120 sigma of contour.
+Whether that is simply too small is a separate question from whether the model can close at all, and it
+has never been separated.
+
+N = 300 and N = 500, explicit solvent, kT = 0.45, **L scaled as sqrt(N/120) x 56** -- 88.0 and 114.0 --
+so the lipid packing fraction is held at 0.15 and only system size changes. 3 seeds each, 400 000 steps.
+
+**FALSIFICATION, STATED BEFORE ANY RESULT IS READ.** If enclosed area grows sharply with N and a lumen at
+about bulk density appears at 300 or 500, closure is size-limited: the model can do it and every previous
+attempt was simply too small. If enclosed area stays at the few-sigma-squared noise level at 500 lipids,
+size is not the limitation, and closure does not occur in this model in either solvent at any size tested
+-- which would be the strongest negative this project has, resting on a validated detector rather than on
+a render or an energy difference no estimator could resolve. If the larger systems fail to aggregate into
+single large ribbons at all, the runs are under-sampled at that size and say nothing either way.
