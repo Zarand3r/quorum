@@ -6735,3 +6735,68 @@ baseline applies; integrity is judged against 1.278 and on `largest`.
 ### Still in flight
 
 Emergence continuation (240 000/800 000, 1.04 million total), mixed-lipid asymmetry test.
+
+---
+
+## Tick: the mixed test said nothing, so the asymmetry was imposed instead
+
+### The 50/50 mixed flat ribbon fired its "says nothing" branch
+
+| seed | largest | core | enrichment | closed |
+|---|---|---|---|---|
+| 0 | 44 | 1.290 | +0.152 | never |
+| 1 | 49 | 1.326 | +0.019 | never |
+| 2 | 33 | 1.295 | +0.143 | never |
+| 3 | 20 | 1.365 | -0.167 | never |
+| 4 | 32 | 1.328 | -0.655 | never |
+
+largest 20-49 of 80: **the ribbon fragmented.** That is the fourth pre-registered branch -- the mixture
+does not hold a flat bilayer, so the run says nothing about asymmetry. The enrichment values swing from
++0.152 to -0.655, but they are measured on broken pieces and mean nothing; they are recorded only so
+they are not mistaken later for a partitioning signal.
+
+### The asymmetry, imposed rather than hoped for
+
+`build()` calls `rng.shuffle(chains)` with the comment "so leaflet assignment is not correlated with
+species" -- which is exactly what keeps every plant symmetric. Both the flat and ring plants fill one
+leaflet before the other, so an UNSHUFFLED chain list puts every short lipid on one face and every long
+lipid on the other. Added `VIVARIUM_SORT_LEAFLETS`.
+
+**Verified rather than assumed**, by building both ways and measuring leaflet composition:
+
+    SORT_LEAFLETS=0: upper 40 lipids, short fraction 0.55 | lower 0.45  -> asymmetry 0.10 (seed noise)
+    SORT_LEAFLETS=1: upper 40 lipids, short fraction 1.00 | lower 0.00  -> asymmetry 1.00
+
+### FALSIFICATION, STATED BEFORE THE RESULT IS READ
+
+Launched: **flat ribbon with imposed leaflet asymmetry**, N = 80, L = 110, implicit, frac_short = 0.5,
+`SORT_LEAFLETS=1`, 5 seeds, 200 000 steps -- the identical protocol that gave 0/5 for a single species,
+changing only which leaflet each lipid type occupies.
+
+This is the last untested source of curvature. chi_TW is a null with power (+2.8 +- 2.8 against
+-5.2 +- 4.2), chi_HH is 0/5 at two values over ten runs, lipid shape dissolves to micelles, and no
+symmetric pair term can produce a curvature that is by definition a difference between leaflets.
+
+**Calibration caveat, recorded before reading:** this arm starts at **core = 1.309**, between the 1.000
+of an all-short ribbon and the 1.467 of an all-long one. Neither the 1.35 threshold nor either baseline
+applies; integrity is judged on `largest` and against 1.309.
+
+* **Curls or closes in >= 1/5 with largest >= 76** -> imposed leaflet asymmetry generates spontaneous
+  curvature, and it is the ingredient this model has been missing all along.
+* **Stays flat 0/5 with largest >= 76** -> asymmetry does not generate it either. Every candidate source
+  is then excluded, and an emergent vesicle is unreachable in this force field without a new term.
+* **largest < 76** -> the asymmetric mixture does not hold a bilayer either, and this route is
+  untestable with these two lipid types rather than answered.
+
+### Emergence continuation, at 1.2 million total steps
+
+Seed 3: largest 160/160, core 1.431, perc = n, n_enclosed = 1, **lumen 98 against 8149 expected, ratio
+0.012**. Rejected by the size gate for the third reading running. Seed 1 likewise (ratio 0.016).
+Doubling the runtime from 800 000 to 1.2 million has not changed the topology: the render is the same
+branched network.
+
+### Still in flight
+
+Emergence continuation (400 000/800 000, 1.2 million total), imposed-asymmetry test (170 000/200 000 at
+the time of writing, largest 33-80 -- partial fragmentation already visible, so the third branch is in
+play).

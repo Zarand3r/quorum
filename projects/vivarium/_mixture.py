@@ -142,7 +142,15 @@ def build(n_short, n_long, n_water, L, d, tails=(2, 4), seed=0, plant="random", 
     """
     rng = np.random.default_rng(seed)
     chains = [tails[0]] * n_short + [tails[1]] * n_long
-    rng.shuffle(chains)                       # so leaflet assignment is not correlated with species
+    # Shuffled by default so leaflet assignment is not correlated with species. Skipping the shuffle
+    # does the opposite deliberately: the flat and ring plants fill one leaflet before the other, so an
+    # UNSHUFFLED chain list puts every short lipid on one face and every long lipid on the other. That
+    # is an imposed leaflet asymmetry, and it is the only remaining candidate source of spontaneous
+    # curvature -- chi_TW (lambda +2.8 +- 2.8 vs -5.2 +- 4.2), chi_HH (0/5 over ten runs) and lipid
+    # shape (2-tail dissolves to micelles) are all excluded, and no SYMMETRIC pair term can produce a
+    # curvature, which is by definition a difference between the two leaflets.
+    if os.environ.get("VIVARIUM_SORT_LEAFLETS", "0") != "1":
+        rng.shuffle(chains)
     n_lip_beads = sum(1 + t for t in chains)
     n = n_lip_beads + n_water
     X = np.zeros((n, d))
