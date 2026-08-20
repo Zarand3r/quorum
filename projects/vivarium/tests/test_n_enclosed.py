@@ -52,3 +52,37 @@ def test_lumen_cells_is_the_largest_enclosed_region():
     mols, X = _as_mols(np.concatenate([ring, bar]))
     _, sizes = n_enclosed(X, mols, 60.0)
     assert lumen_cells(X, mols, 60.0) == max(sizes)
+
+
+def _ring_spaced(R, spacing, L):
+    n = max(8, int(round(2.0 * np.pi * R / spacing)))
+    t = np.linspace(0.0, 2.0 * np.pi, n, endpoint=False)
+    return np.stack([L / 2 + R * np.cos(t), L / 2 + R * np.sin(t)], axis=1)
+
+
+def test_vesicle_vs_tangle_call_survives_the_dilation_knob():
+    """The COUNT moves with dilation; the 1-versus-many CALL must not.
+
+    On real quench tangles the count runs 5/4/4/3 and 8/6/6/4 over bead 1.0-3.0 as thin necks seal
+    and unseal. Only the call is reportable, so only the call is gated.
+    """
+    ring = _ring_spaced(43.0, 1.0, 120.0)
+    # the crossbar must be built at the MEASURED membrane density (0.95 sigma nearest
+    # neighbour); a sparse bar leaks at low dilation and the theta reads as a plain ring.
+    bar = np.stack([np.full(90, 60.0), np.linspace(17.5, 102.5, 90)], axis=1)
+    theta = np.concatenate([ring, bar])
+    for bead in (1.0, 1.5, 2.0, 3.0):
+        assert n_enclosed(ring, [np.arange(len(ring))], 120.0, bead=bead)[0] == 1, f"ring at bead {bead}"
+        assert n_enclosed(theta, [np.arange(len(theta))], 120.0, bead=bead)[0] >= 2, f"theta at bead {bead}"
+
+
+def test_genuine_opening_is_not_sealed_shut():
+    """The opposite failure: dilating far enough to seal a real gap would invent lumens."""
+    R, spacing = 43.0, 1.0
+    for gap in (4.0, 6.0):
+        n = int(round(2.0 * np.pi * R / spacing))
+        frac = gap / (2.0 * np.pi * R)
+        t = np.linspace(0.0, 2.0 * np.pi * (1.0 - frac), n)
+        pts = np.stack([60.0 + R * np.cos(t), 60.0 + R * np.sin(t)], axis=1)
+        count, _ = n_enclosed(pts, [np.arange(len(pts))], 120.0)
+        assert count == 0, f"a {gap} sigma opening must read open, got {count}"

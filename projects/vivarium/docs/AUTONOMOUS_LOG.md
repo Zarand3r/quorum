@@ -5689,3 +5689,107 @@ Reading both arms at step 100 000, at the end.
 * Anneal ladder, 10 runs.
 * Dilution quench, 5 seeds, to 300 000.
 * Dispersed-start emergence, 5 seeds, to 800 000 (an EMERGENCE arm is always running).
+
+---
+
+## Tick: a false alarm about the detector, and a real limit on what it can report
+
+### The alarm
+
+Planted ring sd0 showed `lumen_c` flickering 25036 -> 0 -> 24769 -> 0 -> 0 -> 0 over 25 000 steps while
+`largest` stayed 300 and `core` stayed 1.44-1.45. An intact ring cannot lose and regain a 25 000-cell
+lumen in 5 000 steps, so this looked like the detector leaking.
+
+### RETRACTED: my diagnosis of it
+
+I attributed the leak to in-leaflet bead spacing of 1.8 sigma, computed as circumference/lipids-per-
+leaflet = 270/150. **That arithmetic conflated lipids with beads and is wrong.** The measured median
+nearest-neighbour distance in these states is **0.95 sigma**. Four of the five ring seeds read
+n_enclosed = 1 at the ORIGINAL dilation; only sd0 does not, and sd0 needs bead = 4.0 to close, which is
+past the point where a genuine 4-sigma opening gets sealed into a false lumen.
+
+So sd0 most likely has a **real transient pore**, and the flicker is physics. The detector was not at
+fault, and the default is left at 1.0 -- raising it would have changed every historical `lumen_c` to fix
+a problem that does not exist at this density.
+
+### What the sweep DID establish, which is a real limit
+
+The dilation knob was swept on the actual states:
+
+| state | nenc @ bead 1.0 / 1.5 / 2.0 / 3.0 | call |
+|---|---|---|
+| planted ring sd1-sd4 | [1, 1, 1, 1] | VESICLE |
+| planted ring sd0 | [0, 0, 0, 0] | genuinely open |
+| quench sd0 | [5, 4, 4, 3] | TANGLE |
+| quench sd1 | [4, 2, 2, 2] | TANGLE |
+| quench sd2 | [5, 5, 5, 3] | TANGLE |
+| quench sd3 | [8, 6, 6, 4] | TANGLE |
+| quench sd4 | [5, 3, 3, 3] | TANGLE |
+
+**The COUNT is not a measurement.** It moves by a factor of two with the dilation knob as thin necks
+seal and unseal. The 1-versus-many CALL never flips anywhere in that range. From here only the call is
+reportable, and the count is an ordinal. The gate was rewritten to assert the call across
+bead 1.0-3.0 rather than to assert a number, and the over-seal control (a 4-sigma opening must read 0)
+is kept.
+
+Synthetic calibration, for the record -- ring must read 1, a real gap must read 0:
+
+    bead   1.0s 1.4s 1.8s 2.2s | 4s gap  6s gap
+    1.0      1    0    0    0  |   0       0
+    2.0      1    1    1    0  |   0       0
+    3.0      1    1    1    1  |   0       0
+    3.5      1    1    1    1  |   1       0   <- invents lumens
+
+### The anneal is failing its own control
+
+At step 45 000-50 000 of 100 000, provisional:
+
+| kT | largest | core | n_enclosed |
+|---|---|---|---|
+| 0.60 | 228-300 | 1.382-1.395 | 5, 1, 4, 7, 3 |
+| 0.75 | 109-252 | 1.354-1.391 | 1, 4, 4, 7, 1 |
+
+The seeds reading n_enclosed = 1 are the ones that FRAGMENTED (kT 0.75 sd0 at largest 156, sd4 at 114).
+That is not annealing to a vesicle, it is falling apart into a piece that happens to enclose something,
+and it is exactly why a `largest` guard has to accompany any n_enclosed = 1 claim. Nothing here is a
+vesicle. `core` at kT = 0.75 has reached 1.354 against the 1.35 floor set before launch, so that rung is
+on the edge of failing its melt control outright.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Coarsening, not closure, is the binding constraint on emergence: dispersed runs stall at 20-27 lipids
+against a ~145-lipid closure threshold. Every previous emergence attempt was either dense enough to
+coarsen but too small to hold a vesicle (L = 60), or roomy enough for one but too dilute to coarsen
+(L = 120).
+
+Launched: **N = 160, L = 65, dispersed start, kT = 0.45, 5 seeds, 800 000 steps.** The size is chosen so
+both constraints are satisfiable at once -- a vesicle of R = 160/2pi = 25.5 sigma has diameter 51 sigma
+and fits inside 65, while the lipid area fraction 160/65^2 = 0.038 is 1.8x denser than the L = 120 runs
+that stalled. N = 160 also sits just above the ~145-lipid threshold, so one loop consumes nearly all the
+material and little is left over to branch with.
+
+* **Largest reaches >= 145 lipids AND n_enclosed = 1 across bead 1.0-3.0** -> an emergent vesicle, the
+  first in this project, and the material-excess explanation for the sponge is confirmed.
+* **Largest reaches >= 145 but the call is TANGLE** -> branching is not driven by surplus material, and
+  the sponge is what this force field builds at any size.
+* **Largest stays < 145 after 800 000 steps** -> coarsening is the binding constraint at every density
+  where a vesicle can fit, and emergent closure is out of reach for this model without a nucleation aid.
+
+### Still in flight
+
+Ring and arc arms (the lambda measurement, read at 100 000), anneal ladder, dilution quench,
+the N = 300 dispersed emergence at 320 000, and the new N = 160 emergence.
+
+### Verification, reported honestly
+
+The full bazel suite **TIMED OUT at 900.2 s** and is recorded as a failure by bazel. It is not a real
+failure: the suite normally runs in 265-414 s, and the machine is currently carrying 44 simulation
+processes on 32 cores. It is also not a pass, and is not reported as one. The six `n_enclosed` gates
+were run directly instead and pass in under a second: `6 passed`.
+
+One of them failed first, and the failure was mine, not the metric's -- the synthetic theta's crossbar
+was built at 2.1 sigma spacing, which leaks at bead 1.0 and made a theta read as a plain ring. Rebuilt
+at the measured 0.95 sigma membrane density it passes at every dilation. The test caught exactly the
+sparse-structure sensitivity documented above, in a shape I had built carelessly.
+
+The full suite must be re-run under lower load before this is treated as green.

@@ -29,7 +29,26 @@ def _interior_mask(X, mols, L, cell=0.5, bead=1.0):
     n = max(8, int(L / cell))
     occ = np.zeros((n, n), bool)
     gi = (np.asarray(X[lip]) / L * n).astype(int) % n
-    # Stamp each bead as a DISC of its own radius, not a single cell. `_lumen.py` marked one cell per
+    # `bead` is the DILATION DIAMETER, and it is a calibrated quantity, not the physical bead size.
+    # It must be wide enough to seal the gaps between neighbouring beads along a leaflet and narrow
+    # enough to leave a genuine opening open. Measured window, on synthetic rings of R = 43 in L = 120
+    # (columns are the in-leaflet bead spacing; a correct detector reads 1 for a ring and 0 for a gap):
+    #
+    #     bead   1.0s 1.4s 1.8s 2.2s | 4s gap  6s gap
+    #     1.0      1    0    0    0  |   0       0      <- leaks on anything but a dense ring
+    #     2.0      1    1    1    0  |   0       0
+    #     3.0      1    1    1    1  |   0       0
+    #     3.5      1    1    1    1  |   1       0      <- seals a real opening into a false lumen
+    #
+    # 1.0 is kept because the real membranes here sit at a MEASURED median nearest-neighbour distance
+    # of 0.95 sigma, well inside where 1.0 works, and raising it would change every historical lumen_c.
+    #
+    # What the sweep does NOT license is reading the returned COUNT as exact. On the quench tangles the
+    # count runs 5/4/4/3 and 8/6/6/4 across bead 1.0/1.5/2.0/3.0 -- thin necks seal and unseal. The
+    # 1-versus-many CALL is stable across that whole range and is the only thing to report; the count
+    # is an ordinal, not a measurement.
+    #
+    # Stamp each bead as a DISC, not a single cell. `_lumen.py` marked one cell per
     # bead, which works at DPD's density (rho = 4) but not here: at cell = 0.5 with beads about 1 sigma
     # apart the membrane becomes a dotted line and the flood-fill leaks straight through it, so a planted
     # ring scored 0 on its own positive control.
