@@ -6272,3 +6272,83 @@ Confirmed at step 0: n_enclosed = 0, largest 80, core 1.467, 8073 waters.
 
 chi_TW ring and arc, bend rungs 0.25/0.50, gap scan 0.99 and 0.98 to 100 000, flat-ribbon curling test,
 N = 160 emergence (480 000-520 000/800 000, largest 118 in seed 0).
+
+---
+
+## Tick: a branching metric built and discarded on its own control
+
+### The gap scan, sharpening
+
+At step 20 000 (still running to 100 000):
+
+| arm | gap | closed |
+|---|---|---|
+| N = 300 arc0.99 | 3.0 sigma | **4/5** |
+| N = 300 arc0.98 | 6.0 sigma | 1/5 |
+| N = 300 arc0.97 | 9.0 sigma | 2/5 by step 100 000 |
+
+The monotonic dependence of closure rate on gap holds and is strengthening.
+
+### DISCARDED: a tip-counting metric for branching
+
+With closure now known to be achievable at N = 300, the obvious blocker for emergence is that emergent
+aggregates are BRANCHED -- a branched network has many ends rather than two, so there is no single pair
+to bring together. I built a tip counter to quantify that on saved states, for free.
+
+It looked convincing:
+
+| state | nlip | tips |
+|---|---|---|
+| em160 sd0 | 129 | 56 |
+| em160 sd1 | 52 | 26 |
+| em160 sd3 | 78 | 38 |
+
+correlation(size, tips) = **+0.99**.
+
+**Then the positive control killed it.** A closed ring must read ~0 tips:
+
+    N=80 arc, CLOSED        nlip= 80  tips= 25
+    N=300 planted ring      nlip=300  tips=134
+
+Tips/lipid is 0.31-0.45 for closed rings against 0.43-0.50 for the branched emergent aggregates -- the
+same ratio. **The detector measures boundary roughness, not branch points**, and the +0.99 correlation
+is perimeter scaling, nothing more. Discarded before it was reported as a finding. Branching remains
+unquantified; the claim that it is the blocker is so far only visual.
+
+### A design cost error, recorded
+
+The flat-ribbon curling test is running far slower than intended. The flat plant needs L > ~103 at
+N = 80 purely so the ribbon has ends rather than spanning the box -- but that box then holds **8073
+waters for 80 lipids**, roughly 4x the per-step cost of the N = 80 arc runs at L = 60, where 1921 waters
+sufficed. Four of five seeds had not reached their first checkpoint after twelve minutes. CPU time
+confirms they are running, not wedged (7-8.5 minutes each), and 200 000 steps projects to about five
+hours.
+
+Retired to make room: the N = 300, L = 120 dispersed arm, which had answered its question -- it stalls at
+27-36 lipids of 300 and is superseded by the N = 160 box. The kill pattern was **counted before it was
+used** (5 matches, 0 of them em160), after last tick's pattern destroyed the dilution quench.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Launched a second curling arm in **implicit solvent**: flat ribbon, N = 80, L = 110, phi = 0.0, 5 seeds,
+200 000 steps. With no water the pair cost collapses, so this answers the curling question far sooner
+than the explicit arm. Implicit solvent is a known-good regime here -- it holds a planted vesicle at
+120/120 with a ~1900-cell lumen where explicit solvent originally destroyed one.
+
+* **The flat ribbon curls and closes in >= 1/5 seeds, in either arm** -> curling is spontaneous, and the
+  emergence blocker is branching and time, not a missing force.
+* **It stays open in 5/5 in BOTH arms, while an N = 80 arc closed 5/5** -> closure in this model requires
+  being handed curvature, and a flat emergent ribbon will never close.
+* **The two arms disagree** -> curling depends on the solvent treatment, which would be a result in its
+  own right and would mean no implicit-solvent closure claim transfers to the explicit runs.
+
+### Emergence: a new high
+
+N = 160 seed 0 reached **largest = 129** at step 520 000, up from 118 last tick and 52 at step 320 000 --
+89% of the ~145-lipid threshold, and the largest aggregate this project has assembled from a dispersed
+start. Open, branched, n_enclosed = 0, perc = n.
+
+### Still in flight
+
+chi_TW arms (55 000-60 000/100 000), bend rungs (67 500-75 000/150 000), gap scan to 100 000, explicit
+and implicit flat-ribbon curling tests, N = 160 emergence.
