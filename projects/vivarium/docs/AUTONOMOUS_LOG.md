@@ -5280,3 +5280,66 @@ a network, that is the strongest emergent result this project can produce and th
 If enclosures appear only in the 50-100 cell band, they are indistinguishable from the measured noise and
 the concentration trend is confirmed as a crowding artefact. If aggregates remain space-filling even at
 this size, the model cannot make an isolated closed object at any concentration that nucleates one.
+
+---
+
+## 2026-08-21c tick — a discriminator that PASSES its control: every emergent enclosure is a PERCOLATING network compartment
+
+### The larger system, read at the end
+
+N = 300, L = 60 (same 0.42 lipid area fraction as L = 38), chi_WW = 0.50, 5 seeds, 400 000 steps. Noise
+floor at this size measured last tick as ~100 cells.
+
+    sd63:  97 117 120 625 661 532 529 605 565 546 576 529 567 510 579 568 507 514 510 509
+    sd64:  ... 611 117 110 1344 1516 1635 1564 1725 1731
+    sd62:  ... 2832 408 363 3373 3554 ... 636 542
+
+All five seeds hold enclosures far above the noise floor, sd63 stable at ~550 for seventeen consecutive
+checkpoints and sd64 growing to **1731** -- half a planted vesicle's 3436. `largest` is 300/300 and core
+1.397-1.422.
+
+### The fifth discriminator attempt, and this one works
+
+Four previous attempts failed their positive control (a planted vesicle had to score above a jumble, and
+each time scored below). A fifth, **span/L**, failed too: the planted vesicle spans 0.87 of its box simply
+by being large, so a span threshold called it percolating.
+
+The correct test is **topological, not geometric**: does the enclosing cluster connect to its own
+**periodic image**? Unwrap by BFS and check whether any bead is reached with two inconsistent unwrapped
+positions.
+
+| | largest | lumen | percolates |
+|---|---|---|---|
+| **planted vesicle (control)** | 120 | 4014 | **False** |
+| N = 300, L = 60, all 5 seeds | 300 | 273 - 1731 | **True** |
+| N = 120, L = 38 | 120 | 365 | **True** |
+
+**It passes its control and separates every case.**
+
+### What this settles
+
+**Every emergent enclosure this project has produced is a compartment in a percolating network** -- a
+sponge phase -- and the planted vesicle is the only finite closed object it has ever had. The render
+agrees: a bilayer network spanning the box with water-filled compartments between its arms.
+
+This retroactively explains the four failed discriminators. Those pockets genuinely are amphiphile-lined
+and water-filled -- head enrichment 1.63, water at 1.5-1.6x bulk -- so no measure of *lining* or *content*
+could separate them from a vesicle. The difference was never chemistry or water; it is **topology**.
+
+**Every enclosure count reported in the last five ticks is therefore a count of network compartments.**
+The concentration trend, the quench results and the chi_WW combination all stand as measurements of
+compartment formation, not of vesicle formation.
+
+### Launched
+
+A vesicle needs an aggregate large enough to close but a box large enough that it cannot span. 300 lipids
+closed into a ring gives R = 300/(2*pi) = 48, diameter 96, so **L = 120** leaves room for a finite closed
+object. 5 seeds, 800 000 steps -- double length, since dilution slows coarsening.
+
+**FALSIFICATION, STATED BEFORE THE RUN.** Scored on a **non-percolating** cluster with a lumen above the
+noise floor, confirmed by render. If one appears, it is a vesicle by every test this project has, and the
+milestone is reached. If aggregates grow until they percolate and only then enclose, closure in this model
+is intrinsically a network phenomenon and an isolated vesicle needs something the force field lacks. If
+aggregates stay small and never close, the dilution needed to prevent percolation also prevents the
+aggregate reaching closure size, and the two requirements are geometrically incompatible at this lipid
+count -- which would make the next move more lipids, not different chemistry.
