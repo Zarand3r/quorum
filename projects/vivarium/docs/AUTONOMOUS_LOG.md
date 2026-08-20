@@ -4498,3 +4498,55 @@ because a planted structure removes the nucleation question entirely.
 Above ~2000 cells with core above 1.40 is survival; below ~400 is collapse; between is partial. The
 -0.25 arm is additionally judged on `largest`: a final value near 120 would mean the mid-run fragmentation
 was transient and this entry's caution was warranted.
+
+---
+
+## 2026-08-20o tick — a PLANTED vesicle fails in explicit solvent at BOTH head-tail settings
+
+### The result, read at the end of the run
+
+Planted ring, N = 120, explicit solvent, 150 000 steps, 5 seeds per setting. Planted values: largest
+**120/120**, core **1.465**, lumen **3436 cells**.
+
+| chi_HT | largest | core | lumen |
+|---|---|---|---|
+| **-0.25** (good bilayer) | 55, 62, 67, 73, 74 | 1.431 - 1.449 | **0, 0, 0, 0, 0** |
+| **+0.20** (default) | 80, 96, 111, 120, 120 | 1.289 - 1.321 | 0, 0, 0, 0, **1828** |
+
+**The vesicle fails at both settings, in different ways.** At -0.25 the ring **fragments** -- largest
+falls from 120 to 55-74 in every seed -- and the lumen is gone in 5 of 5. At +0.20 the ring stays
+connected but **deflates**: the lumen is gone in 4 of 5, with one seed retaining 1828 of 3436 cells.
+
+This matches the third branch of the falsification, not the second I expected from the mid-run reading.
+The mid-run entry drew no conclusion, which was the right call for a different reason than anticipated:
+the -0.25 fragmentation held, but +0.20 turned out to be failing too, at 4 of 5 rather than holding.
+
+**Why this is stronger than the earlier negatives.** A planted structure removes nucleation from the
+question entirely. Every previous closure result could be blamed on a rare nucleation event not being
+sampled; this one cannot. Explicit solvent does not hold a vesicle that it is handed.
+
+### The picture across the 2x2, with one cell missing
+
+| | planted vesicle | emergent enclosure |
+|---|---|---|
+| implicit | reported stable, but only with older metrics | **never**, 0 in many runs |
+| explicit | **fails at both chi_HT** (this tick) | rare, ~1 in 15, small |
+
+The implicit/planted cell was measured long ago with `hollow` and `seg`, before the validated lumen
+detector existed, so it is not on the same footing as the rest. **Launched: the same planted ring in
+implicit solvent**, identical N, box, packing, duration and metric, at `chi_HT` -0.75 and +0.20. Verified
+at step 0: largest 120/120, core 1.465, lumen 3436, matching the explicit arm exactly.
+
+### The 20-seed emergence arm
+
+Nine seeds running (the other six were queued behind the planted runs and have not started), at steps
+280 000-360 000, core 1.415-1.425, max lumen 0. Renders show thin well-resolved ribbons that are
+persistently **broken into separate pieces** -- the same fragmentation the planted ring shows at this
+setting, now visible from both directions.
+
+**FALSIFICATION, STATED BEFORE THE IMPLICIT ARM IS READ.** If the planted ring holds its lumen in implicit
+solvent while failing in explicit, then the solvent is what destroys vesicles here, and the milestone
+needs implicit solvent plus a nucleation mechanism -- since implicit has never nucleated one. If it fails
+in implicit too, no configuration of this force field holds a vesicle, planted or otherwise, and the
+model needs a term it does not have. If it holds only at `chi_HT = 0.20`, the repulsive term is
+incompatible with closure regardless of solvent.
