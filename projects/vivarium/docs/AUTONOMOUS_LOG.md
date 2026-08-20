@@ -3747,3 +3747,52 @@ of deleting the solvent. If `lambda_explicit` matches the implicit value within 
 nothing to the edge cost, and the absent closure drive is a property of the force field that no solvent
 treatment will repair. If `lambda_explicit` is near zero or negative, the edge is actually cheap in
 water, and the entire edge-tension route to closure is dead for this model.
+
+---
+
+## 2026-08-20 tick — a direct edge-cost estimator, validated against the known implicit value
+
+### The ring-versus-arc test is confirmed unusable
+
+At step 42 000 of 60 000, explicit solvent, 5 seeds: `ring - arc = +20.8 +- 23.9 eps`. The error has not
+shrunk with more sampling, exactly as predicted last tick. The sign has wandered from +11.5 to +20.8
+between checkpoints, which is what a 0.9-sigma quantity does. **No closure conclusion is drawn from this
+comparison in either solvent**, and the runs were killed to free CPU rather than left to accumulate more
+of the same.
+
+Confirmed on clean data alongside it: the bilayer holds in explicit solvent, core 1.326 +- 0.011 (ring)
+and 1.331 +- 0.011 (arc).
+
+### A better estimator, and it reproduces the known answer
+
+Added a **spanning** ribbon plant: a bilayer that wraps the box seamlessly and therefore has NO ends. At
+matched lipid count and matched spacing, `E(finite) - E(spanning)` is `2*lambda` as a **direct paired
+difference** -- the bulk term cancels exactly, with no extrapolation and no intercept to fit.
+
+Positive control, implicit solvent, N = 60, spacing 2.05 in both:
+
+    spanning  E/lipid  -19.45     finite  E/lipid  -19.12     difference x 60 = 19.8 eps
+
+against `2*lambda = 20.24 eps` from the independent `E(N)` fit. **The new estimator reproduces the known
+value at the planted geometry**, which is the check that makes it worth trusting on the unknown one. Both
+plants verified intact at core 1.467.
+
+Running: finite against spanning at N = 60, 5 seeds, in **both** solvents, 40 000 steps -- implicit as the
+control, explicit as the question. The `lambda_explicit` multi-size fit (N = 20/40/60/80) continues in
+parallel, so the explicit answer will arrive from two independent estimators.
+
+### Process failure caught
+
+**No emergence run was alive at the start of this tick.** Seeds 10-11 were queued as the tail of an
+`xargs -P 10` batch and were killed along with the drive runs before they started, so the standing
+requirement to keep a dispersed-start run in flight was silently broken. Emergence relaunched on seeds
+10-13 as its own batch, not appended to another. No new emergent render exists this tick as a result, and
+no planted structure is sent in its place.
+
+**FALSIFICATION, STATED BEFORE THE RESULT IS READ.** `2*lambda` from the finite-minus-spanning difference,
+in both solvents. If explicit gives substantially more than implicit's ~20 eps, water makes an exposed
+edge expensive and the closure drive exists there. If the two agree, water contributes nothing to the
+edge cost and the missing drive belongs to the force field rather than to the solvent treatment. If
+explicit gives less, edges are cheaper in water than in vacuum and the edge-tension route to closure is
+dead for this model. The implicit arm must reproduce ~20 eps after relaxation or the estimator itself is
+in question and neither number counts.
