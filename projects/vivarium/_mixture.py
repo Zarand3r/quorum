@@ -485,11 +485,25 @@ def geometry(X, mols, wi, chains, L, d, members=None):
     # the furthest bead, which one lipid poking out of an otherwise intact ring is enough to trip: it
     # rejected 3 of 5 explicit seeds whose rings were whole at largest = 300, R_mid 25.98. The span is
     # what unwrapping actually needs to be unambiguous.
+    # `core` and `burial` are computed from PAIRWISE distances only -- no centroid, no radius, no
+    # mid-surface -- so the centroid ambiguity this guard exists for cannot affect them. NaN-ing them
+    # alongside the centroid-dependent quantities discarded exactly the LARGEST aggregates (85, 89, 62,
+    # 58, 95 lipids) and biased every reported mean toward the small ones, which matters because
+    # thickening is size-dependent. They are now computed before the guard and returned through it.
+    _hb = np.concatenate([m[:1] for m in mols])
+    _tb = np.concatenate([m[1:] for m in mols])
+    _d = np.linalg.norm(_wrap(X[_tb][:, None, :] - X[_hb][None, :, :], L), axis=2)
+    core_pre = float(_d.min(axis=1).mean())
+    _P = X[lipid_beads]
+    _nn = (np.linalg.norm(_wrap(_P[:, None, :] - _P[None, :, :], L), axis=2) < 2.0).sum(axis=1) - 1
+    _hm = np.isin(lipid_beads, _hb)
+    burial_pre = float(_nn[~_hm].mean() - _nn[_hm].mean())
+
     span = (rel_all.max(axis=0) - rel_all.min(axis=0)) if len(rel_all) else np.zeros(1)
     if float(span.max()) > 0.5 * L:
         return dict(f_out=f_out, f_in=f_in, n_out=int(outer.sum()), n_in_leaf=int(inner.sum()),
                     R_mid=R_mid, shell_cv=float("nan"), hollow=float("nan"), mix=float("nan"),
-                    seg=float("nan"), burial=float("nan"), core=float("nan"),
+                    seg=float("nan"), burial=burial_pre, core=core_pre,
                     lumen=float("nan"), lumen_w=0, r_in=float("nan"))
     shell_cv = float(rt.std() / max(rt.mean(), 1e-9))
 

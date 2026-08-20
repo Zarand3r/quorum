@@ -3036,3 +3036,49 @@ that were previously discarded show core depth well above 1.467 at -0.50, they a
 clean surfaces, the effect was hidden by the guard, and a direct thickness measure is still needed. If
 the separation vanishes when the big clusters are included, it was an artefact of scoring only small
 aggregates.
+
+---
+
+## 2026-08-19q tick — the unbiased rerun answered a different question than the one asked
+
+### What it gave
+
+L = 120, 300 000 steps, 5 seeds per arm, **every seed reporting** (no NaN, so the guard bias is gone):
+
+| implicit HT | core depth (ref 1.467) | burial |
+|---|---|---|
+| +0.45 | 1.291 +- 0.047 | 4.167 +- 0.79 |
+| -0.50 | **1.453 +- 0.012** | 5.544 +- 0.28 |
+
+Core depth at -0.50 is indistinguishable from a planted bilayer, and the render shows a textbook bilayer
+ribbon: two leaflets, heads lining both long edges, uniform along its length.
+
+### What it failed to give, which is what it was launched for
+
+`largest` is **13-23 lipids in every seed**, against 42-95 at L = 56. Enlarging the box to escape the
+span guard made the system so dilute that coarsening never happened. **The question -- do LARGE aggregates
+thicken? -- is still unanswered**, and this run cannot answer it. I traded a metric bias for a sampling
+failure.
+
+The burial separation also weakens on this data: 5.544 +- 0.28 against 4.167 +- 0.79 is 1.6 sigma, where
+the L = 56 data gave a much cleaner split. Small aggregates are simply less distinguishable.
+
+### The actual fix, which is not a bigger box
+
+`core` and `burial` are computed from **pairwise distances only** -- no centroid, no radius, no
+mid-surface. The span guard exists for centroid ambiguity, so it should never have voided them. Voiding
+them discarded exactly the largest aggregates (85, 89, 62, 58, 95 lipids) and biased every mean toward
+the small ones, which matters precisely because thickening is size-dependent.
+
+Both are now computed **before** the guard and returned through it; only the centroid-dependent
+quantities (`R_mid`, `shell_cv`, `hollow`, `seg`) still go NaN. That removes the bias without changing
+the box, so aggregates can grow AND be measured.
+
+**Rerun launched at L = 56** -- the box that permits growth -- at +0.45 and -0.50, 5 seeds, 200 000 steps.
+
+**FALSIFICATION, STATED BEFORE IT IS READ.** With the large aggregates now scored: if core depth at -0.50
+stays near 1.46 across all seeds including the 85-95 lipid clusters, repulsive head-tail holds at every
+size reached and the bilayer result is unbiased. If core depth at -0.50 falls with aggregate size, large
+aggregates admit heads into the interior after all and the fix only works while structures are small. If
+core depth rises well above 1.467 for the big clusters, they are thickening behind clean surfaces --
+which core depth cannot detect -- and a direct local thickness measure is still owed.
