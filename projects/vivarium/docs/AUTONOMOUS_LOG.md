@@ -6662,3 +6662,76 @@ branched network is a long-lived intermediate or the end state.
 ### Still in flight
 
 Explicit flat ribbon (140 000/200 000), emergence continuation.
+
+---
+
+## Tick: the curling result is now confirmed in both solvents
+
+### The explicit flat ribbon, complete at 200 000
+
+| seed | largest | core | R_mid | closed |
+|---|---|---|---|---|
+| 0 | 80 | 1.448 | 34.51 | never |
+| 1 | 80 | 1.450 | 29.19 | never |
+| 2 | 80 | 1.446 | 18.61 | never |
+| 3 | 80 | 1.438 | 32.58 | never |
+| 4 | 80 | 1.445 | 29.67 | never |
+
+Membrane intact in all five. Combined with the implicit arm:
+
+| plant | implicit | explicit |
+|---|---|---|
+| flat | 0/5 | **0/5** |
+| arc0.97 | 5/5 | 5/5 |
+
+**Twenty runs, two solvents: every arc closed, no flat ribbon ever did.** The solvent treatment is not
+the variable; handed curvature is. This is as clean as anything measured in this project.
+
+### The new gate earns its keep immediately
+
+The emergence continuation reached step 240 000 (1.04 million total) and seed 3 again reports
+`n_enclosed = 1` at largest = 143. Under last tick's criterion that is a second emergent-vesicle claim.
+The size gate rejects it at once:
+
+    lumen 99 cells, expected 6509 for a closed 143-lipid vesicle, ratio 0.015 against a 0.10 threshold
+
+The render confirms it: the same branched network, long ribbon on the right joined to a branched cluster
+on the left, with a small pocket. **The gate added one tick ago caught a false positive on its very next
+reading**, which is a fair indication of how often the single-gate version would have fired.
+
+### A plant bug found and fixed
+
+`_plant_flat_ribbon` crashed on a mixed short/long population --
+`IndexError: index 3 is out of bounds for axis 0 with size 3`. It derived the tail count `nt` and hence
+`half` ONCE for the whole ribbon, so with 3-bead and 5-bead lipids in the same plant it indexed a short
+lipid as though it had five beads. Fixed to take the tail count from each molecule's own bead count.
+The bug was invisible until now because every previous flat plant was single-species.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Curvature has been excluded from every symmetric source: chi_TW is a null with power
+(lambda +2.8 +- 2.8 against -5.2 +- 4.2), chi_HH is 0/5 at two values over ten runs, and 2-tail lipids
+dissolve to micelles rather than curving. A symmetric pair term cannot produce spontaneous curvature
+because curvature is by definition a difference between the leaflets. What remains is compositional
+asymmetry.
+
+Launched: **flat ribbon, 50/50 short and long lipids**, N = 80, L = 110, implicit, 5 seeds, 200 000
+steps -- the identical protocol that gave 0/5 with a single species, changing only the composition. The
+`enrichment` column measures partitioning between the leaflets directly.
+
+**Calibration caveat, recorded before reading:** this arm starts at **core = 1.278**, between the 1.000
+of an all-short ribbon and the 1.467 of an all-long one. Neither the 1.35 threshold nor the 1.000
+baseline applies; integrity is judged against 1.278 and on `largest`.
+
+* **Curls or closes in >= 1/5 with largest >= 76** -> compositional asymmetry generates curvature, and it
+  is the missing ingredient.
+* **Stays flat 0/5 with largest >= 76 AND enrichment stays ~ 0** -> the species do not partition
+  spontaneously, so no asymmetry ever arises. This would NOT show that asymmetry fails to curve a
+  membrane, only that it does not appear on its own; testing it would then need a plant that imposes it.
+* **Stays flat 0/5 with largest >= 76 AND enrichment departs from 0** -> partitioning happened and
+  produced no curvature. Asymmetry of this kind is then insufficient.
+* **largest < 76** -> the mixture does not hold a bilayer and the run says nothing.
+
+### Still in flight
+
+Emergence continuation (240 000/800 000, 1.04 million total), mixed-lipid asymmetry test.

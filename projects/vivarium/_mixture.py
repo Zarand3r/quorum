@@ -342,6 +342,12 @@ def _plant_flat_ribbon(X, mols, chains, d, gap=1.05, L=None, branched=True, span
     for sgn in (+1.0, -1.0):
         for j in range(per):
             idx = mols[k]
+            # Tail count comes from THIS molecule, not from one scalar for the ribbon. A mixed
+            # short/long population has 3-bead and 5-bead lipids in the same plant, and deriving
+            # `half` once from the first molecule indexed a 3-bead lipid as if it had 5
+            # (IndexError: index 3 is out of bounds for axis 0 with size 3).
+            nt = len(idx) - 1
+            half = nt // 2 if branched and nt >= 2 else nt
             # Head on the outer face, tails pointing inward. For a BRANCHED lipid the two tails go SIDE
             # BY SIDE (lateral +-0.5, first bead 0.866 in), not end to end: laying all beads along one
             # line put the bond from the head to the second branch 3 sigma from it against a rest length
