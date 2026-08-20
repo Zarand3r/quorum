@@ -4066,3 +4066,67 @@ size is not the limitation, and closure does not occur in this model in either s
 -- which would be the strongest negative this project has, resting on a validated detector rather than on
 a render or an energy difference no estimator could resolve. If the larger systems fail to aggregate into
 single large ribbons at all, the runs are under-sampled at that size and say nothing either way.
+
+---
+
+## 2026-08-20g tick — I destroyed a validated instrument, restored it, and it finds a real (transient) lumen
+
+### I overwrote an existing detector with a worse one
+
+Last tick I ran `cp /tmp/lumen.py _lumen.py`, not knowing `_lumen.py` already existed in the project with
+its own bazel target. Its docstring is a direct warning against what I replaced it with:
+
+> The current `enclosed` flood-fill fires on everything: 29 on a field of compact micelles, 19 on a
+> branched worm network. Both are false positives -- it counts grid gaps BETWEEN aggregates, and pockets
+> at branch points, as if they were interiors.
+
+My replacement summed **all** enclosed cells, which is precisely that failure. Its "21 sigma^2 in seed 3"
+was therefore unreliable. Restored from git (`2756bc0`), and its validated logic -- **largest contiguous
+pocket**, not the sum, with a **minimum area** -- ported to `field.py` states as `_lumen_field.py`.
+
+Two further errors surfaced while restoring it. The duplicate bazel target broke the build until the
+appended block was deleted. And the original's one-cell-per-bead occupancy, which works at DPD's density
+of 4, leaves our membrane a dotted line at cell = 0.5 that the flood-fill leaks through -- the planted
+ring scored **0** on its own positive control until each bead was stamped as a disc of its own radius.
+
+### The recalibrated detector, passing every control
+
+| control | requirement | score |
+|---|---|---|
+| planted ring | high | **25626 cells** |
+| planted flat ribbon x3 | 0 | 0, 0, 0 |
+| implicit emergent ribbons x4 | 0 | 0, 0, 0, 0 |
+
+### The result
+
+Explicit-solvent emergence, N = 120, 5 seeds, 400 000 steps:
+
+| seed | 0 | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|---|
+| lumen (cells) | 0 | 0 | 0 | **253** | 0 |
+
+Seed 3's enclosure is **63 sigma^2, radius about 4.5 sigma, holding 68 water beads at 1.73x bulk
+density** -- water-filled, so not a vapour bubble, which settles the confound raised three ticks ago for
+this structure. The render confirms a closed loop at step 400 000.
+
+**What this is NOT.** It is one seed in five. It is **1% of a planted ring's lumen area** (63 against
+6407 sigma^2). The enclosed water is compressed rather than at bulk density. And the same loop was OPEN
+at step 380 000 and closed again by 400 000, so it **fluctuates** rather than persisting. The honest
+description is a transient water-filled enclosure, not a stable vesicle.
+
+It is nonetheless the first enclosure in this project to survive a detector that passes a positive
+control and three classes of negative control.
+
+### Also this tick
+
+Periodic state saving added -- state is now written at every checkpoint, overwriting, instead of only at
+the end. Several ticks have been spent waiting for runs to finish before a new observable could be
+applied to them. Two stale arms were killed: the kT = 0.90 emergence runs (membrane melts there, declared
+uninformative) and a 3-D sphere run at the known-void L = 25.
+
+**FALSIFICATION, STATED BEFORE THE SIZE RUNS ARE READ.** N = 300 and N = 500 in explicit solvent at fixed
+packing are at step 80 000-140 000 of 400 000, with largest 51-79, so they are still coarsening and are
+NOT read this tick. If lumen area at N = 300 or 500 reaches a substantial fraction of a planted ring's
+and persists across checkpoints rather than flickering, closure is size-limited and real. If lumen stays
+at zero or at the same transient 1% seen at N = 120, size is not the limitation and the model produces
+only fluctuating pockets, never a vesicle.

@@ -924,9 +924,9 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
-    name = "_lumen",
-    srcs = ["_lumen.py"],
-    main = "_lumen.py",
+    name = "_lumen_field",
+    srcs = ["_lumen_field.py"],
+    main = "_lumen_field.py",
     imports = ["."],
     deps = [":vivarium"],
 )

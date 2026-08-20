@@ -53,6 +53,17 @@ def _env_tag():
                    for k, v in sorted(os.environ.items()) if k.startswith("VIVARIUM_"))
 
 
+def _save_state(X, species, chains, mols, L, d, phi, kT, frac_short, plant, n_lip, seed, steps):
+    """Write the current configuration, overwriting any previous one for this run."""
+    root = os.environ.get("BUILD_WORKSPACE_DIRECTORY", ".")
+    out = pathlib.Path(root) / "projects" / "vivarium" / "docs" / "states"
+    out.mkdir(parents=True, exist_ok=True)
+    tag = (f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}"
+           f"_kT{kT}_fs{frac_short}{_env_tag()}_sd{seed}.npz")
+    np.savez_compressed(out / tag, X=X, species=species, chains=chains, L=L, d=d, phi=phi, steps=steps,
+                        mols=np.array([m for m in mols], dtype=object), allow_pickle=True)
+
+
 def shot(X, species, L, tag, slab=1.2):
     """A structural claim in this project is not allowed without looking at the picture.
 
@@ -752,12 +763,12 @@ if __name__ == "__main__":
                   f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)
             shot(X, species, L, f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}"
                  f"_kT{kT}_fs{frac_short}{_env_tag()}_sd{seed}_s{t:07d}")
+            # Save state at EVERY checkpoint, overwriting. State was previously written only at the end,
+            # so any new observable could be applied to a running experiment only by waiting for it to
+            # finish -- which has cost several ticks. Overwriting keeps one file per run rather than
+            # hundreds, and the render series already records the history.
+            _save_state(X, species, chains, mols, L, d, phi, kT, frac_short, plant, n_lip, seed, steps)
     # Save the final state. Post-hoc analysis has had to RE-RUN the simulation three times in this
     # project because only images and printed metrics survived; a new observable then cannot be applied
     # to a finished experiment. Coordinates plus species and topology are enough to score anything.
-    root = os.environ.get("BUILD_WORKSPACE_DIRECTORY", ".")
-    out = pathlib.Path(root) / "projects" / "vivarium" / "docs" / "states"
-    out.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(out / f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}_kT{kT}_fs{frac_short}{_env_tag()}_sd{seed}.npz",
-                        X=X, species=species, chains=chains, L=L, d=d, phi=phi, steps=steps,
-                        mols=np.array([m for m in mols], dtype=object), allow_pickle=True)
+    _save_state(X, species, chains, mols, L, d, phi, kT, frac_short, plant, n_lip, seed, steps)
