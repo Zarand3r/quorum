@@ -6498,3 +6498,79 @@ growing steadily, consistent with last tick's retraction. All n_enclosed = 0 exc
 
 Gap scan (4/5 and 3/5 at step 60 000), bend rungs (112 500/150 000), explicit flat ribbon
 (50 000/200 000), chi_HH scan, N = 160 emergence.
+
+---
+
+## Tick: no symmetric pair term generates curvature
+
+### The chi_HH scan, complete at 200 000
+
+Same flat-ribbon protocol that gave 0/5 closure at the default chi_HH = +0.20, so it is its own control:
+
+| chi_HH | closed | largest | core | R_mid final |
+|---|---|---|---|---|
+| -0.30 | **0/5** | 80, 80, 80, 80, 80 | 1.464-1.478 | 18.61-19.16 |
+| -0.60 | **0/5** | 80, 80, 80, 80, 80 | 1.454-1.475 | 17.41-19.17 |
+
+Membrane intact in all ten runs and R_mid indistinguishable from the default-chi_HH control (~18.2), so
+head repulsion did not even bend the ribbon, let alone close it. The second pre-registered branch fires.
+
+### The pattern behind both nulls
+
+chi_TW is a null with adequate power (lambda +2.8 +- 2.8 at 0.00 against -5.2 +- 4.2 at -0.50).
+chi_HH is a null at 0/5 across two values and ten runs. **Both are SYMMETRIC pair terms.** A symmetric
+interaction acts identically on the two leaflets, and spontaneous curvature is by definition a
+difference between them, so no symmetric term can produce it. The two nulls are not independent
+surprises; they are the same structural fact found twice.
+
+The remaining sources are asymmetry between the leaflets, or the shape of the lipid itself.
+
+### QUALIFIED: "this model does not curl"
+
+Written last tick from the planted flat ribbon staying straight 5/5. The emergent render this tick shows
+seed 2's 134-lipid aggregate as a large, substantially **curved**, largely unbranched C, ends perhaps
+20-30 sigma apart. So emergent ribbons plainly can carry large-scale curvature.
+
+The planted result stands as stated -- a flat ribbon with free ends does not spontaneously curl toward
+closure in 200 000 steps -- but "this model does not curl a flat bilayer" was too broad. A meandering
+ribbon and a spontaneously curving one look alike in a single frame, and nothing measured so far
+separates them.
+
+**This suggests the sharper question, for a later tick:** measure the end-to-end gap of emergent
+ribbons and compare it against the closure-rate-versus-gap curve already in hand (3.0 sigma -> 4/5,
+6.0 sigma -> 3/5, 9.0 sigma -> 2/5). If emergent ends sit at 20-30 sigma, the blocker is quantified
+rather than argued.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+If no symmetric pair term can curve a bilayer, the lipid's own shape is the next lever. The packing
+parameter P = v/(a0*l) sets the preferred curvature: the 4-tail branched lipid used throughout doubles
+the tail volume v at fixed length and sits in the flat-bilayer band, which is precisely why it was
+chosen. A 2-tail lipid has smaller v, so smaller P, so positive spontaneous curvature.
+
+Launched: **flat ribbon of all-short (2-tail) lipids**, N = 80, L = 110, implicit, frac_short = 1.0,
+5 seeds, 200 000 steps -- identical to the arm that gave 0/5, changing only the lipid.
+
+**Measurement caveat, recorded before reading:** this arm starts at **core = 1.000**, not 1.467, because
+core depth scales with tail length. The `core > 1.35` integrity threshold was calibrated on 4-tail
+lipids and would falsely flag every run here. Integrity must be judged against this arm's own step-0
+value and on `largest`.
+
+* **Curls or closes in >= 1/5 with largest >= 76** -> lipid shape generates curvature and is the missing
+  ingredient for emergent closure.
+* **Stays flat 0/5 with largest >= 76** -> shape does not generate it either, and the source must be
+  leaflet asymmetry, which no plant here currently creates.
+* **Breaks into micelles (largest < 76)** -> 2-tail lipids do not form a bilayer at this composition,
+  the test says nothing about curvature, and it confirms the detergent regime `chain_bonds` warns of
+  ("single chains sit near P ~ 1/3, the micelle band, and micelles are what this project keeps
+  producing").
+
+### Emergence
+
+N = 160 at step 720 000-760 000: largest by seed 91, 93, **134**, 107, 123. Seed 2 is a new high, but
+per last tick's retraction these fluctuate and no single value is a trend.
+
+### Still in flight
+
+Gap scan (4/5 and 3/5 at step 75 000), bend rungs (120 000-127 500/150 000), explicit flat ribbon
+(60 000/200 000), 2-tail shape test, N = 160 emergence.
