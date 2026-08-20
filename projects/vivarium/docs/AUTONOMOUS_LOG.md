@@ -2784,3 +2784,65 @@ control drops toward 0.7, the ribbons carry genuine amphiphilic order and the mo
 real. If the randomized control also reads 3-4, burial is measuring compactness alone at these sizes, the
 metric is void in this regime, and the ribbon claim rests on the render only until a better observable
 exists.
+
+---
+
+## 2026-08-19m tick — the emergent order is REAL (5.9 sigma); but the aggregates thicken, so they are droplets not membranes
+
+### The pre-committed control passes
+
+All five 2-D emergence runs finished 400 000 steps. The control stated last tick -- randomize lipid
+orientations IN PLACE, so shape is matched and only order is destroyed -- was run on the saved end
+states, scored on the largest cluster:
+
+| seed | largest | burial (emergent) | burial (rotated) |
+|---|---|---|---|
+| 0 | 43 | 2.738 | 0.250 |
+| 1 | 61 | 2.766 | 0.303 |
+| 2 | 56 | 2.897 | 0.384 |
+| 3 | 85 | 2.150 | 0.203 |
+| 4 | 52 | 3.490 | 0.269 |
+
+**2.808 +- 0.427 against 0.282 +- 0.060, a 5.9 sigma separation.** The falsification resolves to its
+first branch: the heads-out/tails-in organization is genuine and is not an artefact of compactness. This
+is the first emergent amphiphilic order in this project that survives a shape-matched null.
+
+### But the morphology is wrong, and the render caught it
+
+At 400 000 steps the largest aggregate is a **thick slab** with heads on the rim AND scattered through
+the interior, not the thin strips visible at 60 000. Measured as the minor-axis extent of the largest
+cluster:
+
+| largest | thickness (sigma) |
+|---|---|
+| 43 | 9.55 |
+| 52 | 10.51 |
+| 56 | 13.04 |
+| 61 | 12.04 |
+| 85 | 13.12 |
+
+A bilayer is two leaflets thick, about **5.8 sigma** for this lipid, and crucially that is
+**size-independent**: a membrane grows laterally, not thicker. Ours are 1.6-2.3x too thick and thicken
+monotonically with aggregate size. The burial numbers agree from the other direction -- the largest
+aggregate (85) has the LOWEST burial (2.150) and the smallest (52) the highest (3.490), because a
+thickening slab buries heads.
+
+**So what emerges is a condensed droplet with an ordered surface, not a membrane.** The ribbon
+morphology reported last tick from the step-60 000 render was real at that size and does not survive
+coarsening; that reading is corrected here rather than retracted, since the strips did exist -- they
+just are not the final state.
+
+### The live hypothesis: the packing parameter is too large
+
+The lipid is **one head bead against four tail beads**. Tail volume dominates head area, which pushes
+the packing parameter `P = v/(a0*l)` above the bilayer band and favours bulk condensed phases over
+membranes. That is consistent with everything above: strong surface order (the amphiphile works) but no
+thickness control (the geometry does not).
+
+**FALSIFICATION, STATED BEFORE THE RUN.** 2-D emergence, N = 120, L = 56, kT = 0.60, 200 000 steps,
+5 seeds each, at `frac_short` 0.0 (all 4-tail, the current lipid) and 1.0 (all 2-tail, half the tail
+volume per head). If thickness falls toward ~5.8 sigma and stops growing with aggregate size at
+`frac_short` 1.0, thickening is a packing-parameter problem and the lipid geometry is the thing to fix.
+If thickness is unchanged, packing is not the cause and the defect is in the interactions rather than the
+shape. If the 2-tail lipid instead disperses or forms micelles without growing, its packing parameter has
+overshot into the detergent band and the answer lies between the two.
