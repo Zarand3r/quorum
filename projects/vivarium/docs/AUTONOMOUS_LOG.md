@@ -4414,3 +4414,46 @@ enclosure occupies, the requirements are compatible and the milestone is reachab
 but all stay in the marginal 15-80 raw band, size and bilayer quality are anti-correlated and this force
 field trades one for the other. If no enclosure appears in 20 seeds while default gives 1 in 15, the
 repulsive term suppresses enclosure outright, which is the strongest form of the conflict.
+
+---
+
+## 2026-08-20m tick — separating "cannot form" from "cannot exist"
+
+### The repulsive-head-tail arm, still accumulating
+
+Nine of fifteen new seeds reporting, at steps 120 000-240 000 of 400 000:
+
+    core 1.401, 1.419, 1.421, 1.421, 1.422, 1.427, 1.427, 1.448, 1.452     max lumen: all 0
+
+**Core in explicit solvent now matches implicit-solvent quality** (1.45-1.47) and reaches within 0.015 of
+the 1.467 reference in the best seeds. That is the best membrane any explicit run has produced, and the
+render shows thin ribbons with heads cleanly on both faces.
+
+No enclosures yet. With the base rate at roughly 1 in 15, zero in nine partial runs is what an unchanged
+rate predicts, so **this is not evidence of suppression** and is not read as one.
+
+### The experiment that does not depend on a rare event
+
+Every closure measurement so far has waited for spontaneous nucleation, which happens about once in
+fifteen 400 000-step runs. That samples NUCLEATION, not stability, and the two questions have been
+conflated throughout this project.
+
+A **planted ring** separates them: it is a perfect bilayer with a large lumen by construction. Verified at
+step 0 in explicit solvent: **largest 120/120, core 1.465, lumen 3436 cells** -- thirteen times the
+largest emergent enclosure ever seen here (255 cells).
+
+Running it at `chi_HT = -0.25` (the setting that gives core 1.40-1.45) and at +0.20 (the setting whose
+emergent enclosure was stable), 5 seeds each, 150 000 steps, explicit solvent, same box and packing as
+the emergence runs.
+
+* If it holds at -0.25, a good-bilayer vesicle **is a stable state** in this force field and the only
+  obstacle is nucleation -- which is a tractable problem (seeding, larger systems, longer runs).
+* If it collapses at -0.25 but holds at +0.20, bilayer quality and lumen stability are **genuinely
+  incompatible** here, which is the strongest form of the trade seen last tick.
+* If it collapses at both, explicit solvent cannot hold a vesicle at all and the emergent enclosure at
+  +0.20 was a small structure stabilised by something other than membrane mechanics.
+
+**FALSIFICATION, STATED BEFORE THE RESULT IS READ.** The criterion is the lumen at the end relative to its
+planted 3436 cells, with `core` reported alongside so a lumen preserved by a degraded membrane is not
+mistaken for success. Holding above about 2000 cells with core above 1.40 is survival; falling below ~400
+is collapse; anything between is partial and needs the seed spread to interpret.
