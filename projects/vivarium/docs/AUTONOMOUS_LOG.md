@@ -5343,3 +5343,53 @@ is intrinsically a network phenomenon and an isolated vesicle needs something th
 aggregates stay small and never close, the dilution needed to prevent percolation also prevents the
 aggregate reaching closure size, and the two requirements are geometrically incompatible at this lipid
 count -- which would make the next move more lipids, not different chemistry.
+
+---
+
+## 2026-08-21d tick — percolation test wired into the simulation; the emergent phase is a bilayer SPONGE
+
+### Nothing read from the decisive run
+
+N = 300 at L = 120 is at step **40 000 of 800 000** -- largest 8-21 lipids, core 1.39-1.47, lumen 0
+everywhere. Nothing has coarsened. **Not read.** Dilution was the price of making a finite closed object
+geometrically possible, and it is being paid in coarsening time as expected.
+
+### The discriminator is now part of the instrument
+
+`percolates` -- does the enclosing cluster connect to its own periodic image -- is wired into the driver
+and printed at every checkpoint as a `perc` column. Verified **through the new code path**, not just
+standalone: a planted vesicle reads `perc = n` with `lumen_c = 3436`.
+
+This matters because the quantity is cheap to compute and impossible to reconstruct later: five earlier
+analyses had to be redone post-hoc, and one enclosure could not be attributed at all because the launch
+script discarded information the render filename happened to preserve.
+
+### What the emergent phase actually is
+
+The N = 300, L = 60 renders and the topological test agree: a **bilayer sponge phase** -- a network of
+two-leaflet ribbons spanning the box, with water-filled compartments between the arms. Seed 63 held
+~550 cells for seventeen consecutive checkpoints at core 1.409.
+
+The ribbons are good membrane, heads on both edges. **That is precisely why five chemistry- and
+geometry-based discriminators failed**: the compartments are genuinely amphiphile-lined (head enrichment
+1.63) and genuinely water-filled (1.5-1.6x bulk). Nothing about their local structure differs from a
+vesicle's. Only their topology does.
+
+A sponge phase is a real lyotropic phase, not an artefact -- it is what this force field makes at these
+concentrations. The milestone asks for a different one.
+
+### The state of the question
+
+| structure | exists in this model? | evidence |
+|---|---|---|
+| bilayer membrane | **yes** | core 1.44-1.47, emergent, many seeds |
+| water-filled compartment | **yes** | 1.5-1.6x bulk water, persistent 17+ checkpoints |
+| sponge phase | **yes** | percolates = True, all seeds at L <= 60 |
+| **isolated closed vesicle** | **only when planted** | percolates = False, lumen 3436, stable 150 000 steps |
+
+**FALSIFICATION, UNCHANGED AND RESTATED.** The dilute run is scored on a **non-percolating** cluster with
+a lumen above the noise floor, confirmed by render. A non-percolating closed object would be a vesicle by
+every test this project has. Aggregates that percolate before they enclose would mean closure here is
+intrinsically a network phenomenon. Aggregates that stay small and never close would mean the dilution
+preventing percolation also prevents reaching closure size -- pointing to more lipids rather than
+different chemistry as the next move.

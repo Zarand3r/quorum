@@ -38,7 +38,7 @@ import sys
 import numpy as np
 
 from _shot import disc, write_png
-from _lumen_field import lumen_cells
+from _lumen_field import lumen_cells, percolates
 from field import Field, HEAD, TAIL, WATER, solvent_averaged_chi
 from integrate import Inertial
 
@@ -769,7 +769,7 @@ if __name__ == "__main__":
           f"L={L}, packing fraction {phi}, kT={kT}, start={plant}", flush=True)
     print("enrichment = (short fraction of OUTER leaflet) - (short fraction of INNER leaflet); "
           "0 = no partitioning", flush=True)
-    print(f"{'step':>8}{'E/lip':>9}{'largest':>9}{'R_mid':>7}{'shellCV':>9}{'hollow':>8}{'mix':>7}{'seg':>7}{'burial':>8}{'core':>7}{'lumen_c':>9}"
+    print(f"{'step':>8}{'E/lip':>9}{'largest':>9}{'R_mid':>7}{'shellCV':>9}{'hollow':>8}{'mix':>7}{'seg':>7}{'burial':>8}{'core':>7}{'lumen_c':>9}{'perc':>6}"
           f"{'lumen':>7}{'lumenW':>8}{'shortOUT':>10}{'shortIN':>9}   enrichment", flush=True)
     every = max(steps // 20, 1)
     for t in range(steps + 1):
@@ -777,9 +777,10 @@ if __name__ == "__main__":
         if t % every == 0:
             g = geometry(X, mols, wi, chains, L, d)
             enr = g["f_out"] - g["f_in"]
+            _sub = [mols[i] for i in largest_members(X, mols, L)]
             print(f"{t:>8}{f.energy_solute(X) / n_lip:>9.2f}{largest_cluster(X, mols, L):>9}"
                   f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['hollow']:>8.3f}{g['mix']:>7.3f}{g['seg']:>7.3f}{g['burial']:>8.3f}{g['core']:>7.3f}"
-                  f"{lumen_cells(X, [mols[i] for i in largest_members(X, mols, L)], L):>9d}"
+                  f"{lumen_cells(X, _sub, L):>9d}{('Y' if percolates(X, _sub, L) else 'n'):>6}"
                   f"{g['lumen']:>7.2f}{g['lumen_w']:>8}"
                   f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)
             _ptag = ("restart" + pathlib.Path(plant.split(":", 1)[1]).stem.split("_sd")[-1]

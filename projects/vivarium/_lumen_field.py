@@ -214,3 +214,39 @@ def lumen_head_enrichment(X, species, mols, L, cell=0.5, bead=1.0, min_cells=40,
     f_shell = is_head[inshell].mean()
     f_all = is_head.mean()
     return float(f_shell / f_all)
+
+
+def percolates(X, mols, L, cut=1.4):
+    """Does the cluster connect to its own PERIODIC IMAGE?
+
+    The only discriminator here that passes its control. A vesicle is a FINITE closed object; a sponge
+    phase's "lumen" is a compartment between the arms of a network that wraps the box. Five geometric
+    tests failed to separate them -- head-facing, head enrichment, orientation-randomisation, water
+    content, span/L -- because the compartments genuinely are amphiphile-lined and water-filled. The
+    difference is topological.
+
+    Unwraps the cluster by breadth-first search, accumulating minimum-image displacements. If any bead is
+    reached with two inconsistent unwrapped positions, the cluster wraps.
+    """
+    from collections import deque
+    beads = np.concatenate(mols)
+    P = X[beads]
+    d = P[:, None, :] - P[None, :, :]
+    d -= L * np.round(d / L)
+    adj = np.linalg.norm(d, axis=2) < cut
+    np.fill_diagonal(adj, False)
+    pos = {0: np.zeros(P.shape[1])}
+    q = deque([0])
+    while q:
+        i = q.popleft()
+        for j in np.flatnonzero(adj[i]):
+            off = P[j] - P[i]
+            off -= L * np.round(off / L)
+            new = pos[i] + off
+            if j in pos:
+                if np.linalg.norm(pos[j] - new) > 0.5 * L:
+                    return True
+            else:
+                pos[j] = new
+                q.append(j)
+    return False
