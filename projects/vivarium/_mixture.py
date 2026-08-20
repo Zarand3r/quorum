@@ -63,7 +63,7 @@ def _save_state(X, species, chains, mols, L, d, phi, kT, frac_short, plant, n_li
     root = os.environ.get("BUILD_WORKSPACE_DIRECTORY", ".")
     out = pathlib.Path(root) / "projects" / "vivarium" / "docs" / "states"
     out.mkdir(parents=True, exist_ok=True)
-    tag = (f"mix{d}d_{plant}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}"
+    tag = (f"mix{d}d_{plant}_N{n_lip}_L{L:g}_{'sac' if phi == 0.0 else 'exp'}"
            f"_kT{kT}_fs{frac_short}{_env_tag()}_sd{seed}.npz")
     np.savez_compressed(out / tag, X=X, species=species, chains=chains, L=L, d=d, phi=phi, steps=steps,
                         mols=np.array([m for m in mols], dtype=object), allow_pickle=True)
@@ -779,7 +779,7 @@ if __name__ == "__main__":
                   f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)
             _ptag = ("restart" + pathlib.Path(plant.split(":", 1)[1]).stem.split("_sd")[-1]
                      if plant.startswith("state:") else plant)
-            shot(X, species, L, f"mix{d}d_{_ptag}_N{n_lip}_{'sac' if phi == 0.0 else 'exp'}"
+            shot(X, species, L, f"mix{d}d_{_ptag}_N{n_lip}_L{L:g}_{'sac' if phi == 0.0 else 'exp'}"
                  f"_kT{kT}_fs{frac_short}{_env_tag()}_sd{seed}_s{t:07d}")
             # Save state at EVERY checkpoint, overwriting. State was previously written only at the end,
             # so any new observable could be applied to a running experiment only by waiting for it to

@@ -4992,3 +4992,52 @@ a lumen at read time. If quenched seeds whose sources had NO lumen produce persi
 quench nucleates after all and the 1-of-20 was underpowered. If every persistent quench enclosure traces
 to a source that already had one, the quench is purely a stabiliser, and raising the yield means raising
 the nucleation rate at strong cohesion -- a different experiment from anything run so far.
+
+---
+
+## 2026-08-20x tick — the quench is a STABILISER, not a nucleator; nucleation is the rate-limiting step
+
+### With the mapping recorded, the answer is clean
+
+Quench re-run with the source-to-seed mapping written at launch, 20 seeds:
+
+| source lumen at its own end | seeds | quench longest run | quench max lumen |
+|---|---|---|---|
+| **0** | **19** | 0 - 2 (flickers) | 0 - 70 |
+| **125** (source sd19) | 1 | **13 consecutive** | **195** |
+
+**Every persistent quench enclosure traces to a source that already had one.** Nineteen lumen-free
+sources produced nothing but single- or double-checkpoint flickers near the 40-cell threshold. This is the
+second branch of the falsification stated before the run.
+
+**So the quench cannot create an enclosure -- only sustain and enlarge one.** Combined with the earlier
+arms, the division of labour is now measured rather than inferred:
+
+* strong cohesion (chi_WW >= 0.85) **nucleates**, at roughly 1-2 in 15-20 runs
+* weak cohesion (chi_WW <= 0.50) **sustains and grows**, but nucleates nothing in 25 runs
+* the planted vesicle survives only at chi_WW <= 0.50
+
+**Nucleation is the rate-limiting step**, and it is the one thing no condition tested so far improves.
+
+### Launched: what controls nucleation
+
+Concentration is the direct knob -- a smaller box raises the encounter rate at fixed lipid count. Box
+L = 45, 50, 56 at N = 120, chi_WW = 1.00 where nucleation actually happens, 5 seeds each, 400 000 steps.
+That spans 1.55x in area.
+
+### A collision caught before it corrupted the sweep
+
+The render and state tags carried N, kT, frac_short and every `VIVARIUM_*` override -- but **not L**,
+because `_env_tag()` enumerates environment variables and L is a positional argument. Sweeping box size
+with identical seeds would have had all three sizes overwriting each other's renders and states. This is
+the same missing-variable failure as the very first collision in this project, and the automatic helper
+built to end that class of bug did not cover it. Fixed: `L` is now in both tags, and the sweep was
+relaunched from scratch.
+
+**FALSIFICATION, STATED BEFORE THE SWEEP IS READ.** Scored on nucleation events per run -- an enclosure
+persisting four or more consecutive checkpoints -- across the three box sizes, 5 seeds each. If the rate
+rises as the box shrinks, nucleation is encounter-limited and the milestone is a matter of concentration
+and run length, both cheap. If the rate is flat across a 1.55x range in area, nucleation is not
+encounter-limited and something else gates it -- most likely a barrier in the closure step itself, which
+would point back at the isoenergetic ring-versus-arc result. If the smallest box suppresses nucleation,
+crowding interferes with closure and the optimum is at lower concentration than tested.
