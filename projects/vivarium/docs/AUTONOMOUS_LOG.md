@@ -5793,3 +5793,84 @@ at the measured 0.95 sigma membrane density it passes at every dilation. The tes
 sparse-structure sensitivity documented above, in a shape I had built carelessly.
 
 The full suite must be re-run under lower load before this is treated as green.
+
+---
+
+## Tick: lambda is drifting upward because the arc has not finished opening
+
+### The measurement, at matched steps
+
+Ring and arc arms compared seed-for-seed at the SAME step, 5 seeds each, both past equilibration:
+
+| step | ring mean | arc mean | E_ring - E_arc | sem | implied 2*lambda |
+|---|---|---|---|---|---|
+| 35 000 | -7.506 | -7.512 | +0.006 | 0.062 | -1.8 eps |
+| 40 000 | -7.488 | -7.506 | +0.018 | 0.053 | -5.4 eps |
+| 45 000 | -7.542 | -7.480 | -0.062 | 0.054 | +18.6 eps |
+| 50 000 | -7.556 | -7.474 | -0.082 | 0.043 | +24.6 eps |
+
+At step 50 000 this reads **lambda = +12.3 +- 6.4 eps, 1.9 sigma from zero**.
+
+**It is not converged, and the direction of the drift explains a great deal.** The ring's energy is flat;
+the ARC's is climbing steadily (-7.512 -> -7.474) and its R_mid is climbing with it
+(44.30 -> 44.70 -> 45.07 -> 45.43 -> 45.46). The arc is still opening. `E_ring - E_arc` equals -2*lambda
+only once the ends are fully separated, so **an arc read too early reports lambda too low** -- and at
+step 35 000 this very measurement would have reported lambda = -0.9, i.e. "isoenergetic".
+
+That is almost certainly what the earlier **+0.5 +- 6.0 eps** ring-versus-arc result was: an
+under-converged arc, not evidence that lambda is zero. The 2.3 sigma contradiction flagged last tick is
+therefore probably not a contradiction at all, but the same measurement stopped at different times. The
+intercept value +18.31 +- 7.07 and the still-rising +12.3 +- 6.4 are consistent with each other.
+
+**This is not yet a retraction of the retraction.** The arc must be shown to stop opening before any
+number is final.
+
+### A dead end, recorded
+
+An independent lambda route was attempted and abandoned: a flat ribbon with two ends versus a periodic
+end-free ribbon, which has zero curvature in both arms and so no opening transient at all. It does not
+work here. The `flat` plant refused outright, with a guard already written for this mistake -- "flat
+ribbon of 120 lipids is 123.0 wide and would span a box of L=60.0: it would have no ends... Need
+L > 154" -- and `span` ran but wrapped the 123-wide ribbon twice through the 60 box and self-overlapped,
+`min non-bonded r 0.000`, E/lip **+55.49**. Matching N to L for the spanning arm forces a DIFFERENT box
+for the ended arm, which destroys the matched comparison that made the idea attractive. Ring-versus-arc
+at fixed N and L remains the better measurement; its only defect is that it needs time.
+
+### RETRACTED: my worry that the new box was cavitating
+
+The N = 160, L = 65 render shows large black patches in the solvent and I suspected the water had
+fragmented, which the known-void makes a live risk. Measured instead of eyeballed:
+
+| run | rho_water | max void | p99 void |
+|---|---|---|---|
+| N = 160, L = 65 (new) | 0.511 | 5.0 sigma | 3.0 sigma |
+| N = 300, L = 120 (quench) | 0.596 | 7.0 sigma | 4.0 sigma |
+| N = 300, L = 120 (ring) | 0.596 | 6.0 sigma | 4.0 sigma |
+
+The new box has SMALLER voids than the runs already accepted. The patches are a dot-size artifact of
+rendering a smaller box at the same pixel scale. **The solvent is fine and the concern is withdrawn.**
+
+### Emergence, N = 160 L = 65, step 40 000-80 000
+
+largest 20-31 of 160, core 1.374-1.456, roughly twenty micellar blobs, no bilayer ribbon, nothing near
+the ~145-lipid threshold. Too early to judge against its 800 000-step falsification.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Launched: **arc0.97, N = 300, L = 120, 5 fresh seeds, 300 000 steps** -- three times the current arm, so
+the opening saturates instead of being cut off mid-flight. The ring's energy is flat from step 5 000 and
+needs no extension.
+
+* **R_mid plateaus and `E_ring - E_arc` settles near -36.6 eps** -> lambda = +18.31 stands, the earlier
+  +0.5 was an under-converged arc, and the contradiction is resolved in favour of the intercept.
+* **R_mid plateaus and the difference settles near 0** -> lambda really is ~0, the drift seen here was
+  transient, and the critical-size plan is withdrawn.
+* **R_mid never plateaus within 300 000 steps** -> the arc does not have a converged open state at this
+  size, `E_ring - E_arc` is not a measurement of lambda at all, and BOTH existing values must be
+  discarded rather than averaged.
+
+### Still in flight
+
+Ring (95 000/100 000), short arc (50 000/100 000), long arc (fresh), anneal ladder (70 000/100 000),
+dilution quench (210 000/300 000), N = 300 dispersed emergence (360 000/800 000), N = 160 dispersed
+emergence (80 000/800 000).
