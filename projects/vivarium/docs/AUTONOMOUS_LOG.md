@@ -3194,3 +3194,29 @@ zero or negative on the corrected field, the historical value was an artefact of
 was never a driving force for closure, and every closure experiment in this project has been chasing a
 number that does not exist. If lambda is positive but small -- under about 5 eps -- closure is weakly
 favoured and the 150 000-step window is simply too short to see it.
+
+**lambda re-measured on the corrected field.** Finite flat ribbons N = 20/30/40/60/80, 5 seeds, 40 000
+steps, L = 200. Total energy against lipid count, fitted per seed so the five fits are independent:
+
+    bulk energy per lipid   -20.929 eps
+    2*lambda (intercept)    +20.24 eps
+    lambda per end          **+10.12 +- 5.08 eps**  = +22.5 kT at kT = 0.45  (2.0 sigma from zero)
+    per-seed lambda          6.24, 10.77, 8.61, 6.39, 18.57
+    closure gain 2*lambda    **45 +- 23 kT**
+
+Against the historical **+18.31 +- 7.07 eps** the difference is 8.19 with a combined sd of 8.71, i.e.
+**0.94 sigma** -- statistically consistent. The N = 80 ribbon was rendered and is intact, flat and
+two-ended, so the fit is not contaminated by curling or fragmentation.
+
+**The falsification resolves to its FIRST branch, and the negative result stands.** lambda is positive,
+the edge is expensive, closure is favoured by about 45 kT -- and arcs still open at every size in all 20
+runs. The historical lambda was NOT an artefact of the broken lipid, so that escape is closed. What
+remains is a kinetic barrier, or a continuum picture that does not apply here.
+
+**FALSIFICATION, STATED BEFORE THE NEXT RUN.** N = 70 arcs planted at span 0.75, 0.85, 0.92 and 0.97 --
+end gaps of about 21, 13, 7 and 3 sigma -- kT = 0.45, 5 seeds each, 100 000 steps. If closure occurs only
+at the narrowest gaps, the barrier sits at contact, the failure is nucleation-limited, and the continuum
+argument survives with a kinetic caveat. If the ends spring apart even from span 0.97, where they start
+about 3 sigma apart, then the closed state is not preferred despite a positive lambda and the continuum
+picture is falsified for this model. If closure is stochastic across seeds at intermediate spans, the
+barrier height can be read off the span at which the closure fraction crosses one half.
