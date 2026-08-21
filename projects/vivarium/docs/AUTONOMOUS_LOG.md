@@ -8195,3 +8195,70 @@ list. Recorded as a choice.
 
 3-D assembly (5 large at step 0, 5 probe at 15 000/30 000), 3-D solvent pair (chi_WW = 0.50 at
 16 000/40 000), 10 rate extensions, 5 long runs at 1.12 million.
+
+---
+
+## Tick: the 3-D runs were under-sized by construction, and the arithmetic says so
+
+### The probe, near its end (step 22 500-24 000 of 30 000)
+
+| seed | nlip | thickness | eigenvalues | verdict |
+|---|---|---|---|---|
+| 800 | **52** | 5.5 sigma | 1.000 : 0.612 : 0.453 | isotropic / micelle |
+| 801 | 19 | 4.6 | 1.000 : 0.829 : 0.478 | isotropic / micelle |
+| 802 | 25 | 5.4 | 1.000 : 0.664 : 0.467 | isotropic / micelle |
+| 803 | 21 | 4.4 | 1.000 : 0.730 : 0.404 | isotropic / micelle |
+| 804 | 32 | 5.5 | 1.000 : 0.821 : 0.776 | isotropic / micelle |
+
+**5/5 isotropic**, confirmed two independent ways: anisotropy AND thickness. A 4-tail bilayer is two
+leaflets of head-plus-four-tails, about **9 sigma**; these are **4.4-5.5 sigma**, one leaflet thick.
+They are micelles. Seed 803's earlier rod reading was transient and is now isotropic too.
+
+### RETRACTED: the N = 200 runs as a "definitive" test
+
+They cannot answer the question they were launched for, and this is arithmetic rather than opinion. A
+patch reads as flat only if its radius exceeds its thickness:
+
+| N | disc radius | thickness | aspect |
+|---|---|---|---|
+| 60 (probe) | 3.1 sigma | 9 | **0.34** |
+| 200 (the "definitive" run) | 5.6 sigma | 9 | **0.63** |
+| ~500 | 9 | 9 | 1.0 |
+| ~2000 | 18 | 9 | 2.0 |
+
+**At N = 200 a bilayer disc would still be thicker than it is wide.** The same bound applies to a 3-D
+vesicle, which also needs R > thickness: **~2000 lipids minimum**. So neither 3-D arm could have shown a
+bilayer or a vesicle even if the physics strongly favoured one, and the micelle result at N = 60 is not
+evidence against 3-D bilayers -- it is what a too-small box must produce.
+
+**I should have done this calculation before launching 3-D**, not after two ticks of runs. Retired the
+five N = 200 assembly runs; they were on course for 15+ hours to answer nothing.
+
+### What this means for the 3-D route
+
+The chi_WW = 0.50 solvent fix looks real -- 3-D water stays one connected liquid (1.000 in 3/3) where
+chi_WW = 1.00 fragments (0.626, 0.714). But the solvent was never the only obstacle. **A 3-D membrane in
+this model needs of order 2000 lipids plus roughly 40 000-80 000 waters**, against the 9241 beads that
+already cost 15 hours at N = 200. That is a factor of ten in system size on top of a cost that is
+already the binding constraint.
+
+**The honest position: 3-D is unblocked in principle and out of reach in practice with this setup.**
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+One cheap thing distinguishes "too small" from "wrong lipid": the packing parameter. In 2-D the 4-tail
+branched lipid made bilayers; in 3-D at these sizes it makes micelles. If the architecture is simply
+wrong for 3-D lamellae, a bulkier tail (higher `P = v/(a0*l)`) should shift it even at small N.
+
+Launched: **3-D probe with 6 tails**, N = 60, L = 16, 30 000 steps, 5 seeds, `VIVARIUM_TAILS=6,6`.
+
+* **6-tail aggregates go flat (eigenvalue 3 << eigenvalue 2, thickness rising toward ~12 sigma)** -> the
+  packing parameter is the lever and the 4-tail lipid is simply wrong for 3-D.
+* **Still isotropic at the same thickness** -> the micelle result is a SIZE artefact, exactly as the
+  aspect-ratio arithmetic predicts, and nothing about lipid architecture can fix it at N = 60.
+* **Aggregates fail to form or the run destabilises** -> 6 tails is too bulky and the rung says nothing.
+
+### Still in flight
+
+3-D probe (5 seeds, finishing), 3-D solvent pair, 10 rate extensions, 5 long 2-D runs at 1.28-1.44
+million.
