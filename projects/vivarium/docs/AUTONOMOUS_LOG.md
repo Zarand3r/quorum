@@ -8374,3 +8374,57 @@ cluster is gated at every checkpoint.
 
 Prevalence runs (10 fresh, with `nves`), 3-D solvent pair (chi_WW = 0.50 at 26 000/40 000), 10 rate
 extensions at 1.44 million, 5 long runs at 1.6-1.76 million.
+
+---
+
+## Tick: the extended window barely helped, and two identical arms disagree
+
+### Rate extensions, complete at 3.2 million total
+
+Per-checkpoint prevalence over the 1.6-million-step extension leg:
+
+    ext sd90-99:  1/210 checkpoints = 0.0048,  1 onset across 10 runs
+    endpoint gate, all clusters:  0/10 states contain a vesicle
+
+**Extending the window to 3.2 million added almost nothing.** It was extended precisely because the one
+formation then known happened at 1.96 million, and the original 1.6-million cutoff fell short of it.
+That reasoning was sound but accounts for only a small part of the shortfall.
+
+### The problem: two arms under identical conditions disagree
+
+Same N = 160, L = 65, chi_HT = -0.25, chi_WW = 0.50, kT = 0.45, fresh dispersed starts:
+
+| arm | prevalence | onsets |
+|---|---|---|
+| `rate` seeds 30-39 | **0/210** | 0 |
+| `long` seeds 80-84 | **4/60 = 0.067** | 3 |
+
+If the true rate were 6.7%, the rate arm should have produced about **14** hits and produced **none**.
+And the `long` onsets are at steps **320 000 and 480 000** -- well inside the rate arm's own 1.6-million
+window -- so this is not a late-time effect that the shorter runs simply missed.
+
+**I cannot account for it.** Checked and ruled out: same box, same chemistry, same temperature, same
+plant, same integrator; the difference in checkpoint spacing (80 000 vs 160 000) does not bias a
+per-checkpoint fraction; and the timing of the hits excludes a late-window explanation.
+
+**Consequence: the 2.2% prevalence figure is withdrawn from quotable status** until this is resolved.
+`RESULTS.md` now says so explicitly rather than carrying a number two of its own arms contradict.
+
+### FALSIFICATION -- the adjudicating run is already in flight
+
+Ten fresh dispersed seeds (N = 160, L = 65, 1.6 million steps) carrying the all-cluster `nves` counter,
+currently at 80 000-160 000. They are seeded independently of both disputed arms.
+
+* **Prevalence near 6.7%** -> the `rate` arm's zero was the anomaly, and the `long` figure stands.
+* **Prevalence near zero** -> the `long` arm's four hits were the anomaly, and formation is rarer than
+  either number suggests.
+* **Something between, with onsets** -> both arms are small-sample noise around a low rate, and the
+  honest report is a wide interval rather than a point estimate.
+
+**No new run launched.** The adjudicator exists, the disputed arms are finished, and adding a sixth
+concurrent arm would slow the one measurement that matters. Recorded as a choice.
+
+### Still in flight
+
+Prevalence adjudicator (10 seeds at 80 000-160 000 of 1.6 million), 3-D solvent pair (chi_WW = 0.50 at
+30 000/40 000), 5 long 2-D runs at 1.76-1.92 million.

@@ -170,8 +170,18 @@ fully intact. 0/5 closed.*
   | **overall** | **13/585 = 0.022** | 5/35 | **6** |
 
   Earlier "0/10" and "0/5" figures in this project were ENDPOINT scores and could not see transients;
-  the N = 116 arm reported as 0/5 actually had two onsets. This prevalence is a LOWER BOUND, since the
-  scan reads the largest cluster only.
+  the N = 116 arm reported as 0/5 actually had two onsets.
+
+  **This number is NOT yet quotable.** Two arms run under nominally identical conditions
+  (N = 160, L = 65, same chi and kT, fresh dispersed starts) disagree beyond chance: the `rate` seeds
+  give **0/210** and the `long` seeds give **4/60 (~6.7%)**. If the true rate were 6.7% the rate arm
+  should have shown about 14 hits and showed none, and the `long` onsets at steps 320 000 and 480 000
+  sit well inside the rate arm's own window, so it is not a late-time effect. The discrepancy is
+  unexplained. Ten fresh seeds carrying the all-cluster counter are running to adjudicate it.
+
+  Extending the rate arm to 3.2 million -- a window that does contain the 1.96-million formation time --
+  added almost nothing: **1/210 checkpoints, 1 onset in 10 runs, 0/10 holding a vesicle at the end.**
+  So the earlier "mis-specified window" explanation accounts for only a small part of the shortfall.
 - **It does not improve with time.** Over 600 000 steps and five seeds the composition is static --
   shell 100-110, appendages 50-60 -- and one seed degraded outright (shell 26, lumen 45). The shell
   closed at ratio 0.501 and was at its best the moment it formed.
