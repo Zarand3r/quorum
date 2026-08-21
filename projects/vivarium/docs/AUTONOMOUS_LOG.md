@@ -9211,3 +9211,58 @@ four times finer than any previous emergence arm, at the same run length.
 ### Still in flight
 
 Fine-resolution emergence arm (6 seeds, 20 000-step checkpoints).
+
+---
+
+## Tick: an audit of the deliverable, which was contradicting itself
+
+### What the audit found
+
+`RESULTS.md` has been edited incrementally across many ticks, several of them retractions. Read
+end-to-end it no longer held together:
+
+* **"Three formations observed"** -- there are **seven**.
+* **The 13/585 = 0.022 checkpoint-prevalence table across 35 runs**, which I explicitly retracted as
+  **pseudo-replication** two ticks later, was still present -- sitting **directly above** the corrected
+  run-level figure it had been replaced by. The document asserted both.
+* **"often TRANSIENT"** as the summary of vesicle fate, which the 8/10 survival measurement and the
+  flicker-versus-dissolution distinction had superseded.
+
+None of this was wrong when written. All of it was stale, and a reader of the deliverable would have
+been misled by numbers I had already withdrawn in the log.
+
+### What replaced it
+
+A fates table covering all seven formations:
+
+| seed | peak ratio | fate |
+|---|---|---|
+| em160 lineage | -- | persisted; 3/5 on restart |
+| long sd80 | 0.522 | dissolved by 1.12 M |
+| long sd82 | 0.196 | persisted 1.12 -> 1.6 M |
+| prev sd1000 | 0.131 | gate-flicker; object persisted ~1 M |
+| prev sd1002 | 0.249 | dissolved by 1.6 M |
+| prev sd1007 | 0.232 | present at run end |
+| prv2 sd1101 | 0.328 | dissolved by 1.04 M |
+
+with the two failure modes stated -- genuine dissolution (80, 1002, 1101) versus gate-flicker (1000) --
+and the observation that **peak score does not predict fate**.
+
+A full-document scan for other stale claims came back clean: the remaining `0/5` and `0/10` figures are
+the curvature tests and the shell-only comparison, all still current, and there are no leftover
+"in flight" claims for arms that have since finished.
+
+### Verified rather than assumed
+
+The fine-resolution arm's checkpoint spacing was checked in its own output: steps 20 000, 40 000,
+60 000, 80 000. The override is doing what it claims, and the runs tag themselves apart on disk as
+`..._checkpoint_every20000_...` so they cannot collide with the earlier arms.
+
+### FALSIFICATION -- unchanged; the fine arm is at 15%
+
+Six seeds at 240 000 of 1.6 million, all `nves = 0`, largest 36-69. Pre-registered: a formation with
+lifetime resolved to 20 000 steps lifts the episode floor; no formation in 6 seeds is consistent with a
+16% rate (expected ~1); formations lasting exactly one checkpoint would mean lifetimes are of order
+20 000 steps and every previous episode figure was an overestimate.
+
+**No new run launched.** This tick was documentation repair; the fine arm is the outstanding measurement.

@@ -166,23 +166,24 @@ fully intact. 0/5 closed.*
   in a structure that is still present. Episode-based lifetime statistics computed on the coarse
   emergence checkpoints understate persistence for exactly this reason.
 
-- **Three formations observed, and they are often TRANSIENT.** Seed 80's 48-lipid vesicle existed at
-  steps 320 000 (ratio 0.522) and 480 000 (0.490) and was gone by 1.12 million. Seed 82's has instead
-  persisted from 1.12 to 1.44 million while growing 102 -> 130 lipids. Some dissolve, some hold.
+- **Seven formations observed, with mixed fates.**
 
-  Scoring EVERY checkpoint rather than endpoints, across 35 dispersed runs:
+  | seed | peak ratio | fate |
+  |---|---|---|
+  | em160 lineage | -- | persisted; 3/5 on restart |
+  | long sd80 | 0.522 | dissolved by 1.12 M |
+  | long sd82 | 0.196 | persisted 1.12 -> 1.6 M |
+  | prev sd1000 | 0.131 | gate-flicker; object persisted ~1 M |
+  | prev sd1002 | 0.249 | dissolved by 1.6 M |
+  | prev sd1007 | 0.232 | present at run end |
+  | prv2 sd1101 | 0.328 | dissolved by 1.04 M |
 
-  | arm | checkpoints with a vesicle | runs with one | onsets |
-  |---|---|---|---|
-  | em160 (5) | 0/105 | 0/5 | 0 |
-  | rate (10) | 0/210 | 0/10 | 0 |
-  | N = 116 (5) | 8/105 = 0.076 | 1/5 | 2 |
-  | long (5) | 4/40 = 0.100 | 3/5 | 3 |
-  | ext (10) | 1/125 = 0.008 | 1/10 | 1 |
-  | **overall** | **13/585 = 0.022** | 5/35 | **6** |
+  **Peak score does not predict fate**: 0.522 and 0.328 both dissolved while 0.196 persisted.
 
-  Earlier "0/10" and "0/5" figures in this project were ENDPOINT scores and could not see transients;
-  the N = 116 arm reported as 0/5 actually had two onsets.
+  Two distinct failure modes, each documented more than once. **Genuine dissolution** -- the cluster
+  changes size and the lumen goes to zero and stays there (seeds 80, 1002, 1101). **Gate-flicker** --
+  the object is unchanged while its raw ratio crosses the 0.10 threshold (seed 1000, whose 82-lipid
+  aggregate held an enclosure at 6 of 7 checkpoints while the score passed only 3 times).
 
   **The run-level figure, across the whole corpus.** Consecutive checkpoints within a run are not
   independent -- a vesicle persists across several -- so the independent unit is the run:
