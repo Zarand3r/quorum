@@ -11162,3 +11162,47 @@ the 4 sizes can independently close or unroll across its 5 seeds.
 **Also launching a 6-seed EMERGENCE arm** at the standard N=160/L=65, 1.6M, so a dispersed-start run is
 in flight and there is always something emergent to show. It adds seeds to the validated 5/22 baseline,
 which is useful under any of the pending directions.
+
+## Tick — RETRACTED: R_mid is not buggy, I violated its documented precondition
+
+**Ran.** Arc test and em4 emergence arm, both early. Arcs are PLANTED, so per the standing rule they
+are not read before the end.
+
+**RETRACTED, last tick's claim that `R_mid` "has the wrapped-centroid bug".** That was wrong on the
+facts. `geometry()` computes its centre with `_unwrapped_centroid`, which unwraps relative to one bead
+and re-centres twice. The line I quoted -- `cen = X[lipid_beads].mean(axis=0)` -- is from `_fill_lumen`,
+a different function. I attributed a bug to code I had not read.
+
+**The real cause, diagnosed and confirmed.** `_unwrapped_centroid`'s own docstring states it is "exact
+for any cluster smaller than half the box." An arc of radius R has extent 2R, so the precondition is
+L > 4R. I had sized boxes at roughly 3.4R and violated it. Evidence:
+
+| N | L | R_mid | R/N | L >= 4R? |
+|---|---|---|---|---|
+| 200 | 120 | 40.87 | 0.204 | no |
+| 200 | 150 | 62.06 | 0.310 | no |
+| 200 | 180 | 39.45 | 0.197 | no (158) -- but close |
+| 200 | 200 | 39.45 | 0.197 | yes |
+| 300 | 150 | 49.54 | 0.165 | no |
+| 300 | 200 | 74.91 | 0.250 | no |
+| **300** | **260** | **59.12** | **0.1971** | **yes** |
+| **300** | **300** | **59.12** | **0.1971** | **yes** |
+
+Once L >= 4R the reading is exact and box-independent: 59.12 at both L=260 and L=300, matching the
+0.198*N scaling that holds cleanly for N = 70-200. No code change was needed or made.
+
+**Consequence: three of four arc conditions I launched last tick were invalid.** N=70/L=60 satisfies
+4R=56. N=120/L=90 (4R=95), N=200/L=120 (4R=158) and N=300/L=200 (4R=236) all violate it, so those arcs
+were larger than half their box and could interact with their own periodic images -- which corrupts the
+CLOSURE dynamics, not merely the diagnostic. Killed those 15 runs by explicit PID after verifying each
+command line individually (16 matched; one was my own shell, as before) and relaunched at **N=120/L=100,
+N=200/L=170, N=300/L=260**, each verified to plant at the correct radius (23.76, 39.45, 59.12) with sane
+energy and no percolation. N=70/L=60 was left running.
+
+**Pattern worth naming: this is the third time periodic images have bitten this project** -- the
+enclosure detector blind to boundary-straddling vesicles, the wrapped renders that hid a whole vesicle,
+and now a documented precondition on cluster-versus-box size. Every one cost a relaunch or a retraction.
+
+**Falsification criterion unchanged from last tick** and reachable: all four sizes unroll -> the
+continuum picture is wrong; a threshold appears -> critical size measured; all four close -> repeat
+smaller.
