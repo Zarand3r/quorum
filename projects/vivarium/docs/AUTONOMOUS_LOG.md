@@ -8428,3 +8428,63 @@ concurrent arm would slow the one measurement that matters. Recorded as a choice
 
 Prevalence adjudicator (10 seeds at 80 000-160 000 of 1.6 million), 3-D solvent pair (chi_WW = 0.50 at
 30 000/40 000), 5 long 2-D runs at 1.76-1.92 million.
+
+---
+
+## Tick: the "unexplained discrepancy" was my own pseudo-replication
+
+### Determinism verified first
+
+Before blaming statistics, the obvious suspect was a physics change: `_mixture.py` and `field.py` have
+been edited many times between the two arms' launches. Rerunning `rate` seed 30 under the **current**
+binary reproduces its step-0 row exactly:
+
+    stored:  0  5.06  7  2.18  0.593  4.571  0.987  0.515  1.357  1.263  0  0  n  0.00  0  1.00  1.00  +0.000
+    current: 0  5.06  7  2.18  0.593  4.571  0.987  0.515  1.357  1.263  0  0  n  0.00  0  1.00  1.00  +0.000  0
+
+Identical in every column, with only the new trailing `nves` appended. **The build and the field did not
+change**, so the discrepancy is not a code artefact.
+
+**A false alarm on the way there, recorded:** my first comparison read `NR==5` from both files and showed
+E/lip -6.60 against 4.68, which looked like broken determinism. The stored log has three header lines and
+`NR==5` is step **80 000**, while in a 20-step rerun it is step **1**. I was comparing step 80 000 to
+step 1. Fixed by matching on the step column instead of line number.
+
+### RETRACTED: the size of the discrepancy
+
+Last tick I compared **0/210 against 4/60 checkpoints** and wrote that ~14 hits were expected, calling it
+unexplained and withdrawing the prevalence figure.
+
+**That is pseudo-replication.** Consecutive checkpoints within a run are strongly correlated -- a vesicle
+persists across several of them -- so they are not independent samples. The independent unit is the RUN:
+
+| level | comparison | |
+|---|---|---|
+| checkpoint (wrong) | 0/210 vs 4/60 | implied a large expected count |
+| **run (correct)** | **0/10 vs 3/5** | **Fisher p = 0.022** |
+
+Still notable, but far weaker than I portrayed, and it is a post-hoc comparison between arms chosen
+because they differed. **The alarm was mostly mine, not the data's.**
+
+### The number that IS quotable
+
+    5 of 35 dispersed runs produced at least one vesicle.
+    Wilson 95% CI:  6.3%  to  29.4%
+
+That replaces both the withdrawn 2.2% checkpoint figure and the "unexplained discrepancy" framing in
+`RESULTS.md`. It is a run-level rate with an honest interval, which is what the data supports.
+
+### FALSIFICATION -- the adjudicator still matters, for a narrower reason
+
+The ten fresh seeds with the all-cluster counter are at 320 000-400 000 of 1.6 million, `nves = 0` so
+far. They no longer have to resolve a crisis; they sharpen the interval.
+
+* **>= 3/10 produce a vesicle** -> the rate sits in the upper half of the interval and the `rate` arm's
+  zero was a low draw.
+* **0/10** -> combined 5/45, and the interval tightens downward; the `long` arm was a high draw.
+* **1-2/10** -> consistent with 5/35 and the interval simply narrows.
+
+### Still in flight
+
+Prevalence adjudicator (10 seeds), a determinism rerun of seed 30 continuing as an 11th sample, 3-D
+solvent pair, 5 long 2-D runs at 1.76-1.92 million.
