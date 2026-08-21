@@ -123,11 +123,12 @@ fully intact. 0/5 closed.*
   | emergent, persistence sd22 | 160 | 102 | 58 | 0.281 | 0.691 |
   | emergent, frozen candidate | 160 | 102 | 58 | 0.269 | 0.662 |
 
-  **The appendages are load-bearing, not passengers.** Deleting them and running the bare 102-lipid
-  shell (`vesicle_shell_only.npz`, re-solvated, 5 seeds, 200 000 steps) opens it in **3/5** -- two
-  fully, one marginal -- while `largest` stays 102 throughout, so the aggregate holds but the closure
-  does not. The corrected ratio is therefore the right way to score the SHELL's geometry, but the
-  object that actually persists is the 160-lipid one. A matched 10-vs-10 comparison is in flight.
+  **Whether the appendages are load-bearing is NOT yet settled.** Deleting them and running the bare
+  102-lipid shell (`vesicle_shell_only.npz`, re-solvated, 5 seeds, 200 000 steps) closes **3/5**, with
+  `largest` staying 102 throughout -- the same 3/5 the full 160-lipid object gives under the identical
+  protocol. An earlier entry here claimed the shell opened 3/5 and that the appendages were therefore
+  load-bearing; that was scored with one seed still mid-run and is **withdrawn**. A matched 10-vs-10
+  comparison is in flight to give the difference an error bar.
 
   An independent check of `shell_split` fell out of building that state: with the appendages gone the
   RAW ratio is 0.656-0.657, which is the CORRECTED ratio computed with them present (0.662).

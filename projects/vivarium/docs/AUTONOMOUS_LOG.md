@@ -7342,3 +7342,73 @@ Matched-size N = 116 at 320 000-720 000, largest 33-92, no closures.
 ### Still in flight
 
 Formation rate (10 seeds), N = 116 matched-size emergence (5 seeds), matched 10-vs-10 shell/full.
+
+---
+
+## Tick: RETRACTED -- the appendages are not shown to be load-bearing
+
+### The error
+
+Last tick I reported the bare 102-lipid shell opening **3/5** and concluded the appendages were
+load-bearing. **That is withdrawn.** Re-scored with all five seeds actually at step 200 000:
+
+| seed | largest | vesicle_call | ratio |
+|---|---|---|---|
+| 60 | 102 | False | -- |
+| 61 | 102 | False | -- |
+| 62 | 102 | True | 0.578 |
+| 63 | 102 | **True** | 0.569 |
+| 64 | 102 | True | 0.663 |
+
+**3/5 True**, which is exactly what the full 160-lipid object gives under the same protocol. Seed 63 was
+scored while it was still at step 150 000; it closed by 200 000. **This is precisely the error the
+read-at-the-end rule exists to prevent, and I made it on the seed that decided the conclusion.**
+`RESULTS.md` has been corrected: whether the appendages matter is now marked as not settled.
+
+### A better statistic, from data already collected
+
+A binary endpoint throws away 19 of the 20 checkpoints in each run and is exactly what went wrong above.
+The fraction of post-equilibration checkpoints that are closed AND pass the size gate:
+
+| condition | per-seed | mean |
+|---|---|---|
+| full object 160 (persistence) | 1.00, 1.00, 0.68, 0.68, 0.68 | **0.811 +- 0.077** |
+| full object 160 (maturation) | 0.85, 0.85, 0.30, 1.00, 0.70 | **0.740 +- 0.120** |
+| shell only 102 | **0.00, 0.00**, 0.89, 0.95, 0.84 | **0.537 +- 0.220** |
+
+Two things this shows that the endpoint hid:
+
+* **The shell-only distribution is bimodal.** Two seeds never close at any checkpoint; three close about
+  90% of the time. That is two populations, not a duty cycle. The full object has **no seed that fails
+  outright** -- its worst is 0.30.
+* **Endpoint scoring is noisy.** Persistence seed 24 was recorded as "opened" from its final frame, but
+  it was closed at 68% of its checkpoints. Nothing about that seed was a failure.
+
+The difference, 0.78 against 0.54, is roughly **1 sigma**. Suggestive, not established -- which is the
+honest state of the appendage question and the reason the 10-vs-10 is running.
+
+### Another false positive rejected
+
+Matched-size N = 116 seed 53 reached `n_enclosed = 1` at largest 92: **lumen 116 against 2694 expected,
+ratio 0.043**. Rejected, same scale as every earlier one.
+
+### FALSIFICATION -- unchanged, and now the only thing that can settle this
+
+The matched 10-vs-10 launched last tick (shell-only seeds 60-69, full-object seeds 20-24 and 45-49,
+identical protocol and 200 000 steps) is the run that decides it. **It will be scored on the closed
+FRACTION, not on the endpoint**, since the endpoint has now demonstrably misled once.
+
+* **Full-object fraction exceeds shell-only by more than the combined error across 10 seeds each** ->
+  the appendages measurably stabilise closure.
+* **The two agree within error** -> the appendages are passengers after all, and the corrected ratio
+  0.66-0.71 describes a self-supporting object.
+* **Either condition fragments** -> that condition's numbers say nothing about appendages.
+
+### Not readable yet
+
+New arms at 90 000-130 000 of 200 000. Formation rate at 960 000-1.12 million of 1.6 million, largest
+82-127, zero enclosures passing the gate. N = 116 at 640 000-880 000, largest 45-92.
+
+### Still in flight
+
+Matched 10-vs-10, formation rate (10 seeds), N = 116 matched-size emergence (5 seeds).
