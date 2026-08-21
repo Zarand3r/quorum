@@ -11012,3 +11012,52 @@ sd9015, sd9016; TANGLE sd9000, sd9007. sd9010 is at 46 consecutive hits.
 criterion is unchanged: >= 11/18 by gate is an effect at p < 0.05 against the now-validated baseline
 5/22; <= 1/18 is excluded by data; 2-10/18 is the null. At 85% with 6/18 by gate and 12 seeds still
 hitless, the null remains the overwhelmingly likely outcome, as named at launch.
+
+## Tick — measured cluster sizes, then found the measurement is not of what I wanted
+
+**Pause still in effect for experiments.** No new run launched.
+
+**Ran.** Primary arm at 1.42-1.46M of 1.6M (90%), gate **6/18**, adjudicated **4/18**. sd9010 at 50
+consecutive hits, sd9005 at 17 across two episodes. Completes next tick.
+
+**Measured, per seed rather than per state.** 85 preserved hit states, but they come from only 6 seeds
+and sd9010 alone contributes 50, so a per-state statistic would be pseudo-replication -- the error I
+retracted a claim for earlier in this project.
+
+| seed | verdict | states | cluster size range | mean |
+|---|---|---|---|---|
+| sd9005 | VESICLE | 17 | 73-74 | 73.8 |
+| sd9010 | VESICLE | 50 | 70-87 | 76.8 |
+| sd9015 | VESICLE | 5 | 64-130 | 91.0 |
+| sd9016 | VESICLE | 4 | 59 | 59.0 |
+| sd9000 | TANGLE | 7 | 78 | 78.0 |
+| sd9007 | TANGLE | 2 | 45-63 | 54.0 |
+
+Per-seed vesicle mean **75.2, sd 13.1, n = 4 seeds** -- below the 5-seed bar I set for reporting
+differences, so it is a description, not a comparison.
+
+**Size does not discriminate.** Adjudicated vesicles span 59-130 lipids, adjudicated tangles 45-78. The
+ranges overlap heavily, and sd9000 (TANGLE, 78 lipids) sits squarely inside the vesicle range. Size
+joins lumen ratio, lumen water, shell normalization, isoperimetric quotient and persistence on the list
+of measures that do not separate the two.
+
+**The measurement is not of the quantity I wanted, and the render is what showed it.** sd9015's
+130-lipid state, unwrapped, is a closed ring at top left with a long serpentine tail carrying more than
+half the lipids. Its range of 64 to 130 therefore records a TAIL growing, not a vesicle growing. So what
+I measured is **vesicle-containing-CLUSTER size, not vesicle size**, and those differ by however much
+appendage happens to be attached.
+
+Separating ring from appendage requires `shell_split`, which was retracted four ticks ago as invalid
+outside the planted regime (it returned corrected ratios of 8.0, 11.8 and 172.8 on merged clusters). So
+**this project currently has no working measurement of emergent vesicle size.** Recorded as an open gap
+rather than reporting the cluster numbers as if they were vesicle sizes.
+
+**No critical-size claim.** The standing plan predicts a threshold ribbon length, and a sharp lower
+cutoff in vesicle size would be evidence for it. The lowest adjudicated vesicle here is 59 lipids, but
+this project has previously measured vesicles at 41 lipids (sd1007) and 37 (sd1301) under N=160/L=65, so
+59 is not a floor -- it is this arm's sample. With n = 4 seeds and no valid vesicle-size measurement, the
+critical-size question is untouched by this data.
+
+**No falsification criterion stated for a new run, because none was launched.** Primary arm criterion
+unchanged: >= 11/18 by gate is an effect against the validated baseline 5/22; <= 1/18 is excluded by
+data; 2-10/18 is the null. At 90% with 6/18 and 12 seeds hitless, the null is all but certain.
