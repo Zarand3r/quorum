@@ -9665,3 +9665,92 @@ Disclosed confound that remains: deleting the network also drops lipid concentra
 difference identifies "network present" and "concentration" jointly. This arm cannot separate them.
 
 Read at 400k, not before.
+
+## Tick — the enclosure persists; it is the "vesicle" LABEL that flickers
+
+**Ran.** Lifetime arm (2000-2004) COMPLETE at 400k. Isolated arm (3100-3104) at 280k of 400k, not
+scored. fin2 emergence at ~800k of 1.6M, with a SECOND formation: seed 1306, first hit at 440k.
+
+**Retracted -- the death criterion I pre-registered is invalid.** I defined death as three consecutive
+zero checkpoints. Every seed in the completed lifetime arm re-forms a vesicle after three or more zeros
+(sd2000 at 100k/320k/340k; sd2001 at 200k; sd2002 at 260k; sd2003 at 280k; sd2004 at 400k). Closure is
+not an absorbing state, so "lifetime" was never the right observable. The arm's occupancy is 23 of 105
+checkpoints = **0.219**.
+
+**Measured the mechanism.** At sd1306 the gate reads nves=1 at 800k and nves=0 at 820k while lumen_c
+moves only 235 -> 214 and nenc stays 1. Looked at both renders: the closed ring is unchanged. So the
+flip is not the vesicle opening.
+
+High-frequency probe (5 seeds, 20k steps, checkpoints every 500) restarted from sd1306's state gives
+205 checkpoints. Tabulating nves against the largest cluster's own enclosure:
+
+| seed | (nves=1, nenc=0) | (nves=0, nenc=1) | (1,1) | (0,0) |
+|---|---|---|---|---|
+| sd4000 | 7 | 34 | 0 | 0 |
+| sd4001 | 1 | 40 | 0 | 0 |
+| sd4002 | 22 | 13 | 6 | 0 |
+| sd4003 | 36 | 3 | 1 | 1 |
+| sd4004 | 1 | 34 | 6 | 0 |
+
+**"No enclosure anywhere" occurs once in 205 checkpoints.** Either the vesicle is a separate cluster and
+is counted, or it has touched the network and the merged cluster encloses the region instead. The
+enclosure persists; only the label changes. `nves` has been reporting fusion and separation events, not
+formation and dissolution.
+
+This analysis is POST HOC. I launched the probe before writing its criterion, which is the discipline
+this tick exists to enforce, and I am recording that rather than dressing it up. Its value is as a
+mechanism hypothesis, not a test.
+
+**Retracted -- "every vesicle detected before the endpoint had dissolved by 1.6M (4/4)."** That was a
+direct, pre-existing claim, and the re-check falsifies it. Applying n_enclosed and lumen water to the
+LARGEST cluster of the same four final states:
+
+| seed | largest | n_enclosed | lumen cells | lumH2O |
+|---|---|---|---|---|
+| sd1000 | 116 | 1 | 328 | **0.900** |
+| sd1203 | 88 | 1 | 124 | 0.668 |
+| sd1101 | 118 | 1 | 43 | 0.171 |
+| sd1002 | 121 | 0 | -- | -- |
+
+sd1000 holds a water-filled lumen at 0.900 of bulk at its endpoint. It did not dissolve; it became a
+network-attached enclosure that count_vesicles cannot see. sd1101's 43 cells at 0.171 is a dry pocket
+just over the 40-cell floor and does not count. So it is **2 of 4 retained an enclosure, not 0 of 4**.
+The coarsening account needs amending: the network absorbs the vesicle, but the lumen survives the
+absorption rather than being consumed.
+
+**Also retracted:** the ISO-vs-LIFE occupancy comparison cannot be read as vesicle stability. Occupancy
+measures how often the vesicle is SEPARATE from a network, and the isolated arm has no network to touch,
+so a difference is partly guaranteed by construction. The arm still runs; it will not be reported as a
+stability result.
+
+**Launched — corpus re-score under both criteria, falsification stated in advance.** Every emergent
+N160/L65 final state, scored two ways: the current `vesicle_call` gate, and "any cluster with
+n_enclosed >= 1 whose lumen holds water at >= 0.5 of bulk." The 0.5 threshold is set now and justified
+by measurement, not taste: real lumens read 0.900-1.366, the one dry pocket reads 0.171, and 0.5 is the
+midpoint of that gap.
+
+* **Enclosure rate >= 40%** -> the vesicle gate undercounts badly and every rate figure in RESULTS.md
+  must be restated, with the enclosure rate as the headline and 16.1% demoted to "separate vesicles."
+* **Enclosure rate <= 20%** -> the gate was not undercounting much, and my "lower bound" language has
+  been overstated for several ticks.
+* **Between 20% and 40%** -> report both numbers side by side and claim no headline change.
+
+Reading it against these three, not against whatever it happens to show.
+
+**Corpus re-score result — read against the pre-registered bands.** 69 emergent N160/L65 final states:
+
+| criterion | rate | Wilson 95% |
+|---|---|---|
+| `vesicle_call` gate | 3/69 = **0.043** | 0.015-0.120 |
+| enclosure + lumen water >= 0.5 bulk | 17/69 = **0.246** | 0.160-0.360 |
+
+0.246 lands in the 20-40% band, so by the criterion set before the run: **report both, claim no headline
+change.** Doing that rather than promoting the larger number.
+
+The 5.7x gap is the endpoint undercount factor, and the 14 disagreeing states all hold real water
+(0.532-0.968 of bulk), so they are enclosures the gate misses, not artifacts.
+
+**This does NOT restate the 16.1% figure.** That was any-checkpoint scoring over whole runs; this is
+endpoint-only. The comparable endpoint number for the vesicle gate is 4.3%, and the drop from 16.1% to
+4.3% is the intermittency measured above, not a contradiction. A like-for-like any-checkpoint enclosure
+rate is the next measurement, not a number I have.
