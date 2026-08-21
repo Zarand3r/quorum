@@ -9754,3 +9754,78 @@ The 5.7x gap is the endpoint undercount factor, and the 14 disagreeing states al
 endpoint-only. The comparable endpoint number for the vesicle gate is 4.3%, and the drop from 16.1% to
 4.3% is the intermittency measured above, not a contradiction. A like-for-like any-checkpoint enclosure
 rate is the next measurement, not a number I have.
+
+## Tick — the bead=3.0 dilation rung is a size-dependent false-negative filter
+
+**Ran.** Isolated arm (3100-3104) COMPLETE at 400k. fin2 emergence at ~1.08M of 1.6M. Flicker probe
+complete (reported last tick).
+
+**Measured — isolated vesicle occupancy, the one arm with no labelling confound.** With no network
+present, losing the vesicle label means the vesicle actually opened, so this arm is interpretable on its
+own even though the comparison against the coexisting arm stays retracted.
+
+| seed | occupancy |
+|---|---|
+| sd3100 | 19/21 = 0.905 |
+| sd3101 | 21/21 = 1.000 |
+| sd3102 | 18/21 = 0.857 |
+| sd3103 | 11/21 = 0.524 |
+| sd3104 | 3/21 = 0.143 |
+
+An isolated 41-lipid emergent vesicle is closed **0.686 +- 0.156** (SEM, 5 seeds) of the time over
+400 000 steps.
+
+**Negative result, recorded so it is not re-attempted.** Tested whether aggregate size predicts which
+runs form vesicles. Mean largest cluster: formers 68.0 and 80.3; non-formers 59.1, 72.4, 80.9, 87.1,
+95.1, 105.7. The two formers sit INSIDE the non-former range, so cluster size does not separate them at
+n=8. No intervention will be built on this.
+
+**Measured — the mechanism behind the false negatives.** sd1301 at 1.1M: largest 61 lipids, lumen_c 108,
+nenc 1, nves 0. Expected lumen for 61 lipids is ~1184 cells, so ratio 0.091 against a 0.10 threshold,
+while a PLANTED vesicle scores 0.118. Measuring the same run's later state: a 37-lipid cluster has
+dilation ladder **[1, 1, 1, 0]**, lumen ratio 0.250, lumen water **0.839 of bulk**, verdict False. It
+fails only at the bead=3.0 rung.
+
+The geometry explains it. A lumen of ~108 cells at cell 0.5 has radius sqrt(108*0.25/pi) ~ 2.9 sigma, so
+a 3 sigma dilation fills it completely and n_enclosed drops to 0. The four-dilation unanimity test
+therefore rejects lumens smaller than ~3 sigma BY CONSTRUCTION, independent of whether they are real.
+That is a size-dependent false-negative filter, and a breathing vesicle crosses the threshold
+repeatedly, which is a second contributor to the intermittency alongside the fusion mechanism measured
+last tick.
+
+**Launched — quantify the rung, falsification stated in advance.** Re-scoring all 69 emergent N160/L65
+final states for clusters that enclose at beads 1.0/1.5/2.0, fail only at 3.0, and hold lumen water
+>= 0.5 of bulk. Analysis only, no simulation.
+
+* **>= 5 such states** -> the top rung is a systematic size-dependent false-negative filter; it must be
+  justified or dropped, and the vesicle rates are revised upward with both instruments reported.
+* **<= 1 such state** -> the rung is not the problem and sd1301 is idiosyncratic; the gate stands.
+* **2 to 4** -> suggestive; report the count and change no rate.
+
+No historical number is restated on this tick regardless, since the gate is not being swapped silently.
+
+**Rung result — read against the pre-registered bands.** 69 states scanned, **4** rejected by the
+bead=3.0 rung while holding lumen water >= 0.5:
+
+| seed | lipids | lumen | ratio | lumH2O |
+|---|---|---|---|---|
+| sd1203 | 88 | 124 | 0.050 | 0.668 |
+| sd1301 | 59 | 87 | 0.079 | 0.807 |
+| sd1005 | 104 | 97 | 0.028 | 0.580 |
+| sd38 | 68 | 110 | 0.075 | 0.968 |
+
+4 falls in the 2-4 band: **report the count, change no rate.** Done.
+
+The detail matters more than the count, and it cuts against the hypothesis that motivated the scan: all
+four ALSO fail the lumen-ratio gate (0.028-0.079 against 0.10), so dropping the rung recovers none of
+them. There are **zero rung-only rejections in the endpoint corpus.** The rung-only failure mode is
+real -- sd1301's live state at ratio 0.250 with ladder [1,1,1,0] -- but it does not show up at
+endpoints, so it is a transient-state phenomenon, not a corpus-level bias. The gate stands unchanged.
+
+**Concluded, and it limits the instrument I built two ticks ago.** sd1005 holds lumen water at 0.580 of
+bulk with a lumen ratio of 0.028, which is precisely the branched-net calibration value. A tangle's
+interior pocket holds bulk-density water just as a vesicle's lumen does. So `lumen_water_density` is
+NECESSARY but NOT SUFFICIENT to certify a vesicle: it rules out dry sealed artifacts and nothing more.
+The endpoint enclosure rate of 0.246 from last tick must be read as "encloses a water-filled region,"
+which includes tangle pockets, and NOT as a vesicle rate. I had been treating the two as closer than
+they are.
