@@ -11206,3 +11206,52 @@ and now a documented precondition on cluster-versus-box size. Every one cost a r
 **Falsification criterion unchanged from last tick** and reachable: all four sizes unroll -> the
 continuum picture is wrong; a threshold appears -> critical size measured; all four close -> repeat
 smaller.
+
+## Tick — N=70 arcs neither closed nor unrolled; the arc test was confounded and is redesigned
+
+**Ran.** N=70 arc arm COMPLETE at 300k. N=120/200/300 early. em4 emergence at 280k of 1.6M, 0/6.
+
+**Scored the completed N=70 arm, and the outcome was one my criterion did not enumerate.** All five
+seeds at 300k: `nenc=0, nves=0, lumen_c=0` -- **none closed**. But R_mid went 14.03 -> 12.50, 14.20,
+12.89, 14.85, 14.16, i.e. essentially unchanged, so none **unrolled** either. The render confirms it: a
+curved open bilayer ribbon with two free ends, wandering but keeping its curvature.
+
+My pre-registered branches were "all unroll -> continuum picture wrong" and "threshold appears". The
+actual result is **metastable open arc** -- neither branch. Recording the gap rather than forcing the
+result into one of them.
+
+**Diagnosed why, and it invalidates the design.** `arc0.75` leaves a quarter-circle gap between the
+ends, and that gap scales with radius: **2*pi*R*0.25 = 22 sigma at N=70 and 93 sigma at N=300**. The gap
+scan established closure is encounter-limited (3 sigma -> 5/5, 6 sigma -> 3/5, 9 sigma -> 2/5), so at 22
+sigma the N=70 ends were never going to meet, and larger arcs would be worse. **Fixed span confounds
+size with end-gap, and in the direction that makes closure harder for exactly the large arcs the
+critical-size hypothesis predicts should close more easily.** A null across all sizes would therefore
+have meant nothing about kappa.
+
+**Redesigned so only R varies.** Choosing span per size to hold the end-gap constant at the
+discriminating 9 sigma: span = n/(n+9.62). Verified by planting:
+
+| N | span | R_mid | end-gap | L | L >= 4R |
+|---|---|---|---|---|---|
+| 70 | 0.879 | 12.76 | 9.70 | 60 | yes (51) |
+| 120 | 0.926 | ~20.7 | ~9.6 | 100 | yes (83) |
+| 200 | 0.954 | ~33.4 | ~9.6 | 170 | yes (134) |
+| 300 | 0.969 | 49.29 | 9.60 | 200 | yes (197) |
+
+Gap is constant to within 1%; radius varies 3.9x. Energies sane (-7.42, -8.78), none percolating.
+
+**Killed the 15 confounded runs** (N=120/200/300 at span 0.75) after verifying each command line
+individually; sunk cost was small (0-70k of 300k). N=70's span-0.75 arm is complete and its result is
+recorded above.
+
+**Falsification, stated BEFORE the run, with reachability checked.** Constant 9.6-sigma gap, 4 sizes x 5
+seeds, 300k steps.
+
+* **Closure fraction RISES with N** -> bending cost pi*kappa/R is the barrier, the critical-size picture
+  holds, and the threshold radius gives kappa without a spectrum.
+* **Closure fraction is flat or falls with N** -> bending is not the barrier at these sizes; the
+  continuum argument behind the standing plan does not apply here and is retracted.
+* **No arc closes at any size** -> 9.6 sigma is beyond reach for all radii, the test is
+  encounter-limited rather than bending-limited, and it must be repeated at a smaller gap.
+
+All three are reachable: each size can independently close 0-5 of its seeds.
