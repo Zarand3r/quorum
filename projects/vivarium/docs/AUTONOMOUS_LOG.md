@@ -7280,3 +7280,65 @@ Launched: 5 fresh thermal seeds, 200 000 steps.
 
 Formation rate (10 seeds), maturation (5 seeds, finishing), N = 116 matched-size emergence (5 seeds),
 shell-only stability (5 seeds).
+
+---
+
+## Tick: the appendages turn out to be load-bearing
+
+### SHELL-ONLY: the 102-lipid shell does not reliably stand alone
+
+`vesicle_shell_only.npz` -- the 58 appendage lipids deleted, re-solvated, 5 seeds, 200 000 steps:
+
+| seed | largest | n_enclosed @ 1.0/1.5/2.0/3.0 | vesicle_call | ratio |
+|---|---|---|---|---|
+| 60 | 102 | [0, 0, 0, 0] | False | -- |
+| 61 | 102 | [0, 0, 0, 0] | False | -- |
+| 62 | 102 | [1, 1, 1, 1] | **True** | 0.578 |
+| 63 | 102 | [0, 1, 1, 1] | False (marginal) | -- |
+| 64 | 102 | [1, 1, 1, 1] | **True** | 0.663 |
+
+**2 True, 3 False** -- the second pre-registered branch. `largest` stays 102 in every seed, so the
+aggregate holds together; it is the CLOSURE that fails. The appendages are **load-bearing**, and
+"a clean 102-lipid vesicle carrying passengers" would have been the wrong description. The object that
+persists is the 160-lipid one.
+
+For comparison, the same protocol on the full object kept 3 of 4 intact seeds closed.
+
+### MATURATION, final at 600 000
+
+| seed | total | shell | appendage | lumen | corrected | vesicle_call |
+|---|---|---|---|---|---|---|
+| 40 | 148 | 26 | 122 | 45 | 0.209 | False -- **degraded** |
+| 41 | 160 | 100 | 60 | 2095 | 0.658 | True |
+| 42 | 160 | 110 | 50 | 2298 | 0.597 | True |
+| 43 | 159 | 102 | 57 | 2397 | 0.724 | False (dilation-unstable) |
+| 44 | 160 | 100 | 60 | 2204 | 0.692 | True |
+
+**3/5 still True at 600 000 steps**, consistent with the 3/5 of the 200 000-step persistence test.
+Composition is static in the four that survive -- shell 100-110, appendages 50-60 -- confirming no
+maturation. One seed (40) degraded outright between 510 000 and 600 000, losing its lumen entirely;
+that is a real failure mode and is recorded rather than averaged away.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+The shell-only result is a DIFFERENCE between two conditions (2/5 against 3/4) and both numbers are
+small. A difference reported from five seeds is not a measurement.
+
+Launched: **matched 10-vs-10** -- five more shell-only seeds (65-69) and five more full-object seeds
+(45-49), identical protocol, same box, same 200 000 steps, so each condition reaches ten.
+
+* **Full-object closure exceeds shell-only by more than the combined error** -> the appendages
+  measurably stabilise the closure, and the vesicle must be reported as a 160-lipid object.
+* **The two agree within error** -> the 3/5-versus-2/5 split was noise, the shell stands alone as well
+  as the full object does, and the corrected ratio can be reported as the object's true quality.
+* **Either condition fragments (largest below its start)** -> that condition is unstable for reasons
+  unrelated to closure and its numbers say nothing about the appendages.
+
+### Not readable yet
+
+Formation rate at 960 000-1.04 million of 1.6 million, largest 82-127, zero enclosures passing the gate.
+Matched-size N = 116 at 320 000-720 000, largest 33-92, no closures.
+
+### Still in flight
+
+Formation rate (10 seeds), N = 116 matched-size emergence (5 seeds), matched 10-vs-10 shell/full.

@@ -122,10 +122,23 @@ fully intact. 0/5 closed.*
   | emergent, persistence sd21 | 160 | 101 | 59 | 0.285 | 0.714 |
   | emergent, persistence sd22 | 160 | 102 | 58 | 0.281 | 0.691 |
   | emergent, frozen candidate | 160 | 102 | 58 | 0.269 | 0.662 |
+
+  **The appendages are load-bearing, not passengers.** Deleting them and running the bare 102-lipid
+  shell (`vesicle_shell_only.npz`, re-solvated, 5 seeds, 200 000 steps) opens it in **3/5** -- two
+  fully, one marginal -- while `largest` stays 102 throughout, so the aggregate holds but the closure
+  does not. The corrected ratio is therefore the right way to score the SHELL's geometry, but the
+  object that actually persists is the 160-lipid one. A matched 10-vs-10 comparison is in flight.
+
+  An independent check of `shell_split` fell out of building that state: with the appendages gone the
+  RAW ratio is 0.656-0.657, which is the CORRECTED ratio computed with them present (0.662).
 - **It is 2-D.** Nothing transfers to 3-D, where explicit solvent at φ 0.15–0.35 is still fragmented
   droplets rather than a liquid.
 - **The formation rate is unmeasured.** One occurrence in five emergence seeds. A 10-seed measurement
-  is in flight; until it reports, this is "observed once", not "reproducible at rate X".
+  is in flight and stands at **0/10 at 50-65% of its runs**; until it finishes this is "observed once",
+  not "reproducible at rate X".
+- **It does not improve with time.** Over 600 000 steps and five seeds the composition is static --
+  shell 100-110, appendages 50-60 -- and one seed degraded outright (shell 26, lumen 45). The shell
+  closed at ratio 0.501 and was at its best the moment it formed.
 
 ## Reproducing
 
