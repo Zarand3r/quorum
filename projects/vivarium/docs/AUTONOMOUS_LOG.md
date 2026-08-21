@@ -9057,3 +9057,55 @@ is the outstanding measurement.
 ### Still in flight
 
 Ten new all-cluster prevalence seeds (800 000/1.6 million), chi_WW = 1.00 3-D control.
+
+---
+
+## Tick: seventh formation, and a clean dissolution at high score
+
+### Seed 1101
+
+Fresh dispersed start, new all-cluster arm:
+
+    step 640 000:  largest 64,  n_enclosed 1,  lumen 356,  ratio 0.273,  nves 1
+    step 720 000:  largest 64,  n_enclosed 1,  lumen 427,  ratio 0.328,  nves 1
+    step 1 040 000: largest 96,  n_enclosed 0 at bead 1.0/1.5/2.0,  vesicle_call False
+
+**Ratio 0.328 is among the strongest in the corpus** -- three times the gate, nothing marginal about it --
+and the render shows a clear closed loop with a water-filled interior. It then **dissolved**: by 1.04
+million the aggregate had grown to 96 lipids and lost its enclosure entirely.
+
+This is a **genuine dissolution**, in the same class as seeds 80 and 1002, and distinct from seed 1000's
+gate-flicker. The distinction now rests on four documented cases rather than two, and the classification
+is doing real work: a strong-score vesicle dissolving is not the same event as a marginal-score vesicle
+crossing a threshold.
+
+### Where the corpus stands
+
+Seven formations across the dispersed runs. Their fates, where followed:
+
+| seed | peak ratio | fate |
+|---|---|---|
+| em160 lineage | -- | persisted; 3/5 on restart |
+| long sd80 | 0.522 | dissolved by 1.12 M |
+| long sd82 | 0.196 | persisted 1.12 -> 1.6 M |
+| prev sd1000 | 0.131 | gate-flicker, object persisted ~1 M |
+| prev sd1002 | 0.249 | dissolved by 1.6 M |
+| prev sd1007 | 0.232 | present at run end |
+| **prv2 sd1101** | **0.328** | **dissolved by 1.04 M** |
+
+Dissolution is not confined to weak vesicles: 0.522 and 0.328 both came apart, while 0.196 persisted.
+**Peak score does not predict fate** in this corpus -- worth stating, since the opposite would have been
+the natural assumption.
+
+### FALSIFICATION -- unchanged; new arm at 65%
+
+Ten new all-cluster seeds at 1.04 million of 1.6 million, **1/10** with a formation. The 20-run readings
+stand: above 28.7% establishes the undercount; inside the largest-cluster interval means the instruments
+agree and 8/46 stands; below 13.9% means the earlier 3/10 was a high draw.
+
+**No new run launched.** The arm is the outstanding measurement and is two thirds through.
+
+### Still in flight
+
+Ten new all-cluster prevalence seeds (1.04 million/1.6 million), chi_WW = 1.00 3-D control (36 000-40 000
+of 40 000, essentially complete and already past the recorded fragmentation).
