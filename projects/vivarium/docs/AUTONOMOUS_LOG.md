@@ -9420,3 +9420,58 @@ indirectly. It is no longer load-bearing -- if it disagrees with the unit test, 
 with known ground truth and the rerun would need explaining, not the reverse.
 
 **No new run launched.** Two arms are mid-flight.
+
+---
+
+## Tick: a ninth formation, and a qualification of "the instruments agree"
+
+### Seed 1203's second event
+
+| step | largest | n_enclosed (largest) | nves |
+|---|---|---|---|
+| 440 000 | 67 | 0 | **1** |
+| 1 200 000 | 92 | 0 | **1** |
+
+**760 000 steps apart, so two distinct events in one run.** Both are single-checkpoint (lifetime under
+40 000 steps) and **both are coexisting vesicles** -- the largest cluster has no enclosure at either.
+
+### QUALIFIED: "the two instruments agree"
+
+Reported two ticks ago from the 20-run comparison: all-cluster 4/20 = 20.0% against largest-cluster
+5/36 = 13.9%, intervals overlapping, second pre-registered branch fired.
+
+That remains the correct reading of those numbers, but **the phrasing was too strong**. Looking at the
+detections rather than the run totals:
+
+| all-cluster hit | detection type |
+|---|---|
+| sd1000 | largest cluster |
+| sd1002 | largest cluster |
+| **sd1007** | **coexisting only** |
+| sd1101 | largest cluster |
+| **sd1203** (both events) | **coexisting only** |
+
+**2 of 5 detections -- about 40% -- are invisible to largest-cluster scoring.** A 40% undercount sits
+comfortably inside intervals of 8.1-41.6% and 6.1-28.7%; distinguishing it would need far more than 20
+runs. So the overlap says the sample cannot separate the instruments, **not** that the older data is
+unbiased.
+
+`RESULTS.md` now says this, and marks the pooled 16.1% as a **lower bound** rather than a point
+estimate. The earlier claim that the older data is "not materially biased" is withdrawn -- it was an
+inference from a null that lacked the power to detect the effect its own mechanism predicts.
+
+### FALSIFICATION, STATED BEFORE THE NEXT READ
+
+The fine arm finishes at 1.6 million. Its run-level tally is the cleanest test of the coexisting mode,
+because every hit in it so far has been coexisting-only:
+
+* **The fine arm ends with hits that are largest-cluster visible too** -> the coexisting mode is not
+  dominant and the 40% figure was small-sample.
+* **All its hits stay coexisting-only** -> largest-cluster scoring would have scored the whole arm 0/6
+  where all-cluster scores 1/6, and the undercount is real even if the run-level comparison cannot
+  resolve it.
+
+### Still in flight
+
+Fine arm (6 seeds at 1.26-1.28 million of 1.6 million, 1/6 with two events), 3-D confirmation rerun
+(8 400 of 12 000).

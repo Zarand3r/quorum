@@ -202,11 +202,17 @@ fully intact. 0/5 closed.*
   | all-cluster scoring (can see coexisting vesicles) | 4/20 = **20.0%** | 8.1-41.6% |
   | largest-cluster scoring only | 5/36 = 13.9% | 6.1-28.7% |
 
-  20.0% falls inside the largest-cluster interval, so the older data is **not** materially biased. Seed
-  1007 shows the failure mode is real -- a 41-lipid vesicle beside a 119-lipid open network, scored as
-  zero -- but it is rare enough not to move the rate. An earlier version of this section reported the
-  all-cluster arm at 3/10 = 30% and flagged a possible undercount; the second ten came back **1/10**, so
-  that was a high draw.
+  20.0% falls inside the largest-cluster interval, so **at this sample size the two cannot be
+  distinguished**. That is a statement about resolution, not evidence of no bias.
+
+  At the level of individual detections the bias is visible: **2 of the 5 hits in the all-cluster arms
+  were coexisting vesicles**, invisible to largest-cluster scoring -- seed 1007 (a 41-lipid vesicle
+  beside a 119-lipid network) and seed 1203 (twice). That is roughly 40%, which fits comfortably inside
+  the overlapping intervals and would need far more than 20 runs to resolve. The pooled 16.1% should
+  therefore be read as a **lower bound**.
+
+  An earlier version of this section reported the all-cluster arm at 3/10 = 30% and flagged a possible
+  undercount; the second ten came back **1/10**, so that particular figure was a high draw.
 
   The cleanest arm -- the only one scored with `count_vesicles` on every cluster at every checkpoint --
   gives 3/10, consistent with the pooled figure. Three of its runs are still short of full length, so
