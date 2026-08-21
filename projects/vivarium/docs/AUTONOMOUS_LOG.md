@@ -8037,3 +8037,43 @@ NOT transfer. Integrity must be judged against this arm's own baseline and again
 
 3-D assembly just launched. Larger 3-D solvent pair at 2000-8000 of 40 000. Dilution scan at 360 000-400
 000 of 800 000, largest 23-112, `nves = 0` in all ten. Long runs at 960 000 of 3.2 million.
+
+---
+
+## Tick: capacity reallocated to the 3-D pivot; nothing decidable
+
+### Nothing readable
+
+* **3-D assembly** (N = 200, L = 24, 8241 waters, chi_WW = 0.50): has not reached its first checkpoint
+  at step 10 000. About 17 minutes of CPU per seed so far. This is simply expensive -- roughly 8400
+  beads in three dimensions.
+* **Large 3-D solvent pair**: chi_WW = 0.50 at step 10 000 of 40 000; chi_WW = 1.00 at 2000, still the
+  >5x slowdown seen before.
+* **Long runs**: 1.12 million of 3.2 million, largest 57-143, no closures.
+
+### Capacity reallocated, with the reason recorded
+
+Retired the **10-run dilution scan** (L = 65 and L = 80, seeds 200-204 and 210-214). Its motivating
+hypothesis -- that dilution helps because small vesicles form more readily -- **is the one retracted two
+ticks ago** when the literature check showed the disc-to-vesicle transition is a critical-SIZE
+instability in which larger closes, not smaller. Continuing to spend ten cores on a withdrawn hypothesis
+while the 3-D pivot starves would have been indefensible.
+
+Kept: 10 rate extensions, 5 long runs, 5 3-D assembly seeds, 6 3-D solvent seeds. Load 41 -> 31.
+
+**Method note.** `pgrep -f` reported 7 matches for a 5-seed arm and 12 for a 10-seed arm, because it
+also matches wrapper processes and the grep itself. Killing on those counts is how the dilution-quench
+arm was destroyed several ticks ago. This time the processes were **listed with `ps` and killed by
+explicit PID** -- exactly 10 lines, each printed before the kill, and the survivor census verified
+afterwards (10 x 1600000, 5 x 200000-3D, 5 x 3200000, 6 x 40000-3D).
+
+### FALSIFICATION -- unchanged, pending the runs
+
+The 3-D assembly criterion stands as written last tick: a bilayer forming (largest grows, `core`
+plateaus against this arm's own 1.325 baseline, not the 2-D 1.35) unblocks the route where a bilayer
+edge is a LINE; micelles only means the blocker was never just the solvent; water fragmenting at this
+larger size means the chi_WW fix does not scale.
+
+**No new run launched this tick.** Everything that matters is in flight and starved rather than
+undecided, so adding load would have made the pivot slower without answering anything. Recording that as
+a deliberate choice rather than an omission.
