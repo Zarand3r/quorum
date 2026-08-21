@@ -7789,3 +7789,86 @@ retracted several ticks ago by a direct time-averaged ring-minus-arc measurement
 **+2.8 +- 2.8 eps**. The critical-size plan in the brief is the right idea -- the literature confirms the
 form -- but with the corrected lambda the threshold sits at 950 lipids rather than anywhere near the
 sizes that have been run.
+
+---
+
+## Tick: the critical-size route is unreachable in 2-D, and I proved my own knob inert
+
+### RETRACTED: "bend_frac lowers kappa, so bend_frac ~ 0.10 puts N = 160 above L*"
+
+Launched last tick on the assumption `kappa ~ bend_frac`, which had never been checked. **It is false.**
+Energetic span sweep, planted geometry, no dynamics, N = 200:
+
+| bend_frac | E at span 0.50 | span 0.75 | span 0.97 | **spread** |
+|---|---|---|---|---|
+| 1.00 | -1450.07 | -1429.43 | -1421.44 | **28.63** |
+| 0.25 | -1589.50 | -1568.86 | -1560.87 | **28.63** |
+| 0.10 | -1617.39 | -1596.74 | -1588.76 | **28.63** |
+
+The offset moves by ~170 eps; the **curvature response is identical to four significant figures**, and
+kappa comes only from the slope. Verified the flag itself reaches `Field` (bend_frac 1.0 / 0.25 / 0.1,
+energies -226.2 / -261.1 / -268.0), so this is physics, not a broken override.
+
+**The reason is structural: the 1-3 spring is INTRA-LIPID**, between bead i and i+2 along a tail.
+Bending the *membrane* barely changes intra-lipid 1-3 distances, so it cannot resist membrane curvature.
+There is no knob in this model that lowers kappa. The 10 soft-membrane runs were killed.
+
+It also re-explains the earlier bend rungs: they failed 0/5 not because L* was still too large at
+kappa 67 and 135, but because **kappa never changed at all**.
+
+### No lipid architecture reaches the regime either
+
+Same free sweep across tail counts, with L* = pi^2*kappa/lambda at lambda = 2.8 eps:
+
+| tails | kappa | L* (lipids) | |
+|---|---|---|---|
+| 2 | 77.4 +- 30.0 | 273 | out of reach -- and 2-tail dissolves to micelles |
+| 4 | 499.8 +- 109.9 | 1762 | out of reach |
+| 6 | 1651.3 +- 148.5 | 5821 | out of reach |
+| 8 | 3354.9 +- 358.3 | 11826 | out of reach |
+
+**Nothing gets L* below the N that can actually be run.** The softest architecture, 2 tails, needs
+N > 273 and does not form a bilayer at any N -- its packing parameter sits in the micelle band.
+
+**Bug found:** tails = 3 returned numbers identical to tails = 2 because odd tail counts leave one bead
+UNPLACED at the origin -- `half = nt // 2` places only `2*half = nt - 1` beads. Verified directly
+(tails 2: 3 beads all placed; tails 3: 4 beads, **1 unplaced**; tails 4: 5 beads all placed). The
+tails = 3 row is void and odd tail counts are broken in the plant.
+
+### The real conclusion, and it is about 2-D itself
+
+`L* = pi^2*kappa/lambda` is large here because **lambda ~ 0**, and lambda is small for a geometric
+reason: in 2-D a bilayer edge is TWO POINTS, not a line. Edge energy is 2*lambda, a constant, while in
+3-D it is a line tension times a perimeter that grows with size. **2-D structurally under-weights the
+edge term relative to bending**, which is exactly the term the disc-to-vesicle instability needs.
+
+So the thermodynamic route to vesicles is not merely unreached in this model -- it is **unreachable in
+2-D**, and no parameter fixes it. The two vesicles obtained are kinetic accidents that froze, which is
+how they have been labelled since they were found.
+
+### The fork this opens
+
+* **Accept the 2-D result.** Two emergent vesicles, honestly characterised as kinetically formed and
+  frozen, with the mechanism measured and the thermodynamics shown not to drive them.
+* **Move to 3-D**, where the edge is a line and lambda carries real weight. That is blocked by the
+  standing known-void: explicit solvent at phi 0.15-0.35 is fragmented droplets rather than a liquid,
+  so the solvent has to be fixed first.
+
+This is a strategic choice rather than a measurement, and it is being surfaced rather than decided
+unilaterally.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+The one cheap thing that could still change the picture is lambda itself: L* = pi^2*kappa/lambda falls
+if lambda rises, and lambda has only ever been measured for the DEFAULT 4-tail lipid. kappa at 2 tails
+is 6.5x smaller; if lambda does not fall as fast, L* could drop.
+
+Launched: ring-versus-arc at **N = 200, 2-tail lipids**, implicit, 5 seeds each, 100 000 steps,
+time-averaged -- the same assay that gave +2.8 +- 2.8 for 4-tail lipids.
+
+* **lambda at 2 tails is more than 2.8 * (77.4/499.8) = 0.43 eps** -> L* falls below 273 and a reachable
+  window may exist; worth pursuing.
+* **lambda scales down with kappa or faster** -> L* does not improve, no architecture works, and the
+  2-D thermodynamic route is closed for good.
+* **The 2-tail ribbons dissolve during the assay** -> consistent with the micelle-band result, and
+  lambda is not measurable for this architecture.
