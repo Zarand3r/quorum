@@ -383,3 +383,47 @@ def shell_split(X, mols, L, cell=0.5, reach=5.0):
         if np.linalg.norm(d, axis=2).min() < reach:
             shell += 1
     return shell, len(mols) - shell, len(best)
+
+
+def count_vesicles(X, mols, L, cut=1.4, min_lipids=20):
+    """How many DISTINCT clusters are vesicles by the full gate.
+
+    vesicle_call was only ever applied to the largest cluster, which made a small vesicle beside a
+    bigger network invisible. Since closure is encounter-limited, short ribbons close soonest, so the
+    small ones are exactly the case that was being missed.
+
+    Cheap first: a cluster is only put through the four-dilation gate if it encloses anything at all
+    at the default dilation. Most clusters fail that immediately.
+    """
+    from collections import deque
+
+    cen = np.array([X[m].mean(axis=0) for m in mols])
+    d = cen[:, None, :] - cen[None, :, :]
+    d -= L * np.round(d / L)
+    near = np.linalg.norm(d, axis=2) < 8.0
+    seen = np.zeros(len(mols), bool)
+    total = 0
+    for start in range(len(mols)):
+        if seen[start]:
+            continue
+        comp, q = [start], deque([start])
+        seen[start] = True
+        while q:
+            i = q.popleft()
+            for j in np.flatnonzero(near[i]):
+                if seen[j]:
+                    continue
+                dd = X[mols[i]][:, None, :] - X[mols[j]][None, :, :]
+                dd -= L * np.round(dd / L)
+                if np.linalg.norm(dd, axis=2).min() < cut:
+                    seen[j] = True
+                    comp.append(j)
+                    q.append(j)
+        if len(comp) < min_lipids:
+            continue
+        sub = [mols[i] for i in comp]
+        if n_enclosed(X, sub, L)[0] != 1:
+            continue
+        if vesicle_call(X, sub, L)[0]:
+            total += 1
+    return total

@@ -38,7 +38,7 @@ import sys
 import numpy as np
 
 from _shot import disc, write_png
-from _lumen_field import n_enclosed, percolates
+from _lumen_field import count_vesicles, n_enclosed, percolates
 from field import Field, HEAD, TAIL, WATER, solvent_averaged_chi
 from integrate import Inertial
 
@@ -842,7 +842,7 @@ if __name__ == "__main__":
     print("enrichment = (short fraction of OUTER leaflet) - (short fraction of INNER leaflet); "
           "0 = no partitioning", flush=True)
     print(f"{'step':>8}{'E/lip':>9}{'largest':>9}{'R_mid':>7}{'shellCV':>9}{'hollow':>8}{'mix':>7}{'seg':>7}{'burial':>8}{'core':>7}{'lumen_c':>9}{'nenc':>6}{'perc':>6}"
-          f"{'lumen':>7}{'lumenW':>8}{'shortOUT':>10}{'shortIN':>9}   enrichment", flush=True)
+          f"{'lumen':>7}{'lumenW':>8}{'shortOUT':>10}{'shortIN':>9}   enrichment{'  nves':>6}", flush=True)
     every = max(steps // 20, 1)
     for t in range(steps + 1):
         X = ig.step(X)
@@ -854,11 +854,16 @@ if __name__ == "__main__":
             # there are. A vesicle encloses exactly one; a finite branched tangle encloses
             # several and is non-percolating for the trivial reason that it fits in the box.
             _nenc, _sizes = n_enclosed(X, _sub, L)
+            # Count vesicles across ALL clusters, not just the largest. The 48-lipid vesicle in seed 80
+            # was only ever seen because it happened to BE the largest cluster; a small vesicle sitting
+            # beside a bigger network was invisible to every rate measurement in this project. Closure
+            # is encounter-limited, so small ribbons close soonest -- exactly the case being missed.
+            _nves = count_vesicles(X, mols, L)
             print(f"{t:>8}{f.energy_solute(X) / n_lip:>9.2f}{largest_cluster(X, mols, L):>9}"
                   f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['hollow']:>8.3f}{g['mix']:>7.3f}{g['seg']:>7.3f}{g['burial']:>8.3f}{g['core']:>7.3f}"
                   f"{(_sizes[0] if _sizes else 0):>9d}{_nenc:>6}{('Y' if percolates(X, _sub, L) else 'n'):>6}"
                   f"{g['lumen']:>7.2f}{g['lumen_w']:>8}"
-                  f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}", flush=True)
+                  f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}{_nves:>6}", flush=True)
             _ptag = ("restart" + pathlib.Path(plant.split(":", 1)[1]).stem.split("_sd")[-1]
                      if plant.startswith("state:") else plant)
             shot(X, species, L, f"mix{d}d_{_ptag}_N{n_lip}_L{L:g}_{'sac' if phi == 0.0 else 'exp'}"

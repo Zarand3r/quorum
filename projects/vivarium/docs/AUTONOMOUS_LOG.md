@@ -7671,3 +7671,48 @@ run. Launched: 5 fresh thermal seeds, 200 000 steps.
 
 Rate extensions at 80 000 of 1.6 million (3.2 M total). Long fresh runs at 320 000 of 3.2 million.
 N = 116 finished 0/5 at 1.6 million.
+
+### DIRECTION CHANGE, prompted by review
+
+Reviewing the arc rather than the last tick: **the project has been optimising the wrong variable.**
+
+| vesicle | lipids at closure | step |
+|---|---|---|
+| first | 116 | 1 960 000 |
+| second | **48** | **320 000** |
+
+Closure is encounter-limited, so a shorter ribbon has less distance to bring its ends around and closes
+sooner. Meanwhile the rate runs coarsen to 127-160 lipids in ONE branched network, and a branched
+network has many ends rather than two. **Coarsening destroys the opportunity the long runs were meant
+to create.** Running 1.6 million then 3.2 million steps was pushing the system further from the regime
+where closure happens, not closer to it.
+
+The measurement was biased the same way: score the LARGEST cluster, at the END of a long run. Both
+choices select against small early vesicles. Seed 80's ring was only ever seen because it happened to be
+the largest object in the box.
+
+**Instrument fixed first.** `count_vesicles()` applies the full gate to every cluster of >= 20 lipids,
+and the driver now reports it each checkpoint as a trailing column `nves`. Appended at the END so no
+existing column index shifts -- a column-index mix-up has already caused two errors here. Verified on
+the frozen 48-lipid vesicle: reads **nves = 1**, with every prior column in place.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+If closure is encounter-limited and coarsening closes the window, **density** is the controlling
+variable, not time. More dilute keeps ribbons small and separate so each can close independently;
+too dilute and they never reach the ~40-50 lipids needed (the old L = 120 box stalled at 20-27).
+
+Launched: **N = 160 at L = 65, 80 and 95**, 5 seeds each, 800 000 steps, scored on `nves` at every
+checkpoint rather than on the largest cluster at the end.
+
+    L = 65 -> area fraction 0.0379 (the box both vesicles formed in)
+    L = 80 -> 0.0250
+    L = 95 -> 0.0177
+
+* **Vesicle count rises with dilution** -> keeping ribbons small and separate is the route, and the
+  strategy becomes many small vesicles rather than one large one.
+* **It peaks at intermediate density** -> there is an optimum, and it can be located.
+* **No dependence on density** -> density is not the controlling variable and the two formations were
+  luck; the encounter-limited reading would need re-examining.
+* **Aggregates at L = 95 stall below ~40 lipids** -> too dilute to reach closure size, matching the
+  old L = 120 result, and that rung says nothing about density.
