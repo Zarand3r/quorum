@@ -10597,3 +10597,50 @@ not currently quotable.
 confirms my prediction that run-level scoring is less bug-sensitive than endpoint scoring; >= 3 of 6
 refutes it. Primary arm: >= 11/18 is an effect at p < 0.05 against the baseline 5/22; <= 1/18 is a
 reverse effect; 2 to 10 is the null I named as most likely at launch.
+
+## Tick — both remaining tables re-derived: shell normalization is INVALID, and the gate misses attached vesicles
+
+**Ran.** Re-score arm at 480k of 1.6M, 0/6. Primary arm 9000-9017 at 340-360k, 0/18. Neither scored.
+
+**Re-derived the shell-normalization table, and the measure does not survive it.** With corrected
+clustering `shell_split` returns tiny shell counts against huge appendage counts, and the corrected
+ratio explodes past 1, which is geometrically impossible -- a lumen cannot exceed the maximum area its
+shell lipids could enclose:
+
+| state | lip | shell | app | raw | SHELL_CORR |
+|---|---|---|---|---|---|
+| sd1303 network | 160 | 1 | 159 | 0.007 | **172.788** |
+| sd1005 tangle | 145 | 5 | 140 | 0.014 | **11.812** |
+| PLANTED d110 | 112 | 12 | 100 | 0.092 | **8.007** |
+| sd1203 | 92 | 26 | 66 | 0.043 | 0.534 |
+| PLANTED d111 | 53 | 48 | 5 | 0.404 | 0.492 |
+| PLANTED d112 | 48 | 46 | 2 | 0.552 | 0.601 |
+
+**RETRACTED: the whole shell-normalization comparison, including the 2.36x versus 2.21x separation and
+the 4.68x -> 1.22x spread collapse.** Last tick I called it "a more consistent measure of the same
+quantity." It is not a measure at all outside the planted-vesicle regime it was calibrated on, where
+shell happens to equal nearly all lipids. It breaks down precisely where it was supposed to help.
+
+**Re-derived the isoperimetric table; the dead-end verdict survives, by a different route.** The
+render-confirmed vesicle sd1306 now scores the LOWEST IQ of the set at 0.124, below the network sd1303
+at 0.169 and every planted control at 0.167-0.191. Still no discrimination, and now inverted.
+
+**The consequential finding, from the corrected raw ratios.** sd1306 is a render-confirmed vesicle and
+reads raw **0.032**. Planted d110 reads **0.092**. Both are BELOW the gate's 0.10 threshold. With
+correct clustering, a vesicle attached to a larger aggregate has its lumen normalized against the whole
+merged cluster, so the ratio collapses and the gate rejects it.
+
+So both available normalizations fail, in opposite directions: the raw ratio under-counts attached
+vesicles, and the shell-corrected ratio is undefined for them. That is the cleanest statement this
+project has of its measurement problem, and it explains the endpoint numbers -- the fixed gate finds
+only 5 hits in 78 endpoint states because most emergent vesicles here are attached to networks.
+
+**Consequence for the running experiment, stated BEFORE the read.** The primary arm is scored with
+`vesicle_call` at run level. That gate is now known to systematically reject attached vesicles, so its
+count is a lower bound weighted toward FREE-STANDING vesicles. Both arms are scored by the same
+instrument, so the COMPARISON remains valid; the absolute rates do not. When the arm is read I will
+report it as a comparison of free-standing-vesicle rates, not of vesicle rates.
+
+* **>= 11/18** -> more material raises the free-standing formation rate at p < 0.05 against 5/22.
+* **<= 1/18** -> it lowers it.
+* **2 to 10 of 18** -> the null named at launch, still the most likely outcome.
