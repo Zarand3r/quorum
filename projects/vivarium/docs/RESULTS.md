@@ -123,12 +123,18 @@ fully intact. 0/5 closed.*
   | emergent, persistence sd22 | 160 | 102 | 58 | 0.281 | 0.691 |
   | emergent, frozen candidate | 160 | 102 | 58 | 0.269 | 0.662 |
 
-  **Whether the appendages are load-bearing is NOT yet settled.** Deleting them and running the bare
-  102-lipid shell (`vesicle_shell_only.npz`, re-solvated, 5 seeds, 200 000 steps) closes **3/5**, with
-  `largest` staying 102 throughout -- the same 3/5 the full 160-lipid object gives under the identical
-  protocol. An earlier entry here claimed the shell opened 3/5 and that the appendages were therefore
-  load-bearing; that was scored with one seed still mid-run and is **withdrawn**. A matched 10-vs-10
-  comparison is in flight to give the difference an error bar.
+  **The appendages are passengers, not load-bearing** -- settled with 10 seeds per condition, scored on
+  the fraction of checkpoints closed over a common step range rather than on a single endpoint:
+
+  | condition | closed fraction | never closed |
+  |---|---|---|
+  | bare 102-lipid shell | 0.594 +- 0.141 | 2/10 |
+  | full 160-lipid object | 0.565 +- 0.119 | 0/10 |
+
+  Difference **-0.029 +- 0.184, i.e. 0.2 sigma.** Deleting the 58 appendage lipids does not destabilise
+  the closure, so the corrected ratio describes a self-supporting object. (An earlier version of this
+  section claimed the opposite from a 5-seed endpoint read in which one seed was scored mid-run; that
+  is withdrawn.)
 
   An independent check of `shell_split` fell out of building that state: with the appendages gone the
   RAW ratio is 0.656-0.657, which is the CORRECTED ratio computed with them present (0.662).

@@ -7412,3 +7412,69 @@ New arms at 90 000-130 000 of 200 000. Formation rate at 960 000-1.12 million of
 ### Still in flight
 
 Matched 10-vs-10, formation rate (10 seeds), N = 116 matched-size emergence (5 seeds).
+
+---
+
+## Tick: the appendage question, settled at 10 seeds per condition
+
+### MATCHED 10-vs-10, scored on closed FRACTION over a common step range
+
+Scored over steps 20 000-180 000 for every run, so the few seeds that had not reached 200 000 contribute
+the same number of observations as the rest:
+
+| condition | per-seed closed fraction | mean | never closed |
+|---|---|---|---|
+| shell-only 102 | 0.00, 0.00, 0.88, 0.94, 0.82, 1.00, 1.00, 0.29, 0.94, 0.06 | **0.594 +- 0.141** | 2/10 |
+| full object 160 | 1.00, 1.00, 0.65, 0.65, 0.71, 0.12, 0.47, 0.06, 0.94, 0.06 | **0.565 +- 0.119** | 0/10 |
+
+    full - shell = -0.029 +- 0.184   (0.2 sigma)
+
+**The second pre-registered branch fires: the appendages are passengers.** Deleting all 58 of them does
+not measurably change how often the structure is closed. This confirms last tick's retraction at proper
+sample size, and it means the corrected ratio 0.66-0.71 describes a **self-supporting** ~102-lipid
+vesicle rather than a fragment propped up by attached material.
+
+The 2/10-versus-0/10 split in seeds that never close is not significant at this sample size and is
+recorded rather than interpreted.
+
+**Note on what changed the answer.** At 5 seeds and an endpoint read this looked like a 3/5-versus-3/4
+difference and I called the appendages load-bearing. At 5 seeds and a fraction read it looked like
+0.54 against 0.78, about 1 sigma. At 10 seeds and a fraction read it is 0.2 sigma. The estimator
+mattered as much as the sample size: an endpoint discards 19 of 20 observations per run.
+
+### A prompt from outside, and the test it deserves
+
+The user pointed out that real vesicles do form with bilayer appendages and protrusions, which reframes
+"appendages" from defect to plausible morphology. Taking that at face value would be motivated
+reasoning, because there is a specific disanalogy: real protrusions generally arise from EXCESS AREA AT
+FIXED ENCLOSED VOLUME, a 3-D constraint. In 2-D there is no volume constraint, and a single 160-lipid
+loop encloses strictly more than a 102-lipid loop plus 58 lipids of branches.
+
+The step-0 numbers make the gap concrete: a planted single 160-ring encloses **6589** cells against the
+emergent vesicle's **2320**, nearly 3x, from the same lipid count.
+
+### FALSIFICATION, STATED BEFORE THE RESULT IS READ
+
+Launched: **planted single ring, N = 160, L = 65**, same chi and kT as the emergent vesicle, 5 seeds,
+150 000 steps, read at the end after thermalisation. Its E/lip is compared with the emergent
+vesicle-plus-appendages at matched conditions.
+
+* **The single ring sits well below the emergent structure in E/lip** -> the appendages are a KINETIC
+  TRAP, not a preferred morphology, and the biological analogy does not carry across to this 2-D model.
+* **The two are comparable within seed spread** -> the appendaged form is genuinely competitive here,
+  and the resemblance to budded and tubulated vesicles is worth taking seriously rather than dismissing.
+* **The planted ring fails to hold (largest < 152 or it opens)** -> the reference state is not stable at
+  this size and the comparison says nothing.
+
+The step-0 E/lip of -8.49 against the emergent -7.13 is NOT evidence for anything: the plant is
+unthermalised and every planted structure in this project starts artificially low.
+
+### Formation rate: still 0/10
+
+At 1.12-1.28 million of 1.6 million. Seed 30 now has **largest = 160/160** -- every lipid in one
+aggregate -- and `n_enclosed = 0`. The successful run had closed by ~1.96 million, so these still have
+room.
+
+### Still in flight
+
+Formation rate (10 seeds), N = 116 matched-size emergence (5 seeds), planted 160-ring reference.
