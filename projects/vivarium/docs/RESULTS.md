@@ -177,16 +177,31 @@ fully intact. 0/5 closed.*
   Earlier "0/10" and "0/5" figures in this project were ENDPOINT scores and could not see transients;
   the N = 116 arm reported as 0/5 actually had two onsets.
 
-  **Quote the RUN-level figure, not the checkpoint one.** Consecutive checkpoints within a run are not
+  **The run-level figure, across the whole corpus.** Consecutive checkpoints within a run are not
   independent -- a vesicle persists across several -- so the independent unit is the run:
 
-      5 of 35 dispersed runs produced at least one vesicle.   Wilson 95% CI  0.063 to 0.294
+  | arm | runs | runs with a vesicle |
+  |---|---|---|
+  | em160 | 5 | 0 |
+  | rate | 10 | 0 |
+  | N = 116 | 5 | 1 |
+  | long | 5 | 3 |
+  | ext | 10 | 1 |
+  | prevalence (carries the all-cluster counter) | 10 | 2 |
+  | determinism rerun | 1 | 0 |
+  | **total** | **46** | **7** |
 
-  An earlier version of this section compared arms at checkpoint level (0/210 against 4/60) and called
-  the difference unexplained. That was **pseudo-replication**: at run level it is 0/10 against 3/5,
-  Fisher p = 0.022 -- notable, but a post-hoc comparison between arms and far weaker than the
-  checkpoint framing implied. The physics is identical across arms: rerunning `rate` seed 30 under the
-  current binary reproduces its step-0 row exactly, column for column.
+      7 of 46 dispersed runs produced a vesicle.   15.2%,  Wilson 95% CI  7.6% to 28.2%
+
+  The cleanest arm -- the only one scored with `count_vesicles` on every cluster at every checkpoint --
+  gives 2/10, consistent with the pooled figure. Seven runs are still short of their full length, so
+  their contribution is a lower bound.
+
+  An earlier version compared two arms at checkpoint level (0/210 against 4/60) and called the
+  difference unexplained. That was **pseudo-replication**: at run level it is 0/10 against 3/5,
+  Fisher p = 0.022 -- notable, but a post-hoc comparison and far weaker than the checkpoint framing
+  implied. The physics is identical across arms: rerunning `rate` seed 30 under the current binary
+  reproduces steps 0, 80 000 and 160 000 exactly.
 
   Extending the rate arm to 3.2 million -- a window that does contain the 1.96-million formation time --
   added almost nothing: **1/210 checkpoints, 1 onset in 10 runs, 0/10 holding a vesicle at the end.**

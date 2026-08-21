@@ -8718,3 +8718,62 @@ audit of existing data rather than a new question, and the long 2-D arm is finis
 
 Prevalence adjudicator (10 seeds at 60-85%), determinism rerun as an 11th sample at 960 000,
 chi_WW = 1.00 3-D control (18 000-20 000 of 40 000), long 2-D runs finishing at 2.72-3.2 million.
+
+---
+
+## Tick: the formation rate, measured across the whole corpus
+
+### Fifth formation, and the cleanest by raw score
+
+Prevalence seed 1002 at step 1.2 million, fresh dispersed start:
+
+    largest = 132/160,  count_vesicles = 1
+    bead 1.0/1.5/2.0/3.0: n_enclosed = 1,  lumen 1381 / 1199 / 1199 / 1029
+    vesicle_call -> True   (0.249 of expected, stable at 1)
+    shell_split: shell 80, appendages 52  ->  shell-corrected 0.678
+
+**Ratio 0.249 is two and a half times the gate**, where seed 1000 sat at 0.104. The render shows a large
+closed loop centre-left around a water-filled interior. This is the strongest raw-score vesicle from a
+dispersed start so far.
+
+### The rate, run-level, across 46 runs
+
+| arm | runs | with a vesicle |
+|---|---|---|
+| em160 | 5 | 0 |
+| rate | 10 | 0 |
+| N = 116 | 5 | 1 |
+| long | 5 | 3 |
+| ext | 10 | 1 |
+| prevalence (all-cluster counter) | 10 | **2** |
+| determinism rerun | 1 | 0 |
+| **total** | **46** | **7** |
+
+    7 of 46 = 15.2%,  Wilson 95% CI  7.6% to 28.2%
+
+The **prevalence arm is the only one scored with `count_vesicles` on every cluster at every checkpoint**,
+and it gives 2/10 -- consistent with the pooled estimate rather than revealing a large hidden population.
+That is a meaningful check: the older arms' largest-cluster-only scoring was not badly undercounting.
+
+**Seven runs are still short of full length**, so their contribution is a lower bound and the figure can
+only move up. `RESULTS.md` now carries this table in place of the withdrawn 2.2% checkpoint number.
+
+### Arm-to-arm heterogeneity, stated rather than smoothed
+
+The arms still range from 0/10 to 3/5. With 46 runs the pooled interval is stable, but the spread is
+real and is not averaged away in the writeup: the `rate` arm's 0/10 and the `long` arm's 3/5 differ at
+Fisher p = 0.022, on identical, verified-identical physics.
+
+### FALSIFICATION -- the adjudicator's remaining seeds
+
+Three of ten prevalence seeds have reached 1.6 million; the rest are at 1.2-1.52 million.
+
+* **A third prevalence seed fires** -> 3/10 in the cleanest arm, upper half of the interval.
+* **The remaining seven finish at 2/10** -> pooled 7/46 stands as the final figure.
+
+**No new run launched.** Every arm is complete or finishing, and the corpus tally is the deliverable.
+
+### Still in flight
+
+Prevalence adjudicator (7 seeds finishing), chi_WW = 1.00 3-D control (20 000-22 000 of 40 000, already
+past the recorded fragmentation), long 2-D runs at 3.04-3.2 million.
