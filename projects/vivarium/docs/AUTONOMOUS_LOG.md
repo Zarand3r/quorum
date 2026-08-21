@@ -7540,3 +7540,57 @@ formation time, so the window actually contains the regime where closure has bee
 
 Formation rate (10 seeds, finishing at 1.6 M -- to be extended), N = 116 matched-size emergence
 (5 seeds), long-horizon rate runs (5 seeds, 3.2 M).
+
+---
+
+## Tick: both 1.6-million arms scored at their endpoints; the rate window extended
+
+### FORMATION RATE, 10 seeds at 1.6 million
+
+| seed | largest | n_enclosed @ 1.0/1.5/2.0/3.0 | vesicle_call |
+|---|---|---|---|
+| 30 | 160 | [0,0,0,0] | False |
+| 31 | 156 | [0,0,0,0] | False |
+| 32 | 146 | [1,0,0,0] | False |
+| 33 | 145 | -- | False (lumen 306, ratio 0.046) |
+| 34 | 142 | [0,0,0,0] | False |
+| 35 | 160 | [3,0,0,0] | False |
+| 36 | 127 | [0,0,0,0] | False |
+| 37 | 160 | [0,0,0,0] | False |
+| 38 | 155 | [1,1,1,0] | False |
+| 39 | 144 | [1,0,0,0] | False |
+
+**0/10.** Every seed coarsened to a large aggregate (127-160 of 160) and none closed. Seed 38 came
+closest, stable at 1 through bead 2.0 before failing at 3.0.
+
+**This zero is NOT a rate.** The window ends at 1.6 million and the one formation ever observed happened
+at **1.96 million**, so the experiment stops before the regime it is meant to sample. Extended: all ten
+continued a further 1.6 million steps to **3.2 million total**, seed-to-source mapping written at launch
+to `/tmp/ext_mapping.txt`.
+
+### MATCHED-SIZE N = 116, 5 seeds at 1.44-1.6 million
+
+**0/5.** largest 83-101 of 116, so the aggregates sit at absolute sizes comparable to the 116 at which
+the original closed. Seed 51 reads [2,2,2,2] -- stably TWO compartments, a branched network rather than
+a near-miss. Seed 54's render shows a single large horseshoe wrapped most of the way round an open
+interior, the same precursor shape the successful run passed through.
+
+The pre-registered third branch applies: with no vesicle in five seeds, "N = 116 is too small to close"
+and "the rate is too low to see in five seeds" cannot be separated. The aggregates reaching 83-101
+lipids argues against the first, but that is an argument, not a measurement.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Restated for the extended window, since the earlier version was mis-specified:
+
+* **>= 1/15 reach `vesicle_call` True by 3.2 million** (10 extended + 5 fresh long runs) -> formation is
+  reproducible, and the rate can be quoted with the original occurrence no longer standing alone.
+* **0/15 at 3.2 million** -> formation is rarer than about 1 in 15 per 3.2-million-step window. The
+  single observed vesicle is then a rare event and must be reported that way, not as a typical outcome
+  of this box.
+* **Aggregates coarsen to 140-160 and still never close** -> size is not the limiting factor and the
+  barrier is the end-encounter itself, which the gap scan already quantified.
+
+### Still in flight
+
+Rate extensions (10 seeds, to 3.2 M), long-horizon fresh runs (5 seeds, 3.2 M), N = 116 (finishing).
