@@ -427,3 +427,51 @@ def count_vesicles(X, mols, L, cut=1.4, min_lipids=20):
         if vesicle_call(X, sub, L)[0]:
             total += 1
     return total
+
+
+def unwrap_cluster(X, mols, L, cut=1.4):
+    """Unwrap a periodic cluster by BFS along contacts, accumulating offsets. None if disconnected.
+
+    Minimum-image centring is NOT a substitute. It failed here even for clusters spanning only ~0.36 of
+    the box: a 3-D aggregate scored 1.000 : 0.036 : 0.028 on its gyration tensor -- an extreme rod --
+    and unwrapping by connectivity gave 1.000 : 0.859 : 0.642, an ordinary isotropic blob. Two of five
+    shape verdicts flipped. The same failure mode broke the enclosure detector earlier in this project.
+    """
+    from collections import deque
+
+    beads = np.concatenate(mols)
+    P = X[beads]
+    d = P[:, None, :] - P[None, :, :]
+    d -= L * np.round(d / L)
+    adj = np.linalg.norm(d, axis=2) < cut
+    np.fill_diagonal(adj, False)
+    pos = {0: P[0].copy()}
+    q = deque([0])
+    while q:
+        i = q.popleft()
+        for j in np.flatnonzero(adj[i]):
+            if j in pos:
+                continue
+            off = P[j] - P[i]
+            off -= L * np.round(off / L)
+            pos[j] = pos[i] + off
+            q.append(j)
+    if len(pos) < 0.9 * len(P):
+        return None
+    return np.array([pos[k] for k in sorted(pos)])
+
+
+def shape_anisotropy(X, mols, L, cut=1.4):
+    """Gyration-tensor eigenvalues, normalised, largest first. None if the cluster is disconnected.
+
+    Discriminates aggregate morphology where a 3-D slab render cannot:
+        micelle / sphere      1 : ~1  : ~1
+        flat bilayer patch    1 : ~1  : << 1
+        rod / cylinder        1 : << 1 : << 1
+    """
+    U = unwrap_cluster(X, mols, L, cut=cut)
+    if U is None:
+        return None
+    Q = U - U.mean(axis=0)
+    w = np.sort(np.linalg.eigvalsh((Q.T @ Q) / len(Q)))[::-1]
+    return w / w[0]

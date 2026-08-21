@@ -127,3 +127,37 @@ def test_shell_split_control_a_clean_ring_has_no_appendages():
     shell, app, lumen = shell_split(ring, mols, 65.0)
     assert app == 0, f"a clean ring must have no appendages, got {app} (shell {shell})"
     assert shell == n and lumen > 0
+
+
+def test_shape_anisotropy_separates_sphere_disc_and_rod():
+    """Positive controls for the 3-D shape metric, including a cluster that STRADDLES the boundary.
+
+    Minimum-image centring reported an ordinary blob as 1.000:0.036:0.028 (an extreme rod) when it
+    wrapped; unwrapping by connectivity is what makes the metric trustworthy.
+    """
+    from _lumen_field import shape_anisotropy
+
+    rng = np.random.default_rng(0)
+    L = 40.0
+
+    def cluster(pts):
+        return [np.array([i]) for i in range(len(pts))], pts
+
+    # dense sphere, comfortably inside the box
+    p = rng.normal(size=(400, 3))
+    p = p / np.linalg.norm(p, axis=1)[:, None] * rng.uniform(0, 3.0, 400)[:, None] + 20.0
+    m, pts = cluster(p)
+    w = shape_anisotropy(pts, m, L)
+    assert w is not None and w[2] > 0.5, f"a sphere must be isotropic, got {w}"
+
+    # flat disc: thin in z
+    q = np.column_stack([rng.uniform(-6, 6, 500), rng.uniform(-6, 6, 500), rng.uniform(-0.6, 0.6, 500)]) + 20.0
+    m2, pts2 = cluster(q)
+    w2 = shape_anisotropy(pts2, m2, L)
+    assert w2 is not None and w2[1] > 0.5 and w2[2] < 0.2, f"a disc must be flat, got {w2}"
+
+    # the case that broke the naive version: a sphere straddling the periodic edge
+    p3 = (p - 20.0) % L
+    m3, pts3 = cluster(p3)
+    w3 = shape_anisotropy(pts3, m3, L)
+    assert w3 is not None and w3[2] > 0.5, f"a wrapped sphere is still a sphere, got {w3}"

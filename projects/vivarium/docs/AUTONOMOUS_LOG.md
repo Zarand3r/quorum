@@ -8142,3 +8142,56 @@ large runs continue as the definitive version.
 ### Still in flight
 
 3-D assembly (5 large, 5 fast probe), 3-D solvent pair, 10 rate extensions, 5 long runs.
+
+---
+
+## Tick: first 3-D emergent aggregates -- micelles, provisionally -- and a wrap bug that flipped verdicts
+
+### The fast 3-D probe at halfway (step 15 000 of 30 000)
+
+N = 60 lipids, L = 16, 2438 waters, chi_WW = 0.50. Aggregates grew from ~4-9 lipids at step 0 to 19-31,
+E/lip -27 to -32, so assembly is happening.
+
+A 3-D render is a thin z-SLAB and cannot settle shape by eye. Measured with the gyration tensor:
+
+| seed | nlip | span/L | eigenvalues | verdict |
+|---|---|---|---|---|
+| 800 | 19 | 0.34 | 1.000 : 0.872 : 0.625 | isotropic / micelle |
+| 801 | 19 | 0.37 | 1.000 : 0.857 : 0.444 | isotropic / micelle |
+| 802 | 24 | 0.36 | 1.000 : 0.859 : 0.642 | isotropic / micelle |
+| 803 | 21 | 0.44 | 1.000 : 0.343 : 0.218 | rod-like |
+| 804 | 31 | 0.41 | 1.000 : 0.909 : 0.551 | isotropic / micelle |
+
+**4/5 isotropic, 1/5 rod, none flat.** Provisionally 3-D is making micelles, not bilayer patches.
+
+**Two caveats, both stated before this is leaned on.** It is halfway through its run. And **N = 60 may
+simply be too few lipids to form a patch in 3-D at all** -- the N = 200 runs exist to settle that and
+are compute-bound. This is not yet the pre-registered "micelles only" branch firing.
+
+### A wrap bug that reversed two of five verdicts
+
+The first pass centred each cluster by minimum image. It reported seed 802 as
+**1.000 : 0.036 : 0.028** -- an extreme rod. Unwrapping the cluster by BFS along contacts instead gives
+**1.000 : 0.859 : 0.642**, an ordinary isotropic blob. Seed 804 flipped the same way.
+
+**Minimum-image centring failed at span/L of only 0.36**, not just above the classic L/2 threshold,
+because it is applied per-bead relative to a centroid that is itself wrapped. Had I reported the first
+table, the conclusion would have been "3-D makes rods", which is false.
+
+`unwrap_cluster()` and `shape_anisotropy()` are now in `_lumen_field.py` with a test whose controls
+include **a sphere straddling the periodic edge** -- the exact case that broke it. 9 tests pass.
+
+### FALSIFICATION -- unchanged, pending the runs
+
+The 3-D assembly criterion stands: a flat patch (eigenvalues 1 : ~1 : << 1) with `core` plateauing
+against this arm's own baseline unblocks 3-D; micelles only means the blocker was never just the
+solvent; water fragmenting means the chi_WW fix does not hold at scale.
+
+**No new run launched.** The N = 200 assembly, the fast probe, the 3-D solvent pair, 10 rate extensions
+and 5 long runs are all in flight, and the machine is the binding constraint rather than the question
+list. Recorded as a choice.
+
+### Still in flight
+
+3-D assembly (5 large at step 0, 5 probe at 15 000/30 000), 3-D solvent pair (chi_WW = 0.50 at
+16 000/40 000), 10 rate extensions, 5 long runs at 1.12 million.
