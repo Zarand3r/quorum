@@ -7872,3 +7872,66 @@ time-averaged -- the same assay that gave +2.8 +- 2.8 for 4-tail lipids.
   2-D thermodynamic route is closed for good.
 * **The 2-tail ribbons dissolve during the assay** -> consistent with the micelle-band result, and
   lambda is not measurable for this architecture.
+
+---
+
+## Tick: second vesicle confirmed and cleaner; the 2-D thermodynamic route closed
+
+### 48-lipid vesicle PERSISTENCE, read at the end (200 000 steps)
+
+| seed | largest | shell | appendages | vesicle_call | ratio |
+|---|---|---|---|---|---|
+| 110 | 112 | 48 | 64 | False | 0.092 |
+| 111 | 53 | 48 | 5 | **True** | 0.404 |
+| 112 | 48 | 46 | 2 | **True** | 0.552 |
+| 113 | 48 | 48 | 0 | **True** | 0.464 |
+| 114 | 48 | 47 | 1 | **True** | 0.567 |
+
+**4/5 True**, against a pre-registered bar of >= 3/5. The second vesicle is confirmed, and it is
+**far cleaner than the first**: shell 46-48 with 0-5 appendages, where the first had 102 shell and 58
+appendages.
+
+Seed 110 failed only by ACCRETION -- its shell is still an intact 48 and 64 lipids stuck to it, exactly
+the artefact characterised on the first vesicle. Shell-corrected it reads 368/733 = **0.50**, so the
+count is 4/5 strictly and 5/5 by shell-corrected scoring. Both are reported rather than the flattering
+one.
+
+### The 2-D thermodynamic route is closed
+
+The 2-tail lambda assay **dissolved**: largest 12-21 of 200 in both the ring and arc arms. That is the
+third pre-registered branch -- lambda is not measurable for this architecture, and the ribbons fall
+apart exactly as the packing-parameter argument (`P ~ 1/3`, the micelle band) predicts.
+
+So the chain is complete and every link is measured, not argued:
+
+* `bend_frac` does not change kappa at all (curvature response 28.63 at every value).
+* No lipid architecture reaches `L* < N`: 2 tails gives L* = 273 and does not form a bilayer; 4, 6 and
+  8 tails give 1762, 5821, 11826.
+* The softest architecture that could in principle qualify dissolves before lambda can be measured.
+
+**The disc-to-vesicle instability is unreachable in this 2-D model.** The two vesicles are kinetic
+accidents that froze -- which is how they have been labelled since the day each was found.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+That leaves 3-D, which the standing known-void blocks: "explicit solvent at phi 0.15-0.35 is fragmented
+droplets, not a liquid". **But that void was diagnosed as the solvent sitting below its liquid-vapour
+critical point, and the 2-D counterpart of exactly that was fixed by lowering chi_WW from 1.00 to 0.50.**
+The 3-D record predates the fix, so the blocker may simply be stale.
+
+Launched: **3-D, N = 100 lipids, L = 22, phi = 0.35, 6618 waters, 40 000 steps, chi_WW = 1.00 and 0.50,
+3 seeds each.** The old value is its own positive control -- it must reproduce the fragmentation, or the
+test is not measuring what the void recorded.
+
+* **chi_WW = 0.50 gives a single connected water phase while 1.00 fragments** -> the known-void was a
+  chi_WW artefact, it is retired, and 3-D is unblocked as the route where an edge is a LINE and lambda
+  can carry real weight.
+* **Both fragment** -> the void is real at 3-D densities independent of chi_WW, 3-D stays blocked, and
+  the project's honest end state is the 2-D kinetic result.
+* **Neither fragments** -> the void does not reproduce at all and the original record needs
+  re-examining before anything is built on it either way.
+
+### Not readable yet
+
+Dilution scan at 400 000 of 800 000, largest 17-80, `nves = 0` everywhere. Rate extensions and long
+runs continuing.
