@@ -8885,3 +8885,63 @@ steps, taking that arm from 10 to 20 runs and roughly halving its interval.
 
 Ten new all-cluster prevalence seeds, chi_WW = 1.00 3-D control (26 000-30 000 of 40 000, already past
 the recorded fragmentation).
+
+---
+
+## Tick: lifetimes measured, and the statistic's own limits stated
+
+### The lifetime distribution
+
+"Metastable with a distribution of lifetimes" has been asserted for several ticks without being
+measured. Contiguous episodes above the gate, across the whole corpus:
+
+| run | span | duration |
+|---|---|---|
+| long sd80 | 320 000 -> 480 000 | 320 000 |
+| long sd80 | 1 440 000 | 160 000 |
+| long sd80 | 3 040 000 | 160 000 |
+| **long sd82** | **1 120 000 -> 1 600 000** | **640 000** |
+| long sd83 | 1 120 000 | 160 000 |
+| ext sd92 | 560 000 | 80 000 |
+| prev sd1000 | 640 000 | 80 000 |
+| prev sd1000 | 800 000 -> 1 120 000 | 400 000 |
+| prev sd1000 | 1 360 000 | 80 000 |
+| prev sd1000 | 1 520 000 | 80 000 |
+| prev sd1002 | 1 200 000 -> 1 280 000 | 160 000 |
+| prev sd1007 | 1 600 000 | 80 000 (ongoing) |
+
+**12 episodes, 11 completed. Median 160 000 steps, range 80 000 to 640 000.**
+
+### Two limits on that statistic, stated rather than buried
+
+1. **It overstates fragmentation.** Seed 1000 contributes **four** episodes, but its object was
+   continuously present from 560 000 to 1.6 million -- the *score* crossed the gate four times; the
+   vesicle did not form four times. Episode counting cannot distinguish gate-crossing from
+   formation/dissolution, and for this run it inflates one object into four events.
+
+2. **It is censored from below.** Eight of twelve episodes are a **single checkpoint**, which is the
+   resolution floor (80 000 steps for most arms, 160 000 for `long`). A brief flicker and a genuine
+   80 000-step episode are indistinguishable here.
+
+**So episode duration is a LOWER BOUND on object lifetime, not a measurement of it.** The longest
+uninterrupted episode is seed 82's 640 000 steps; the longest *object* persistence is seed 1000's
+~1 million, which the episode statistic never shows as such.
+
+Measuring object lifetime properly would need per-checkpoint cluster tracking -- following identity
+across frames rather than scoring each frame independently. That is a real gap, and it is recorded
+rather than papered over.
+
+### FALSIFICATION -- unchanged; the new arm is at 15%
+
+Ten new all-cluster seeds at 240 000 of 1.6 million, all `nves = 0`, largest 30-81. Far too early. The
+pre-registered readings for the 20-run all-cluster arm stand: above 28.7% establishes the undercount;
+inside the largest-cluster interval means the instruments agree and 8/46 stands; below 13.9% means the
+3/10 was a high draw.
+
+**No new run launched.** This tick was an audit of existing data; the new arm is the outstanding
+measurement and adding load would slow it.
+
+### Still in flight
+
+Ten new all-cluster prevalence seeds (240 000/1.6 million), chi_WW = 1.00 3-D control (28 000-32 000 of
+40 000, already past the recorded fragmentation).
