@@ -7087,3 +7087,72 @@ Launched: **10 fresh dispersed starts**, N = 160, L = 65, kT = 0.45, 1.6 million
 ### Still in flight
 
 Formation-rate measurement, 10 seeds. The emergence continuation has finished at 2.4 million.
+
+---
+
+## Tick: the vesicle's "with appendages" qualifier, quantified
+
+### shell_split: which lipids actually line the lumen
+
+The vesicle was reported as "ratio 0.28, a vesicle WITH appendages", leaving the qualifier as prose.
+It is now a measurement:
+
+| structure | total | shell | appendage | raw ratio | corrected |
+|---|---|---|---|---|---|
+| planted vesicle N = 120 (control) | 120 | 120 | 0 | 0.876 | **0.876** |
+| emergent, persistence sd21 | 160 | 101 | 59 | 0.285 | **0.714** |
+| emergent, persistence sd22 | 160 | 102 | 58 | 0.281 | **0.691** |
+| emergent, frozen candidate | 160 | 102 | 58 | 0.269 | **0.662** |
+
+**About 101 of 160 lipids form the shell; 59 are attached material.** Correcting the expectation for
+that, the shell reads **0.662-0.714** against **0.876** for a planted vesicle. The raw ratio understated
+shell quality by roughly 2.5x, because appendage lipids inflate the denominator while lining no lumen.
+
+This makes the result stronger and more precise at the same time: the closed object is a genuine if
+somewhat irregular vesicle of ~101 lipids, not a marginal 0.28-quality shell.
+
+### Two errors, both caught by controls before the number was used
+
+1. **Every interior cell instead of the largest component.** The first pass reported lumen 2605 where
+   `n_enclosed` gives 2320 for the same state -- small unrelated pockets were being folded in, which
+   inflated both the lumen and the lipid set counted as lining it. Fixed to the largest component.
+2. **reach = 2.5 reported 22 appendages on a vesicle that has none.** A bilayer has two leaflets and
+   only the INNER one touches the lumen, so the reach has to span the membrane. Calibrated against the
+   control, which must return (120, 0):
+
+       reach 2.5 -> 98 shell / 22 appendage      4.0 -> 119 / 1
+       reach 5.0 -> 120 / 0   <- chosen          6.0 -> 120 / 0
+
+   At 5.0 the control's corrected ratio equals its raw ratio exactly, which is the consistency the
+   parameter has to satisfy rather than a threshold picked to look right.
+
+A test asserting that a clean ring has zero appendages is in the suite; 8 tests pass.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Launched: **5 fresh seeds from the frozen candidate, 600 000 steps**, asking whether the 59 appendage
+lipids are shed over time or are a stable feature of the structure.
+
+* **Corrected ratio above 0.80 in >= 3/5** -> the vesicle matures into a cleaner shell and the
+  appendages are transient.
+* **It stays at 0.66-0.71** -> the appendages are permanent, and "a ~101-lipid vesicle carrying ~59
+  lipids of attached material" is the honest final characterisation rather than a stage on the way to
+  something tidier.
+* **`vesicle_call` goes False** -> the closure is less stable than the 200 000-step persistence test
+  showed, and the persistence result needs restating at the longer horizon.
+
+### The formation-rate runs are NOT readable yet
+
+Ten fresh dispersed starts at step 240 000 of 1.6 million, largest 32-89, no enclosures anywhere. That
+is 15% of the run, and the successful trajectory did not close until about 2 million steps. Recorded so
+the zero is not mistaken for a negative result.
+
+### Checkpoint pushed
+
+Branch `autoresearch/bilayer-emergence` and tag `vivarium-emergent-vesicle-v1` are on origin, with
+`docs/RESULTS.md`, six curated figures, and the full suite green in 164.5 s -- which also clears the
+verification debt from the tick where it timed out at 900.2 s under load and was not recorded as a pass.
+
+### Still in flight
+
+Formation-rate measurement (10 seeds, 240 000/1.6 million), maturation test (5 seeds, 600 000).
