@@ -10316,3 +10316,41 @@ baseline 5/22.
 **N=80/L=46 is not being expanded, and here is why.** With 0/6 at 855k it can at best report a null: 0/12
 against 5/22 gives p = 0.16, undetectable. Expanding it would buy an outcome that cannot reach
 significance either way, so the seeds are better spent on the arm that can.
+
+## Tick — killed 12 void runs that were starving the primary arm
+
+**Ran.** Baseline em3 at ~1.53M of 1.6M, 2/8 (sd1402 18 hits, sd1405 24) -- will complete next tick.
+N=80/L=46 at ~1.0M, 0/6. N=240/L=80 primary: first 6 seeds at 260k, second 6 at 20k. None scored.
+
+**Measured a throughput problem, not a physics one.** Under a 38-simulation load the primary arm
+advanced 220k -> 260k in one tick, against 120k -> 220k the tick before: roughly a 2.5x slowdown. At
+40k steps per tick the arm needs about 33 more ticks to reach 1.6M. That is a design failure of the same
+kind as the power oversight -- an experiment that cannot finish is not better than one that cannot
+resolve.
+
+**The cause was free to fix.** Both arms I declared VOID were still running and consuming 12 of the 38
+slots: N=80/L=65 (micellar, voided two ticks ago) and N=240/L=65 (percolating, voided last tick).
+Neither will ever be reported as a rate, so their compute was pure waste.
+
+Killed all 12 by explicit PID after verifying each one's full command line individually. The listing
+initially returned **14** matches, not 12; the two extras (2649905, 2649930) were transient processes
+from my own listing pipeline matching their own command string, and had already exited by the time I
+inspected them. I checked rather than assuming, because a careless pattern in this project once
+destroyed five healthy dilution-quench runs at 270k of 300k. Load is now 26, verified as 8 baseline +
+6 N=80/L=46 + 12 N=240/L=80, which should raise per-simulation throughput by roughly 38/26 = 1.46x.
+
+**Verified the primary arm by render.** sd8001 at 260k: separate ribbons and arcs, largest cluster 73,
+nenc 0, perc n, nves 0. Ribbon regime, no closure yet at 16% of run length. Render and metric agree.
+
+**No new run launched, and the arithmetic is the reason.** Freed slots are worth more as throughput for
+the arm that can resolve something than as new arms. Expanding N=80/L=46 remains pointless for the
+reason given last tick: 0/12 against the baseline 5/22 gives p = 0.16, undetectable either way.
+Expanding N=240/L=80 beyond 12 would slow the very arm it was meant to strengthen.
+
+**Falsification, unchanged and restated so it is not quietly revised.** N=240/L=80 is scored at 1.6M on
+`vesicle_call` at run level, every hit render-adjudicated first, against the length-matched 1.6M
+baseline (currently 5/22 = 0.227, to be updated when em3 completes).
+
+* **>= 8/12 after adjudication** -> more material raises the formation rate at p < 0.05.
+* **<= 2/12** -> more material lowers it and the monotonic length argument is wrong.
+* **3/12 to 7/12** -> null, the outcome I named in advance as most likely.
