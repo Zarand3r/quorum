@@ -10551,3 +10551,49 @@ endpoint score gets a single sample. Concretely:
 * **1 or 2 gain hits** -> the effect is real at run level and the baseline is revised upward.
 * **>= 3 of 6 gain hits** -> my prediction is wrong, run-level scoring is MORE sensitive than endpoint
   scoring, and every rate in the project needs full re-derivation.
+
+## Tick — RETRACTED: the water-threshold agreement was 0.720 on buggy metrics, it is 0.280 corrected
+
+**Ran.** Re-score arm at 360-380k of 1.6M, 0 hits. Primary arm 9000-9017 at 280k, 0 hits, largest
+clusters 33-92, none percolating. Neither scored.
+
+**Paid the debt flagged last tick.** My scratch analysis scripts carried the same wrapped-centroid
+prefilter as the library, so the metric COLUMNS of the blind-adjudication table were computed on
+fragmented clusters. Re-derived them with corrected clustering, against the SAME render labels -- those
+came from looking at pictures and are unaffected.
+
+| | buggy metrics | corrected metrics |
+|---|---|---|
+| agreement of lumH2O >= 0.7 with render | 18/25 = **0.720** | 7/25 = **0.280** |
+
+**RETRACTED: the 0.720 and the earlier 0.733 figures.** Both were computed on fragmented clusters. The
+corrected number is 0.280.
+
+The mechanism is visible in the values. Tangle states jumped -- sd38 0.968 -> 1.292, sd82 0.949 ->
+1.302, sd213 0.632 -> 1.384, sd1204 0.556 -> 1.248, sd1200 0.404 -> 1.070 -- while render-confirmed
+vesicles barely moved: sd1205 0.934 -> 0.934, sd1306 0.882 -> 0.938, sd80 1.332 -> 1.332. The bug had
+been fragmenting tangles; merging them restores the large water-filled voids they actually enclose.
+
+**Concluded, and it strengthens rather than weakens the earlier verdict.** With correct clustering,
+lumen water sits near bulk for almost ANY enclosed region, vesicle or network void. Render-confirmed
+vesicles span 0.586 to 1.332 (sd1000 0.586, sd1109 0.636, sd1205 0.934, sd1306 0.938, sd80 1.332, and
+sd1301 now has no enclosure at all), while render-confirmed tangles span 0.545 to 1.384. The
+distributions overlap almost completely, and the threshold predicts VESICLE for 19 of 25 states of which
+only 6 are vesicles. Against the bands set when this test was designed, 0.280 is far below the 0.75
+floor, so the rejection of lumH2O as a discriminator stands, and stands more firmly than before.
+
+**A second effect worth recording.** Correcting the clustering can REMOVE an enclosure: sd1301 was a
+render-confirmed vesicle reading 0.313 under fragmented clustering and now has no enclosed region at
+all, because its vesicle merged into a larger cluster whose combined mask has no interior. So the
+correction moves detections in both directions, exactly as the sd1202 endpoint case showed last tick.
+
+**Still outstanding, and named so it is not forgotten.** The shell-normalization table and the
+isoperimetric table were computed with the same broken clustering and have NOT been re-derived. Both
+concluded "no discrimination," and the corrected data here points the same way, but their specific
+numbers -- the 2.36x versus 2.21x separation, the 4.68x to 1.22x spread collapse, the IQ values -- are
+not currently quotable.
+
+**Falsification for the running arms, unchanged and restated.** Re-score arm: 0 of 6 gaining hits
+confirms my prediction that run-level scoring is less bug-sensitive than endpoint scoring; >= 3 of 6
+refutes it. Primary arm: >= 11/18 is an effect at p < 0.05 against the baseline 5/22; <= 1/18 is a
+reverse effect; 2 to 10 is the null I named as most likely at launch.
