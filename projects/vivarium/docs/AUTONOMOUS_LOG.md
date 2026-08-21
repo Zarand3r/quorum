@@ -9109,3 +9109,50 @@ agree and 8/46 stands; below 13.9% means the earlier 3/10 was a high draw.
 
 Ten new all-cluster prevalence seeds (1.04 million/1.6 million), chi_WW = 1.00 3-D control (36 000-40 000
 of 40 000, essentially complete and already past the recorded fragmentation).
+
+---
+
+## Tick: the 3-D control completes, and an unexplained stability flagged
+
+### The control, at its 40 000-step endpoint
+
+| chi_WW | seed 500 | seed 501 | seed 502 |
+|---|---|---|---|
+| 1.00 | 0.252 | 0.202 | 0.218 |
+| 0.50 | 1.000 | 1.000 | 1.000 |
+
+Identical to the mid-run reading at step ~13 000. **The void retirement now rests on a completed
+control** rather than one read while still advancing, which was the caveat attached when it was first
+reported.
+
+### Unexplained, and flagged rather than glossed
+
+The largest water clusters are identical **to the integer** -- 1668, 1335, 1446 -- between readings
+26 000 steps apart. Checks run:
+
+* State file mtimes are fresh (02:45-03:01 against a 03:11 clock), so the files are being rewritten.
+* X checksums differ per seed (119370.139 / 114145.758 / 115910.107), so they are distinct states, not
+  one file read three times.
+
+**A check that proved nothing, recorded as such:** I inspected the `steps` field in the npz expecting it
+to give the current step. It is the run's TOTAL requested steps and reads 40000 for every file
+regardless of progress. It verified nothing and should not be cited as if it had.
+
+Early saturation of the droplet phase is the plausible reading -- fragmentation completes fast and the
+largest droplet stops changing. But exact integer stability across 26 000 steps is more than that
+predicts, and **I have not explained it.** The conclusion is unaffected: both readings fire the control
+identically and by the same margin, so the retirement of the known-void does not depend on which one is
+used.
+
+### FALSIFICATION -- unchanged; new arm at 75%
+
+Ten all-cluster seeds at 1.2 million of 1.6 million, **1/10** with a formation (seed 1101, since
+dissolved). The 20-run readings stand: above 28.7% establishes the undercount; inside the
+largest-cluster interval means the instruments agree and 8/46 stands; below 13.9% means the earlier
+3/10 was a high draw.
+
+**No new run launched.** The arm is three quarters through and is the outstanding measurement.
+
+### Still in flight
+
+Ten all-cluster prevalence seeds (1.2 million/1.6 million); the 3-D control is complete.
