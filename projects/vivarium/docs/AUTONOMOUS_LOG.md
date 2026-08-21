@@ -7594,3 +7594,80 @@ Restated for the extended window, since the earlier version was mis-specified:
 ### Still in flight
 
 Rate extensions (10 seeds, to 3.2 M), long-horizon fresh runs (5 seeds, 3.2 M), N = 116 (finishing).
+
+---
+
+## Tick: a SECOND emergent vesicle, and a gap in how I was scoring
+
+### Second independent formation
+
+Long-horizon fresh run, seed 80, at step **320 000** -- a different lineage from the original, dispersed
+start, nothing planted:
+
+    largest = 48/160   perc = n
+    bead 1.0: n_enclosed = 1, lumen 383
+    bead 1.5: n_enclosed = 1, lumen 298
+    bead 2.0: n_enclosed = 1, lumen 298
+    bead 3.0: n_enclosed = 1, lumen 218
+    vesicle_call -> True   (0.522 of expected, stable at 1)
+
+Render confirms a closed bilayer ring around a water-filled lumen, heads on both faces.
+
+**It formed at 320 000 steps and at 48 lipids, where the original took 1.96 million and 116 lipids.**
+Small vesicles appear to form far more readily than large ones -- which is what the encounter-limited
+picture predicts, since a shorter ribbon has to bring its two ends a shorter way round.
+
+### A methodological gap, found and closed
+
+`vesicle_call` had only ever been applied to the **largest cluster**. A small vesicle coexisting with a
+larger network would have been invisible to every rate measurement in this project.
+
+Rescanned every saved state for ANY cluster of >= 20 lipids passing the full gate:
+
+    rate sd30-39: none        n116 sd50-54: none        long sd80: 48-lipid cluster PASSES
+    -> 1/20 states contain a vesicle
+
+So the gap was real but did **not** change the answer: the 0/10 was not hiding anything. Recorded
+because the negative result is only trustworthy now that the scan is exhaustive. **Caveat:** states are
+overwritten each checkpoint, so this is one snapshot per run; a vesicle that formed and dissolved
+earlier would still be invisible.
+
+### The protrusion analogy, checked against the literature rather than argued
+
+Previously I dismissed the comparison to real budded and tubulated vesicles from my own reasoning. On
+the user's instruction I searched instead, and the sources support the mechanism I had named:
+
+* Vesicle budding is explicitly a **fixed-area, fixed-volume** process -- deflation reduces the volume,
+  generating excess area, which drives the shape transformation.
+* Tubulation is driven by **spontaneous curvature**; large positive and negative spontaneous curvature
+  produce buds and tubes protruding into the exterior and interior respectively.
+
+Both drivers are absent here by measurement: 2-D imposes no volume constraint, and spontaneous curvature
+was excluded five separate ways with the membrane intact each time. Together with the measured
++55 +- 6 eps (122 kT) gap to a single ring, the appendages in this model are a kinetic trap and not the
+same phenomenon. **The conclusion is unchanged, but it now rests on sources rather than on my own
+argument** -- and I could not have known which way it would go without looking.
+
+Sources: Lipowsky, Adv. Biol. 2022 (advanced.onlinelibrary.wiley.com/doi/full/10.1002/adbi.202101020);
+Faraday Discuss. 2013 (pubs.rsc.org/en/content/articlelanding/2013/fd/c2fd20105d);
+PMC6465328 (ncbi.nlm.nih.gov/pmc/articles/PMC6465328/).
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+The 48-lipid vesicle is at step 320 000 of a 3.2-million-step run and has not been tested for
+persistence. The original's early `n_enclosed = 1` readings vanished on their own.
+
+Its state was **copied to `vesicle48_frozen.npz`** first, since the live file is overwritten by its own
+run. Launched: 5 fresh thermal seeds, 200 000 steps.
+
+* **`vesicle_call` True in >= 3/5 with largest >= 45** -> a second confirmed emergent vesicle, at a
+  quarter the size and a sixth the formation time of the first, and the rate question changes from
+  "does it happen" to "how does the rate depend on size".
+* **It opens in >= 3/5** -> a transient closure like the earlier false positives, and the second
+  formation claim is withdrawn.
+* **largest < 45** -> the small ring is not stable enough to test and says nothing.
+
+### Not readable yet
+
+Rate extensions at 80 000 of 1.6 million (3.2 M total). Long fresh runs at 320 000 of 3.2 million.
+N = 116 finished 0/5 at 1.6 million.
