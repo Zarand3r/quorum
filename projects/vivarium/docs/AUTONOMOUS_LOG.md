@@ -10690,3 +10690,58 @@ criteria for the two running arms are unchanged and are restated so they are not
 * Primary arm: **>= 11/18** is an effect at p < 0.05 against the baseline 5/22; **<= 1/18** is a reverse
   effect; **2 to 10 of 18** is the null named at launch. Currently 1/18 at 33% of run length, which is
   on track for the null.
+
+## Tick — the standard render CANNOT show a boundary-spanning vesicle, and one of them is the best result yet
+
+**Pause still in effect.** No new experiment launched, for the same reason as last tick: the direction
+decision is the user's. Everything below is monitoring and analysis of runs already in flight.
+
+**Ran.** Re-score arm at 880-900k of 1.6M, **0/6**. Primary arm at 620-640k, **4/18** (sd9005, sd9007,
+sd9010 with 9 consecutive hits, sd9015). 12 hit states preserved.
+
+**Adjudicated all four hits from their PRESERVED states**, which is only possible because of the
+hit-preservation fix:
+
+| seed | cluster | largest | ladder | lumen | ratio | lumH2O | |
+|---|---|---|---|---|---|---|---|
+| sd9005 | 74 | 88 | [1,1,1,1] | **1245** | **0.714** | 1.332 | attached |
+| sd9010 | 87 | 87 | [1,1,1,1] | 655 | 0.272 | 0.861 | FREE-STANDING |
+| sd9007 | 45 | 60 | [1,1,1,1] | 122 | 0.189 | 0.765 | attached |
+| sd9015 | 64 | 76 | [1,1,1,1] | 136 | 0.104 | 1.200 | marginal |
+
+sd9005's ratio of **0.714 exceeds every planted vesicle measured in this project** (0.404, 0.552, and
+d110 at 0.092 corrected).
+
+**The finding that matters, and it undermines a method I have used for many ticks.** sd9005's ordinary
+render shows open ribbons and NO closed ring. The metrics say a 1245-cell lumen. Both are correct: the
+vesicle is 34.3 x 29.4 sigma across in an L=80 box and sits across the periodic edge, so the renderer --
+which does not wrap -- draws it as several disconnected arcs. Recentring and unwrapping the cluster by
+connectivity produces the picture the metrics describe: a large, clean, closed bilayer ring with a
+water-filled lumen, the best structure this project has produced.
+
+**Consequence: my render adjudications are biased AGAINST boundary-spanning vesicles.** Every visual
+verdict in this project -- including the 25-state blind adjudication that produced 6 vesicles and 19
+tangles, and the instrument comparisons built on it -- was made from wrapped renders. Any vesicle
+straddling an edge would have been drawn as disconnected arcs and called a tangle. The direction of the
+bias is one-way: it can only have UNDER-counted vesicles.
+
+Checked the most suspicious case immediately: sd82, an angular loop I called a tangle. Under corrected
+clustering it has no gate-passing cluster at all, so that verdict is consistent and is NOT an example of
+the bias. That is one state, not a clearance of the method.
+
+**Built the tool the adjudication needs.** A recentred, connectivity-unwrapped cluster renderer, drawn
+from a preserved hit state with the surrounding water carried into the same frame. This is what visual
+adjudication should have been using from the start.
+
+**Falsification, stated BEFORE the analysis it licenses.** Re-adjudicate the 25 blind-adjudication
+states using unwrapped renders of every gate-passing cluster.
+
+* **>= 3 previously-tangle states become vesicles** -> the visual method was materially biased, the
+  6/25 verdict and the 0.058 render-adjudicated endpoint rate are retracted, and every instrument
+  comparison resting on those labels is void.
+* **0 or 1 changes** -> the bias exists in principle but did not bite on this corpus, and the labels
+  stand with the limitation recorded.
+* **2 changes** -> report both readings and adopt neither.
+
+This analysis is NOT run this tick; it is the first thing to run when the pause lifts, and it is stated
+now so the criterion is fixed before the result is seen.
