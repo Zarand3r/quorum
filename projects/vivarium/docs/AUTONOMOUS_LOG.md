@@ -7986,3 +7986,54 @@ The small 3-D pair runs to 6000 steps with checkpoints every 300, and the origin
 
 Dilution scan at 400 000 of 800 000, largest 23-84, `nves = 0` in all ten. Rate extensions and the
 3.2-million-step long runs continuing.
+
+---
+
+## Tick: the 3-D solvent control fires directionally; chi_WW is the controlling variable
+
+### Read at the end of the small 3-D pair (6000 steps)
+
+Largest connected water cluster / all water -- the metric the known-void recorded at 0.27-0.48:
+
+| chi_WW | seed 600 | seed 601 | seed 602 |
+|---|---|---|---|
+| 1.00 (the void's own value) | **0.626** | 0.995 (only reached step 3300) | **0.714** |
+| 0.50 (the 2-D fix) | **1.000** | **1.000** | **1.000** |
+
+**The control now fires, directionally.** Both finished chi_WW = 1.00 seeds fragmented -- 0.998 -> 0.626
+and 0.644 -> 0.714 over the run -- and were still falling when it ended. chi_WW = 0.50 held a perfect
+single connected liquid in 3/3.
+
+**Severity is NOT matched**: 0.63-0.71 against a recorded 0.27-0.48. So this does not reproduce the void
+exactly, and that is stated rather than glossed. What it does establish, with no overlap between the two
+conditions, is that **chi_WW is the controlling variable for whether 3-D water stays a liquid** -- which
+is the premise the void rested on. The larger pair (6618 waters, 40 000 steps) continues and may reach
+the recorded severity.
+
+Supporting signals, still reported as signals: at chi_WW = 1.00 the water occupies 0.206 of grid cells
+against 0.432 at 0.50 for the same 1684 waters, and those runs are >5x slower at equal CPU.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+If the solvent was the whole blocker, then fixing it should let 3-D do what 2-D could not: build a
+membrane whose edge is a LINE, where lambda carries real weight and the disc-to-vesicle instability is
+reachable in principle.
+
+Launched: **3-D dispersed assembly, N = 200 lipids, L = 24, phi = 0.35, chi_HT = -0.25, chi_WW = 0.50,
+5 seeds, 200 000 steps.**
+
+* **A bilayer forms -- largest cluster grows to a substantial fraction and `core` rises to a stable
+  plateau** -> the solvent fix unblocks 3-D, and the route where lambda can carry real weight is open.
+* **Only micelles form -- largest stays small with no core plateau** -> 3-D gives micelles just as the
+  2-tail 2-D lipid did, and the blocker was never only the solvent.
+* **The water fragments at this larger size (largest water cluster < 0.9)** -> the chi_WW fix does not
+  scale to the box needed for a membrane, and 3-D stays blocked for the original reason.
+
+**Calibration caveat, recorded before reading:** `core` is calibrated on 2-D bilayers (1.467 reference,
+1.35 melt floor). The 3-D geometry differs and the step-0 value here is 1.325, so the 2-D thresholds do
+NOT transfer. Integrity must be judged against this arm's own baseline and against `largest`.
+
+### Not readable yet
+
+3-D assembly just launched. Larger 3-D solvent pair at 2000-8000 of 40 000. Dilution scan at 360 000-400
+000 of 800 000, largest 23-112, `nves = 0` in all ten. Long runs at 960 000 of 3.2 million.
