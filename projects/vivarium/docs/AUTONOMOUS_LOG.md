@@ -10891,3 +10891,49 @@ Reachability check, which is the step I omitted two ticks ago: 5 hits exist now 
 hit, so the ">= 8 hits" precondition is reachable but NOT guaranteed. If the arm ends with fewer than 8
 hitting seeds the third branch fires by construction, and I am naming that in advance rather than
 discovering it at the read.
+
+## Tick — the persistence hypothesis is dead one tick after I floated it
+
+**Pause still in effect for experiments.** No new run launched.
+
+**Ran.** Re-score arm at 1.50-1.52M of 1.6M (94%), **0/6**. Primary arm at 1.02-1.04M (65%), **6/18** by
+gate: sd9016 newly hitting, and sd9000 grew from 1 hit to 4.
+
+**REFUTED — "longest run >= 2 checkpoints implies vesicle".** Last tick that rule fit 5 of 5 (runs of 1
+were tangles 2/2, runs of 2+ were vesicles 3/3) and I explicitly declined to adopt it, on the grounds
+that a single-checkpoint boundary at n = 5 is the same shape as the 0.7 water threshold that collapsed
+on correction. Two new data points killed it immediately:
+
+* **sd9000** now has a run of **4** (80 000 steps) and its state at 1 020 000, unwrapped, is still a
+  branched serpentine aggregate with a small internal pocket and no closed ring. **TANGLE with run 4.**
+* **sd9016** has a run of **1** and its state at 1 040 000 is a closed ring with an appendage, 59 lipids.
+  **VESICLE with run 1.**
+
+| longest run | 1 | 1 | 2 | 4 | 10 | 29 |
+|---|---|---|---|---|---|---|
+| verdict | T | **V** | V | **T** | V | V |
+
+Persistence and structure are uncorrelated on this sample. The rule fails in BOTH directions, which is
+stronger than failing in one. Recorded as refuted; the pre-registered test at 1.6M is therefore moot and
+will not be run.
+
+That restraint paid off within a single tick. Had I adopted the rule last tick it would have become the
+project's screening criterion and would have mislabelled two of six seeds immediately.
+
+**Adjudicated tally for the arm.** Gate **6/18**; unwrapped-render adjudication **4/18**:
+
+* VESICLE -- sd9005 (ring, ratio 0.714), sd9010 (ring + appendage, 29 consecutive hits), sd9015 (large
+  ring, 77 lipids), sd9016 (ring + appendage, 59 lipids).
+* TANGLE -- sd9000 (branched + pocket, confirmed twice at 960k and 1.02M), sd9007 (loose branched +
+  pocket).
+
+Two of six gate hits are not vesicles, consistent with last tick's two of five.
+
+**No falsification criterion for a new run, because none was launched.** Standing criteria unchanged:
+
+* Re-score arm at 0/6 with 94% of length elapsed. Both branches remain reachable in principle, but ">= 3
+  of 6 gaining hits" now requires three flips in the final 6% and is effectively excluded.
+* Primary arm: ">= 11/18 by gate" remains reachable (6 now, 12 seeds hitless); "<= 1/18" remains
+  excluded by data as recorded two ticks ago. Note the criterion is written on GATE counts while the
+  adjudicated count is lower (4/18 against 6/18) -- at the read I will report both, and the adjudicated
+  count is the one that means anything.
