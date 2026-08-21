@@ -10029,3 +10029,60 @@ rate over all 69.
 * **The CI includes both** -> 69 states cannot separate the instruments and no instrument claim is made.
 
 The emergence arm 1400-1407 keeps a dispersed-start run in flight throughout.
+
+## Tick — vesicle_call IS the endpoint instrument; enclosure counting confirmed a 3x overcount
+
+**Ran.** Emergence arm 1400-1407 at ~440k of 1.6M, NOT scored. Every seed still reads nves=0 AND
+nenc=0, largest clusters 39-104.
+
+**Executed the pre-registered adjudication.** Judged the 10 remaining enclosing states by render, blind,
+recording verdicts before computing water:
+
+* **vesicle** -- 1109 (rounded closed loop upper-right with an arm), 80 (large closed oval, centre)
+* **tangle** -- 1008, 1103, 1105, 213, 3, 39, 83, 84
+
+Combined with last tick, **25 states adjudicated: 6 vesicles** (1000, 1205, 1301, 1306, 1109, 80) and 19
+tangles. sd83 was called tangle for being an angular network loop, the same reasoning applied to sd82
+last tick, so the two calls are consistent rather than convenient.
+
+**Result, read against the bands set before the run.** Render-adjudicated endpoint rate over all 69
+emergent states:
+
+| instrument | rate |
+|---|---|
+| render adjudication | **6/69 = 0.087, CI 0.0405-0.1770** |
+| `vesicle_call` | 0.043 |
+| enclosure + water >= 0.5 | 0.246 |
+
+The CI **includes 0.043 and excludes 0.246**. That is the second band, whose stated consequence was:
+the gate is consistent with adjudication, the enclosure count is confirmed an overcount, and the gate is
+reported as the endpoint instrument. **Adopting that.** `vesicle_call` is the endpoint instrument of
+record. The enclosure count overstates by about threefold and is retired as a vesicle measure.
+
+0.043 sits just inside the lower bound (0.0405), so "consistent" here means barely consistent, and the
+gate probably still undercounts somewhat. That is stated rather than smoothed over.
+
+**Re-tested the water threshold on the larger sample, and it holds up as rejected.** Agreement over all
+25 states is **18/25 = 0.720, CI 0.524-0.857**, against 11/15 = 0.733 last tick. The adoption decision
+was already made at n = 15 and is not being re-litigated; the larger sample simply confirms it rather
+than overturning it.
+
+The failure structure sharpened with the extra states. False positives are large network loops enclosing
+bulk water: sd3 0.790, sd38 0.968, sd82 0.949, sd83 0.935, sd1007 0.916. False negatives are small or
+heavily appendaged vesicles: sd1301 0.313, sd1109 0.636. Water fails high on big loops and low on small
+vesicles, and the extra data did not move that pattern.
+
+**Concluded — the instrument question, open for five ticks, is closed.** The corpus formation rate of
+12/70 = 0.171 is an ANY-CHECKPOINT run-level figure and is unaffected by this, since it was always
+scored with `vesicle_call`. What changes is that the 0.246 enclosure figure is now retired outright
+rather than carried as an alternative reading.
+
+**Falsification, stated BEFORE the next run.** The emergence arm 1400-1407 runs to 1.6M and is scored on
+`vesicle_call` at run level, exactly as fin2 was.
+
+* **0 of 8 form** -> pooled 12/78 = 0.154 and the arm is consistent with the established rate.
+* **1-3 of 8 form** -> consistent with 0.171; pool and report.
+* **>= 4 of 8 form** -> 0.500 sits outside the corpus CI 0.101-0.276 and something differs between this
+  arm and fin2 that must be found before the number is pooled.
+
+Read at 1.6M, not before, and scored with the gate now designated the endpoint instrument.
