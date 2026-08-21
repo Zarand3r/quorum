@@ -10404,3 +10404,64 @@ unadjudicable hits are tangles) to high bound (all are vesicles). Against the ba
 
 Naming the range in advance prevents the failure mode where an ambiguous hit is resolved in whichever
 direction produces a publishable difference.
+
+## Tick — the vesicle gate was blind to any aggregate sitting on a periodic boundary
+
+**Completed.** N=80/L=46 finished 1.6M at **0/6**, confirming last tick's provisional null (p = 0.553
+against the baseline 5/22, CI 0.000-0.390).
+
+**Found a systematic bug in the primary instrument, from a discrepancy I nearly ignored.** sd7000's
+final log line reads `largest=80` -- all 80 lipids in one cluster -- while the render shows several
+separate pieces. Chasing that:
+
+* the driver's `_cluster_labels` (bead to bead, minimum image) gives ONE cluster of 80;
+* my analysis path and `count_vesicles` give **[27, 19, 15, 6, 2, 1x11]**;
+* on that state, **35 real bead-contacts** (separations 0.88-1.12) are rejected by the centroid < 8.0
+  prefilter, at apparent centroid distances of 8.1-20.2, because **13 of 80 molecules straddle the
+  periodic boundary** and the mean of their WRAPPED coordinates lands in the middle of the box.
+
+**Synthetic control, the same ring in two places:**
+
+| ring position | n_enclosed | vesicle_call | count_vesicles |
+|---|---|---|---|
+| centred | 1 | True | 1 |
+| straddling the edge | **0** | **False** | **0** |
+
+Two independent causes. `count_vesicles` prefiltered connectivity on wrapped centroids, and
+`_interior_mask` centred the grid on the RAW wrapped centroid, which is itself meaningless for a
+straddling aggregate -- so `n_enclosed` returned 0 before the gate was even reached. The second is the
+more serious: it means **every nves = 0 recorded in this project may hide a vesicle that merely sat on a
+boundary.**
+
+**Fixed both.** Added `_mol_centroids`, which unwraps each molecule about its own first bead, and made
+`_interior_mask` unwrap the cluster by connectivity using `unwrap_cluster` -- a function that already
+existed in this file, written for the gyration-tensor wrap bug, and never applied here. After the fix
+the straddling ring scores 1 / True / 1 at four positions including two corners. Full suite PASSED in
+182.4s with two new regression tests.
+
+**Impact measured before deciding anything.** The fixed gate finds **5 hits over 77 emergent endpoint
+states** (sd1202, sd1402, sd1007, sd80, sd83) against 3/69 with the bug. Not a clean comparison -- the
+state set grew by 8 when em3 completed -- and the direction is not uniformly favourable: **sd83 now
+passes and I adjudicated it a TANGLE by render.** So the fix changes real calls in both directions, and
+every historical nves number is affected.
+
+**Discarded the primary arm and relaunched it, which costs ~500k steps x 12 seeds.** The bug's magnitude
+depends on how often aggregates straddle a boundary, which depends on box size -- and the comparison is
+N=240 at **L=80** against a baseline at **L=65**. An L-dependent gate bug across arms that differ in L is
+a confound I cannot correct after the fact, so the arm could not have been reported. Killed all 12 by
+explicit PID after verifying each command line (13 matched; one was my own shell matching its own
+string, as last tick). Relaunched as **18 seeds, 9000-9017**, on the fixed binary, which also preserves
+every hit's state for adjudication.
+
+**Falsification, stated BEFORE the run.** Primary arm N=240/L=80, 18 seeds, scored at 1.6M on the FIXED
+`vesicle_call` at run level, every hit adjudicated from its preserved state.
+
+* **>= 11/18** -> more material raises the formation rate at p < 0.05 (11/18 vs 5/22 gives p = 0.023).
+* **<= 1/18** -> more material lowers it.
+* **2/18 to 10/18** -> null, still the most likely outcome.
+
+**Also required before that read, and stated now:** the baseline 5/22 was itself scored with the buggy
+gate and must be re-scored with the fixed one. Any comparison using the old baseline is invalid. The
+baseline runs are complete and their per-checkpoint states are gone, so only their ENDPOINTS can be
+re-scored, which is not the same quantity as the any-checkpoint 5/22. Resolving that mismatch is the
+next tick's work, and until it is resolved **no rate comparison from this experiment should be quoted.**

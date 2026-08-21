@@ -226,3 +226,50 @@ def test_lumen_water_density_controls():
 
     # (d) implicit solvent is undefined, not zero
     assert np.isnan(lumen_water_density(ring, mols, np.array([], dtype=int), L))
+
+
+def test_ring_on_the_periodic_edge_is_still_a_vesicle():
+    """The same ring must score identically wherever it sits in the box.
+
+    It did not. Centred it read n_enclosed 1 / vesicle_call True / count_vesicles 1; translated onto the
+    corner it read 0 / False / 0. Two separate causes, both fixed: _interior_mask centred on the RAW
+    wrapped centroid, which is meaningless for a straddling aggregate, and count_vesicles prefiltered
+    connectivity on wrapped per-molecule centroids, rejecting 35 real bead-contacts on one real state.
+    Every nves=0 recorded before this fix may hide a vesicle that merely sat on a boundary.
+    """
+    import numpy as np
+    from _lumen_field import count_vesicles, vesicle_call, n_enclosed
+
+    L, R = 60.0, 12.0
+    ang = np.arange(0, 2 * np.pi, 1.0 / R)
+
+    def ring_at(cx, cy):
+        pts, mols = [], []
+        for a in ang:
+            base = np.array([cx + R * np.cos(a), cy + R * np.sin(a)])
+            idx = []
+            for k in range(3):
+                pts.append((base + k * 0.9 * np.array([np.cos(a), np.sin(a)])) % L)
+                idx.append(len(pts) - 1)
+            mols.append(np.array(idx))
+        return np.array(pts), mols
+
+    for cx, cy in ((L / 2, L / 2), (0.0, 0.0), (0.0, L / 2), (L - 1.0, 1.0)):
+        X, mols = ring_at(cx, cy)
+        assert n_enclosed(X, mols, L)[0] == 1, (cx, cy)
+        assert vesicle_call(X, mols, L)[0], (cx, cy)
+        assert count_vesicles(X, mols, L) == 1, (cx, cy)
+
+
+def test_mol_centroids_survive_the_boundary():
+    """A molecule straddling the edge must not get a centroid in the middle of the box."""
+    import numpy as np
+    from _lumen_field import _mol_centroids
+
+    L = 60.0
+    m = np.arange(3)
+    X = np.array([[59.5, 10.0], [0.2, 10.0], [0.9, 10.0]])   # spans the x boundary
+    c = _mol_centroids(X, [m], L)[0]
+    wrapped_mean = X.mean(axis=0)
+    assert abs(wrapped_mean[0] - 20.2) < 0.1          # the broken value, for the record
+    assert min(c[0] % L, L - (c[0] % L)) < 2.0        # correct centroid sits near the edge

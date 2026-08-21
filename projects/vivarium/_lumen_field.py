@@ -17,6 +17,24 @@ from __future__ import annotations
 import numpy as np
 
 
+def _mol_centroids(X, mols, L):
+    """Per-molecule centroids computed AFTER unwrapping each molecule about its own first bead.
+
+    The mean of WRAPPED coordinates is meaningless for a molecule straddling the periodic boundary: it
+    lands in the middle of the box, nowhere near either fragment. On one N=80/L=46 endpoint state, 13 of
+    80 molecules straddled, and a centroid<8.0 prefilter built on those means rejected 35 bead-contacts
+    that are real (bead separations 0.88-1.12 at centroid distances 8.1-20.2). The driver's own
+    _cluster_labels goes bead to bead and is immune, which is why it read one cluster of 80 where the
+    analysis path read 27.
+    """
+    out = np.empty((len(mols), X.shape[1]))
+    for i, m in enumerate(mols):
+        p = X[m]
+        ref = p[0]
+        out[i] = (ref + (p - ref) - L * np.round((p - ref) / L)).mean(axis=0)
+    return out
+
+
 def _interior_mask(X, mols, L, cell=0.5, bead=1.0):
     """Boolean grid of free cells the aggregate cuts off from the box boundary.
 
@@ -25,10 +43,17 @@ def _interior_mask(X, mols, L, cell=0.5, bead=1.0):
     which made an earlier detector report "no enclosed region" for a planted ring.
     """
     lip = np.concatenate(mols)
-    X = X - X[lip].mean(axis=0) + L / 2.0
+    # UNWRAP BY CONNECTIVITY before centring. Centring on the raw wrapped centroid is not enough: for an
+    # aggregate straddling the boundary that centroid is itself meaningless, and the same planted ring
+    # scored n_enclosed 1 centred and 0 when moved onto the edge. Every nves=0 in this project predating
+    # this fix could therefore hide a vesicle that merely sat on a boundary.
+    P = unwrap_cluster(X, mols, L)
+    if P is None:
+        P = np.asarray(X[lip])                      # disconnected: nothing to unwrap along
+    P = P - P.mean(axis=0) + L / 2.0
     n = max(8, int(L / cell))
     occ = np.zeros((n, n), bool)
-    gi = (np.asarray(X[lip]) / L * n).astype(int) % n
+    gi = (P / L * n).astype(int) % n
     # `bead` is the DILATION DIAMETER, and it is a calibrated quantity, not the physical bead size.
     # It must be wide enough to seal the gaps between neighbouring beads along a leaflet and narrow
     # enough to leave a genuine opening open. Measured window, on synthetic rings of R = 43 in L = 120
@@ -436,7 +461,7 @@ def count_vesicles(X, mols, L, cut=1.4, min_lipids=20, wi=None):
     """
     from collections import deque
 
-    cen = np.array([X[m].mean(axis=0) for m in mols])
+    cen = _mol_centroids(X, mols, L)
     d = cen[:, None, :] - cen[None, :, :]
     d -= L * np.round(d / L)
     near = np.linalg.norm(d, axis=2) < 8.0
