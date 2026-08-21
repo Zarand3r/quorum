@@ -239,12 +239,34 @@ fully intact. 0/5 closed.*
   placed "inside a tenfold gap" between a branched net at 0.028 and a closed arc at 0.295, but nothing
   in that calibration was an appendaged vesicle. A **planted** vesicle measures **0.118** -- below the
   emergent seed 1301 at 0.151 -- because appendages add lipids without adding lumen. The gate's
-  exposure is therefore false NEGATIVES, which makes the 16.1% rate a stronger lower bound. An
-  independent check, `lumen_water_density`, counts water in the flood-filled interior cells: sd1301
-  reads 1.012 of bulk, sd1007 0.916, planted vesicles 1.068-1.366. Every marginal detection is a
-  genuine solvent-filled enclosure, so the rate is not inflated by dry artifacts. The driver's radial
-  `lumenW` column cannot do this job -- it measures water near the whole aggregate's centroid and
-  returns 0 for any vesicle sitting off to one side.
+  exposure is therefore false NEGATIVES, which makes the 16.1% rate a stronger lower bound. 
+
+  **CORRECTION (supersedes the paragraph above).** Every ratio quoted above -- 0.232, 0.118, 0.151,
+  0.028, 0.295 -- was computed with a cluster-connectivity routine that prefiltered on the mean of
+  WRAPPED coordinates, which is meaningless for a molecule straddling the periodic boundary. On one
+  N=80/L=46 state that prefilter rejected 35 real bead-contacts and split one 80-lipid aggregate into
+  [27, 19, 15, 6, 2, ...]. The same defect made the enclosure detector blind to any aggregate sitting on
+  a boundary: an identical planted ring scored n_enclosed 1 centred and 0 on the edge. Both causes are
+  fixed and regression-tested at four ring positions.
+
+  Re-derived with correct clustering, the DIRECTION of the claim above survives and its magnitude grows.
+  A render-confirmed emergent vesicle (sd1306) reads raw ratio **0.032** and a PLANTED vesicle reads
+  **0.092**, both BELOW the 0.10 gate. The reason is structural: when a vesicle is attached to a larger
+  aggregate, its lumen is normalized against the whole merged cluster, so the ratio collapses. The gate
+  therefore counts FREE-STANDING vesicles and systematically misses attached ones, which is why it finds
+  only 5 hits across 78 emergent endpoint states.
+
+  **RETRACTED: `lumen_water_density` as an independent check.** Corrected, lumen water sits near bulk
+  for almost any enclosed region: render-confirmed vesicles span 0.586-1.332 and render-confirmed
+  tangles span 0.545-1.384, overlapping almost completely. Tested blind against 25 visually adjudicated
+  states it agrees 7/25 = 0.280, against 0.720 on the buggy metrics. It rules out dry sealed artifacts
+  and nothing more. **RETRACTED: shell normalization** as a fix for the appendage bias -- corrected, it
+  returns ratios of 8.0, 11.8 and 172.8, which are geometrically impossible, because `shell_split`
+  assigns almost every lipid of a merged cluster to "appendage".
+
+  The driver's radial `lumenW` column is a separate matter and remains unusable for this purpose: it
+  measures water near the whole aggregate's centroid and returns 0 for any vesicle sitting off to one
+  side.
 
   "Coexisting-only" is a detection category, not a distinct physical
   mode: the largest-cluster sizes overlap completely between the two categories (64, 67, 82, 92, 119,
