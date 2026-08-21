@@ -96,9 +96,19 @@ fully intact. 0/5 closed.*
 
 ## Limits
 
-- **It is a vesicle with appendages.** A stub and corner fragments belong to the same cluster, joined
-  through the periodic boundary. That is why the ratio is ~0.28 rather than the ~0.88 of a planted
-  vesicle: appendage lipids count in the expectation and contribute no lumen.
+- **It is a vesicle with appendages, and the split is measured.** `shell_split()` counts which lipids
+  line the lumen. Of 160 lipids, **~101 form the shell and ~59 are attached material**. Correcting the
+  expectation for that, the shell alone reads **0.662-0.714** against **0.876** for a planted vesicle
+  -- so the raw 0.28 understates shell quality by about 2.5x. `reach` is calibrated on a planted
+  vesicle, which must return (120, 0): 2.5 gives 98/22 because it reaches only the inner leaflet,
+  5.0 is where the control comes out clean.
+
+  | structure | total | shell | appendage | raw | corrected |
+  |---|---|---|---|---|---|
+  | planted vesicle N=120 (control) | 120 | 120 | 0 | 0.876 | 0.876 |
+  | emergent, persistence sd21 | 160 | 101 | 59 | 0.285 | 0.714 |
+  | emergent, persistence sd22 | 160 | 102 | 58 | 0.281 | 0.691 |
+  | emergent, frozen candidate | 160 | 102 | 58 | 0.269 | 0.662 |
 - **It is 2-D.** Nothing transfers to 3-D, where explicit solvent at φ 0.15–0.35 is still fragmented
   droplets rather than a liquid.
 - **The formation rate is unmeasured.** One occurrence in five emergence seeds. A 10-seed measurement

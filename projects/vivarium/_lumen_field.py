@@ -327,3 +327,59 @@ def vesicle_call(X, mols, L, cell=0.5):
     if ratio < 0.10:
         return False, f"lumen {lumen} is {ratio:.3f} of the {expected:.0f} expected for {n} lipids"
     return True, f"lumen {lumen}, {ratio:.3f} of expected, n_enclosed stable at 1"
+
+
+def shell_split(X, mols, L, cell=0.5, reach=5.0):
+    """Split an aggregate into the lipids that line its lumen (the SHELL) and the rest (APPENDAGES).
+
+    Returns (n_shell, n_appendage, lumen_cells).
+
+    Why this exists: the raw lumen ratio divides by an expectation built from EVERY lipid in the
+    cluster, so material hanging off the vesicle inflates the denominator and understates how good the
+    shell is. The first emergent vesicle reads 0.269-0.285 raw; ~59 of its 160 lipids line no lumen, and
+    the shell alone reads 0.662-0.714 against 0.876 for a planted vesicle.
+
+    `reach` is CALIBRATED, not guessed: a bilayer has two leaflets and only the inner one touches the
+    lumen, so the reach must span the membrane. Measured on a planted N=120 vesicle, which has no
+    appendages and must therefore return (120, 0):
+
+        reach 2.5 -> 98 shell, 22 appendage   (finds only the inner leaflet)
+        reach 4.0 -> 119 shell,  1 appendage
+        reach 5.0 -> 120 shell,  0 appendage   <- chosen, and corrected ratio == raw ratio there
+        reach 6.0 -> 120 shell,  0 appendage
+
+    Only the LARGEST interior component counts. Using every interior cell folds in unrelated pockets:
+    it reported lumen 2605 where n_enclosed gives 2320 for the same state.
+    """
+    interior = _interior_mask(X, mols, L, cell=cell)
+    n = interior.shape[0]
+    vis = np.zeros_like(interior)
+    best = None
+    for a in range(n):
+        for b in range(n):
+            if not interior[a, b] or vis[a, b]:
+                continue
+            stack, comp = [(a, b)], []
+            vis[a, b] = True
+            while stack:
+                p, q = stack.pop()
+                comp.append((p, q))
+                for dp, dq in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    r, t = p + dp, q + dq
+                    if 0 <= r < n and 0 <= t < n and interior[r, t] and not vis[r, t]:
+                        vis[r, t] = True
+                        stack.append((r, t))
+            if best is None or len(comp) > len(best):
+                best = comp
+    if not best:
+        return 0, len(mols), 0
+    pts = np.array(best, dtype=float) * (L / n)
+    lip = np.concatenate(mols)
+    Xs = X - X[lip].mean(axis=0) + L / 2.0
+    shell = 0
+    for m in mols:
+        d = Xs[m][:, None, :] - pts[None, :, :]
+        d -= L * np.round(d / L)
+        if np.linalg.norm(d, axis=2).min() < reach:
+            shell += 1
+    return shell, len(mols) - shell, len(best)

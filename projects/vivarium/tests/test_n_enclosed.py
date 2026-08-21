@@ -109,3 +109,21 @@ def test_vesicle_call_rejects_a_network_with_an_incidental_pocket():
     snake = np.stack([6.0 + 52.0 * s, 32.5 + 9.0 * np.sin(9.0 * np.pi * s)], axis=1)
     ok2, why2 = vesicle_call(snake, [np.arange(len(snake))], 65.0)
     assert not ok2, f"a meander is not a vesicle, but passed: {why2}"
+
+
+def test_shell_split_control_a_clean_ring_has_no_appendages():
+    """Calibration control: a ring with nothing attached must be all shell.
+
+    At reach 2.5 this returns 98/22 on a real planted vesicle because only the inner leaflet is
+    within range; the reach has to span the bilayer. 5.0 is where the control comes out clean.
+    """
+    from _lumen_field import shell_split
+
+    n = 160
+    R = n / (2.0 * np.pi)
+    t = np.linspace(0.0, 2.0 * np.pi, n, endpoint=False)
+    ring = np.stack([32.5 + R * np.cos(t), 32.5 + R * np.sin(t)], axis=1)
+    mols = [np.array([i]) for i in range(len(ring))]
+    shell, app, lumen = shell_split(ring, mols, 65.0)
+    assert app == 0, f"a clean ring must have no appendages, got {app} (shell {shell})"
+    assert shell == n and lumen > 0
