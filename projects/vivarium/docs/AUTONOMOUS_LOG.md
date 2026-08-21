@@ -9266,3 +9266,56 @@ lifetime resolved to 20 000 steps lifts the episode floor; no formation in 6 see
 20 000 steps and every previous episode figure was an overestimate.
 
 **No new run launched.** This tick was documentation repair; the fine arm is the outstanding measurement.
+
+---
+
+## Tick: chasing the 3-D measurement puzzle to a decisive test
+
+### The puzzle, restated
+
+The chi_WW = 1.00 water-cluster fractions were **identical to the integer** (1668, 1335, 1446) between a
+reading at step ~13 000 and one at step 40 000. Already ruled out: stale files (mtimes fresh, checksums
+distinct per seed) and a frozen system (E/lip runs -36.67 -> -43.85 and the largest lipid cluster goes
+19 -> 23 -> 35 across the same interval, so the simulation is demonstrably evolving).
+
+That leaves two possibilities, and they are distinguishable:
+
+* the droplet phase saturates so completely that the largest cluster is pinned to the same integer, or
+* **the measurement is state-independent** -- returning a value set by the box and the cutoff rather than
+  by the configuration, which would be a bug in the cluster routine.
+
+### The decisive test, set up
+
+Take **one seed** and compare its step-12 000 state against its step-40 000 state with the same routine.
+Identical integers across two genuinely different configurations of the same trajectory would mean the
+measurement is not reading the configuration at all.
+
+The step-40 000 state was **copied to `/tmp/w3d_40000.npz` before rerunning**, since the run overwrites
+its own state file -- the same overwriting that has cost data in this project before.
+
+**The rerun overran a 10-minute foreground budget** (chi_WW = 1.00 carries the >5x slowdown recorded
+earlier) and is now backgrounded. The comparison lands next tick. Recorded rather than rushed: a
+half-finished rerun would have produced a state at some unknown step, which is exactly the ambiguity the
+test exists to remove.
+
+### FALSIFICATION, STATED BEFORE THE COMPARISON
+
+* **The two states give different cluster integers** -> the measurement does read the configuration, the
+  earlier identical readings were genuine saturation, and the puzzle dissolves as a physical property of
+  the droplet phase.
+* **They give identical integers** -> the cluster routine is returning a configuration-independent value
+  and is **buggy**. Every 3-D water-cluster number in this log would then need re-deriving, including the
+  0.202-0.252 that retired the known-void. The chi_WW = 0.50 side reads exactly 1.000, which is a
+  saturating value and would survive; the 1.00 side would not.
+
+That second branch is the one worth being careful about: it would put a load-bearing conclusion back in
+question, which is why the test is being run rather than the puzzle left as a footnote.
+
+### Fine-resolution arm
+
+Six seeds at 420 000-580 000 of 1.6 million, all `nves = 0`, largest 45-113. At a 16% rate the
+expectation is about one formation across the arm; nothing yet.
+
+### Still in flight
+
+Fine-resolution emergence arm (6 seeds), chi_WW = 1.00 12 000-step rerun for the state comparison.
