@@ -8262,3 +8262,57 @@ Launched: **3-D probe with 6 tails**, N = 60, L = 16, 30 000 steps, 5 seeds, `VI
 
 3-D probe (5 seeds, finishing), 3-D solvent pair, 10 rate extensions, 5 long 2-D runs at 1.28-1.44
 million.
+
+---
+
+## Tick: 4-tail 3-D probe closed; transience is not universal; RESULTS consolidated
+
+### The 4-tail 3-D probe, read at the end (30 000 steps)
+
+| seed | nlip | thickness | eigenvalues | verdict |
+|---|---|---|---|---|
+| 800 | 52 | 5.5 | 1.000 : 0.959 : 0.611 | isotropic / micelle |
+| 801 | 19 | 4.5 | 1.000 : 0.926 : 0.475 | isotropic / micelle |
+| 802 | 44 | 5.5 | 1.000 : 0.870 : 0.637 | isotropic / micelle |
+| 803 | 21 | 4.5 | 1.000 : 0.794 : 0.472 | isotropic / micelle |
+| 804 | 32 | 5.3 | 1.000 : 0.702 : 0.659 | isotropic / micelle |
+
+**5/5 isotropic**, thickness constant at 4.5-5.5 sigma from 19 lipids up to 52 -- growth adds radius, not
+thickness, which is the micelle signature. Against a ~9 sigma bilayer expectation.
+
+**This is NOT evidence that 3-D cannot make bilayers.** At N = 60 a bilayer disc would be thicker than
+wide (aspect 0.34), so a micelle is the only geometrically available answer. The result is consistent
+with the size bound, and is recorded as confirming it rather than as a physics finding.
+
+### Transience is not universal
+
+Seed 80: vesicle at steps 320 000 (ratio 0.522) and 480 000 (0.490), **gone** by 1.12 million.
+Seed 82: vesicle at 1.12 million (ratio 0.196), **still present** at 1.44 million (0.129) while the
+aggregate grew 102 -> 130 lipids.
+
+So the correct statement is that emergent vesicles here are **metastable with a distribution of
+lifetimes** -- some dissolve within ~10^5 steps, at least one has held for 3.2 x 10^5 and counting. Last
+tick's "they do not last" was drawn from a single seed and is **softened accordingly**.
+
+### RESULTS.md consolidated
+
+Two sections rewritten to state the whole picture rather than the last increment: the per-checkpoint
+prevalence table (13/585 = 2.2%, 6 onsets, 5/35 runs, marked a lower bound) with the note that earlier
+0/10 and 0/5 figures were endpoint artefacts; and the 3-D section, now stating that the chi_WW solvent
+fix appears real but that the required system is ~2000 lipids, an order of magnitude beyond a
+configuration that already cost 15+ hours.
+
+### FALSIFICATION -- unchanged, pending the 6-tail probe
+
+At step 4500-6000 of 30 000: largest 22-45, core 1.548-1.637 (higher than the 4-tail 1.38, as longer
+tails should give). Too early to read.
+
+* **6-tail goes flat** -> packing parameter is the lever and the 4-tail lipid is wrong for 3-D.
+* **6-tail stays isotropic at the same thickness ratio** -> confirms the size artefact; no lipid
+  architecture can produce a flat patch at N = 60.
+* **Fails to aggregate** -> too bulky, says nothing.
+
+### Still in flight
+
+6-tail 3-D probe, 3-D solvent pair (chi_WW = 0.50 at 20 000/40 000), 10 rate extensions, 5 long 2-D runs
+at 1.44 million.

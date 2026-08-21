@@ -138,8 +138,15 @@ fully intact. 0/5 closed.*
 
   An independent check of `shell_split` fell out of building that state: with the appendages gone the
   RAW ratio is 0.656-0.657, which is the CORRECTED ratio computed with them present (0.662).
-- **It is 2-D.** Nothing transfers to 3-D, where explicit solvent at phi 0.15-0.35 is still fragmented
-  droplets rather than a liquid.
+- **It is 2-D, and 3-D is out of practical reach.** The old blocker -- explicit solvent being fragmented
+  droplets -- looks like a chi_WW artefact: at chi_WW = 0.50 the largest connected water cluster is
+  1.000 in 3/3 seeds, where chi_WW = 1.00 gives 0.626 and 0.714. But the solvent was never the only
+  obstacle. A 4-tail bilayer is ~9 sigma thick, so a patch reads as flat only above ~500 lipids and
+  convincingly only near ~2000; a 3-D vesicle needs the same, since it too needs R > thickness. Runs at
+  N = 60 and N = 200 are both **thicker than they are wide** and cannot show a bilayer even in
+  principle -- the observed 3-D micelles (5/5 isotropic, thickness 4.5-5.5 sigma) are what a too-small
+  box must produce. At N = 200 the cost was already 15+ hours, so the required system is a further
+  order of magnitude beyond this setup.
 - **The appendaged form is a kinetic trap, not a preferred morphology.** Real vesicles do bud and
   tubulate, so the shape is not by itself disqualifying -- but in this model it is measurably NOT the
   favoured state. A planted single 160-ring, same lipids and conditions, sits at **-7.502 +- 0.023**
@@ -147,9 +154,24 @@ fully intact. 0/5 closed.*
   (122 kT) higher, at 8.5 sigma**, and the single ring encloses ratio 0.76-0.85 against 0.28. Real
   budding is driven by excess area at fixed enclosed volume and by spontaneous curvature; this model
   has no volume constraint and, measured five different ways, no spontaneous curvature at all.
-- **The formation rate is unmeasured.** One occurrence in five emergence seeds. A 10-seed measurement
-  is in flight and stands at **0/10 at 50-65% of its runs**; until it finishes this is "observed once",
-  not "reproducible at rate X".
+- **Three formations observed, and they are often TRANSIENT.** Seed 80's 48-lipid vesicle existed at
+  steps 320 000 (ratio 0.522) and 480 000 (0.490) and was gone by 1.12 million. Seed 82's has instead
+  persisted from 1.12 to 1.44 million while growing 102 -> 130 lipids. Some dissolve, some hold.
+
+  Scoring EVERY checkpoint rather than endpoints, across 35 dispersed runs:
+
+  | arm | checkpoints with a vesicle | runs with one | onsets |
+  |---|---|---|---|
+  | em160 (5) | 0/105 | 0/5 | 0 |
+  | rate (10) | 0/210 | 0/10 | 0 |
+  | N = 116 (5) | 8/105 = 0.076 | 1/5 | 2 |
+  | long (5) | 4/40 = 0.100 | 3/5 | 3 |
+  | ext (10) | 1/125 = 0.008 | 1/10 | 1 |
+  | **overall** | **13/585 = 0.022** | 5/35 | **6** |
+
+  Earlier "0/10" and "0/5" figures in this project were ENDPOINT scores and could not see transients;
+  the N = 116 arm reported as 0/5 actually had two onsets. This prevalence is a LOWER BOUND, since the
+  scan reads the largest cluster only.
 - **It does not improve with time.** Over 600 000 steps and five seeds the composition is static --
   shell 100-110, appendages 50-60 -- and one seed degraded outright (shell 26, lumen 45). The shell
   closed at ratio 0.501 and was at its best the moment it formed.
