@@ -187,30 +187,20 @@ fully intact. 0/5 closed.*
   **The run-level figure, across the whole corpus.** Consecutive checkpoints within a run are not
   independent -- a vesicle persists across several -- so the independent unit is the run:
 
-  | arm | runs | runs with a vesicle |
-  |---|---|---|
-  | em160 | 5 | 0 |
-  | rate | 10 | 0 |
-  | N = 116 | 5 | 1 |
-  | long | 5 | 3 |
-  | ext | 10 | 1 |
-  | prevalence (carries the all-cluster counter) | 10 | **3** |
-  | determinism rerun | 1 | 0 |
-  | **total** | **46** | **8** |
+      9 of 56 dispersed runs produced a vesicle.   16.1%,  Wilson 95% CI  8.7% to 27.8%
 
-      8 of 46 dispersed runs produced a vesicle.   17.4%,  Wilson 95% CI  9.1% to 30.7%
-
-  **The two instruments disagree in the expected direction:**
+  **The two instruments AGREE, once the better one has 20 runs:**
 
   | subset | rate | 95% CI |
   |---|---|---|
-  | all-cluster scoring (can see coexisting vesicles) | 3/10 = **30.0%** | 10.8-60.3% |
+  | all-cluster scoring (can see coexisting vesicles) | 4/20 = **20.0%** | 8.1-41.6% |
   | largest-cluster scoring only | 5/36 = 13.9% | 6.1-28.7% |
 
-  Seed 1007 is the mechanism: a 41-lipid vesicle beside a 119-lipid open network, which the weaker
-  instrument scores as zero. But **the intervals overlap heavily**, so the difference is not established
-  at these sample sizes -- it is a direction with a known cause, not a measured gap. Ten further
-  all-cluster runs are in flight to halve that interval.
+  20.0% falls inside the largest-cluster interval, so the older data is **not** materially biased. Seed
+  1007 shows the failure mode is real -- a 41-lipid vesicle beside a 119-lipid open network, scored as
+  zero -- but it is rare enough not to move the rate. An earlier version of this section reported the
+  all-cluster arm at 3/10 = 30% and flagged a possible undercount; the second ten came back **1/10**, so
+  that was a high draw.
 
   The cleanest arm -- the only one scored with `count_vesicles` on every cluster at every checkpoint --
   gives 3/10, consistent with the pooled figure. Three of its runs are still short of full length, so

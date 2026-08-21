@@ -9156,3 +9156,58 @@ largest-cluster interval means the instruments agree and 8/46 stands; below 13.9
 ### Still in flight
 
 Ten all-cluster prevalence seeds (1.2 million/1.6 million); the 3-D control is complete.
+
+---
+
+## Tick: the rate question closes -- the instruments agree
+
+### The pre-registered read, at 20 runs
+
+| arm | rate | 95% CI |
+|---|---|---|
+| all-cluster, first 10 | 3/10 = 30.0% | 10.8-60.3% |
+| all-cluster, second 10 | **1/10 = 10.0%** | 1.8-40.4% |
+| **all-cluster combined** | **4/20 = 20.0%** | 8.1-41.6% |
+| largest-cluster arms | 5/36 = 13.9% | 6.1-28.7% |
+| **whole corpus** | **9/56 = 16.1%** | **8.7-27.8%** |
+
+**20.0% is inside the largest-cluster interval, so the second pre-registered branch fires: the two
+instruments agree at this resolution.** The older largest-cluster data is not materially biased.
+
+Seed 1007 remains a real demonstration that the weaker instrument can miss a vesicle -- a 41-lipid
+cluster beside a 119-lipid open network, scored as zero -- but it is **rare enough not to move the
+rate**. Two ticks ago I reported the all-cluster arm at 3/10 = 30% and flagged a possible undercount;
+the second ten came back **1/10**, so that was a high draw, exactly as one of the pre-registered branches
+allowed for.
+
+**Final formation rate: 9 of 56 dispersed runs, 16.1%, 95% CI 8.7% to 27.8%.**
+
+### The 3-D integer-stability puzzle: not a stale-state bug
+
+The `chi_WW = 1.00` runs are demonstrably evolving -- E/lip runs -36.67, -41.43, -42.87, -43.53, -43.85
+across the run and the largest lipid cluster goes 19 -> 23 -> 35. So the frozen water-cluster values are
+**not** a case of states failing to update. The puzzle stands, but it is a property of the measurement or
+of the droplet phase, not a file-writing fault. Recorded, still unexplained, conclusion unaffected.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Twice now the lifetime statistic has been limited by checkpoint spacing: 8 of 12 episodes came out at
+exactly one checkpoint, which is the resolution floor rather than a measurement. Spacing was hardwired
+at `steps // 20`, tying resolution to run length.
+
+`VIVARIUM_CHECKPOINT_EVERY` added and verified (a 12-step run with the override set to 3 emits steps
+0, 3, 6, 9, 12).
+
+Launched: **6 fresh dispersed seeds, N = 160, L = 65, 1.6 million steps, checkpoints every 20 000** --
+four times finer than any previous emergence arm, at the same run length.
+
+* **A formation is caught with lifetime resolved to 20 000 steps** -> the episode floor is lifted and
+  lifetimes can be quoted rather than bounded.
+* **No formation in 6 seeds** -> consistent with a 16% rate (expected ~1), and the resolution
+  improvement stands unused rather than refuted.
+* **Formations appear but still last exactly one checkpoint** -> lifetimes really are of order 20 000
+  steps, and every previous episode figure was an overestimate rather than a floor.
+
+### Still in flight
+
+Fine-resolution emergence arm (6 seeds, 20 000-step checkpoints).

@@ -843,7 +843,11 @@ if __name__ == "__main__":
           "0 = no partitioning", flush=True)
     print(f"{'step':>8}{'E/lip':>9}{'largest':>9}{'R_mid':>7}{'shellCV':>9}{'hollow':>8}{'mix':>7}{'seg':>7}{'burial':>8}{'core':>7}{'lumen_c':>9}{'nenc':>6}{'perc':>6}"
           f"{'lumen':>7}{'lumenW':>8}{'shortOUT':>10}{'shortIN':>9}   enrichment{'  nves':>6}", flush=True)
-    every = max(steps // 20, 1)
+    # Checkpoint spacing was hardwired at steps/20, which ties resolution to run length: a 1.6M-step
+    # run could only resolve a vesicle lifetime to 80 000 steps, and 8 of 12 measured episodes came out
+    # at exactly one checkpoint -- the resolution floor rather than a measurement. Overridable so
+    # lifetime and run length can be chosen independently.
+    every = max(int(os.environ.get("VIVARIUM_CHECKPOINT_EVERY", steps // 20)), 1)
     for t in range(steps + 1):
         X = ig.step(X)
         if t % every == 0:
