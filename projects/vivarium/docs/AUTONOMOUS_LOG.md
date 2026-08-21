@@ -8077,3 +8077,68 @@ larger size means the chi_WW fix does not scale.
 **No new run launched this tick.** Everything that matters is in flight and starved rather than
 undecided, so adding load would have made the pivot slower without answering anything. Recording that as
 a deliberate choice rather than an omission.
+
+---
+
+## Tick: vesicles are TRANSIENT, and endpoint scoring was hiding them
+
+### A third formation
+
+Long run seed 82 at step 1.12 million, dispersed start, nothing planted:
+
+    largest = 102/160   perc = n
+    bead 1.0/1.5/2.0/3.0: n_enclosed = 1, lumen 648 / 518 / 518 / 408
+    vesicle_call -> True   (0.196 of expected, stable at 1)
+    shell_split: shell 58, appendages 44  -> shell-corrected ratio 0.605
+
+### THE FINDING: they do not last
+
+Seed 80's 48-lipid vesicle, tracked through its own trajectory:
+
+    step  320 000: largest 48, lumen 383, ratio 0.522
+    step  480 000: largest 48, lumen 359, ratio 0.490
+    step 1 120 000: largest 57, **n_enclosed = 0**  -- gone
+
+**Emergent vesicles form, persist of order 10^5 steps, then dissolve or merge.** That is consistent with
+everything measured: closure is not thermodynamically favoured here (L* ~ 950 lipids against N = 160), so
+a closed state is metastable, held only by the barrier to unfusing -- and barriers are eventually crossed.
+
+### RETRACTED: "0/10 at 1.6 million" and "0/5 for N = 116" as statements about formation
+
+Both were **endpoint scores**, and an endpoint cannot see a transient. Scoring every checkpoint instead:
+
+| arm | checkpoints with a vesicle | runs with one | onset events |
+|---|---|---|---|
+| em160 (5 seeds) | 0/105 | 0/5 | 0 |
+| rate (10 seeds) | 0/210 | 0/10 | 0 |
+| **N = 116 (5 seeds)** | **8/105 = 0.076** | **1/5** | **2** |
+| **long (5 seeds)** | **4/40 = 0.100** | **3/5** | **3** |
+| ext (10 seeds) | 1/125 = 0.008 | 1/10 | 1 |
+| **overall** | **13/585 = 0.022** | 5/35 | **6** |
+
+**The N = 116 arm was reported as 0/5 and actually had two onset events.** That retraction matters
+because it was used as evidence that matching N to the closure size does not help.
+
+**Prevalence is 2.2% of checkpoints, with 6 onsets across 35 dispersed runs** -- not the zero the
+endpoint scores implied. This is a **LOWER BOUND**: the scan reads the `nenc`/`lumen` columns, which
+describe the LARGEST cluster only. The all-cluster `nves` counter exists only in runs launched after it
+was added, so small vesicles beside larger networks are still uncounted in these older logs.
+
+### The 3-D pivot is compute-bound, and was made cheaper
+
+The N = 200, L = 24 assembly runs have burned 28 minutes of CPU each without reaching their first
+checkpoint at step 10 000; 200 000 steps would need upwards of 15 hours. Launched a **faster probe at
+the same question** -- N = 60, L = 16, 2438 waters, 30 000 steps, checkpoints every 1500, 5 seeds. The
+large runs continue as the definitive version.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+* **The 3-D probe forms a bilayer** (largest grows well beyond the ~10-lipid start, `core` plateaus
+  against this arm's own baseline rather than the 2-D 1.35) -> the solvent fix unblocks 3-D.
+* **Only micelles** (largest stalls in the tens, no plateau) -> 3-D gives micelles and the blocker was
+  never only the solvent.
+* **Water fragments (largest water cluster < 0.9)** -> the chi_WW fix does not hold at this size.
+
+### Still in flight
+
+3-D assembly (5 large, 5 fast probe), 3-D solvent pair, 10 rate extensions, 5 long runs.
