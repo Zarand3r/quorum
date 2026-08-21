@@ -10937,3 +10937,42 @@ Two of six gate hits are not vesicles, consistent with last tick's two of five.
   excluded by data as recorded two ticks ago. Note the criterion is written on GATE counts while the
   adjudicated count is lower (4/18 against 6/18) -- at the read I will report both, and the adjudicated
   count is the one that means anything.
+
+## Tick — RE-SCORE ARM COMPLETE at 0/6: the baseline survives the gate fix, and the blocker lifts
+
+**Pause still in effect for experiments.** No new run launched.
+
+**COMPLETED and scored against its pre-registered criterion.** The six previously-zero baseline seeds
+(1400, 1401, 1403, 1404, 1406, 1407) all reached 1.6M on the FIXED gate, with identical parameters and
+identical seeds to their originals. Result: **0 hits in all six**, exactly as under the buggy gate.
+
+The criterion, fixed before the run: *0 of 6 gaining hits confirms that run-level scoring is less
+bug-sensitive than endpoint scoring, and the 5/22 baseline stands for these six; 1 or 2 revises the
+baseline upward; >= 3 refutes the prediction.* **The first branch fires.**
+
+**This lifts the blocker raised eight ticks ago.** I had written that the 5/22 baseline was scored with
+the buggy gate, that its per-checkpoint states were gone, and that *"until that is resolved, no rate
+comparison from this experiment should be quoted -- including by me."* It is now resolved: determinism
+let the runs be reproduced exactly, and the fix changed nothing at run level on the six trajectories
+where a false negative could have occurred. **The baseline 5/22 = 0.227 stands**, validated on 6 of its
+22 runs.
+
+Scope stated plainly: only the six zero-seeds were re-run, because those are the only ones where the
+bug could flip a run-level verdict. The two hitting seeds (1402, 1405) were not re-run -- their verdict
+cannot change, only their hit counts, which affect occupancy rather than rate. So this is validation of
+the runs that mattered, not of all 22.
+
+**Reconciles with the endpoint finding, rather than contradicting it.** At ENDPOINT the fix changed 1
+state in 78 (sd1202). At RUN level over any checkpoint it changed 0 in 6. That is the predicted
+direction: a vesicle persisting across many checkpoints only needs one moment when it is not straddling
+a boundary, while an endpoint score takes a single sample.
+
+**Primary arm at 1.22-1.24M (76%), gate 6/18, adjudicated 4/18.** sd9010's vesicle has now held **39
+consecutive checkpoints = 780 000 steps**, nearly half the run: at 1.22M it is 70 lipids, lumen 677
+cells, lumen water 0.724, and unwrapped it is a large clean closed ring with a small tail.
+
+**No falsification criterion stated for a new run, because none was launched.** The primary arm's
+criterion is unchanged and its comparison is now legitimate, which it was not before this tick:
+>= 11/18 by gate is an effect at p < 0.05 against the validated baseline 5/22; <= 1/18 remains excluded
+by data; 2-10/18 is the null. Both gate and adjudicated counts will be reported, and the adjudicated
+count is the one that carries meaning.
