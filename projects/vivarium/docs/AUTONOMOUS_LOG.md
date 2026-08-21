@@ -8606,3 +8606,60 @@ adjudicator is the one thing that needs finishing.
 
 Prevalence adjudicator (10 seeds at ~50%), determinism rerun as an 11th sample, chi_WW = 1.00 3-D
 control (12 000-14 000 of 40 000), 5 long 2-D runs at 2.4-2.56 million.
+
+---
+
+## Tick: two failure modes distinguished, and a correction to last tick's reading
+
+### CORRECTED: seed 1000 did not lose its vesicle
+
+Last tick I wrote that prevalence seed 1000 "held its vesicle for 2 checkpoints and has since lost it
+(nves = 0 at 880 000)". **It had not.** The full trajectory:
+
+| step | largest | n_enclosed | lumen | ratio | gate |
+|---|---|---|---|---|---|
+| 560 000 | 82 | 1 | 162 | 0.076 | fail |
+| 640 000 | 82 | 1 | 223 | 0.104 | pass |
+| 720 000 | 82 | 0 | 0 | -- | fail |
+| 800 000 | 82 | 1 | 281 | 0.131 | pass |
+| 880 000 | 82 | 1 | 242 | 0.113 | pass |
+| 960 000 | 82 | 1 | 226 | 0.106 | pass |
+| 1 040 000 | 82 | 1 | 249 | 0.116 | pass |
+
+The aggregate is **stable at 82 lipids throughout**, with an enclosure at **6 of 7** checkpoints. I read
+a single `nves = 0` at the then-latest line and reported the object as lost.
+
+### The distinction that matters: gate-flicker versus dissolution
+
+**Seed 1000 -- marginal score, persistent object.** Its raw ratio sits just above the 0.10 gate
+(0.104-0.131) because roughly half the cluster is appendages; shell-corrected it is **0.606**. The
+stricter `nves` gate, which also demands dilation stability, fires at only 3 of 7. So the *score*
+crosses back and forth while the *structure* does not change.
+
+**Seed 80 -- genuine dissolution.** largest changed 48 -> 57, lumen went to 0 **and stayed 0** across
+four consecutive checkpoints, from ratios of 0.522 and 0.490.
+
+**Consequence for the earlier "vesicles are transient" claim:** it conflates these. Some vesicles
+genuinely dissolve; others persist while their raw ratio flickers across a threshold. Lifetime estimates
+built on the raw gate will understate persistence for appendage-heavy structures, and the shell-corrected
+ratio is the steadier quantity.
+
+### Verification
+
+Full bazel suite **PASSED in 256.1 s**. This covers everything added since it last ran green:
+`count_vesicles`, `unwrap_cluster`, `shape_anisotropy`, `shell_split`, and the trailing `nves` column.
+Running it was a standing debt, not a new requirement.
+
+### FALSIFICATION -- unchanged; the adjudicator is at 45-65%
+
+Ten prevalence seeds at 720 000-1 040 000 of 1.6 million; **1/10 runs has produced a vesicle**. The
+pre-registered readings stand: >= 3/10 puts the rate in the upper half of the 6.3-29.4% interval; 0/10
+tightens it downward; 1-2/10 is consistent with the current 6/36 estimate. Not being read at 45-65%.
+
+**No new run launched.** The adjudicator is the one measurement that needs finishing, and the correction
+above is a scoring nuance rather than a new question.
+
+### Still in flight
+
+Prevalence adjudicator (10 seeds), determinism rerun as an 11th sample, chi_WW = 1.00 3-D control
+(14 000-16 000 of 40 000, already past the recorded fragmentation), 5 long 2-D runs at 2.4-2.72 million.
