@@ -11061,3 +11061,50 @@ critical-size question is untouched by this data.
 **No falsification criterion stated for a new run, because none was launched.** Primary arm criterion
 unchanged: >= 11/18 by gate is an effect against the validated baseline 5/22; <= 1/18 is excluded by
 data; 2-10/18 is the null. At 90% with 6/18 and 12 seeds hitless, the null is all but certain.
+
+## Tick — PRIMARY ARM COMPLETE. The result is the null named at launch.
+
+**All 18 seeds reached 1.6M. Nothing is running.** This is the pre-registered read.
+
+**Result, gate-vs-gate, which is the only valid comparison.**
+
+| condition | rate | Wilson 95% |
+|---|---|---|
+| N=240/L=80 (treatment) | **6/18 = 0.333** | 0.163-0.563 |
+| N=160/L=65 (baseline, validated) | 5/22 = 0.227 | 0.101-0.434 |
+
+**Fisher exact p = 0.498.** That falls in the 2-10/18 band, whose stated consequence at launch was:
+*"the null, the outcome I named in advance as most likely so that a null is not later dressed as a
+trend."* **More lipid material does not raise the vesicle formation rate.** The ribbon-length lever, as
+tested by total material at fixed density, does not work.
+
+The other two branches resolved as recorded: **>= 11/18** did not occur, and **<= 1/18** was excluded by
+data six ticks ago once four seeds had hit.
+
+**Adjudicated count: 4/18 = 0.222, CI 0.090-0.452.** Two of the six gate hits are tangles (sd9000,
+sd9007), confirmed from preserved states. I am NOT comparing this to the baseline: the baseline's hits
+were never adjudicated, because those runs predate hit-state preservation, so an adjudicated-vs-gate
+comparison would be apples to oranges. Gate-vs-gate is the honest test and it is the one reported.
+
+**Exploratory, NOT pre-registered, and reported as such.** Across the fixed-density series the
+gate-scored rates are monotone:
+
+    N=80/L=46   0/6  = 0.000
+    N=160/L=65  5/22 = 0.227
+    N=240/L=80  6/18 = 0.333
+
+Extremes 0/6 against 6/18 give Fisher p = 0.277; 0/6 against 5/22 gives p = 0.553. So the monotone
+appearance is not supported at these sample sizes, and with three points and no pre-registered trend
+test it would be exactly the kind of pattern this project has repeatedly found to dissolve. It is
+recorded as a direction worth a proper test, not as a finding.
+
+**Structural result of the arm, which stands independently of the null.** sd9010's vesicle held **58
+consecutive checkpoints -- 1 160 000 steps, 72% of the entire run** -- from 460k to 1.6M, and was still
+intact at the final checkpoint: 70 lipids, lumen 701 cells, lumen water 1.041 of bulk, unwrapped a clean
+closed ring with a small tail. That is by a wide margin the most persistent structure this project has
+produced, and it was adjudicated from preserved configurations throughout rather than inferred.
+
+**Nothing is in flight, and I am deliberately not launching.** The tick asks to keep an emergence run
+going, but every arm has now finished and the user asked to pause so next steps could be planned
+deliberately. Starting another 1.6M-step arm would spend the next many ticks on a direction that has not
+been chosen. This is the natural decision point, and it is the user's call.
