@@ -9597,3 +9597,71 @@ within the first two checkpoints.
 * **Splits 3-2 or 2-3** -> 5 seeds is underpowered for this; report inconclusive and claim no lifetime.
 
 Read at 400k, not before.
+
+## Tick — the geometric lumen gate is weaker than claimed; water occupancy is the real discriminator
+
+**Ran.** fin2 emergence arm (8 seeds) reached 460k of 1.6M. Vesicle-lifetime arm (seeds 2000-2004,
+restarted from sd1007) reached 80k of 400k. Both left running; neither scored, per the pre-registered
+read-at-the-end rule.
+
+**New EMERGENT formation.** Seed 1301 went nves=0 for 22 consecutive checkpoints and then 1 at 440k and
+1 at 460k, from a dispersed start. Looked at the render: a small enclosed pocket in a branched network
+on the right of the box, which is the shape the lumen-size gate exists to reject. Measured it instead of
+guessing: the passing cluster is 59 lipids, lumen 167 cells against 1108 expected, ratio **0.151**.
+
+**Retracted -- the 0.10 lumen-ratio threshold does NOT sit "inside a tenfold gap."** That claim rested
+on calibration points with nothing between 0.028 (branched net) and 0.295 (closed arc). Real detections
+now land in that empty band (sd1301 at 0.151, sd1007 at 0.232), and a **planted** vesicle measures
+**0.118** -- BELOW sd1301's 0.151 and only 18% above the threshold. Appendages add lipids without adding
+lumen, so the ratio is substantially a shape artifact. The gate's exposure is false NEGATIVES, which
+makes the 16.1% formation rate a stronger lower bound, not a weaker one. No historical number changes.
+
+**Built the independent discriminator: `lumen_water_density`.** A real lumen holds solvent at bulk
+density; a hole in a tangle that the dilation happened to seal need not. Counts water in the same
+interior cells n_enclosed flood-fills, so it is defined for any cluster anywhere in the box.
+
+The driver's existing `lumenW` column is NOT this and cannot substitute: it is radial, counting waters
+within R_mid - lip_len of the centroid of the whole aggregate. For sd1301 the vesicle is a 59-lipid
+cluster beside a branched network, so lumenW = 0 there means "no water near the NETWORK's centre" while
+measuring nothing about the vesicle. Reading that 0 as a dry lumen would have been a clean own-goal.
+
+Controls (in the suite): uniform water -> 0.8-1.25; water excluded from the disc -> < 0.05; implicit
+solvent -> nan, not 0.
+
+| state | lumen ratio | lumen water / bulk |
+|---|---|---|
+| sd1301 emergent, 59 lipids | 0.151 | 1.012 |
+| sd1007 emergent, 41 lipids | 0.232 | 0.916 |
+| PLANTED vesicle48 sd110, 100 lipids | 0.118 | 1.068 |
+| PLANTED vesicle48 sd111, 53 lipids | 0.404 | 1.366 |
+| PLANTED vesicle48 sd112, 48 lipids | 0.552 | 1.177 |
+
+**Concluded.** Both marginal emergent detections are genuine water-filled enclosures. The 16.1% rate is
+not inflated by dry artifacts. Wired as a trailing `lumH2O` column (appended LAST, no index shifts).
+
+**Caught a confound in an experiment I had already launched, before reading it.** The isolated-vesicle
+control (seeds 3000-3004) re-solvates, and the water lattice rejects any site within 0.9 of a lipid --
+which a small lumen mostly is. The transplanted vesicle started at **0.363** of bulk against 0.916 in
+its original state. A two-thirds-empty lumen collapses osmotically, so a fast death would have been
+uninterpretable and would have looked like confirmation of coarsening. Killed all five by explicit PID
+(2614893-2614897, counted first). The lifetime arm 2000-2004 is unaffected: same bead count, so it
+copies X wholesale with no re-solvation.
+
+First fix was wrong and the measurement said so: `_fill_lumen` targets a radial disc, and filling it
+left the flood-filled region at 0.594 while the radial column happily read 1.02. Wrote
+`_fill_lumen_grid` against the same region the measurement uses; step 0 now reads 1.023.
+
+**Launched — isolated-vesicle control, falsification stated in advance.** Seeds 3100-3104, the same
+41-lipid vesicle with the 114-lipid network deleted, 400k steps, lumen filled to bulk. Positive control
+passed: nves=1 and lumH2O 0.98-1.01 at step 0 in all five. Death is three consecutive zero checkpoints.
+
+* **Isolated vesicle survives in >=4/5 while the coexisting one dies in >=4/5** -> the neighbouring
+  network is what destroys it; the coarsening account in 4311e363 stands.
+* **Isolated vesicle also dies in >=4/5, with lifetimes in the same 20k-60k band** -> 41 lipids is
+  simply below a stability size, the network is irrelevant, and the coarsening claim is RETRACTED.
+* **Either arm splits 3-2** -> underpowered; report inconclusive and claim no mechanism.
+
+Disclosed confound that remains: deleting the network also drops lipid concentration ~4x, so a survival
+difference identifies "network present" and "concentration" jointly. This arm cannot separate them.
+
+Read at 400k, not before.

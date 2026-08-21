@@ -385,7 +385,41 @@ def shell_split(X, mols, L, cell=0.5, reach=5.0):
     return shell, len(mols) - shell, len(best)
 
 
-def count_vesicles(X, mols, L, cut=1.4, min_lipids=20):
+def lumen_water_density(X, mols, wi, L, cell=0.5, bead=1.0):
+    """Water number density inside the enclosed region, in units of the BULK density.
+
+    The `lumenW` column in the driver is not this. That one is radial: it counts waters within
+    R_mid - lip_len of the centroid of the whole aggregate, which is only meaningful for a single
+    roughly-round vesicle sitting at that centroid. For a small vesicle beside a branched network it
+    measures water near the NETWORK's centre and returns 0, which reads as "dry lumen" when nothing
+    about the vesicle was measured at all.
+
+    This version counts waters in the same interior cells that n_enclosed flood-fills, so it is defined
+    for any cluster anywhere in the box. A real lumen holds solvent at roughly bulk density; a hole in
+    a tangle that the dilation happened to seal holds little or none.
+
+    Returns nan for implicit solvent (no water beads) rather than 0 -- reporting 0 would be the same
+    silent-zero this project has been caught by before.
+    """
+    if len(wi) == 0:
+        return float("nan")
+    interior = _interior_mask(X, mols, L, cell, bead)
+    n_cells = int(interior.sum())
+    if n_cells == 0:
+        return float("nan")
+    n = interior.shape[0]
+    lip = np.concatenate(mols)
+    # The SAME shift _interior_mask applies, or the water grid and the interior grid disagree.
+    shift = -X[lip].mean(axis=0) + L / 2.0
+    gw = ((np.asarray(X[wi]) + shift) / L * n).astype(int) % n
+    n_in = int(interior[gw[:, 0], gw[:, 1]].sum())
+    step = L / n
+    rho_in = n_in / (n_cells * step * step)
+    rho_bulk = len(wi) / (L * L)
+    return float(rho_in / rho_bulk)
+
+
+def count_vesicles(X, mols, L, cut=1.4, min_lipids=20, wi=None):
     """How many DISTINCT clusters are vesicles by the full gate.
 
     vesicle_call was only ever applied to the largest cluster, which made a small vesicle beside a
@@ -394,6 +428,11 @@ def count_vesicles(X, mols, L, cut=1.4, min_lipids=20):
 
     Cheap first: a cluster is only put through the four-dilation gate if it encloses anything at all
     at the default dilation. Most clusters fail that immediately.
+
+    With `wi` (water indices) it returns (count, [lumen_water_density per passing cluster]) instead of
+    a bare count. Kept OPTIONAL and additive so every existing caller and every historical number is
+    untouched: the geometric lumen ratio turned out to be a weak discriminator -- a planted vesicle
+    scored 0.118 against an emergent marginal case at 0.151 -- while water occupancy separated cleanly.
     """
     from collections import deque
 
@@ -403,6 +442,7 @@ def count_vesicles(X, mols, L, cut=1.4, min_lipids=20):
     near = np.linalg.norm(d, axis=2) < 8.0
     seen = np.zeros(len(mols), bool)
     total = 0
+    waters = []
     for start in range(len(mols)):
         if seen[start]:
             continue
@@ -426,7 +466,8 @@ def count_vesicles(X, mols, L, cut=1.4, min_lipids=20):
             continue
         if vesicle_call(X, sub, L)[0]:
             total += 1
-    return total
+            waters.append(lumen_water_density(X, sub, wi, L) if wi is not None else float("nan"))
+    return (total, waters) if wi is not None else total
 
 
 def unwrap_cluster(X, mols, L, cut=1.4):

@@ -190,3 +190,39 @@ def test_largest_cluster_fraction_reads_the_configuration():
     _, f8 = largest_cluster_fraction(eight, L)
     assert 0.09 < f8 < 0.18, f"eight separated blobs should give about an eighth, got {f8}"
     assert f8 < f4 < f1, "more separation must mean a smaller largest cluster"
+
+
+def test_lumen_water_density_controls():
+    """Positive and negative controls for the lumen-occupancy instrument.
+
+    Built because the driver's radial `lumenW` column returns 0 for any vesicle that is not centred on
+    the aggregate centroid, and 0 there reads as "dry lumen" when nothing was measured.
+    """
+    import numpy as np
+    from _lumen_field import lumen_water_density
+
+    L, R = 60.0, 12.0
+    ang = np.arange(0, 2 * np.pi, 1.0 / R)
+    ring = np.stack([L / 2 + R * np.cos(ang), L / 2 + R * np.sin(ang)], axis=1)
+    mols = [np.array([i]) for i in range(len(ring))]
+
+    rng = np.random.default_rng(0)
+    # (a) water everywhere at uniform density -> lumen sits at bulk, ratio ~ 1
+    w = rng.uniform(0, L, size=(4000, 2))
+    X = np.concatenate([ring, w])
+    wi = np.arange(len(ring), len(X))
+    r_uniform = lumen_water_density(X, mols, wi, L)
+    assert 0.8 < r_uniform < 1.25, r_uniform
+
+    # (b) water excluded from the disc -> empty lumen, ratio ~ 0
+    out = w[np.linalg.norm(w - L / 2, axis=1) > R]
+    X2 = np.concatenate([ring, out])
+    wi2 = np.arange(len(ring), len(X2))
+    r_dry = lumen_water_density(X2, mols, wi2, L)
+    assert r_dry < 0.05, r_dry
+
+    # (c) the instrument must separate the two by a wide margin
+    assert r_uniform > 10 * max(r_dry, 1e-6) or r_dry == 0.0
+
+    # (d) implicit solvent is undefined, not zero
+    assert np.isnan(lumen_water_density(ring, mols, np.array([], dtype=int), L))

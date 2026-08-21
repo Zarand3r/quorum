@@ -235,7 +235,18 @@ fully intact. 0/5 closed.*
   **One of those hits was invisible to largest-cluster scoring.** In seed 1007 the largest cluster is a
   119-lipid open network with `n_enclosed = 0`; the vesicle is a separate **41-lipid** cluster (lumen
   124, ratio 0.232, stable across bead 1.0-3.0, shell 32 with 9 appendages). Under the older scoring that
-  run counted as a clean zero. "Coexisting-only" is a detection category, not a distinct physical
+  run counted as a clean zero. The geometric lumen-ratio threshold of 0.10 is weaker than first claimed. It was
+  placed "inside a tenfold gap" between a branched net at 0.028 and a closed arc at 0.295, but nothing
+  in that calibration was an appendaged vesicle. A **planted** vesicle measures **0.118** -- below the
+  emergent seed 1301 at 0.151 -- because appendages add lipids without adding lumen. The gate's
+  exposure is therefore false NEGATIVES, which makes the 16.1% rate a stronger lower bound. An
+  independent check, `lumen_water_density`, counts water in the flood-filled interior cells: sd1301
+  reads 1.012 of bulk, sd1007 0.916, planted vesicles 1.068-1.366. Every marginal detection is a
+  genuine solvent-filled enclosure, so the rate is not inflated by dry artifacts. The driver's radial
+  `lumenW` column cannot do this job -- it measures water near the whole aggregate's centroid and
+  returns 0 for any vesicle sitting off to one side.
+
+  "Coexisting-only" is a detection category, not a distinct physical
   mode: the largest-cluster sizes overlap completely between the two categories (64, 67, 82, 92, 119,
   132), so the label records only that the vesicle happened to be smaller than the biggest aggregate in
   the box. There is one kind of vesicle here, scored by two instruments.

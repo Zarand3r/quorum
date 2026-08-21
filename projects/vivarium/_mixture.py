@@ -245,6 +245,55 @@ def build(n_short, n_long, n_water, L, d, tails=None, seed=0, plant="random", br
     return X, species, np.array(bonds), mols, wi, np.array(chains)
 
 
+def _fill_lumen_grid(X, wi, mols, L, rng, cell=0.5, bead=1.0):
+    """Fill the FLOOD-FILLED enclosed region to bulk density, not a radial disc.
+
+    _fill_lumen targets r_in = median(radius) - lipid_length about the centroid, which is a circle. The
+    region a vesicle actually encloses is the irregular one n_enclosed flood-fills, and it is the region
+    lumen_water_density measures. Filling the circle left the real lumen at 0.594 of bulk when the
+    original state held 0.916, so the two must be the same region or the fill does not fix the confound.
+
+    Waters are taken from those furthest from the aggregate, so the bulk thins evenly. Returns the
+    number moved.
+    """
+    from _lumen_field import _interior_mask
+
+    if len(wi) == 0:
+        return 0
+    interior = _interior_mask(X, mols, L, cell, bead)
+    n_cells = int(interior.sum())
+    if n_cells == 0:
+        return 0
+    n = interior.shape[0]
+    step = L / n
+    lip = np.concatenate(mols)
+    shift = -X[lip].mean(axis=0) + L / 2.0
+    gw = ((X[wi] + shift) / L * n).astype(int) % n
+    inside = interior[gw[:, 0], gw[:, 1]]
+    have = int(inside.sum())
+    want = int(round((len(wi) / L ** 2) * n_cells * step * step))
+    if want <= have:
+        return 0
+    cells = np.argwhere(interior)
+    # Candidate positions: cell centres in the interior, far enough from any lipid bead to be legal.
+    pos = (cells + 0.5) * step
+    dd = pos[:, None, :] - (X[lip] + shift)[None, :, :]
+    dd -= L * np.round(dd / L)
+    ok = np.linalg.norm(dd, axis=2).min(axis=1) > 0.9
+    pos = pos[ok]
+    if len(pos) == 0:
+        return 0
+    need = min(want - have, len(pos))
+    outer = wi[~inside]
+    if len(outer) == 0:
+        return 0
+    r = np.linalg.norm(_wrap(X[outer] - X[lip].mean(axis=0), L), axis=1)
+    take = outer[np.argsort(r)[::-1][:need]]
+    chosen = pos[rng.choice(len(pos), len(take), replace=False)] - shift
+    X[take] = chosen
+    return len(take)
+
+
 def _fill_lumen(X, wi, mols, chains, L, d, rng):
     """Move enough water inside the planted shell that the lumen sits at the BULK number density.
 
@@ -817,8 +866,14 @@ if __name__ == "__main__":
                 if len(_cand) < _nw:
                     raise ValueError(f"only {len(_cand)} free water sites for {_nw} after transplant")
                 X[_lipn:] = _cand[_rng.choice(len(_cand), _nw, replace=False)]
+            # The lattice rejects any site within 0.9 of a lipid, and a small lumen is mostly within
+            # 0.9 of its OWN shell, so re-solvation leaves it systematically dry: the 41-lipid vesicle
+            # measured lumen water 0.916 of bulk in its original state and 0.363 after transplanting.
+            # A two-thirds-empty lumen collapses for osmotic reasons that have nothing to do with the
+            # question any restart is asking, so fill it to bulk the same way a planted shell is.
+            _moved = _fill_lumen_grid(X, wi, mols, L, np.random.default_rng(seed + 993))
             print(f"re-solvated: {_lipn} lipid beads transplanted, {_nw} fresh waters placed around them "
-                  f"(state had {len(_z['X']) - _lipn})", flush=True)
+                  f"(state had {len(_z['X']) - _lipn}); {_moved} waters moved into the lumen", flush=True)
         else:
             raise ValueError(f"state has {len(_z['X'])} beads, fewer than {_lipn} lipid beads")
     # With phi = 0 there are no water beads, so the explicit chi is the WRONG table: it puts the
@@ -842,7 +897,7 @@ if __name__ == "__main__":
     print("enrichment = (short fraction of OUTER leaflet) - (short fraction of INNER leaflet); "
           "0 = no partitioning", flush=True)
     print(f"{'step':>8}{'E/lip':>9}{'largest':>9}{'R_mid':>7}{'shellCV':>9}{'hollow':>8}{'mix':>7}{'seg':>7}{'burial':>8}{'core':>7}{'lumen_c':>9}{'nenc':>6}{'perc':>6}"
-          f"{'lumen':>7}{'lumenW':>8}{'shortOUT':>10}{'shortIN':>9}   enrichment{'  nves':>6}", flush=True)
+          f"{'lumen':>7}{'lumenW':>8}{'shortOUT':>10}{'shortIN':>9}   enrichment{'  nves':>6}{'  lumH2O':>8}", flush=True)
     # Checkpoint spacing was hardwired at steps/20, which ties resolution to run length: a 1.6M-step
     # run could only resolve a vesicle lifetime to 80 000 steps, and 8 of 12 measured episodes came out
     # at exactly one checkpoint -- the resolution floor rather than a measurement. Overridable so
@@ -862,12 +917,16 @@ if __name__ == "__main__":
             # was only ever seen because it happened to BE the largest cluster; a small vesicle sitting
             # beside a bigger network was invisible to every rate measurement in this project. Closure
             # is encounter-limited, so small ribbons close soonest -- exactly the case being missed.
-            _nves = count_vesicles(X, mols, L)
+            _nves, _lumw = count_vesicles(X, mols, L, wi=wi)
+            # Water occupancy of the enclosure, in units of bulk. Independent of the geometric lumen
+            # ratio, which a planted vesicle can fail (0.118) while a marginal emergent case passes
+            # (0.151). Appended LAST so no existing column index shifts.
+            _lumh2o = max(_lumw) if _lumw else float("nan")
             print(f"{t:>8}{f.energy_solute(X) / n_lip:>9.2f}{largest_cluster(X, mols, L):>9}"
                   f"{g['R_mid']:>7.2f}{g['shell_cv']:>9.3f}{g['hollow']:>8.3f}{g['mix']:>7.3f}{g['seg']:>7.3f}{g['burial']:>8.3f}{g['core']:>7.3f}"
                   f"{(_sizes[0] if _sizes else 0):>9d}{_nenc:>6}{('Y' if percolates(X, _sub, L) else 'n'):>6}"
                   f"{g['lumen']:>7.2f}{g['lumen_w']:>8}"
-                  f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}{_nves:>6}", flush=True)
+                  f"{g['f_out']:>10.2f}{g['f_in']:>9.2f}   {enr:+.3f}{_nves:>6}{_lumh2o:>8.3f}", flush=True)
             _ptag = ("restart" + pathlib.Path(plant.split(":", 1)[1]).stem.split("_sd")[-1]
                      if plant.startswith("state:") else plant)
             shot(X, species, L, f"mix{d}d_{_ptag}_N{n_lip}_L{L:g}_{'sac' if phi == 0.0 else 'exp'}"
