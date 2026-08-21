@@ -9961,3 +9961,71 @@ every emergent state that encloses anything, then check the 0.7 water threshold 
 
 The adjudication must be done by looking at renders BEFORE computing the water values for them, or it is
 not a test.
+
+## Tick — the water threshold fails its blind test at 0.733; no single scalar solves this
+
+**Ran.** Replacement emergence arm (1400-1407) at 260k of 1.6M, NOT scored -- too early, and every seed
+still reads nves=0 with largest clusters of 30-88.
+
+**The pre-registered test, executed in the required order.** Listed the 25 emergent states that enclose
+anything and have a render. Adjudicated 15 of them BY RENDER ONLY, recording each verdict before any
+water value was computed for any of them.
+
+Verdicts: **vesicle** -- 1000, 1205, 1301, 1306. **tangle** -- 1200, 1203, 1204, 1005, 1006, 1007, 1101,
+1303, 35, 38, 82.
+
+Then computed lumH2O and applied the 0.7 threshold:
+
+| seed | render | lumH2O | predicted | agree |
+|---|---|---|---|---|
+| 35 | T | 0.447 | T | yes |
+| 38 | T | 0.968 | V | **NO** |
+| 82 | T | 0.949 | V | **NO** |
+| 1000 | V | 0.900 | V | yes |
+| 1005 | T | 0.580 | T | yes |
+| 1006 | T | 0.492 | T | yes |
+| 1007 | T | 0.916 | V | **NO** |
+| 1101 | T | 0.171 | T | yes |
+| 1200 | T | 0.404 | T | yes |
+| 1203 | T | 0.668 | T | yes |
+| 1204 | T | 0.556 | T | yes |
+| 1205 | V | 0.934 | V | yes |
+| 1301 | V | 0.313 | T | **NO** |
+| 1303 | T | 0.382 | T | yes |
+| 1306 | V | 0.882 | V | yes |
+
+**Agreement 11/15 = 0.733, CI 0.480-0.891.** That is below the 0.75 floor, so by the criterion set last
+tick: **water is not the discriminator, and the vesicle / tangle-pocket problem is declared unsolved by
+any single scalar in this project.** The 0.7 threshold is NOT adopted.
+
+The failures are structured rather than random, which is the useful part. Three false positives (38, 82,
+1007) are large network loops that enclose a big water-filled region -- water cannot tell those from a
+vesicle because both hold bulk solvent. The one false negative (1301) is a genuinely small vesicle whose
+lumen is small enough that boundary effects pull the density down. So water fails HIGH on big network
+loops and LOW on small vesicles, a size-dependence running opposite to the lumen ratio's. That is why no
+single threshold works, and it is a reason to expect a COMBINATION of compactness and water might --
+which I am not claiming, only naming as the remaining avenue.
+
+**Honest limit on this test.** The render adjudication is my own judgment, not an objective label. sd82
+in particular is a large angular closed loop that another reader could reasonably call a vesicle; had I
+called it V, agreement would be 12/15 = 0.80 and the verdict would flip to the 75-90% band. The result
+is therefore reported with that sensitivity stated, and the conclusion I draw -- do not adopt -- is the
+conservative one either way.
+
+**Concluded — a calibration between the three instruments, at endpoint.** Render-adjudicated vesicles
+are 4 of the 15 adjudicated (0.267, CI 0.109-0.520), and 4 of all 69 emergent endpoint states
+(**0.058, CI 0.023-0.140**). Against the same 69 states, `vesicle_call` gives 0.043 and enclosure-plus-
+water-at-0.5 gives 0.246. So the gate sits close to render adjudication while the enclosure count
+overstates it by roughly fourfold. Any use of the 0.246 figure as a vesicle rate is wrong, and I had
+flagged it as "encloses a water-filled region" for exactly this reason.
+
+**Falsification, stated BEFORE the next run.** Adjudicate the 10 remaining enclosing states (1008, 1103,
+1105, 1109, 213, 3, 39, 80, 83, 84) by render, blind, then recompute the render-adjudicated endpoint
+rate over all 69.
+
+* **The rate's CI excludes 0.043** -> the gate undercounts at endpoint and the amount is stated.
+* **The CI includes 0.043 but excludes 0.246** -> the gate is consistent with adjudication and the
+  enclosure count is confirmed as an overcount; report the gate as the endpoint instrument.
+* **The CI includes both** -> 69 states cannot separate the instruments and no instrument claim is made.
+
+The emergence arm 1400-1407 keeps a dispersed-start run in flight throughout.
