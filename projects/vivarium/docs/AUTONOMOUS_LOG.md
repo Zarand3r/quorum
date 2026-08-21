@@ -10976,3 +10976,39 @@ criterion is unchanged and its comparison is now legitimate, which it was not be
 >= 11/18 by gate is an effect at p < 0.05 against the validated baseline 5/22; <= 1/18 remains excluded
 by data; 2-10/18 is the null. Both gate and adjudicated counts will be reported, and the adjudicated
 count is the one that carries meaning.
+
+## Tick — two separate vesicle episodes in one run, 520 000 steps apart
+
+**Pause still in effect for experiments.** No new run launched.
+
+**Ran.** Primary arm at 1.34-1.38M of 1.6M (85%), gate **6/18**, adjudicated **4/18**. 77 hit states
+preserved. Re-score arm finished last tick at 0/6.
+
+**Measured — recurrent formation within a single run.** sd9005's hit timeline, in thousands of steps:
+
+    620 640 660 680 700 720 740 760 780 800  ...gap of 520...  1320 1340 1360
+
+Ten consecutive checkpoints, then a **520 000-step absence**, then a new run of hits. Adjudicated the
+new structure from its preserved state at 1 360 000: a large clean closed ring with a small tail, 74
+lipids, span 34.7 x 26.4 sigma. **VESICLE.** So this run produced two distinct vesicle episodes
+separated by half a million steps, with the first (ratio 0.714) the best-scoring structure this project
+has measured.
+
+This is direct, well-instrumented support for something recorded much earlier and then left as an
+inference: closure is **not an absorbing state**. Previously that rested on flickering hit patterns in a
+restarted arm, where a "death" could not be distinguished from a detector dropout. Here the absence
+lasts 26 consecutive zero checkpoints and both episodes are adjudicated from preserved configurations,
+so neither the death nor the re-formation is an instrument artifact.
+
+**Also measured.** sd9000, adjudicated TANGLE, ran 7 consecutive checkpoints (960k-1080k, 140 000 steps)
+and has now been absent for 260 000 steps. So tangle-pockets are transient too, on a comparable
+timescale to short vesicle episodes -- another reason persistence alone cannot separate the two, beyond
+the direct refutation two ticks ago.
+
+**Running tally of the arm, unchanged this tick.** Gate 6/18. Adjudicated 4/18: VESICLE sd9005, sd9010,
+sd9015, sd9016; TANGLE sd9000, sd9007. sd9010 is at 46 consecutive hits.
+
+**No falsification criterion stated for a new run, because none was launched.** The primary arm's
+criterion is unchanged: >= 11/18 by gate is an effect at p < 0.05 against the now-validated baseline
+5/22; <= 1/18 is excluded by data; 2-10/18 is the null. At 85% with 6/18 by gate and 12 seeds still
+hitless, the null remains the overwhelmingly likely outcome, as named at launch.
