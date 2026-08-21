@@ -7217,3 +7217,66 @@ matched to the original box so coarsening is comparable: 116/55^2 = 0.0383 again
 ### Still in flight
 
 Formation rate (10 seeds), maturation (5 seeds), matched-size N = 116 emergence (5 seeds).
+
+---
+
+## Tick: no maturation, and the shell tested on its own
+
+### The maturation test, at 510 000 of 600 000
+
+Raw ratio is the wrong level to judge this on -- shedding or absorbing appendages shows up in the split,
+not in a number whose denominator counts every lipid. Measured with `shell_split`:
+
+| state | total | shell | appendage | raw | corrected |
+|---|---|---|---|---|---|
+| START (frozen candidate) | 160 | 102 | 58 | 0.269 | 0.662 |
+| maturation sd40 | 160 | 103 | 57 | 0.266 | 0.641 |
+| maturation sd41 | 160 | 102 | 58 | 0.273 | 0.673 |
+| maturation sd42 | 159 | 108 | 51 | 0.297 | 0.644 |
+| maturation sd43 | 159 | 103 | 56 | 0.294 | 0.700 |
+
+**The composition is static.** Shell 102 -> 102-108, appendages 58 -> 51-58, corrected ratio flat across
+four independent thermal seeds and 510 000 steps. This is the second pre-registered branch: the
+appendages are permanent, not a stage on the way to something tidier.
+
+It also confirms the prediction made last tick from the trajectory -- the shell closed at ratio 0.501
+and was at its best the moment it formed. Nothing since has improved it.
+
+(Reported at 85% of the run. The runs finish at 600 000 and the final read follows, but four seeds flat
+over half a million steps is not going to reverse in the last 15%.)
+
+### A false positive rejected, again
+
+Formation-rate seed 33 reached `n_enclosed = 1` at largest 123, held for two checkpoints. Lumen **92
+against 4816 expected, ratio 0.019** -- rejected. That is the same scale as every earlier false positive
+(0.010-0.044) and nowhere near the 0.10 gate. The rate stands at 0/10 at the halfway mark.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+If the shell is a real vesicle, it should stand without the material hanging off it. If the appendages
+are load-bearing, removing them should open or collapse it.
+
+Built `vesicle_shell_only.npz`: the 102 shell lipids kept, the 58 appendage lipids deleted, re-solvated
+into the same box. **An independent check of `shell_split` fell out of this**: with the appendages gone
+the RAW ratio is 0.656-0.657, which is the CORRECTED ratio computed with them present (0.662). Two
+different routes to the same number.
+
+Launched: 5 fresh thermal seeds, 200 000 steps.
+
+* **`vesicle_call` True in >= 3/5 with largest >= 97** -> the shell is a self-supporting vesicle and the
+  appendages are passengers. The headline object is then a clean 102-lipid vesicle, and the raw 0.269
+  was always an artefact of counting passengers in the denominator.
+* **It opens in >= 3/5** -> the appendages were load-bearing, and the structure only holds as the
+  160-lipid object it actually is. The claim would need restating in those terms.
+* **largest < 97** -> stripping was too aggressive and the test says nothing.
+
+### Not readable yet
+
+* Formation rate: 800 000 of 1.6 million, largest 64-125, zero enclosures passing the gate.
+* Matched-size N = 116 emergence: 320 000-560 000 of 1.6 million, largest 37-92, no closures. The
+  original did not close until ~1.96 million.
+
+### Still in flight
+
+Formation rate (10 seeds), maturation (5 seeds, finishing), N = 116 matched-size emergence (5 seeds),
+shell-only stability (5 seeds).
