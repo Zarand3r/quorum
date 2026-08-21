@@ -8316,3 +8316,61 @@ tails should give). Too early to read.
 
 6-tail 3-D probe, 3-D solvent pair (chi_WW = 0.50 at 20 000/40 000), 10 rate extensions, 5 long 2-D runs
 at 1.44 million.
+
+---
+
+## Tick: the 3-D pivot closes -- micelles are a size artefact, not a lipid problem
+
+### The 6-tail discriminator, read near the end
+
+| | seed | nlip | thickness | thick/bilayer | eigenvalues | verdict |
+|---|---|---|---|---|---|---|
+| **6-tail** | 900 | 27 | 5.0 | **0.36** | 1.000 : 0.603 : 0.571 | isotropic / micelle |
+| | 901 | 40 | 6.4 | 0.46 | 1.000 : 0.714 : 0.665 | isotropic / micelle |
+| | 902 | 30 | 5.5 | 0.39 | 1.000 : 0.719 : 0.590 | isotropic / micelle |
+| | 903 | 45 | 6.5 | 0.46 | 1.000 : 0.928 : 0.689 | isotropic / micelle |
+| | 904 | 27 | 5.0 | 0.36 | 1.000 : 0.906 : 0.727 | isotropic / micelle |
+| **4-tail** | 800-804 | 19-52 | 4.5-5.5 | 0.45-0.55 | -- | isotropic / micelle |
+
+**5/5 isotropic in both.** Doubling the tail bulk -- a large increase in the packing parameter
+`P = v/(a0*l)`, the quantity that decides micelle versus lamella -- **changed the morphology not at
+all**. Every aggregate is a monolayer-thick blob, 0.36-0.55 of a bilayer's thickness.
+
+**This fires the second pre-registered branch: the micelles are a SIZE artefact.** It is what the
+aspect-ratio arithmetic already predicted -- at N = 60 a bilayer disc would be thicker than it is wide,
+so no lipid architecture can produce a flat patch there. The 6-tail case is if anything worse, since a
+thicker bilayer (14 sigma vs 10) needs an even larger patch to read as flat.
+
+### The 3-D pivot, closed honestly
+
+* **Solvent:** the known-void looks like a chi_WW artefact. 3-D water is one connected liquid at
+  chi_WW = 0.50 (1.000 in 3/3) and fragments at 1.00 (0.626, 0.714). Directionally unambiguous, though
+  short of the recorded 0.27-0.48 severity.
+* **Size:** a 3-D bilayer patch or vesicle needs **~2000 lipids** (R > the ~9-14 sigma thickness). N = 60
+  and N = 200 are both thicker than wide. N = 200 already cost 15+ hours.
+* **Lipid architecture:** cannot substitute for size, now measured rather than assumed.
+
+**3-D is unblocked in principle and out of reach in practice with this setup.** That is the end of the
+pivot, and it is a feasibility bound rather than a physics result.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Prevalence -- 13/585 = 2.2% of checkpoints, 6 onsets across 35 runs -- is the project's remaining soft
+number. It was computed from `nenc`/`lumen`, which describe the **largest cluster only**, so it is a
+lower bound: a small vesicle beside a bigger network is invisible to it. The all-cluster `nves` counter
+exists but only in runs launched after it was added, and none of the prevalence runs are among them.
+
+Launched: **10 fresh dispersed 2-D seeds, N = 160, L = 65, 1.6 million steps, WITH `nves`** -- so every
+cluster is gated at every checkpoint.
+
+* **All-cluster prevalence is materially above 2.2%** -> the largest-cluster estimate was undercounting,
+  and the corrected figure replaces it in `RESULTS.md`.
+* **Comparable to 2.2%** -> small coexisting vesicles are rare, and the existing number stands as
+  approximately right rather than merely as a bound.
+* **Zero vesicles in 10 runs over 1.6 million steps** -> inconsistent with 6 onsets in the older runs,
+  and the discrepancy would need explaining before either figure is quoted.
+
+### Still in flight
+
+Prevalence runs (10 fresh, with `nves`), 3-D solvent pair (chi_WW = 0.50 at 26 000/40 000), 10 rate
+extensions at 1.44 million, 5 long runs at 1.6-1.76 million.
