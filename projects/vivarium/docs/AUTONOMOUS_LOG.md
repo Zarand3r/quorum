@@ -7935,3 +7935,54 @@ test is not measuring what the void recorded.
 
 Dilution scan at 400 000 of 800 000, largest 17-80, `nves = 0` everywhere. Rate extensions and long
 runs continuing.
+
+---
+
+## Tick: the 3-D solvent test is not decidable yet, because its positive control has not fired
+
+### What was measured
+
+Largest connected WATER cluster as a fraction of all water -- **the same metric the known-void
+recorded**, at 0.27-0.48. 3-D, N = 30 lipids, L = 14, phi = 0.35, 1684 waters, step 300-900:
+
+| chi_WW | seed 600 | seed 601 | seed 602 |
+|---|---|---|---|
+| 1.00 (the value the void was recorded at) | 0.998 | 0.993 | **0.644** |
+| 0.50 (the 2-D fix) | 1.000 | 1.000 | 1.000 |
+
+**The positive control did not reproduce the void.** chi_WW = 1.00 was supposed to give 0.27-0.48 and
+gives 0.644-0.998. A test whose control fails to reproduce the known phenomenon **cannot be used to
+declare that phenomenon absent**, so nothing is concluded from the chi_WW = 0.50 column, encouraging
+though a flat 1.000 across three seeds looks.
+
+Two candidate reasons, neither yet distinguished: these runs are only at step 300-900 and phase
+separation may need far longer, or the box (L = 14) differs from whatever recorded the void.
+
+### A real signal, reported as a signal rather than a result
+
+At chi_WW = 1.00 the water occupies **0.206** of grid cells against **0.432** at chi_WW = 0.50, with the
+same 1684 waters -- so it has condensed into half the volume. Independently, the chi_WW = 1.00 runs are
+**more than 5x slower** at equal CPU, which is what denser neighbour lists do. Both point the way the
+void describes. Neither is the recorded metric, and neither is being substituted for it.
+
+**Retired as useless in 3-D:** the "largest connected vapour region" metric, which reads 1.000 and 0.986
+for the two conditions. Empty space percolates trivially in three dimensions, so it cannot discriminate
+there even though its 2-D counterpart worked.
+
+### FALSIFICATION -- unchanged, pending the control
+
+The small 3-D pair runs to 6000 steps with checkpoints every 300, and the original larger pair
+(N = 100, L = 22, 6618 waters) to 40 000. **Read when the control fires or the runs end.**
+
+* **chi_WW = 1.00 falls into 0.27-0.48 while 0.50 stays near 1.0** -> the control reproduces, the void
+  is a chi_WW artefact, and 3-D is unblocked as the route where a bilayer edge is a LINE and lambda can
+  carry real weight.
+* **Both stay near 1.0 to the end** -> the void does not reproduce under these conditions at all, and
+  the original record must be re-derived before either it or its retirement is relied on.
+* **Both fall** -> the void is real and independent of chi_WW; 3-D stays blocked and the 2-D kinetic
+  result is the honest end state.
+
+### Not readable yet
+
+Dilution scan at 400 000 of 800 000, largest 23-84, `nves = 0` in all ten. Rate extensions and the
+3.2-million-step long runs continuing.
