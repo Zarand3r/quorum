@@ -8663,3 +8663,58 @@ above is a scoring nuance rather than a new question.
 
 Prevalence adjudicator (10 seeds), determinism rerun as an 11th sample, chi_WW = 1.00 3-D control
 (14 000-16 000 of 40 000, already past the recorded fragmentation), 5 long 2-D runs at 2.4-2.72 million.
+
+---
+
+## Tick: how much the raw gate undercounts, and what actually does the rejecting
+
+### Raw versus shell-corrected, across 30 dispersed final states
+
+Last tick established that the raw ratio understates appendage-heavy structures. Quantified:
+
+| gate | passes |
+|---|---|
+| raw ratio | **0/30** |
+| shell-corrected ratio | **2/30** (N160 sd33, N160 sd1000) |
+
+So the correction recovers real cases, but it is **modest** -- not the large systematic undercount the
+last tick's argument might have suggested.
+
+### The binding constraint is dilation stability, not the ratio
+
+Several states have a comfortable corrected ratio and still fail:
+
+    N116 sd51   shell 50 / 83 lipids   corrected 0.542   FAILS
+    N160 sd80   shell 33 / 57 lipids   corrected 0.303   FAILS
+    N116 sd53   shell 29 / 92 lipids   corrected 0.183   FAILS
+
+They fail because `n_enclosed` is not 1 across bead 1.0-3.0 -- the enclosure leaks when beads are
+dilated. Those are **pockets, not lumens**, and the dilation gate is what separates them. That gate has
+a passing positive control (a planted vesicle reads 1 at every dilation), so it is calibrated rather
+than merely strict.
+
+**Correction to the emphasis of the previous tick:** I framed the raw ratio as the problem. It is *a*
+problem, worth about 2 states in 30, but the dominant filter is dilation stability, which is doing the
+right thing.
+
+### A structural observation worth recording
+
+Shell fractions across the corpus are **24-50 lipids of shell out of 57-160 total**. These aggregates
+are predominantly branched network with a small enclosing region attached -- consistent with everything
+measured about junction networks being the model's preferred morphology, and with the vesicles being
+rare kinetic exceptions rather than the bulk behaviour.
+
+### FALSIFICATION -- unchanged; adjudicator at 60-85%
+
+Ten prevalence seeds at 960 000-1.36 million of 1.6 million. **1/10 runs** has produced a vesicle
+(seed 1000, now 5 checkpoints). Pre-registered: >= 3/10 puts the rate in the upper half of the
+6.3-29.4% interval; 0/10 tightens it downward; 1-2/10 is consistent with the current 6/36 estimate.
+
+**No new run launched.** The adjudicator is the one measurement outstanding, this tick's work was an
+audit of existing data rather than a new question, and the long 2-D arm is finishing on its own
+(sd83 has reached 3.2 million).
+
+### Still in flight
+
+Prevalence adjudicator (10 seeds at 60-85%), determinism rerun as an 11th sample at 960 000,
+chi_WW = 1.00 3-D control (18 000-20 000 of 40 000), long 2-D runs finishing at 2.72-3.2 million.
