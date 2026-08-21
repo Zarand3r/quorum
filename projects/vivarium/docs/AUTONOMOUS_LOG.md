@@ -8945,3 +8945,58 @@ measurement and adding load would slow it.
 
 Ten new all-cluster prevalence seeds (240 000/1.6 million), chi_WW = 1.00 3-D control (28 000-32 000 of
 40 000, already past the recorded fragmentation).
+
+---
+
+## Tick: closing the lifetime gap, and catching my own broken merge
+
+### The attempt
+
+Last tick's gap: episode counting fragments one persistent object into several, because it scores each
+frame independently. Proper cluster tracking needs saved per-checkpoint states, which do not exist. The
+cheap substitute is **cluster size as an identity proxy** -- merge across a gate-dropout when `largest`
+holds.
+
+### The first implementation was WRONG, and the number gave it away
+
+It tolerated a dropout of **any length** provided the size was stable. An aggregate can sit at a constant
+size for a million steps with no enclosure at all, so it merged straight through those:
+
+    long sd80  ->  "longest object persistence 1 920 000 steps"
+
+Seed 80's vesicle existed at steps 320 000 and 480 000 and was **gone by 1.12 million** -- a fact already
+recorded in this log. The output contradicted it, which is how the bug was caught. It also reported
+seed 82 going from 1 strict episode to **2** object episodes, and a merge cannot increase a count.
+
+### Fixed, and the correction is modest
+
+Allowing at most a **single-checkpoint** dropout:
+
+| | strict | object-merged |
+|---|---|---|
+| total episodes | 14 | **12** |
+| prev sd1000 | 4 | **2** |
+| longest persistence | 640 000 | **640 000** (seed 82, unchanged) |
+
+Seed 1000's remaining split is a **two-checkpoint** dropout (1 200 000 and 1 280 000 both absent), too
+long to merge without assuming what is being measured. So the fragmentation concern raised last tick is
+**real but small**: it costs two episodes across the corpus and does not change the longest lifetime.
+
+**The honest position on lifetimes is unchanged:** episodes run 80 000 to 640 000 steps, the statistic is
+censored from below by checkpoint spacing, and true object lifetime still needs per-checkpoint cluster
+tracking that this corpus does not have.
+
+### FALSIFICATION -- unchanged; the new arm is at 25%
+
+Ten new all-cluster seeds at 400 000 of 1.6 million, all `nves = 0`, largest 39-93. The pre-registered
+readings for the 20-run all-cluster arm stand: above 28.7% establishes the undercount; inside the
+largest-cluster interval means the instruments agree and 8/46 stands; below 13.9% means 3/10 was a high
+draw.
+
+**No new run launched.** This was an analysis fix on existing data; the new arm is the outstanding
+measurement.
+
+### Still in flight
+
+Ten new all-cluster prevalence seeds (400 000/1.6 million), chi_WW = 1.00 3-D control (30 000-34 000 of
+40 000).
