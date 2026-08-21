@@ -9890,3 +9890,74 @@ calibration ANCHORS by ~2.3x but leave intermediate cases like sd1203 (0.380 cor
 for the nearest planted vesicle) unresolved. Every rate this project reports inherits that ambiguity,
 and none of the three instruments resolves it. I am recording this as the blocking problem rather than
 picking whichever threshold flatters the rate.
+
+## Tick — fin2 complete at 2/8; lumen water at a 0.7 threshold is the surviving candidate
+
+**Ran / scored.** The fin2 emergence arm (seeds 1300-1307) reached 1.6M, 7 of 8 complete, sd1302 at
+1.56M. Scored against the branches pre-registered when it was launched:
+
+* Hits: **2 of 8** (sd1301, 11 checkpoints; sd1306, 15). CI 0.071-0.591.
+* The "no hits at all in 8 runs" branch is falsified.
+* Both formations were coexisting -- measured earlier at sd1301/460k (vesicle 59 lipids beside a
+  85-lipid largest) and sd1306/800k (vesicle 49 beside 122) -- so the "coexisting-only hits continue to
+  dominate" branch is the one that fired, now on 2 more runs.
+
+Corpus becomes **12 of 70 = 0.171, CI 0.101-0.276**, still a lower bound.
+
+Six non-forming runs are not a labelling artifact: sd1305 has nenc = 0 across all 81 checkpoints, and
+sd1300/1304/1307 have 1, 1 and 2.
+
+**Replacement emergence arm launched** (seeds 1400-1407, same parameters, 1.6M, 20k checkpoints) so a
+dispersed-start run stays in flight. These carry the lumH2O column, which fin2 predates.
+
+**Dead end — isoperimetric quotient of the lumen.** Tested whether lumen SHAPE separates vesicles from
+tangle pockets, since neither ratio nor water had. Size-matched synthetic discs first, which is the
+control the tip-counting metric failed long ago:
+
+    target   48 -> IQ 0.721      target  218 -> IQ 0.601
+    target   97 -> IQ 0.630      target 1000 -> IQ 0.639
+    target  124 -> IQ 0.562      target 3400 -> IQ 0.631
+
+A perfect disc scores 0.56-0.72, not 1, and drifts 28% with size, so the measure is partly
+pixelation-limited at these lumen sizes. On real states it discriminates nothing: PLANTED vesicles score
+0.171 / 0.191 / 0.180, sitting INSIDE the tangle range 0.138-0.279, and the highest score of all is
+sd1301's tangle at 0.279. Discarded.
+
+I formed this criterion before running but wrote it down afterwards. That is the same lapse as the
+flicker probe, and I am recording it rather than presenting the analysis as pre-registered.
+
+**Measured — the case that was missing from last tick's shell-normalization test.** sd1306's final state
+renders as an unmistakable closed ring with a long arm, so the render adjudicates it a vesicle
+independently of any gate:
+
+| state (render verdict) | lip | shell | raw | shell-corr | lumH2O | IQ |
+|---|---|---|---|---|---|---|
+| sd1306 VESICLE | 98 | 46 | 0.074 | 0.336 | 0.882 | 0.145 |
+| sd1303 NETWORK | 69 | 27 | 0.038 | 0.246 | 0.382 | 0.175 |
+| sd1005 tangle | 104 | 37 | 0.028 | 0.223 | 0.580 | 0.138 |
+| sd1301 | 50 | 25 | 0.054 | 0.216 | 0.313 | 0.279 |
+| PLANTED d110 | 100 | 48 | 0.118 | 0.513 | 1.068 | 0.171 |
+| PLANTED d111 | 53 | 48 | 0.404 | 0.492 | 1.366 | 0.191 |
+| PLANTED d112 | 48 | 46 | 0.552 | 0.601 | 1.177 | 0.180 |
+
+Shell normalization does NOT rescue it: sd1306 lands at 0.336 against 0.492-0.601 for planted vesicles
+and 0.216-0.246 for tangles -- intermediate, and the network rose by a LARGER factor (6.5x) than the
+vesicle (4.5x). Last tick's dead-end verdict survives this new case.
+
+**Hypothesis, explicitly not adopted.** Lumen water separates all seven states at a threshold of **0.7**,
+not the 0.5 I used two ticks ago: render-confirmed vesicles hold 0.882-1.366, render-confirmed tangles
+0.313-0.580. That threshold is post hoc on n = 7 and would be overfitting to adopt now. It also revises
+what I said two ticks ago -- I called water "necessary but not sufficient" on the strength of sd1005 at
+0.580, which is below 0.7, so the sufficiency claim was tested against the wrong threshold.
+
+**Falsification, stated BEFORE the test, to run next tick.** Adjudicate by RENDER, blind to the metric,
+every emergent state that encloses anything, then check the 0.7 water threshold against that verdict.
+
+* **>= 90% agreement with render adjudication over >= 15 states** -> adopt lumH2O >= 0.7 as the vesicle
+  criterion, re-score the corpus, and report both instruments.
+* **< 75% agreement** -> water is not the discriminator either, and the vesicle/tangle-pocket problem is
+  declared unsolved by any single scalar in this project.
+* **75-90%** -> report the agreement rate and adopt nothing.
+
+The adjudication must be done by looking at renders BEFORE computing the water values for them, or it is
+not a test.
