@@ -159,7 +159,17 @@ fully intact. 0/5 closed.*
   (122 kT) higher, at 8.5 sigma**, and the single ring encloses ratio 0.76-0.85 against 0.28. Real
   budding is driven by excess area at fixed enclosed volume and by spontaneous curvature; this model
   has no volume constraint and, measured five different ways, no spontaneous curvature at all.
-- **Survival from a known vesicle is 8/10 over 200 000 steps.** Measured on the persistence arms, which
+- **Survival from a known vesicle is 8/10 over 200 000 steps -- and this does NOT extend to the full
+  run length.** Every vesicle in the corpus that was detected *before* its run's endpoint had dissolved
+  by 1 600 000 steps (4 of 4: seeds 1000, 1002, 1101, 1203). The only vesicle present at an endpoint,
+  seed 1007's, was first detected at that endpoint. Seed 1000's vesicle *was* the largest cluster (82
+  lipids) when detected and the network is 116 lipids at the end, so it was consumed rather than merely
+  lost to view. These vesicles are kinetic intermediates, not terminal states. That is consistent with
+  the +262 eps vesicle-over-sponge result, which held the lipid count fixed: a 41-lipid vesicle beside a
+  114-lipid network carries its own edge, and merging removes it, so the small coexisting vesicle was
+  never the ground state. The 8/10 figure is scoped to 200 000 steps starting from a known vesicle and
+  licenses no claim about the 800 000-1 000 000 step remainder of a full run.
+  Measured on the persistence arms, which
   checkpoint every 10 000 steps -- eight times finer than the emergence runs. Six of ten runs dipped
   below the gate at least once, but **four of those recovered and ended closed**; only two ended open.
   So a first sub-threshold checkpoint is NOT a death time, and gate-crossings are mostly transient dips
@@ -225,7 +235,11 @@ fully intact. 0/5 closed.*
   **One of those hits was invisible to largest-cluster scoring.** In seed 1007 the largest cluster is a
   119-lipid open network with `n_enclosed = 0`; the vesicle is a separate **41-lipid** cluster (lumen
   124, ratio 0.232, stable across bead 1.0-3.0, shell 32 with 9 appendages). Under the older scoring that
-  run counted as a clean zero. Small vesicles coexisting with larger networks are real and are only
+  run counted as a clean zero. "Coexisting-only" is a detection category, not a distinct physical
+  mode: the largest-cluster sizes overlap completely between the two categories (64, 67, 82, 92, 119,
+  132), so the label records only that the vesicle happened to be smaller than the biggest aggregate in
+  the box. There is one kind of vesicle here, scored by two instruments.
+  Small vesicles coexisting with larger networks are real and are only
   counted by `count_vesicles`.
 
   An earlier version compared two arms at checkpoint level (0/210 against 4/60) and called the

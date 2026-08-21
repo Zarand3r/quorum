@@ -9538,3 +9538,62 @@ checkpoints), taking the fine-resolution population from 6 to 14 runs.
 ### Still in flight
 
 Eight fine-resolution seeds. All other arms are complete.
+
+## Tick — vesicles detected before the endpoint are gone by it
+
+**Ran.** Full test suite (`//projects/vivarium:test_suite`) PASSED in 158.4s, under 8 concurrent
+sims. This clears the debt from last tick: `largest_cluster_fraction` and its synthetic controls had
+only ever been run as a single file, never through the suite.
+
+**Measured (no new compute).** All five detection seeds still have preserved final states. Split each
+into clusters and applied the full vesicle gate to every cluster >= 20 lipids:
+
+| seed | detected at | largest cluster @1.6M | vesicles @1.6M |
+|---|---|---|---|
+| sd1000 | 640k, 800k | 116 | none |
+| sd1002 | 1200k, 1280k | 121 | none |
+| sd1101 | 640k, 720k | 118 | none |
+| sd1203 | 440k, 1200k | 88 | none |
+| sd1007 | 1600k (endpoint) | 114 | [41], coexisting |
+
+**Concluded.** Every vesicle detected before the endpoint had dissolved by 1.6M (4/4). The only one
+present at the endpoint was first detected there. sd1000's vesicle *was* the largest cluster (82) at
+detection and the network is 116 at the end, so it was consumed, not merely lost to view.
+
+These are kinetic intermediates, not terminal states. That does not contradict the +262 eps
+vesicle-over-sponge result: that comparison held the lipid count fixed. A 41-lipid vesicle beside a
+114-lipid network carries its own edge, and merging removes it, so a small vesicle coexisting with a
+larger aggregate was never the ground state. Coarsening consuming it is the expected behaviour.
+
+**Retracted / qualified.** "Survival 8/10 over 200k steps" stands as measured but is now explicitly
+scoped: it was measured over 200k steps starting FROM a known vesicle. It does not license any claim
+about persistence over the 800k-1M step remainder of a 1.6M run, where the corpus shows 4/4 loss.
+
+**Corrected.** Read the restart logs with `NR>=5` and got step 20000 as the first row: these restarts
+skip re-solvation, so the header sits one line earlier than in the dilution-quench logs. This is the
+same header-offset error as before. Re-read by matching the step column, which is what I said I would
+do last time and did not.
+
+**Also concluded (conceptual).** "Coexisting-only" is not a distinct physical mode. The largest-cluster
+sizes overlap completely between the two detection categories (64, 67, 82, 92, 119, 132), so the label
+only records that the vesicle happened to be smaller than the biggest aggregate in the box. The
+instrumentation point -- largest-cluster scoring undercounts -- stands. The implication that there are
+two kinds of vesicle does not, and I had been writing as if there were.
+
+**Launched — vesicle lifetime, falsification stated in advance.** 5 seeds (2000-2004) restarted from
+sd1007's state, which holds a 41-lipid vesicle beside a 114-lipid network -- exactly the configuration
+the coarsening account is about. 400k steps, checkpoints every 20k. Positive control passed: nves=1 at
+step 0 in all five.
+
+Lifetime is defined as the last checkpoint with nves>=1, and death requires **three consecutive zero
+checkpoints** (60k steps). sd2003 already read 1 -> 0 -> 1 at 0/20k/40k, so a single zero is detector
+flicker at threshold, not death. Scoring a first zero as death would have been wrong on 1 of 5 seeds
+within the first two checkpoints.
+
+* **Vesicle dies in >=4/5 within 400k** -> coarsening consumes small coexisting vesicles; transience
+  confirmed with an upper bound on lifetime.
+* **Vesicle persists in >=4/5 for the full 400k** -> the four corpus dissolutions were not generic
+  coarsening but seed-specific; the transience claim retracts to "sometimes."
+* **Splits 3-2 or 2-3** -> 5 seeds is underpowered for this; report inconclusive and claim no lifetime.
+
+Read at 400k, not before.
