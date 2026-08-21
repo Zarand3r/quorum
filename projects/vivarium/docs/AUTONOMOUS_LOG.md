@@ -8836,3 +8836,52 @@ million, and the corpus tally is the deliverable.
 
 Three prevalence seeds (1.36-1.52 million of 1.6 million), chi_WW = 1.00 3-D control (22 000-24 000 of
 40 000, already past the recorded fragmentation).
+
+---
+
+## Tick: the adjudicator completes at 3/10; two instruments, one direction
+
+### Adjudicator complete
+
+All ten prevalence seeds reached 1.6 million. Final: **3/10 runs produced a vesicle** (seed 1000 at 6
+checkpoints, 1002 at 2, 1007 at 1). That crosses the **3/10 threshold pre-registered** as meaning the
+rate sits in the upper half of the interval.
+
+### The final rate, reported with both instruments
+
+| subset | rate | 95% CI | instrument |
+|---|---|---|---|
+| all arms pooled | 8/46 = **17.4%** | 9.1-30.7% | mostly largest-cluster |
+| all-cluster arm | 3/10 = **30.0%** | 10.8-60.3% | sees coexisting vesicles |
+| largest-cluster arms | 5/36 = 13.9% | 6.1-28.7% | cannot |
+
+The direction is as expected and has a demonstrated mechanism -- seed 1007's vesicle was a 41-lipid
+cluster beside a 119-lipid open network, scored as zero by the weaker instrument. **But the intervals
+overlap heavily**, so this is a direction with a known cause, **not a measured gap**. Reporting it as
+established would overstate 10 runs.
+
+### Seed 1002 dissolved
+
+The run that held the corpus's cleanest vesicle at 1.2 million (ratio 0.249, shell 80, corrected 0.678)
+ends at 1.6 million with **largest = 160, n_enclosed = 0, nves = 0** -- all lipids in one connected
+network, the near-closed arc still visible curving through the render. That is a **genuine dissolution**,
+like seed 80, not the scoring flicker seen in seed 1000. Both failure modes are now documented in the
+same corpus.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Launched: **10 further dispersed seeds carrying the all-cluster counter**, N = 160, L = 65, 1.6 million
+steps, taking that arm from 10 to 20 runs and roughly halving its interval.
+
+* **The 20-run all-cluster rate lands above the largest-cluster arms' upper bound (28.7%)** -> the
+  undercount is established rather than merely directional, and the pooled 17.4% should be replaced by
+  the all-cluster figure.
+* **It falls inside the largest-cluster interval** -> the two instruments agree at this resolution, the
+  pooled 8/46 stands, and seed 1007 was a rare case rather than a systematic bias.
+* **It lands below 13.9%** -> the 3/10 was a high draw and the pooled figure was, if anything,
+  generous.
+
+### Still in flight
+
+Ten new all-cluster prevalence seeds, chi_WW = 1.00 3-D control (26 000-30 000 of 40 000, already past
+the recorded fragmentation).

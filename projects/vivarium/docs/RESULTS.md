@@ -193,6 +193,18 @@ fully intact. 0/5 closed.*
 
       8 of 46 dispersed runs produced a vesicle.   17.4%,  Wilson 95% CI  9.1% to 30.7%
 
+  **The two instruments disagree in the expected direction:**
+
+  | subset | rate | 95% CI |
+  |---|---|---|
+  | all-cluster scoring (can see coexisting vesicles) | 3/10 = **30.0%** | 10.8-60.3% |
+  | largest-cluster scoring only | 5/36 = 13.9% | 6.1-28.7% |
+
+  Seed 1007 is the mechanism: a 41-lipid vesicle beside a 119-lipid open network, which the weaker
+  instrument scores as zero. But **the intervals overlap heavily**, so the difference is not established
+  at these sample sizes -- it is a direction with a known cause, not a measured gap. Ten further
+  all-cluster runs are in flight to halve that interval.
+
   The cleanest arm -- the only one scored with `count_vesicles` on every cluster at every checkpoint --
   gives 3/10, consistent with the pooled figure. Three of its runs are still short of full length, so
   the figure is a lower bound.
