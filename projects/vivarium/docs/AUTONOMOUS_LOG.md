@@ -9829,3 +9829,64 @@ NECESSARY but NOT SUFFICIENT to certify a vesicle: it rules out dry sealed artif
 The endpoint enclosure rate of 0.246 from last tick must be read as "encloses a water-filled region,"
 which includes tangle pockets, and NOT as a vesicle rate. I had been treating the two as closer than
 they are.
+
+## Tick — does shell normalization separate small vesicles from tangle pockets?
+
+**Ran.** fin2 emergence at ~1.22M of 1.6M, NOT scored (read at the end). Two runs that had zero
+enclosures last tick now have them on the largest cluster: sd1302 (2 checkpoints) and sd1303 (4).
+
+**Looked.** sd1303 at 1.22M is a long branched network running diagonally with two small holes near the
+centre. That is the tangle-pocket case made visible, and it is what an nenc >= 1 hit can mean.
+
+**The question this tick.** Last tick established that lumen water is necessary but not sufficient:
+sd1005 holds water at 0.580 of bulk with a lumen ratio of 0.028, the branched-net calibration value. The
+ratio is the discriminator that matters, but its normalization assumes every lipid in the cluster lines
+the ring, which is why an appendaged PLANTED vesicle scores only 0.118. `shell_split` already exists and
+its docstring records the correction working once (raw 0.269-0.285 -> shell 0.662-0.714 against 0.876
+planted), but it was never adopted into `vesicle_call`.
+
+**Falsification, stated BEFORE the run.** Compute the shell-corrected ratio for the four
+water-holding low-ratio states plus the planted anchors and a known branched net.
+
+* **sd1005 (the tangle) stays low while sd1301/sd38/sd1203 rise above ~0.4** -> shell normalization
+  separates small vesicles from tangle pockets; adopt it as the gate's ratio and re-score, reporting
+  both instruments.
+* **All four rise together** -> the correction only rescales and discriminates nothing; keep the current
+  gate and record the attempt as a dead end.
+* **All four stay low** -> they are all tangle pockets, the current gate is right to reject them, and
+  the "false negative" framing of the last two ticks is wrong and gets retracted.
+
+Analysis only, no simulation. fin2 keeps a dispersed-start run in flight throughout.
+
+**Result — read against the pre-registered bands.**
+
+| state | raw ratio | shell-corrected | lumH2O | shell/app |
+|---|---|---|---|---|
+| sd1303 network | 0.022 | 0.216 | 0.470 | 25/54 |
+| sd1005 tangle | 0.028 | 0.223 | 0.580 | 37/67 |
+| sd1203 | 0.050 | 0.380 | 0.668 | 32/56 |
+| PLANTED d111 | 0.404 | 0.492 | 1.366 | 48/5 |
+| PLANTED d110 | 0.118 | 0.513 | 1.068 | 48/52 |
+| PLANTED d112 | 0.552 | 0.601 | 1.177 | 46/2 |
+
+sd1301 and sd38 did not print: their live states have advanced and neither currently holds an enclosure,
+so this is 3 comparison states, not 5. Any difference here is reported as indicative only.
+
+Everything rose together, by 7.6-10x for the tangles and 4.3x for the appendaged planted case. Class
+separation is unchanged: **raw 0.118/0.050 = 2.36x, shell-corrected 0.492/0.223 = 2.21x**. That is the
+"all rise together" branch, so by the criterion set before the run: **keep the current gate, record the
+attempt as a dead end.** Done -- `vesicle_call` is unchanged.
+
+**Concluded, and it is worth keeping even though the hypothesis failed.** Shell normalization does fix a
+real defect, just not the one it was tested for. The PLANTED spread collapses from **4.68x** (0.118 to
+0.552 raw) to **1.22x** (0.492 to 0.601 corrected), because dividing by shell lipids removes the
+appendage-load dependence. So the corrected ratio is the more CONSISTENT measure of the same quantity
+while being no better at separating vesicles from tangle pockets.
+
+**Standing open problem, stated plainly.** After three ticks of instrument work there is still no
+measurement that separates a small vesicle from a water-filled pocket in a tangle. Lumen water fails
+(tangle pockets hold 0.47-0.58 of bulk). Raw ratio and shell-corrected ratio both separate the
+calibration ANCHORS by ~2.3x but leave intermediate cases like sd1203 (0.380 corrected, against 0.492
+for the nearest planted vesicle) unresolved. Every rate this project reports inherits that ambiguity,
+and none of the three instruments resolves it. I am recording this as the blocking problem rather than
+picking whichever threshold flatters the rate.
