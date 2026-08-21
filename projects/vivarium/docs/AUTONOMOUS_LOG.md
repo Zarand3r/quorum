@@ -10837,3 +10837,57 @@ proper measurement; sd9005 at 10 consecutive hits is the only other candidate so
 criterion is unchanged and both its branches remain reachable: currently 0/6 at 78% of length, so
 "0 of 6 confirms the prediction" and ">= 3 of 6 refutes it" are both still live, though >= 3 now
 requires all three remaining flips in the final 22%.
+
+## Tick — every hit adjudicated from preserved states: the gate says 5/18, adjudication says 3/18
+
+**Pause still in effect for experiments.** No new run launched.
+
+**Ran.** Re-score arm at 1.40-1.42M of 1.6M (88%), **0/6**. Primary arm at 960k (60%), **5/18** by gate
+(sd9000 newly hitting). sd9010 now at 26 consecutive hits.
+
+**Measured persistence properly for the first time**, using preserved hit states rather than overwritten
+checkpoints. Five hitting seeds:
+
+| seed | hits | longest run | steps | largest at hit | fate |
+|---|---|---|---|---|---|
+| sd9010 | 26 | 26 | **520 000** | 83 | alive at 960k |
+| sd9005 | 10 | 10 | 200 000 | 84 | died at 800k, absent 160k since |
+| sd9015 | 4 | 2 | 40 000 | 90 | flickering |
+| sd9000 | 1 | 1 | 20 000 | 126 | new |
+| sd9007 | 1 | 1 | 20 000 | 60 | -- |
+
+Emergent vesicle persistence in this system spans 20 000 to over 520 000 steps, and both the
+long-lived and the flickering behaviours occur in the same arm under identical conditions.
+
+**Adjudicated all five hits from their preserved states, unwrapped.** This is the first time every hit
+in an arm could be checked against the exact configuration that triggered it:
+
+* **sd9010** -- clean closed ring with one long appendage. VESICLE.
+* **sd9005** -- clean closed ring, ratio 0.714. VESICLE.
+* **sd9015** -- large closed ring with a clear lumen, 77 lipids. VESICLE.
+* **sd9000** -- branched aggregate with a small internal pocket, no closed ring. **TANGLE.**
+* **sd9007** -- loose branched structure with a small pocket. **TANGLE.**
+
+**So the gate reads 5/18 and adjudication reads 3/18.** Two of five gate hits are not vesicles. This is
+why the pre-registered criterion requires adjudication before the arm is scored, and it is the first
+time that requirement has actually changed a count.
+
+**Hypothesis, explicitly NOT adopted: persistence may discriminate.** Runs of 1 checkpoint are tangles
+(2 of 2); runs of 2 or more are vesicles (3 of 3). That would be a temporal discriminator, using
+information no static scalar has, and every static scalar tried here has failed. But it rests on a
+single-checkpoint boundary at n = 5, which is precisely the shape of post-hoc threshold that has
+misled me before -- the 0.7 water threshold looked just as clean at n = 7 and collapsed to 0.280 on
+correction.
+
+**Falsification, stated BEFORE the test it licenses, and checked for reachability this time.** At 1.6M
+the arm will have some number of hitting seeds; currently 5, and 13 seeds remain hitless so more are
+possible. Test "longest run >= 2 checkpoints" against unwrapped-render adjudication of every hit.
+
+* **Agreement >= 90% over at least 8 adjudicated hits** -> adopt as a screening rule and report it.
+* **Agreement < 75%** -> reject; persistence is not a discriminator either.
+* **75-90%, or fewer than 8 hits to adjudicate** -> report the agreement and adopt nothing.
+
+Reachability check, which is the step I omitted two ticks ago: 5 hits exist now and 13 seeds could still
+hit, so the ">= 8 hits" precondition is reachable but NOT guaranteed. If the arm ends with fewer than 8
+hitting seeds the third branch fires by construction, and I am naming that in advance rather than
+discovering it at the read.
