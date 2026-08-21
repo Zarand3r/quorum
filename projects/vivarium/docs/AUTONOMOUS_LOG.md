@@ -10795,3 +10795,45 @@ passes anything at endpoint, which is the attached-vesicle problem recorded two 
 **No falsification criterion is stated for a new run, because none was launched.** Standing criteria for
 the two running arms are unchanged: re-score arm 0 of 6 currently, at 62% of length; primary arm 4/18 at
 43%, inside the 2-10 null band named at launch.
+
+## Tick — reachability audit of the standing criteria; one branch is now excluded by data
+
+**Pause still in effect for experiments.** No new run launched.
+
+**Ran.** Re-score arm at 1.24-1.26M of 1.6M (78%), **0/6**. Primary arm at 860k (54%), **4/18**, with
+sd9010 at 21 consecutive hits and sd9005 at 10. 34 hit states preserved.
+
+**Applied last tick's lesson to the STANDING criteria, before they are read.** Last tick I found I had
+written a falsification branch that could not fire. Auditing the primary arm's criterion the same way:
+
+| branch | reachable? |
+|---|---|
+| >= 11/18 -> effect at p < 0.05 | YES -- needs 7 of the 14 hitless seeds |
+| 2 to 10 of 18 -> null | YES |
+| **<= 1/18 -> more material LOWERS the rate** | **NO** |
+
+Run-level hit counts accumulate monotonically, so with 4 seeds already carrying hits the final count is
+certain to be >= 4. **The "more material lowers the rate" hypothesis is therefore excluded by the data
+already in hand**, not by a flaw in the criterion -- unlike last tick, this branch was reachable when
+written and has since been ruled out. Recording it as a partial result rather than waiting to discover
+at 1.6M that a third of the criterion was moot.
+
+What remains testable is a one-sided question: does more material RAISE the rate. p-values against the
+baseline 5/22 across the still-possible outcomes: 4/18 p=1.000, 6/18 p=0.498, 8/18 p=0.185, 10/18
+p=0.050, 11/18 p=0.023, 12/18 p=0.010.
+
+**Measured — persistence, which is new behaviour.** sd9010's vesicle has now held **21 consecutive
+checkpoints, 420 000 steps**, at 87 lipids with lumen 638 cells. Unwrapped, it is a clean closed ring
+with a long appendage, span 42.1 x 34.7 sigma in an L=80 box.
+
+This contrasts sharply with the intermittency measured much earlier, where a 41-lipid vesicle restarted
+beside a 114-lipid network gave occupancy 0.219 and flickered in and out for its whole run. The
+conditions differ in more than one way (N=240/L=80 here against N=160/L=65 there, emergent here against
+restarted there), and this is **one seed**, so it is recorded as an observation and no mechanism is
+claimed. If persistence at this scale holds across the arm's other hitting seeds it would be worth a
+proper measurement; sd9005 at 10 consecutive hits is the only other candidate so far.
+
+**No falsification criterion stated for a new run, because none was launched.** The re-score arm's
+criterion is unchanged and both its branches remain reachable: currently 0/6 at 78% of length, so
+"0 of 6 confirms the prediction" and ">= 3 of 6 refutes it" are both still live, though >= 3 now
+requires all three remaining flips in the final 22%.
