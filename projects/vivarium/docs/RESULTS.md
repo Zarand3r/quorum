@@ -138,8 +138,15 @@ fully intact. 0/5 closed.*
 
   An independent check of `shell_split` fell out of building that state: with the appendages gone the
   RAW ratio is 0.656-0.657, which is the CORRECTED ratio computed with them present (0.662).
-- **It is 2-D.** Nothing transfers to 3-D, where explicit solvent at φ 0.15–0.35 is still fragmented
+- **It is 2-D.** Nothing transfers to 3-D, where explicit solvent at phi 0.15-0.35 is still fragmented
   droplets rather than a liquid.
+- **The appendaged form is a kinetic trap, not a preferred morphology.** Real vesicles do bud and
+  tubulate, so the shape is not by itself disqualifying -- but in this model it is measurably NOT the
+  favoured state. A planted single 160-ring, same lipids and conditions, sits at **-7.502 +- 0.023**
+  eps/lipid against the emergent structure's **-7.158 +- 0.033**: the emergent form is **+55 +- 6 eps
+  (122 kT) higher, at 8.5 sigma**, and the single ring encloses ratio 0.76-0.85 against 0.28. Real
+  budding is driven by excess area at fixed enclosed volume and by spontaneous curvature; this model
+  has no volume constraint and, measured five different ways, no spontaneous curvature at all.
 - **The formation rate is unmeasured.** One occurrence in five emergence seeds. A 10-seed measurement
   is in flight and stands at **0/10 at 50-65% of its runs**; until it finishes this is "observed once",
   not "reproducible at rate X".

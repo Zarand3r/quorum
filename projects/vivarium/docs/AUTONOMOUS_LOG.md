@@ -7478,3 +7478,65 @@ room.
 ### Still in flight
 
 Formation rate (10 seeds), N = 116 matched-size emergence (5 seeds), planted 160-ring reference.
+
+---
+
+## Tick: the appendaged form is 122 kT above the ideal ring
+
+### The pre-registered comparison, read at the end
+
+Planted single 160-ring against the emergent vesicle-with-appendages. Matched N, box, chi, kT;
+time-averaged over the common range 40 000-150 000; intact seeds only.
+
+| arm | E/lip | n |
+|---|---|---|
+| planted single 160-ring | **-7.502 +- 0.023** | 4 |
+| emergent + appendages | **-7.158 +- 0.033** | 4 |
+
+    emergent - ring = +0.343 +- 0.040 eps/lipid = +55 +- 6 eps total = 122 kT   (8.5 sigma)
+
+Ring seed 74 fragmented (largest 119) and was excluded as pre-registered. The four that held enclose
+**ratio 0.760-0.853** against the emergent structure's 0.28.
+
+**The first branch fires: the appendages are a KINETIC TRAP.** The same 160 lipids arranged as one ring
+sit 122 kT lower and enclose three times the lumen. The emergent structure is not sitting in a
+preferred morphology; it is stuck 55 eps above one.
+
+### On the biological analogy
+
+The observation that real vesicles form with appendages and protrusions is correct and reframes the
+shape from "defect" to "plausible morphology" -- but it does not transfer here, and the measurement is
+what settles that rather than the argument. Real budding and tubulation are driven by **excess area at
+fixed enclosed volume** and by **spontaneous curvature**. This model has no volume constraint, and
+spontaneous curvature was excluded five separate ways with the membrane intact each time (chi_TW a null
+with power, chi_HH 0/5 over ten runs, 2-tail shape dissolving to micelles, leaflet thickness asymmetry
+0/5, leaflet area asymmetry 0/5). Neither driver exists, and the energetics say the appendaged form is
+strongly disfavoured.
+
+### A design flaw of my own, caught
+
+**The formation-rate runs stop at 1.6 million steps. The one formation ever observed happened at 1.96
+million.** So 0/10 was never capable of measuring the rate -- the runs end before the only time closure
+has ever been seen. That is not a null result, it is a mis-specified experiment, and reporting "0/10"
+without this caveat would have been misleading.
+
+Four more rate-run enclosures were screened and rejected: sd32 ratio 0.011, sd35 0.029, sd38 0.030,
+sd39 0.020. All the usual incidental-pocket scale.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Launched: **5 fresh dispersed starts, N = 160, L = 65, 3.2 million steps** -- 1.6x the observed
+formation time, so the window actually contains the regime where closure has been seen.
+
+* **>= 1/5 reach `vesicle_call` True** -> formation is reproducible and a rate can be quoted, with the
+  original occurrence no longer standing alone.
+* **0/5 at 3.2 million, with the existing 10 also extended past 2 million** -> formation is rarer than
+  1 in 15 over a 3-million-step window, and the single observed vesicle must be reported as a rare
+  event rather than a typical outcome.
+* **Aggregates stop coarsening below ~116 lipids** -> the runs never reach the size at which closure
+  became possible, and the rate question is unanswerable in this box rather than answered.
+
+### Still in flight
+
+Formation rate (10 seeds, finishing at 1.6 M -- to be extended), N = 116 matched-size emergence
+(5 seeds), long-horizon rate runs (5 seeds, 3.2 M).
