@@ -187,15 +187,21 @@ fully intact. 0/5 closed.*
   | N = 116 | 5 | 1 |
   | long | 5 | 3 |
   | ext | 10 | 1 |
-  | prevalence (carries the all-cluster counter) | 10 | 2 |
+  | prevalence (carries the all-cluster counter) | 10 | **3** |
   | determinism rerun | 1 | 0 |
-  | **total** | **46** | **7** |
+  | **total** | **46** | **8** |
 
-      7 of 46 dispersed runs produced a vesicle.   15.2%,  Wilson 95% CI  7.6% to 28.2%
+      8 of 46 dispersed runs produced a vesicle.   17.4%,  Wilson 95% CI  9.1% to 30.7%
 
   The cleanest arm -- the only one scored with `count_vesicles` on every cluster at every checkpoint --
-  gives 2/10, consistent with the pooled figure. Seven runs are still short of their full length, so
-  their contribution is a lower bound.
+  gives 3/10, consistent with the pooled figure. Three of its runs are still short of full length, so
+  the figure is a lower bound.
+
+  **One of those hits was invisible to largest-cluster scoring.** In seed 1007 the largest cluster is a
+  119-lipid open network with `n_enclosed = 0`; the vesicle is a separate **41-lipid** cluster (lumen
+  124, ratio 0.232, stable across bead 1.0-3.0, shell 32 with 9 appendages). Under the older scoring that
+  run counted as a clean zero. Small vesicles coexisting with larger networks are real and are only
+  counted by `count_vesicles`.
 
   An earlier version compared two arms at checkpoint level (0/210 against 4/60) and called the
   difference unexplained. That was **pseudo-replication**: at run level it is 0/10 against 3/5,

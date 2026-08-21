@@ -8777,3 +8777,62 @@ Three of ten prevalence seeds have reached 1.6 million; the rest are at 1.2-1.52
 
 Prevalence adjudicator (7 seeds finishing), chi_WW = 1.00 3-D control (20 000-22 000 of 40 000, already
 past the recorded fragmentation), long 2-D runs at 3.04-3.2 million.
+
+---
+
+## Tick: a vesicle only the all-cluster counter could see
+
+### Sixth formation, and the first invisible to largest-cluster scoring
+
+Prevalence seed 1007, final step 1.6 million:
+
+    LARGEST cluster: 119 lipids,  n_enclosed = 0,  vesicle_call = False
+    count_vesicles over all clusters = 1
+    PASSING cluster: 41 lipids -- lumen 124, 0.232 of expected, stable across bead 1.0-3.0
+                     shell 32, appendages 9,  shell-corrected 0.380
+
+The render shows the 119-lipid open network filling the left of the box and the 41-lipid vesicle as a
+**separate cluster** at the right. **Under the largest-cluster scoring used for every arm before the
+prevalence runs, this run counted as a clean zero.**
+
+That is precisely the failure mode `count_vesicles()` was added for, several ticks ago, on the argument
+that a small vesicle beside a bigger network would be invisible. At the time the retrospective rescan of
+20 saved states found nothing extra, and the concern looked theoretical. **It is now demonstrated in the
+wild.**
+
+### The rate, updated
+
+| arm | runs | with a vesicle |
+|---|---|---|
+| em160 | 5 | 0 |
+| rate | 10 | 0 |
+| N = 116 | 5 | 1 |
+| long | 5 | 3 |
+| ext | 10 | 1 |
+| prevalence (all-cluster) | 10 | **3** |
+| determinism rerun | 1 | 0 |
+| **total** | **46** | **8** |
+
+    8 of 46 = 17.4%,  Wilson 95% CI  9.1% to 30.7%
+
+**The adjudicator crossed its pre-registered 3/10 threshold**, which was set to mean "the rate sits in
+the upper half of the interval". Three of its ten runs are still short of full length, so this remains a
+lower bound.
+
+The all-cluster arm now reads 3/10 against a pooled 8/46 -- still consistent, but it is the arm with the
+better instrument, and it is running slightly hotter than the arms that could not see coexisting
+vesicles. That is the expected direction and worth stating.
+
+### FALSIFICATION -- for the three unfinished seeds
+
+* **A fourth prevalence seed fires** -> 4/10 in the cleanest arm; the pooled figure moves toward 20% and
+  the older arms are confirmed to have undercounted.
+* **They finish at 3/10** -> pooled 8/46 = 17.4% is the final figure for this corpus.
+
+**No new run launched.** Every arm is complete or finishing, the long 2-D runs have all reached 3.2
+million, and the corpus tally is the deliverable.
+
+### Still in flight
+
+Three prevalence seeds (1.36-1.52 million of 1.6 million), chi_WW = 1.00 3-D control (22 000-24 000 of
+40 000, already past the recorded fragmentation).
