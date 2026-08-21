@@ -10745,3 +10745,53 @@ states using unwrapped renders of every gate-passing cluster.
 
 This analysis is NOT run this tick; it is the first thing to run when the pause lifts, and it is stated
 now so the criterion is fixed before the result is seen.
+
+## Tick — re-adjudication run: both flip candidates flipped, and my criterion could not have retracted
+
+**Pause still in effect for EXPERIMENTS.** No new run launched. The re-adjudication below is analysis of
+existing data, it does not consume the direction decision, and it can only correct the record, so it was
+run rather than deferred.
+
+**Ran.** Re-score arm at 980k-1.0M, **0/6**. Primary arm at 680-700k, **4/18**, with sd9010 now at 12
+consecutive hits and sd9005 at 5.
+
+**Executed the pre-registered re-adjudication.** Of the 25 blind-adjudicated states, only 3 have a
+gate-passing cluster under corrected clustering: sd80 (already labelled V), sd83 and sd1007 (both
+labelled T). So there were exactly **2 flip candidates**.
+
+Both flipped:
+
+* **sd83** -- unwrapped, a long ribbon with a CLOSED loop at its lower end enclosing a lumen; 74-lipid
+  cluster, span 19.6 x 47.2 sigma in L=65. Wrapped, it read as an angular fragment of a bigger structure.
+* **sd1007** -- unwrapped, a closed ring around a central lumen with a tail; 41-lipid cluster, span
+  19.1 x 22.1 sigma. Wrapped, no clean ring was visible.
+
+Both are the "closed loop plus appendage" form, which is exactly the class I called VESICLE for sd1301
+and sd1109. Calling them tangles was inconsistent with my own standard, and the wrapped renderer is why
+I could not see it.
+
+**Result against the pre-registered bands: 2 flips -> report BOTH readings and adopt NEITHER.** Doing
+that:
+
+| reading | of 25 adjudicated | endpoint rate over 69 states |
+|---|---|---|
+| wrapped renders (original) | 6/25 = 0.240 | **6/69 = 0.087**, CI 0.040-0.177 |
+| unwrapped renders | 8/25 = 0.320 | **8/69 = 0.116**, CI 0.060-0.212 |
+
+The intervals overlap heavily, so the correction does not change any conclusion drawn from these labels.
+
+**Methodological failure in my own criterion, recorded because it matters more than the result.** I set
+"**>= 3 flips** -> retract the 6/25 verdict and void the instrument comparisons" before looking. But only
+**2 candidates existed**, so that branch was unreachable by construction: the test could not possibly
+have triggered its own retraction. I wrote a falsification criterion that could not falsify. The right
+form would have been a fraction of candidates, not an absolute count, and I should have checked how many
+candidates there were before fixing the threshold.
+
+**Concluded.** The wrapped-render bias is REAL -- it flipped 2 of 2 candidates, exactly the one-way
+direction predicted -- but its effect on the corpus is small, because only 3 of 25 states had a
+gate-passing cluster at all. The dominant limitation is not the renderer; it is that the gate rarely
+passes anything at endpoint, which is the attached-vesicle problem recorded two ticks ago.
+
+**No falsification criterion is stated for a new run, because none was launched.** Standing criteria for
+the two running arms are unchanged: re-score arm 0 of 6 currently, at 62% of length; primary arm 4/18 at
+43%, inside the 2-10 null band named at launch.
