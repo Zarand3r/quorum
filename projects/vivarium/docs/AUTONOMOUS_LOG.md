@@ -7716,3 +7716,76 @@ checkpoint rather than on the largest cluster at the end.
   luck; the encounter-limited reading would need re-examining.
 * **Aggregates at L = 95 stall below ~40 lipids** -> too dilute to reach closure size, matching the
   old L = 120 result, and that rung says nothing about density.
+
+---
+
+## Tick: the literature says the opposite, and the numbers agree with the literature
+
+### RETRACTED: "small vesicles form more readily, so dilute to keep ribbons small"
+
+Stated last tick from my own reasoning about encounter kinetics. Checked against the literature on
+instruction, and it is **backwards relative to the physics**.
+
+The disc-to-vesicle transition is a critical-SIZE instability: above a critical area a flat membrane
+becomes mechanically unstable and closes, because the edge energy released by a shrinking perimeter
+overtakes the bending energy paid for leaving the flat state. The threshold is **2*kappa/gamma** -- about
+20 nm for conventional lipid bilayers at kappa ~ 1e-19 J and gamma ~ 1e-11 J/m. **Larger closes; smaller
+stays flat.**
+
+### The 2-D analogue, with this project's own measured constants
+
+In 2-D a ribbon has TWO ends, so the edge term is 2*lambda (constant, not perimeter-proportional), and
+bending is pi*kappa/R = 2*pi^2*kappa/L. Closure is favoured when
+
+    L > L* = pi^2 * kappa / lambda
+
+| stiffness | kappa | L* | vs N = 160 |
+|---|---|---|---|
+| bend_frac 1.00 (default) | 269.5 | **950** | far below threshold |
+| bend_frac 0.50 | ~135 | 476 | below |
+| bend_frac 0.25 | ~67 | 236 | below |
+| bend_frac 0.15 | ~40 | **141** | **above threshold** |
+| bend_frac 0.10 | ~27 | **95** | **above threshold** |
+
+**At the default stiffness L* is about 950 lipids and every run in this project has been at 160.**
+Thermodynamically nothing should ever have closed -- and the measured lambda = +2.8 +- 2.8 eps is what
+puts L* there.
+
+### What that means for the two vesicles
+
+They are **kinetic accidents that then froze**, not the disc-to-vesicle mechanism. Two ends met by
+diffusion and could not unstick, in a regime where the closed state is not thermodynamically preferred.
+That is consistent with everything measured: lambda ~ 0, closure rate falling steeply with end-gap, no
+maturation, and closures that persist because unfusing has a barrier rather than because closing pays.
+
+It also explains why the small one closed first -- shorter ribbons bring their ends together sooner --
+without that being the physical route to vesicles. **The observation was right; my generalisation from
+it was wrong.**
+
+The bend rungs at 0.25 and 0.50 failing 0/5 is now explained rather than merely predicted: their L* of
+236 and 476 are both above 160, so they were run below threshold.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Killed the L = 95 dilution arm, which the corrected picture makes doubly wrong -- too dilute to coarsen
+AND aimed at the wrong variable. Launched instead: **bend_frac 0.15 and 0.10, N = 160, L = 65, dispersed
+starts, 5 seeds each, 800 000 steps**, scored on the new all-cluster `nves` counter. These are the first
+runs in this project placed ABOVE the critical size.
+
+* **Vesicles form at 0.10 and/or 0.15 but not at the default** -> closure becomes thermodynamically
+  driven when L > L*, the criterion transfers from 3-D to this 2-D model, and vesicle formation stops
+  being an accident.
+* **No vesicles at either** -> either kappa does not scale with the 1-3 spring as assumed, or the
+  criterion does not apply here. **`kappa ~ bend_frac` is an ASSUMPTION**: kappa = 269.5 was measured at
+  bend_frac = 1.0 only, and the scaling has never been checked. That would need measuring before the
+  null means anything.
+* **The membrane stops forming a bilayer (core far below its 1.34 start)** -> the chain is too floppy to
+  hold a leaflet and the rung says nothing about closure.
+
+### Standing correction to the brief
+
+The tick brief still carries lambda = +18.31 +- 7.07 eps and "closure has ~81 kT to gain". Both were
+retracted several ticks ago by a direct time-averaged ring-minus-arc measurement giving
+**+2.8 +- 2.8 eps**. The critical-size plan in the brief is the right idea -- the literature confirms the
+form -- but with the corrected lambda the threshold sits at 950 lipids rather than anywhere near the
+sizes that have been run.
