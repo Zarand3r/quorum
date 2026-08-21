@@ -9319,3 +9319,56 @@ expectation is about one formation across the arm; nothing yet.
 ### Still in flight
 
 Fine-resolution emergence arm (6 seeds), chi_WW = 1.00 12 000-step rerun for the state comparison.
+
+---
+
+## Tick: the fine arm pays off -- a formation with lifetime under 40 000 steps
+
+### The eighth formation, resolved
+
+Fine-resolution arm, seed 1203, 20 000-step checkpoints:
+
+| step | largest | n_enclosed | lumen | ratio | nves |
+|---|---|---|---|---|---|
+| 420 000 | 67 | 0 | 0 | -- | 0 |
+| **440 000** | 67 | 0 | 0 | -- | **1** |
+| 460 000 | 67 | 1 | 124 | 0.087 | 0 |
+| 480 000 | 67 | 1 | 121 | 0.085 | 0 |
+
+The vesicle is present at **one checkpoint only**, so its lifetime is **under 40 000 steps**. It is also
+a **coexisting** vesicle -- the largest cluster has no enclosure at 440 000, so only `count_vesicles`
+sees it, the second such case after seed 1007.
+
+**This fires the third pre-registered branch for this arm.** Every earlier arm checkpoints at 80 000 or
+160 000, so this formation would have been recorded as an "80 000-step episode" or missed entirely.
+
+### What that does to the lifetime numbers
+
+The episode durations reported earlier -- 80 000 to 640 000 steps, median 160 000 -- were flagged twice
+as censored from below by checkpoint spacing. **They now have a demonstrated counterexample:** a real
+formation shorter than the floor. So on the short end those durations are **resolution-limited upper
+bounds, not measurements**, and `RESULTS.md` now says so.
+
+It does not overturn the long end. Seed 82's 640 000-step episode and the 8/10 survival over 200 000
+steps from a known vesicle are unaffected -- those are long compared with any spacing used.
+
+The honest summary is a **wide distribution**: at least one formation under 40 000 steps, several
+lasting hundreds of thousands, and 8/10 of known vesicles surviving 200 000. Not a single
+characteristic lifetime.
+
+Note the near-misses at 460 000 and 480 000 -- ratios 0.087 and 0.085, just under the 0.10 gate, on the
+same 67-lipid cluster. The structure lingers around the threshold after the counted event.
+
+### The 3-D comparison run
+
+At step 3 600 of 12 000. The chi_WW = 1.00 slowdown is severe; the state comparison lands in a later
+tick. The pre-registered branches are unchanged, including the one where the cluster routine turns out
+buggy and every 3-D water number needs re-deriving.
+
+### FALSIFICATION -- unchanged for the fine arm
+
+Six seeds at 840 000 of 1.6 million, **1/6** so far, consistent with the 16% rate. The remaining
+readings stand: more single-checkpoint formations would confirm short lifetimes are common; multi-
+checkpoint ones would show the distribution is genuinely wide rather than uniformly short.
+
+**No new run launched.** Two arms are mid-flight and both are the outstanding measurements.

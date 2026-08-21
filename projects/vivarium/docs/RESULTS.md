@@ -180,6 +180,11 @@ fully intact. 0/5 closed.*
 
   **Peak score does not predict fate**: 0.522 and 0.328 both dissolved while 0.196 persisted.
 
+  An eighth formation, in a 20 000-step-checkpoint arm, was present at one checkpoint only -- **lifetime
+  under 40 000 steps**, beneath the 80 000-step resolution floor of every other arm. Coarse arms would
+  have recorded it as an 80 000-step episode or missed it entirely, so the episode durations quoted
+  elsewhere are resolution-limited upper bounds on the short end, not measurements.
+
   Two distinct failure modes, each documented more than once. **Genuine dissolution** -- the cluster
   changes size and the lumen goes to zero and stays there (seeds 80, 1002, 1101). **Gate-flicker** --
   the object is unchanged while its raw ratio crosses the 0.10 threshold (seed 1000, whose 82-lipid
