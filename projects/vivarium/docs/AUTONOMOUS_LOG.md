@@ -10165,3 +10165,39 @@ from concentration, which the fixed-L design could not.
 
 The fixed-density N=240 counterpart (L=80) is NOT being run yet; if the N=240/L=65 arm shows an effect,
 that counterpart is required before attributing it to ribbon length rather than concentration.
+
+## Tick — fixed-density fix verified; launching the N=240 concentration control before its arm can be read
+
+**Ran.** Four arms, none scored. em3 (N=160/L=65 baseline) at 1.14M of 1.6M, 2/8 (sd1402 10 hits,
+sd1405 6). N=80/L=46 at 180k. N=240/L=65 at ~280k. N=80/L=65 continues but is VOID by last tick's
+determination.
+
+**Verified — the fixed-density correction works.** N=80/L=46 largest clusters are **53, 28, 33, 24, 31,
+42** against **11, 21, 15, 13, 14, 18** for N=80/L=65 at the same step. The render shows extended
+bilayer ribbons -- long curved arcs -- where the L=65 version showed about fourteen stubby blobs. So
+holding density at 0.0378 lipids/sigma^2 restores the ribbon regime, and the micellar result last tick
+was caused by concentration, not by total N. Render and metric agree.
+
+This closes the third pre-registered branch for that arm ("still micellar -> retire the line of attack")
+in the negative: it is not micellar, so the arm is valid and will be read at 1.6M as planned.
+
+**Early signal, deliberately NOT scored.** N=240/L=65 already has hits in 2 of 6 seeds at 260-280k,
+where the baseline's first formation came at 440k and its second at 720k. Its largest clusters are
+176-238. This is 17% of run length and the pre-registered read is at 1.6M, so it is recorded as an
+observation and nothing is concluded from it. I note it because it is the reason the control below
+cannot wait.
+
+**Launching — the fixed-concentration N=240 control, criterion stated BEFORE the run.** N=240 at L=80,
+6 seeds, 1.6M, 20k checkpoints. Density 240/80^2 = 0.0375 against the baseline's 0.0379. I declared this
+control REQUIRED last tick before any N=240 effect could be attributed to ribbon length, and the early
+hits make it likely there will be an effect to attribute. Launching it now means both arms finish
+together rather than the control trailing the result it is supposed to qualify.
+
+* **N=240/L=80 rate is close to N=240/L=65** -> the N=240 effect follows total material and therefore
+  ribbon length; the critical-size picture is supported.
+* **N=240/L=80 rate is close to the N=160 baseline** -> the N=240/L=65 effect was concentration, not
+  ribbon length, and the length account does not explain it.
+* **CIs overlap all three ways** -> 6 seeds cannot resolve it; report counts and claim nothing.
+
+With this the design is a proper 2x2: N in {80, 240} crossed with fixed-L and fixed-density, against the
+N=160 baseline. Read at 1.6M, not before.
