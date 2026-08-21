@@ -10086,3 +10086,44 @@ rather than carried as an alternative reading.
   arm and fin2 that must be found before the number is pooled.
 
 Read at 1.6M, not before, and scored with the gate now designated the endpoint instrument.
+
+## Tick — stop auditing, test the mechanism: does ribbon length control closure?
+
+**Ran.** Emergence arm 1400-1407 at ~840k of 1.6M, NOT scored. Two seeds have formed: sd1402 (5
+checkpoints) and sd1405 (2), so it is tracking fin2's 2/8 at the halfway mark.
+
+**sd1402 is the best emergent vesicle this project has produced.** At 840k: largest cluster 80 lipids,
+lumen 546 cells, lumen water **1.199 of bulk**, raw ratio 546/2037 = **0.268** -- comparable to planted
+d111 at 0.404 and far above the 0.10 gate. Its run of hits reads lumen 628/457/596/536/546 with water
+1.244/1.429/1.031/1.317/1.199. The render shows a large, round, closed ring with a clear lumen and one
+small appendage. Render and metric agree, which is the standard this project requires.
+
+**Course correction, stated plainly.** The last five ticks were instrument audits. They produced real
+results -- three discriminators killed, `vesicle_call` confirmed as the endpoint instrument -- but the
+net finding was that the gate I already had was correct, and that was not worth five ticks. The vesicle
+was already achieved. I am returning to experiments that extend the result rather than validate it.
+
+**Re-derived the intervention, because the obvious one is wrong.** The natural move was a concentration
+sweep, on the grounds that closure is encounter-limited. But the gap scan that established
+encounter-limitation (3 sigma -> 5/5, 6 sigma -> 3/5, 9 sigma -> 2/5) measured the two ENDS OF ONE
+RIBBON meeting. That is set by ribbon length and flexibility, not by how often separate aggregates
+collide, so concentration is the wrong knob and a sweep over it would have tested nothing. The knob that
+controls end-to-end encounter is ribbon length -- which is also exactly what the standing critical-size
+plan names, so the mechanism and the standing plan converge on the same experiment.
+
+**Launching — lipid budget sweep, falsification stated BEFORE the run.** N = 80 and N = 240 at fixed
+L = 65, 6 seeds each, 1.6M steps, 20k checkpoints, scored at run level on `vesicle_call` exactly as fin2
+was. Baseline is fin2's 2/8 at N = 160.
+
+* **N=240 rate > N=160** -> longer ribbons close better; the critical-size picture holds and N=160 sits
+  below the optimum.
+* **N=80 rate > N=160** -> shorter ribbons close better, which contradicts the bending-cost argument
+  that a threshold length exists, and that argument gets retracted.
+* **Both new conditions below N=160** -> an optimum near 160 and a genuine size window.
+* **All three CIs overlap** -> 6 seeds cannot resolve it; report the counts and claim no difference.
+
+Disclosed confound: at fixed L, changing N changes lipid CONCENTRATION as well as available ribbon
+length, and this design cannot separate them. A follow-up holding concentration fixed (N=80/L=46,
+N=240/L=80) would separate them and is not being run yet.
+
+Read at 1.6M, not before.
