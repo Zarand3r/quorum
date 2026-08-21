@@ -193,7 +193,7 @@ fully intact. 0/5 closed.*
   **The run-level figure, across the whole corpus.** Consecutive checkpoints within a run are not
   independent -- a vesicle persists across several -- so the independent unit is the run:
 
-      9 of 56 dispersed runs produced a vesicle.   16.1%,  Wilson 95% CI  8.7% to 27.8%
+      10 of 62 dispersed runs produced a vesicle.   16.1%,  Wilson 95% CI  9.0% to 27.2%
 
   **The two instruments AGREE, once the better one has 20 runs:**
 
@@ -210,6 +210,10 @@ fully intact. 0/5 closed.*
   beside a 119-lipid network) and seed 1203 (twice). That is roughly 40%, which fits comfortably inside
   the overlapping intervals and would need far more than 20 runs to resolve. The pooled 16.1% should
   therefore be read as a **lower bound**.
+
+  The clearest single demonstration: the 6-seed fine-resolution arm scores **1/6 by all-cluster and 0/6
+  by largest-cluster**, because its only formations were coexisting. That arm would have been recorded
+  as a clean zero by the older instrument.
 
   An earlier version of this section reported the all-cluster arm at 3/10 = 30% and flagged a possible
   undercount; the second ten came back **1/10**, so that particular figure was a high draw.

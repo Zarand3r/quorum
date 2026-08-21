@@ -9475,3 +9475,66 @@ because every hit in it so far has been coexisting-only:
 
 Fine arm (6 seeds at 1.26-1.28 million of 1.6 million, 1/6 with two events), 3-D confirmation rerun
 (8 400 of 12 000).
+
+---
+
+## Tick: both open arms close -- and a pre-registration that was a false dichotomy
+
+### The 3-D comparison, at last
+
+| state | X-checksum | largest water cluster | fraction |
+|---|---|---|---|
+| step 12 000 | 114 661.2 | **1668** | 0.2520 |
+| step 40 000 | 120 034.0 | **1668** | 0.2520 |
+
+The configurations plainly differ. The count is identical.
+
+**My falsification criterion was a false dichotomy.** I wrote: different integers means the measurement
+reads the configuration and the puzzle dissolves as saturation; identical integers means the routine is
+**buggy** and every 3-D water number needs re-deriving. The integers are identical -- and the routine is
+**not** buggy, which the synthetic controls established independently (four separated blobs 0.249, eight
+0.125, a 0.3 sigma perturbation shifting the count).
+
+The real answer is a third case I did not anticipate when writing the branches: **the largest droplet
+exchanges essentially no water over 28 000 steps**, so its size is genuinely constant while the rest of
+the configuration moves. A stable droplet with negligible evaporation is exactly what a strongly
+phase-separated solvent below its critical point should give.
+
+**Lesson recorded:** two branches were not enough. "Identical" had a benign explanation I had not
+enumerated, and had the unit test not been run first, the identical result would have been read as
+evidence of a bug in a routine that works.
+
+The known-void retirement is unaffected and now rests on two independent checks.
+
+### The fine arm, complete
+
+| seed | nves hits | largest-cluster hits |
+|---|---|---|
+| 1200, 1201, 1202, 1204, 1205 | 0 | 0 |
+| **1203** | **2** | **0** |
+
+    all-cluster scoring        1/6 = 0.167   CI 0.030-0.564
+    largest-cluster scoring    0/6 = 0.000   CI 0.000-0.390
+
+**Every formation in this arm was coexisting**, so the older instrument would have scored the whole arm
+a clean zero. This is the clearest single demonstration of the undercount, and the pre-registered branch
+for it fires.
+
+Corpus: **10 of 62 dispersed runs, 16.1%, Wilson 95% CI 9.0% to 27.2%** -- point estimate unchanged, and
+still a lower bound.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+Launched: **8 more fine-resolution seeds** (N = 160, L = 65, 1.6 million steps, 20 000-step
+checkpoints), taking the fine-resolution population from 6 to 14 runs.
+
+* **Coexisting-only hits continue to dominate** -> the ~40% undercount figure firms up and the pooled
+  rate's status as a lower bound is quantified rather than asserted.
+* **Largest-cluster-visible hits appear** -> the fine arm's 0/6 was small-sample and the two instruments
+  are closer than the detection-level tally suggested.
+* **No hits at all in 8 runs** -> consistent with 16% (expected ~1.3) but the coexisting question stays
+  open at this sample size.
+
+### Still in flight
+
+Eight fine-resolution seeds. All other arms are complete.
