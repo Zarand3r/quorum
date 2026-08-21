@@ -7156,3 +7156,64 @@ verification debt from the tick where it timed out at 900.2 s under load and was
 ### Still in flight
 
 Formation-rate measurement (10 seeds, 240 000/1.6 million), maturation test (5 seeds, 600 000).
+
+---
+
+## Tick: how the vesicle actually closed, read off its own trajectory
+
+### The mechanism, evidenced rather than inferred
+
+`RESULTS.md` claimed the vesicle formed "by two ends meeting", which until now rested on the planted-arc
+gap scan rather than on the emergent run itself. The trajectory settles it:
+
+| leg step | total step | largest | n_enclosed | lumen | ratio |
+|---|---|---|---|---|---|
+| 80 000 | 1.68 M | 92 | 1 | 46 | 0.017 |
+| 320 000 | 1.92 M | 116 | 0 | 0 | -- |
+| **360 000** | **1.96 M** | **116** | **1** | **2145** | **0.501** |
+| 400 000 | 2.00 M | 160 | 1 | 2191 | 0.269 |
+
+**Closure happened at 116 lipids, at CONSTANT size.** 116 before, 116 after. That is what two ends
+meeting looks like; accretion bridging a gap would show a size jump at the moment of closure, and the
+size jump happens one checkpoint LATER.
+
+Two corrections to what was recorded earlier:
+
+* The vesicle formed at **1.96 million** steps and at **116 lipids**, not at 2.0 million and 160. The
+  earlier figure was simply the first checkpoint I looked at.
+* **The appendages are post-closure accretion.** The shell closed at ratio **0.501**, then absorbed ~44
+  further lipids that added no lumen, diluting the raw ratio to 0.269. This is consistent with
+  `shell_split`, which puts the shell at 101-102 lipids and appendages at 58-59.
+
+**The shell was at its best the moment it formed.** That is the opposite of the maturation hypothesis
+now under test, which supposed the structure would tidy itself up over time.
+
+Also visible: the transient 46-cell pocket at leg step 80 000, ratio 0.017 -- exactly the scale of the
+false positives the size gate was built to reject, appearing and vanishing on its own.
+
+### FALSIFICATION, STATED BEFORE THE RUN
+
+If appendages are surplus material accreting after closure, then removing the surplus should remove
+them. The successful vesicle closed at 116 lipids while the box held 160.
+
+Launched: **N = 116 in L = 55, dispersed start, 5 seeds, 1.6 million steps.** The lipid area fraction is
+matched to the original box so coarsening is comparable: 116/55^2 = 0.0383 against 160/65^2 = 0.0379.
+
+* **A vesicle forms with raw ratio > 0.45 in >= 1/5** -> surplus material is what creates appendages,
+  and matching N to the closure size gives a clean emergent vesicle.
+* **A vesicle forms with ratio ~0.28** -> appendages form regardless of surplus, and the structure is
+  intrinsically a shell carrying attached material.
+* **No vesicle in 5 seeds** -> either 116 lipids in this box does not reach closure, or the rate is too
+  low to see in five seeds, and the two cannot be separated without more seeds. Say that rather than
+  reading it as a size effect.
+
+### Not readable yet, and recorded as such
+
+* Maturation test: 120 000 of 600 000 steps. Raw ratios 0.267-0.284, one seed opened, one at 40 cells.
+  Essentially unchanged from the 0.269 it started at, but this is 20% of the run.
+* Formation rate: 400 000 of 1.6 million, largest 40-89, zero enclosures across all ten seeds. The
+  successful trajectory had largest 92 and no lumen at the equivalent stage.
+
+### Still in flight
+
+Formation rate (10 seeds), maturation (5 seeds), matched-size N = 116 emergence (5 seeds).

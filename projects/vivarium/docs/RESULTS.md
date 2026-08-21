@@ -76,8 +76,21 @@ planted-flat-ribbon protocol, and every one is a measured null with the membrane
 The reason is structural: χ terms are symmetric pair interactions, and spontaneous curvature is by
 definition a difference between the two leaflets.
 
-Closure instead happens when two ends of a ribbon meet. That route is quantified — planted arcs at
-fixed N = 300, varying only the end-gap:
+Closure instead happens when two ends of a ribbon meet. **In the emergent run this is visible directly
+in the trajectory**, not just inferred from the planted arcs:
+
+| step | largest | n_enclosed | lumen | ratio |
+|---|---|---|---|---|
+| 320 000 | 116 | 0 | 0 | — |
+| **360 000** | **116** | **1** | **2145** | **0.501** |
+| 400 000 | 160 | 1 | 2191 | 0.269 |
+
+The vesicle closed at **116 lipids** at **constant size** — 116 before, 116 after — which is what two
+ends meeting looks like, and is not what accretion bridging a gap would look like. It then absorbed the
+remaining ~44 lipids, which added appendages and no lumen, diluting the raw ratio from 0.501 to 0.269.
+**The appendages are post-closure accretion, and the shell was at its best the moment it formed.**
+
+The same route is quantified in planted arcs at fixed N = 300, varying only the end-gap:
 
 | end-gap | closed |
 |---|---|
