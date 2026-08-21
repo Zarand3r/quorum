@@ -10644,3 +10644,49 @@ report it as a comparison of free-standing-vesicle rates, not of vesicle rates.
 * **>= 11/18** -> more material raises the free-standing formation rate at p < 0.05 against 5/22.
 * **<= 1/18** -> it lowers it.
 * **2 to 10 of 18** -> the null named at launch, still the most likely outcome.
+
+## Tick — first FULLY ADJUDICABLE emergent vesicle; no new experiment launched (pause in effect)
+
+**Status of the pause.** The user asked to stop at a milestone so next steps can be planned
+deliberately, and I paused. This tick therefore does the monitoring, adjudication, logging and commit,
+and deliberately **does NOT launch a new experiment**. Item 5 is held because launching a new arm would
+preempt the direction decision that is the user's to make (2-D write-up versus 3-D; whether large
+angular network loops count as vesicles; whether the running arms are worth finishing). The existing
+runs continue -- they are "existing work" and cost nothing to leave in flight.
+
+**Ran.** Re-score arm at 720-740k of 1.6M, **0/6**. Primary arm 9000-9017 at 500-520k, **1/18**.
+Neither scored; both read at 1.6M.
+
+**The protocol fix paid off immediately.** sd9010 hit at 460k/480k/500k/520k, and because this arm runs
+the binary that preserves hit states, all four configurations were written to `docs/hits/` and could be
+measured directly. Every previous hit in this project had to be adjudicated from an overwritten
+checkpoint or a 760px render, and sd8003's was recorded as UNADJUDICABLE for exactly that reason.
+
+**Adjudicated — VESICLE, and the cleanest one yet.**
+
+| | value |
+|---|---|
+| cluster | 78 lipids, and it is the LARGEST cluster |
+| dilation ladder (bead 1.0/1.5/2.0/3.0) | [1, 1, 1, 1] |
+| lumen | 635-707 cells across four checkpoints |
+| lumen ratio | **0.333** (planted vesicle 0.404; gate threshold 0.10) |
+| lumen water | 1.083, 1.116, 1.277, **1.373** of bulk |
+| percolates | no |
+
+The render shows a round, **free-standing** closed ring with a clear lumen at centre-right, attached to
+nothing. Render and metric agree, and for the first time the metric was computed on the exact
+configuration the render depicts rather than on a later state.
+
+This also matters for the instrument problem recorded last tick: the gate counts free-standing vesicles
+and misses attached ones. sd9010 is free-standing, so it is exactly the class the gate CAN see, and its
+ratio of 0.333 sits far above threshold rather than marginally above it.
+
+**No falsification criterion is stated this tick because no new run was launched.** The standing
+criteria for the two running arms are unchanged and are restated so they are not quietly revised:
+
+* Re-score arm: **0 of 6 gaining hits** confirms the prediction that run-level scoring is less
+  bug-sensitive than endpoint scoring, and the 5/22 baseline stands for these six. **>= 3 of 6** refutes
+  it. Currently 0/6 at 46% of run length.
+* Primary arm: **>= 11/18** is an effect at p < 0.05 against the baseline 5/22; **<= 1/18** is a reverse
+  effect; **2 to 10 of 18** is the null named at launch. Currently 1/18 at 33% of run length, which is
+  on track for the null.
