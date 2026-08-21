@@ -8488,3 +8488,66 @@ far. They no longer have to resolve a crisis; they sharpen the interval.
 
 Prevalence adjudicator (10 seeds), a determinism rerun of seed 30 continuing as an 11th sample, 3-D
 solvent pair, 5 long 2-D runs at 1.76-1.92 million.
+
+---
+
+## Tick: determinism confirmed through dynamics; a fourth formation, caught by the all-cluster counter
+
+### Determinism, now through the trajectory rather than just setup
+
+Rerunning `rate` seed 30 under the current binary, checkpoint by checkpoint:
+
+| step | stored | rerun | |
+|---|---|---|---|
+| 0 | 5.06, 7, 1.263 | 5.06, 7, 1.263 | MATCH |
+| 80 000 | -6.60, 23, 1.349 | -6.60, 23, 1.349 | MATCH |
+| 160 000 | -6.78, 77, 1.423 | -6.78, 77, 1.423 | MATCH |
+
+**Bit-identical through 160 000 steps of dynamics.** The two arms that disagreed on formation rate were
+running the same physics, so the difference was statistical -- which is what the pseudo-replication
+correction already indicated, now confirmed rather than assumed.
+
+### A fourth formation, and the new counter earned its place
+
+Prevalence seed 1000 at step 640 000, fresh dispersed start:
+
+    largest = 82/160,  count_vesicles(all clusters) = 1
+    bead 1.0/1.5/2.0/3.0: n_enclosed = 1, lumen 223 / 158 / 158 / 101
+    vesicle_call -> True   (0.104 of expected, stable at 1)
+    shell_split: shell 34, appendages 48  ->  shell-corrected ratio 0.606
+
+**The raw ratio 0.104 is marginal**, a hair over the 0.10 gate -- and the reason is that **half the
+cluster is appendages**. Corrected for that, 0.606 sits squarely with the other vesicles (0.5-0.7). The
+shell is 34 lipids, the smallest yet.
+
+The render shows the closed loop centre-right with a longer ribbon trailing down-left, consistent with
+the split.
+
+**This is the first formation found by `count_vesicles` rather than by the largest-cluster columns**, and
+it is exactly the case the old scoring would have called marginal-or-missed.
+
+### Running tally of emergent formations
+
+| # | arm | shell | when | fate |
+|---|---|---|---|---|
+| 1 | em160 lineage | 116 -> 102 | 1.96 M | persisted, 3/5 on restart |
+| 2 | long sd80 | 48 | 320 K | dissolved by 1.12 M |
+| 3 | long sd82 | 58 | 1.12 M | persisted to 1.44 M |
+| 4 | prev sd1000 | **34** | 640 K | just formed |
+
+Run-level rate is now **6 of 36** dispersed runs. The interval will be recomputed when the adjudicator
+finishes rather than quoted after each hit.
+
+### FALSIFICATION -- unchanged, and the adjudicator is the arbiter
+
+Ten prevalence seeds at 480 000-640 000 of 1.6 million; one has fired. The pre-registered readings stand:
+>= 3/10 puts the rate in the upper half of the 6.3-29.4% interval; 0/10 would have tightened it downward;
+1-2/10 is consistent with the existing estimate.
+
+**No new run launched.** Six arms are in flight, the adjudicator is mid-run, and the marginal ratio on
+this fourth vesicle is a scoring nuance rather than a new question.
+
+### Still in flight
+
+Prevalence adjudicator (10 seeds), determinism rerun continuing as an 11th sample, 3-D solvent pair
+(chi_WW = 0.50 finished at 40 000; chi_WW = 1.00 at 10 000-12 000), 5 long 2-D runs at 2.24-2.4 million.
