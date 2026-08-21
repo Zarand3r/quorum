@@ -10201,3 +10201,61 @@ together rather than the control trailing the result it is supposed to qualify.
 
 With this the design is a proper 2x2: N in {80, 240} crossed with fixed-L and fixed-density, against the
 N=160 baseline. Read at 1.6M, not before.
+
+## Tick — N=240/L=65 percolates; the second fixed-L arm is void for the same reason as the first
+
+**Ran.** Four arms, none scored. Baseline em3 at ~1.33M of 1.6M, 2/8 (sd1402 10 hits, sd1405 14).
+N=80/L=46 at ~590k, largest 40-80, 0/6. N=240/L=65 at ~470k with hits in 3 of 6 seeds. N=240/L=80 at
+120k, largest 35-55.
+
+**Looked before trusting the early N=240 signal, and it does not survive.** sd6001's hit at 420k has all
+240 lipids in ONE cluster with a 4223-cell enclosed region. The render is a percolating network spanning
+the whole box with a large central void: the "lumen" is the gap between network arms. sd6002's hit
+checkpoint is a dense branched mass with a small loop inside it. By render both are tangles, the same
+class I called tangle for sd82 and sd83 in the blind adjudication, at larger scale.
+
+**Measured the regime directly, from a column already in the logs.**
+
+| arm | percolating checkpoints |
+|---|---|
+| N=80/L=46 fixed density | 0/32 |
+| N=160/L=65 baseline | 0/69 (sd1405); sd1402 0/68 |
+| N=240/L=80 fixed density | 0/8 |
+| **N=240/L=65 fixed L** | 3/26 (sd6002), **19/26 (sd6001)** |
+| N=80/L=65 fixed L | 0/25, but micellar |
+
+The baseline NEVER percolates, and all 25 of its gate hits are non-percolating. N=240 at fixed L usually
+does.
+
+**Concluded, and it voids the arm BEFORE it is read.** At fixed L, raising N crosses a percolation
+boundary exactly as lowering it crossed into micelles last tick. So **N=240/L=65 is void for the
+ribbon-length question**, on the same grounds and by the same reasoning as N=80/L=65. Its elevated early
+rate is attributable to a box-spanning network producing voids that pass the gate, not to more vesicles.
+I am recording this now, while the arm looks like it is winning, rather than after reading a number I
+would then have to withdraw.
+
+Both fixed-L arms are therefore void, and the experiment reduces to a clean three-point series in one
+regime: **N=80/L=46, N=160/L=65, N=240/L=80**, none of which percolate. The N=240/L=80 arm was launched
+last tick as a control; it is now the primary measurement.
+
+**Scope limit discovered on the instrument.** `vesicle_call` was validated against render adjudication at
+N=160 only (6/69 render against 0.043 gate). At N=240/L=65 it passes box-spanning network voids. The
+validation does not transfer across the percolation boundary, and no rate from a percolating condition
+should be quoted from the gate alone.
+
+**Falsification, stated BEFORE the read.** The three-point fixed-density series is scored at 1.6M on
+`vesicle_call` at run level, AND every hit is render-adjudicated before any rate is reported, because
+the gate has now been shown to pass tangles in at least one regime.
+
+* **Rate rises monotonically with N across 80/160/240** -> more material means longer ribbons and better
+  closure; the critical-size picture is supported.
+* **Rate falls with N, or peaks at 160** -> a size window exists and the monotonic length argument is
+  wrong.
+* **All three CIs overlap** -> 6-8 seeds per point cannot resolve it; report the counts and claim
+  nothing.
+* **Any arm's render adjudication disagrees with its gate count by more than one run** -> the gate is
+  not trustworthy at that N either, and the series is reported by adjudication only.
+
+**No new arm launched this tick, deliberately.** 32 simulations are running, the design is now complete
+and clean, and adding a fifth arm would slow the three that constitute the actual experiment. Filler
+would cost the result more than it would add.
