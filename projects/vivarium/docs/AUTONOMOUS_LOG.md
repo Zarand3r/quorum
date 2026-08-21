@@ -9372,3 +9372,51 @@ readings stand: more single-checkpoint formations would confirm short lifetimes 
 checkpoint ones would show the distribution is genuinely wide rather than uniformly short.
 
 **No new run launched.** Two arms are mid-flight and both are the outstanding measurements.
+
+---
+
+## Tick: the 3-D puzzle resolved by unit test, not by waiting
+
+### The question, answered directly
+
+The slow rerun (step 6 000 of 12 000) was never the only way to ask whether the cluster routine reads
+the configuration. Synthetic configurations of known structure answer it immediately:
+
+| configuration | fraction | expected |
+|---|---|---|
+| single dense blob, 2000 points | 0.998 | ~1.0 |
+| four separated blobs, 4 x 500 | **0.249** | ~0.25 |
+| eight separated blobs, 8 x 250 | **0.125** | ~0.125 |
+| uniform, 6618 points at real water density | 0.999 | ~1.0 |
+| the same uniform set perturbed by 0.3 sigma | largest changes by 1 point | must differ |
+
+**The routine is correct and state-dependent.** The first pre-registered branch fires: the identical
+integers across two 3-D states are a property of the **droplet phase**, not a measurement fault.
+
+**Consequence for the load-bearing conclusion:** the 0.202-0.252 values that retired the known-void are
+trustworthy. The branch where every 3-D water number needed re-deriving is closed.
+
+The perturbation test also explains why the integers can repeat: a 0.3 sigma jitter over 6610 points
+moves the largest cluster by **one**. The measure is very insensitive to small rearrangement, so a
+well-separated droplet phase can hold the same count for a long time without anything being frozen.
+
+### The gap this exposed, and closed
+
+**A load-bearing measurement was living in a scratch script with no tests.** The known-void retirement --
+a blocker that stood over this project for a long time -- rested on a routine in `/tmp` that had never
+been checked against a case with a known answer. That it turned out correct is luck, not process.
+
+`largest_cluster_fraction()` is now in `_lumen_field.py` with the synthetic controls as a test,
+including the ordering assertion `f8 < f4 < f1`. Ten tests pass.
+
+### FALSIFICATION -- unchanged for the arms still running
+
+Fine arm: six seeds at 1.1 million of 1.6 million, **1/6**, consistent with the 16% rate. More
+single-checkpoint formations would confirm short lifetimes are common; multi-checkpoint ones would show
+the distribution is genuinely wide.
+
+The 12 000-step 3-D rerun continues as a direct confirmation of what the unit test established
+indirectly. It is no longer load-bearing -- if it disagrees with the unit test, the unit test is the one
+with known ground truth and the rerun would need explaining, not the reverse.
+
+**No new run launched.** Two arms are mid-flight.

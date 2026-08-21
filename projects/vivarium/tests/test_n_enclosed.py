@@ -161,3 +161,32 @@ def test_shape_anisotropy_separates_sphere_disc_and_rod():
     m3, pts3 = cluster(p3)
     w3 = shape_anisotropy(pts3, m3, L)
     assert w3 is not None and w3[2] > 0.5, f"a wrapped sphere is still a sphere, got {w3}"
+
+
+def test_largest_cluster_fraction_reads_the_configuration():
+    """Controls for the routine that retired the known-void.
+
+    It reported the SAME integer for two states 26 000 steps apart, which raised the possibility that
+    it was returning a value set by box and cutoff rather than by the configuration. If that were true
+    the 3-D water numbers -- and the void retirement resting on them -- would all need re-deriving.
+    """
+    from _lumen_field import largest_cluster_fraction
+
+    rng = np.random.default_rng(0)
+    L = 22.0
+
+    blob = rng.normal(scale=1.5, size=(2000, 3)) + 11.0
+    _, f1 = largest_cluster_fraction(blob, L)
+    assert f1 > 0.95, f"one dense blob is one cluster, got {f1}"
+
+    four = np.concatenate([rng.normal(scale=1.0, size=(500, 3)) + c
+                           for c in ([4, 4, 4], [4, 4, 16], [16, 4, 4], [16, 16, 16])])
+    _, f4 = largest_cluster_fraction(four, L)
+    assert 0.2 < f4 < 0.32, f"four separated blobs should give about a quarter, got {f4}"
+
+    eight = np.concatenate([rng.normal(scale=0.8, size=(250, 3)) + c
+                            for c in ([4, 4, 4], [4, 4, 16], [4, 16, 4], [4, 16, 16],
+                                      [16, 4, 4], [16, 4, 16], [16, 16, 4], [16, 16, 16])])
+    _, f8 = largest_cluster_fraction(eight, L)
+    assert 0.09 < f8 < 0.18, f"eight separated blobs should give about an eighth, got {f8}"
+    assert f8 < f4 < f1, "more separation must mean a smaller largest cluster"

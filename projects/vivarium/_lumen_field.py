@@ -475,3 +475,54 @@ def shape_anisotropy(X, mols, L, cut=1.4):
     Q = U - U.mean(axis=0)
     w = np.sort(np.linalg.eigvalsh((Q.T @ Q) / len(Q)))[::-1]
     return w / w[0]
+
+
+def largest_cluster_fraction(P, L, cut=1.4):
+    """Largest connected component of a point set, as a fraction of all points.
+
+    This is the measurement that retired the project's standing known-void ("3-D explicit solvent is
+    fragmented droplets"): applied to the water beads it reads 1.000 at chi_WW = 0.50 and 0.202-0.252 at
+    chi_WW = 1.00, against a recorded 0.27-0.48. It lived in a scratch script with no tests while that
+    conclusion rested on it, which is why it is here now.
+
+    A grid of cells of side >= `cut` bounds the neighbour search, so a point's contacts can only lie in
+    the 27 cells around it. Distances use the minimum image, so a cluster wrapping the periodic boundary
+    stays one cluster.
+    """
+    from collections import deque
+
+    P = np.asarray(P) % L
+    n = len(P)
+    if n == 0:
+        return 0, 0.0
+    g = max(4, int(L / cut))
+    cs = L / g
+    gi = (P / cs).astype(int) % g
+    cells = {}
+    for i, key in enumerate(map(tuple, gi)):
+        cells.setdefault(key, []).append(i)
+    seen = np.zeros(n, bool)
+    best = 0
+    for start in range(n):
+        if seen[start]:
+            continue
+        q = deque([start])
+        seen[start] = True
+        size = 0
+        while q:
+            i = q.popleft()
+            size += 1
+            a, b, c = gi[i]
+            for da in (-1, 0, 1):
+                for db in (-1, 0, 1):
+                    for dc in (-1, 0, 1):
+                        for j in cells.get(((a + da) % g, (b + db) % g, (c + dc) % g), ()):
+                            if seen[j]:
+                                continue
+                            d = P[i] - P[j]
+                            d -= L * np.round(d / L)
+                            if d @ d < cut * cut:
+                                seen[j] = True
+                                q.append(j)
+        best = max(best, size)
+    return best, best / n
