@@ -10127,3 +10127,41 @@ length, and this design cannot separate them. A follow-up holding concentration 
 N=240/L=80) would separate them and is not being run yet.
 
 Read at 1.6M, not before.
+
+## Tick — N=80 at fixed L is a micellar dispersion, not short ribbons; arm cannot answer the question
+
+**Ran.** Three arms. em3 (N=160, baseline) at 1.04M of 1.6M with sd1402 at 10 hits and sd1405 at 3, so
+2/8 so far. N=80 and N=240 at ~180k of 1.6M. None scored -- all read at the end.
+
+**Measured, and it invalidates one arm's design.** At 180k the N=80 largest clusters are **11, 21, 15,
+13, 14, 18 lipids**. The smallest vesicle this project has ever detected was 37 lipids. Looked at the
+render: N=80/L=65 is a field of about fourteen stubby micelle-like blobs with no extended bilayer
+ribbons anywhere. Render and metric agree.
+
+That is a **phase change, not a ribbon-length change**. Halving N at fixed L halves the concentration,
+and at that concentration the system makes small micelles instead of ribbons. So the N=80 arm tests
+"does dilution suppress aggregation" -- to which the answer is trivially yes -- and not "does ribbon
+length control closure," which is the question it was launched for. The confound I disclosed when
+launching it is exactly what bit.
+
+**Consequence for the pre-registered bands, stated before the read.** The branch "N=80 rate > N=160 ->
+retract the bending-cost threshold argument" is now VOID for this arm: if N=80 returns 0/6 that is
+attributable to the absence of ribbons, not to ribbons being too short, and it licenses no conclusion
+about bending cost. I am recording that now rather than discovering it convenient later. The N=240 arm
+is unaffected -- its largest clusters are 74-168, comparable to or larger than N=160's, so it remains a
+valid test of the longer-ribbon branch.
+
+**Launching — the fixed-CONCENTRATION replacement, criterion stated BEFORE the run.** N=80 at L=46,
+6 seeds, 1.6M, 20k checkpoints. Density check: 80/46^2 = 0.0378 against 160/65^2 = 0.0379, so aggregate
+morphology should match N=160's while total available material is halved. That isolates ribbon length
+from concentration, which the fixed-L design could not.
+
+* **N=80/L=46 forms ribbons (largest cluster >= 40) and rate < N=160** -> less material means shorter
+  ribbons and worse closure; the critical-size picture holds.
+* **Forms ribbons and rate >= N=160** -> ribbon length is not the limiting factor and the
+  encounter-limited-by-length account is wrong.
+* **Still micellar (largest cluster < 30)** -> the morphology is set by total N and not by
+  concentration, which would be a genuine surprise and would retire this whole line of attack.
+
+The fixed-density N=240 counterpart (L=80) is NOT being run yet; if the N=240/L=65 arm shows an effect,
+that counterpart is required before attributing it to ribbon length rather than concentration.
