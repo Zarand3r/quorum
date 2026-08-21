@@ -10259,3 +10259,60 @@ the gate has now been shown to pass tangles in at least one regime.
 **No new arm launched this tick, deliberately.** 32 simulations are running, the design is now complete
 and clean, and adding a fifth arm would slow the three that constitute the actual experiment. Filler
 would cost the result more than it would add.
+
+## Tick — corrected the percolation claim, and found the series was underpowered by design
+
+**Ran.** Baseline em3 at ~1.47M of 1.6M (2/8: sd1402 15 hits, sd1405 21). N=80/L=46 at ~855k, 0/6.
+N=240/L=80 at 220k, 0/6, largest 40-61. N=240/L=65 continues but is VOID. None scored.
+
+**Corrected — "the baseline never percolates" was over-generalized from two seeds.** I asserted 0 of 68
+percolating checkpoints last tick, citing sd1402 and sd1405. Across all seeds:
+
+| arm | percolating checkpoints | seeds ever percolating |
+|---|---|---|
+| N=80/L=46 | 10/263 = 3.8% | 1 of 6 |
+| N=160/L=65 | 17/596 = 2.9% | 1 of 8 |
+| N=240/L=80 | 0/72 | 0 of 6 |
+| N=240/L=65 | 74/191 = 38.7% | 5 of 6 |
+
+The baseline percolates rarely, in one seed of eight, not never. The regime distinction survives and is
+better stated quantitatively -- 38.7% and 5 of 6 seeds against 2.9% and 1 of 8 -- than as the absolute
+I claimed. The related claim that no baseline gate hit coincides with percolation does hold: sd1401 is
+the seed that percolates and it has zero hits.
+
+**Verified the primary arm's regime by render.** N=240/L=80 at 220k shows separate ribbons and arcs, no
+percolation, largest cluster 61 -- the same morphology as the baseline. The arm is valid.
+
+**Found a design failure in my own experiment, before reading it.** I never computed the power. Against
+the em3 baseline of 2/8, Fisher exact gives:
+
+    0/6 p=0.473   1/6 p=1.000   2/6 p=1.000   3/6 p=0.580
+    4/6 p=0.277   5/6 p=0.103   6/6 p=0.010
+
+The ONLY detectable outcome is a perfect 6/6 sweep. Power to detect a true 0.25 against 0.50 is 0.07,
+and adding seeds to the treatment arm barely helps because the BASELINE's n=8 is the binding constraint:
+even 30 treatment seeds against 8 baseline seeds gives power 0.18. This should have been computed at
+design time and was not.
+
+**The fix is a bigger baseline, which already exists.** Restricting to length-matched 1.6M runs at
+N=160/L=65 -- fin2 2/8, em3 2/8, fine arm 1/6 -- gives a baseline of **5/22 = 0.227**. Against that:
+
+    3/6 p=0.311   4/6 p=0.064   5/6 p=0.013   6/6 p=0.001
+    6/12 p=0.138  7/12 p=0.062  8/12 p=0.025
+
+So a 6-seed arm needs 5/6 to be detectable, while a 12-seed arm needs 8/12. Doubling the arm lowers the
+required effect from 83% to 67% formation. Power for a true 0.50 rises from 0.40 to 0.61.
+
+**Launching — 6 more seeds at N=240/L=80, to reach 12. Criterion stated BEFORE the run.** Scored at
+1.6M on `vesicle_call` at run level, with every hit render-adjudicated first, against the length-matched
+baseline 5/22.
+
+* **>= 8/12 after adjudication** -> more material raises the formation rate at p < 0.05; the
+  critical-size picture is supported quantitatively.
+* **<= 2/12** -> more material LOWERS it, and the monotonic length argument is wrong.
+* **3/12 to 7/12** -> consistent with the baseline; report the count and claim no effect. This is the
+  most likely outcome and I am naming it in advance so that a null is not later dressed as a trend.
+
+**N=80/L=46 is not being expanded, and here is why.** With 0/6 at 855k it can at best report a null: 0/12
+against 5/22 gives p = 0.16, undetectable. Expanding it would buy an outcome that cannot reach
+significance either way, so the seeds are better spent on the arm that can.
