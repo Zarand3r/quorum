@@ -10354,3 +10354,53 @@ baseline (currently 5/22 = 0.227, to be updated when em3 completes).
 * **>= 8/12 after adjudication** -> more material raises the formation rate at p < 0.05.
 * **<= 2/12** -> more material lowers it and the monotonic length argument is wrong.
 * **3/12 to 7/12** -> null, the outcome I named in advance as most likely.
+
+## Tick — baseline complete at 2/8; my own adjudication protocol turned out to be unrunnable
+
+**Throughput fix confirmed.** The primary arm advanced 260k -> 460k this tick against 40k last tick, a
+5x speedup from killing the 12 void runs. Load is 15.
+
+**Baseline em3 COMPLETE at 1.6M: 2/8** (sd1402 22 hits, sd1405 25). The length-matched 1.6M baseline at
+N=160/L=65 is confirmed at **5/22 = 0.227, CI 0.101-0.434**.
+
+**N=80/L=46 at 0/6**, three seeds at 1.56-1.58M and still running, so this is provisional and will be
+confirmed at exact completion. Against the baseline: **p = 0.553**, CI 0.000-0.390. Exactly the
+undetectable null predicted when I declined to expand this arm, and it is reported as a null, not as
+evidence that less material suppresses closure.
+
+**Primary arm N=240/L=80: 1 of 12 so far** -- sd8003, hits at 360k/380k/400k/420k, largest cluster
+61-67, nenc 0 on the largest so the vesicle is a separate smaller cluster, lumen water 0.958/1.306/
+1.156/1.019.
+
+**The pre-registered adjudication could not be carried out, and that is a protocol failure of mine.**
+I required every hit to be render-adjudicated before counting. For sd8003 that is impossible:
+
+* the hit is transient -- by the current state the aggregate encloses NOTHING at any dilation
+  (ladder [0,0,0,0] on all four clusters of 107/30/26/22 lipids), so the vesicle is gone;
+* the rolling checkpoint state is overwritten every checkpoint, so the 420k configuration no longer
+  exists;
+* the 760px render at 420k shows a candidate loop in the top right that I cannot confidently call
+  either way at that resolution.
+
+So the hit is **UNADJUDICABLE**. I am recording it as such rather than forcing a verdict in whichever
+direction suits the hypothesis.
+
+**Fixed the cause.** The driver now preserves the full state at every gate hit, step-tagged, under
+`docs/hits/`. Verified: a 20-step run with hits at 0/10/20 wrote hit_N41_L65_sd999_s0000000.npz and the
+two others. This does NOT help the 12 running primary seeds, whose code was loaded before the change,
+so the primary arm's hits will remain render-only. Stated so the limitation is not forgotten at the
+read.
+
+**Falsification, REVISED before the read, with the revision made explicit.** The original wording --
+"every hit render-adjudicated" -- assumed adjudication was always possible. It is not. Replacing it:
+
+Unadjudicable hits are counted BOTH ways and the arm is reported as a RANGE, low bound (all
+unadjudicable hits are tangles) to high bound (all are vesicles). Against the baseline 5/22:
+
+* **Low bound >= 8/12** -> effect confirmed at p < 0.05 regardless of adjudication.
+* **High bound <= 2/12** -> more material lowers the rate regardless of adjudication.
+* **The bounds straddle the baseline** -> report the range and claim no effect. Given 1 of 12 so far and
+  6 seeds still under 250k, this remains the most likely outcome.
+
+Naming the range in advance prevents the failure mode where an ambiguous hit is resolved in whichever
+direction produces a publishable difference.

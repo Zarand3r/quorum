@@ -936,6 +936,18 @@ if __name__ == "__main__":
             # finish -- which has cost several ticks. Overwriting keeps one file per run rather than
             # hundreds, and the render series already records the history.
             _save_state(X, species, chains, mols, L, d, phi, kT, frac_short, plant, n_lip, seed, steps)
+            if _nves > 0:
+                # PRESERVE the state at every gate hit, tagged by step. The rolling checkpoint file is
+                # overwritten, and hits are transient -- sd8003 hit at 360k-420k and by 480k its
+                # aggregate enclosed nothing at any dilation, so the hit could not be adjudicated from a
+                # state at all, only from a 760px render in which the responsible cluster could not be
+                # identified. Without this, "every hit is render-adjudicated" is not a protocol that can
+                # actually be run.
+                _hd = pathlib.Path(os.environ.get("BUILD_WORKSPACE_DIRECTORY", ".")) / "projects" / "vivarium" / "docs" / "hits"
+                _hd.mkdir(parents=True, exist_ok=True)
+                np.savez_compressed(_hd / f"hit_N{n_lip}_L{L:g}_sd{seed}_s{t:07d}.npz",
+                                    X=X, species=species, chains=chains, L=L, d=d, phi=phi, steps=t,
+                                    mols=np.array([m for m in mols], dtype=object))
     # Save the final state. Post-hoc analysis has had to RE-RUN the simulation three times in this
     # project because only images and printed metrics survived; a new observable then cannot be applied
     # to a finished experiment. Coordinates plus species and topology are enough to score anything.
