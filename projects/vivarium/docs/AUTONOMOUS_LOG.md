@@ -10465,3 +10465,37 @@ gate and must be re-scored with the fixed one. Any comparison using the old base
 baseline runs are complete and their per-checkpoint states are gone, so only their ENDPOINTS can be
 re-scored, which is not the same quantity as the any-checkpoint 5/22. Resolving that mismatch is the
 next tick's work, and until it is resolved **no rate comparison from this experiment should be quoted.**
+
+## Tick — determinism verified, so the buggy baseline can be re-scored exactly
+
+**Ran.** Primary arm relaunched last tick (18 seeds, 9000-9017) is at step 0-20k. Nothing to score.
+
+**Verified determinism, which makes the baseline recoverable.** Re-running baseline seed 1400 on the
+fixed binary reproduces the stored trajectory exactly:
+
+    step 0     rerun E/lip 3.04  largest 7    | stored E/lip 3.04  largest 7
+    step 20000 rerun E/lip -6.26 largest 23   | stored E/lip -6.26 largest 23  core 1.404 both
+
+So a re-run differs from the original in NOTHING except the gate that scores it. That converts the
+blocker I raised last tick -- "the 5/22 baseline was scored with the buggy gate and its per-checkpoint
+states are gone" -- from unrecoverable into a controlled experiment. I do not have to choose between
+re-running everything and abandoning the comparison.
+
+**Launching — re-score the previously-ZERO baseline seeds, criterion stated BEFORE the run.** The bug
+causes FALSE NEGATIVES (an aggregate straddling a boundary was invisible), so the informative seeds are
+the ones that scored zero. Re-running the six zero seeds of em3 -- 1400, 1401, 1403, 1404, 1406, 1407 --
+on the fixed gate, 1.6M, identical parameters and seeds.
+
+* **>= 1 of 6 now shows hits** -> the baseline undercounted, 5/22 is invalid, and every rate in this
+  project has to be re-derived from re-scored runs before anything is quoted.
+* **0 of 6** -> the bug did not change any-checkpoint scoring on these trajectories, and 5/22 stands,
+  tested on 6 of its 22 runs. That is partial validation, not full, and will be reported as such.
+
+The two seeds that already had hits (1402 with 22, 1405 with 25) are NOT being re-run first: their
+run-level verdict cannot change, only their hit counts, which affect occupancy rather than the rate.
+They are second priority if capacity allows.
+
+**Note on cost.** The relaunched primary arm is back at step 0, so discarding it last tick cost the
+~500k x 12 steps it had accumulated. That was the right call -- an L-dependent gate bug across arms
+differing in L is not correctable after the fact -- but it is a real cost and is recorded as one rather
+than glossed.
