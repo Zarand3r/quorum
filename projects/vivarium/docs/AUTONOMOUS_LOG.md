@@ -10499,3 +10499,55 @@ They are second priority if capacity allows.
 ~500k x 12 steps it had accumulated. That was the right call -- an L-dependent gate bug across arms
 differing in L is not correctable after the fact -- but it is a real cost and is recorded as one rather
 than glossed.
+
+## Tick — the gate fix adds one endpoint hit, and by render that hit is a tangle
+
+**Ran.** Re-score arm (6 previously-zero baseline seeds, fixed gate) at 200k of 1.6M, 0 hits so far.
+Primary arm 9000-9017 at 160k, 0 hits. Neither scored -- both read at 1.6M.
+
+**Measured the bug's exact cost, on an IDENTICAL state set.** Last tick's 3/69-versus-5/77 comparison
+was confounded by a growing denominator. Re-ran both gate versions over the same 78 emergent endpoint
+states, using the fact that `_interior_mask` falls back to the legacy centring when `unwrap_cluster`
+returns None, so the old behaviour can be reproduced exactly by monkeypatching rather than
+reimplemented:
+
+| gate | endpoint hits over 78 states |
+|---|---|
+| legacy (buggy) | 4 |
+| fixed | 5 |
+| run-level disagreements | **1** (sd1202, legacy 0 -> fixed 1) |
+
+So the endpoint false-negative rate is 1 in 78 states, or 1 of 5 true positives -- real, but far smaller
+than "every nves=0 is suspect" implied when I found the bug.
+
+**Adjudicated the one new hit, and it does not help the fix's case.** sd1202's final state has
+**159 of 160 lipids in a single aggregate**, ladder [1,1,1,1], lumen ratio 0.285, lumen water 0.656.
+The render shows long ribbons wrapping the periodic box with an empty centre: the enclosed region is the
+box-scale void inside a system-spanning network, the same class as sd82 and sd83, which I called TANGLE
+in the blind adjudication. Calling it TANGLE here too, for consistency rather than convenience.
+
+**Concluded.** The gate fix adds one endpoint detection and that detection is a large-network-void false
+positive, not a recovered vesicle. The count of render-confirmed vesicles at endpoint is UNCHANGED by
+the fix in this corpus. The fix is still correct -- a ring on a boundary must not be invisible, and the
+regression tests enforce that -- but its practical effect on the vesicle rate is smaller than I feared
+and points the wrong way.
+
+**Found that the bug also contaminated my ANALYSIS scripts, not just the library.** My scratch scripts
+computed cluster connectivity with the same wrapped-centroid prefilter. On sd1202 that split the
+aggregate into 147 lipids with ladder [0,1,1,1] and verdict False, where corrected clustering gives 159
+lipids, [1,1,1,1], verdict True. So the metric COLUMNS in earlier tables -- the blind-adjudication
+table, the shell-normalization comparison, the isoperimetric test -- were computed on possibly
+fragmented clusters. The RENDER verdicts in those tables are unaffected, because those came from
+looking at pictures. The affected numbers are the raw ratios, shell-corrected ratios, lumH2O and IQ
+values, and they should be re-derived before any of them is quoted again.
+
+**Prediction, stated BEFORE the re-score arm is read.** A run-level any-checkpoint rate should be
+affected LESS by this bug than an endpoint rate, because a vesicle that persists across many
+checkpoints only has to be caught once at a moment when it is not straddling a boundary, whereas an
+endpoint score gets a single sample. Concretely:
+
+* **0 of 6 re-scored seeds gain hits** -> consistent with this prediction, and the 5/22 baseline stands
+  for these six.
+* **1 or 2 gain hits** -> the effect is real at run level and the baseline is revised upward.
+* **>= 3 of 6 gain hits** -> my prediction is wrong, run-level scoring is MORE sensitive than endpoint
+  scoring, and every rate in the project needs full re-derivation.
