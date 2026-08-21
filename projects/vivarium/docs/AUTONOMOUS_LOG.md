@@ -8551,3 +8551,58 @@ this fourth vesicle is a scoring nuance rather than a new question.
 
 Prevalence adjudicator (10 seeds), determinism rerun continuing as an 11th sample, 3-D solvent pair
 (chi_WW = 0.50 finished at 40 000; chi_WW = 1.00 at 10 000-12 000), 5 long 2-D runs at 2.24-2.4 million.
+
+---
+
+## Tick: the standing known-void is RETIRED, with a control that finally fires
+
+### The larger 3-D solvent test, 6618 waters
+
+Largest connected water cluster / all water -- the exact metric the void recorded at **0.27-0.48**:
+
+| chi_WW | seed 500 | seed 501 | seed 502 |
+|---|---|---|---|
+| **1.00** (the value the void was recorded at) | **0.252** | **0.202** | **0.218** |
+| **0.50** (the fix carried over from 2-D) | **1.000** | **1.000** | **1.000** |
+
+**The positive control reproduces the recorded phenomenon**, at or slightly past its severity, where the
+earlier 1684-water probe only trended toward it (0.626, 0.714). At nearly four times the system size the
+effect is unambiguous, and chi_WW = 0.50 holds a single connected liquid in 3/3.
+
+**First pre-registered branch fires. The known-void -- "3-D explicit solvent at phi 0.15-0.35 is
+fragmented droplets, not a liquid" -- is a chi_WW artefact and is RETIRED.** It was never a property of
+three dimensions; it was the solvent sitting below its liquid-vapour critical point at chi_WW = 1.00,
+exactly as the 2-D counterpart did before the same fix.
+
+The chi_WW = 1.00 arm is at step 12 000-14 000 of 40 000 rather than finished. Reading it now is safe
+because the effect is monotonic and has already gone **past** the recorded range; more steps can only
+fragment it further. Stated rather than glossed.
+
+### What this changes, and what it does not
+
+**Changes:** the solvent is no longer a reason 3-D cannot be attempted. That blocker stood over this
+project for a long time and is gone.
+
+**Does not change:** the size bound. A 3-D bilayer patch or vesicle still needs **~2000 lipids** for its
+radius to exceed the ~9-14 sigma bilayer thickness, against N = 200 already costing 15+ hours. 3-D is
+now blocked by compute alone, which is a cleaner and more honest statement than before.
+
+### The adjudicator at halfway
+
+Ten prevalence seeds at 640 000-880 000 of 1.6 million. Seed 1000 held its vesicle for **2 checkpoints**
+and has since lost it (nves = 0 at 880 000) -- another transient, consistent with the lifetime
+distribution already recorded. **1/10 runs so far.**
+
+### FALSIFICATION -- unchanged
+
+The adjudicator's pre-registered readings stand: >= 3/10 puts the rate in the upper half of the
+6.3-29.4% interval; 0/10 tightens it downward; 1-2/10 is consistent with the existing 6/36 estimate. It
+is at halfway and is not being read.
+
+**No new run launched.** The void retirement is a completed measurement, not a new question, and the
+adjudicator is the one thing that needs finishing.
+
+### Still in flight
+
+Prevalence adjudicator (10 seeds at ~50%), determinism rerun as an 11th sample, chi_WW = 1.00 3-D
+control (12 000-14 000 of 40 000), 5 long 2-D runs at 2.4-2.56 million.

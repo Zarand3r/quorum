@@ -139,8 +139,13 @@ fully intact. 0/5 closed.*
   An independent check of `shell_split` fell out of building that state: with the appendages gone the
   RAW ratio is 0.656-0.657, which is the CORRECTED ratio computed with them present (0.662).
 - **It is 2-D, and 3-D is out of practical reach.** The old blocker -- explicit solvent being fragmented
-  droplets -- looks like a chi_WW artefact: at chi_WW = 0.50 the largest connected water cluster is
-  1.000 in 3/3 seeds, where chi_WW = 1.00 gives 0.626 and 0.714. But the solvent was never the only
+  droplets -- **is a chi_WW artefact and is retired**, with a positive control that reproduces the
+  recorded phenomenon. At 6618 waters:
+
+  | chi_WW | largest water cluster / all water |
+  |---|---|
+  | 1.00 (the value the void was recorded at) | **0.252, 0.202, 0.218** -- at or below the recorded 0.27-0.48 |
+  | 0.50 | **1.000, 1.000, 1.000** | But the solvent was never the only
   obstacle. A 4-tail bilayer is ~9 sigma thick, so a patch reads as flat only above ~500 lipids and
   convincingly only near ~2000; a 3-D vesicle needs the same, since it too needs R > thickness. Runs at
   N = 60 and N = 200 are both **thicker than they are wide** and cannot show a bilayer even in
