@@ -159,6 +159,13 @@ fully intact. 0/5 closed.*
   (122 kT) higher, at 8.5 sigma**, and the single ring encloses ratio 0.76-0.85 against 0.28. Real
   budding is driven by excess area at fixed enclosed volume and by spontaneous curvature; this model
   has no volume constraint and, measured five different ways, no spontaneous curvature at all.
+- **Survival from a known vesicle is 8/10 over 200 000 steps.** Measured on the persistence arms, which
+  checkpoint every 10 000 steps -- eight times finer than the emergence runs. Six of ten runs dipped
+  below the gate at least once, but **four of those recovered and ended closed**; only two ended open.
+  So a first sub-threshold checkpoint is NOT a death time, and gate-crossings are mostly transient dips
+  in a structure that is still present. Episode-based lifetime statistics computed on the coarse
+  emergence checkpoints understate persistence for exactly this reason.
+
 - **Three formations observed, and they are often TRANSIENT.** Seed 80's 48-lipid vesicle existed at
   steps 320 000 (ratio 0.522) and 480 000 (0.490) and was gone by 1.12 million. Seed 82's has instead
   persisted from 1.12 to 1.44 million while growing 102 -> 130 lipids. Some dissolve, some hold.

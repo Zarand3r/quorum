@@ -9000,3 +9000,60 @@ measurement.
 
 Ten new all-cluster prevalence seeds (400 000/1.6 million), chi_WW = 1.00 3-D control (30 000-34 000 of
 40 000).
+
+---
+
+## Tick: a properly-resolved lifetime, which invalidates my own episode statistic
+
+### The measurement
+
+The emergence arms checkpoint every 80 000-160 000 steps, so a death time cannot be resolved there. The
+**persistence arms checkpoint every 10 000** and start from a known vesicle, so they can.
+
+| run | first sub-threshold checkpoint | final state |
+|---|---|---|
+| pers sd20 | never | closed |
+| pers sd21 | never | closed |
+| pers sd22 | 40 000 | **closed** -- recovered |
+| pers sd23 | 10 000 | **closed** -- recovered |
+| pers sd24 | 10 000 | OPEN |
+| p48 sd110 | 110 000 | OPEN |
+| p48 sd111 | 30 000 | **closed** -- recovered |
+| p48 sd112 | never | closed |
+| p48 sd113 | never | closed |
+| p48 sd114 | never | closed |
+
+### RETRACTED: first gate-failure as a lifetime
+
+**Six of ten runs dipped below the gate; four of those recovered and ended closed.** Only **2 of 10**
+genuinely ended open. So the quantity I have been treating as an episode boundary -- a checkpoint
+falling below threshold -- is mostly a **transient dip in a structure that is still there**, not a
+death.
+
+That undermines the episode statistic reported two ticks ago (12 episodes, median 160 000 steps) as a
+lifetime measure. It was never wrong as a count of gate-crossings; it was wrong as a description of how
+long vesicles last. **Both the previous framings were too pessimistic.**
+
+### The replacement, which is a real number
+
+    Survival from a known vesicle: 8/10 over 200 000 steps.
+
+This is the cleanest persistence statistic in the corpus: fine resolution, known starting state, ten
+independent thermal seeds. It supersedes the episode median in `RESULTS.md`, which now carries it.
+
+Consistent with the coarse observations rather than contradicting them: the emergence runs show
+vesicles that do eventually dissolve (seed 80 by 1.12 million, seed 1002 by 1.6 million), and 8/10
+survival over 200 000 steps is compatible with dissolution on a 10^6-step timescale.
+
+### FALSIFICATION -- unchanged; the new arm is at 50%
+
+Ten new all-cluster seeds at 800 000 of 1.6 million, all `nves = 0`, largest 39-93. The 20-run readings
+stand: above 28.7% establishes the undercount; inside the largest-cluster interval means the instruments
+agree and 8/46 stands; below 13.9% means 3/10 was a high draw.
+
+**No new run launched.** This was a re-analysis of existing data at better resolution, and the new arm
+is the outstanding measurement.
+
+### Still in flight
+
+Ten new all-cluster prevalence seeds (800 000/1.6 million), chi_WW = 1.00 3-D control.
