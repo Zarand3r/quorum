@@ -11786,3 +11786,40 @@ length being near the minimum for this measurement, not a claim about any partic
 
 **No falsification criterion, because no run was launched.** Load is 36 and the N=300 energy arm remains
 the bottleneck the kappa fit needs. Its criterion is fixed and unchanged.
+
+## Tick — em4 finishes 1/6; launching a longer arm to test whether 1.6M truncates
+
+**Ran / completing.** em4 at 1.58-1.60M: four seeds final at zero, sd7105 final with 6 hits, two seeds
+with 20 000 steps left. **em4 = 1/6**, and since hits accumulate monotonically that can only rise.
+N=300 energy at 24-28k of 50k. N=300 kinetic at 50-100k of 300k, sd2 now at 2 enclosure checkpoints.
+
+**Pooled length-matched baseline is now 6/28 = 0.214** (fin2 2/8, em3 2/8, fine arm 1/6, em4 1/6),
+against the 5/22 = 0.227 it replaces. Barely moved, as expected from adding one hit in six runs.
+
+**The design question this raises, and the reason for the next run.** sd7105's first formation was at
+**1 500 000 of a 1.6M run** -- the latest in this project, against 440k, 620k and 720k in earlier arms.
+A run terminated at 1.0M or 1.2M would have scored that seed a clean zero. If formations continue to
+arrive that late, every rate this project reports is a lower bound set by run length rather than by
+physics, and the 1.6M convention is doing more work than it should.
+
+**Launching -- a 2.4M emergence arm, criterion stated BEFORE the run.** 6 seeds, standard conditions
+(N=160, L=65), 1.5x the usual length, checkpoints every 20k. It will be scored **twice**: at 1.6M for
+comparability with the pooled baseline, and again at 2.4M for the increment.
+
+* **>= 2 of 6 seeds gain their FIRST hit between 1.6M and 2.4M** -> 1.6M truncates, every rate in this
+  project is a run-length artifact to some degree, and the corpus figures must be restated as lower
+  bounds with the truncation named.
+* **0 of 6 gain a first hit in that window** -> 1.6M is adequate, sd7105's late formation was a tail
+  event, and the existing rates stand as they are.
+* **exactly 1 of 6** -> consistent with the single late formation already observed; report the count
+  and revise nothing.
+
+Reachability checked: each of the six seeds can independently form or not in the extension window, so
+all three branches are attainable.
+
+**Note on what this cannot settle.** Even 0/6 in the window would not prove 1.6M sufficient in general
+-- it would bound the truncation effect at these conditions only. And the arm's 1.6M score is a fresh
+draw from the same distribution as the baseline, so it also adds six runs to the pooled figure whatever
+the extension shows.
+
+**Load.** 32 running, and em4's six are finishing, so this adds six against six retiring.
