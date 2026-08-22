@@ -12185,3 +12185,53 @@ token channel, MLP liveness, ensemble equivalence and the production topology ar
 remains is whether "always alive" should mean weights adapting during forward passes -- which changes
 the physics rather than re-expressing it, and would require re-deriving every number in RESULTS.md.
 That is a decision, not a task.
+
+## Tick — turned the pending truncation test into a quantitative prediction, before its data exists
+
+**Ran.** N=300 kinetic at 140-220k of 300k, sd2 holding 11 enclosure checkpoints. em5 at 1.20-1.56M of
+2.4M, 1/6. em6 at 700k-1.06M of 2.4M, 0/6. **No em5 seed has passed 1.6M yet, so the truncation window
+has not opened** -- sd7203's hit was at 580 000, inside the comparable range.
+
+**Recovered the first-formation time for every seed that ever formed in a completed 1.6M arm.**
+
+    440k  440k  440k  640k  640k  640k  720k  1200k  1500k  1600k
+
+| window | first formations |
+|---|---|
+| 0-400k | 0 |
+| 400-800k | 7 |
+| 800-1200k | 1 |
+| 1200-1600k | **2** |
+
+Seven of ten arrive by 720 000, but **three of ten arrive after 1.2M, and one at exactly 1 600 000** --
+the final checkpoint of its run. That seed was caught by luck; a marginally shorter run records it as a
+clean zero. So the tail is real, not an artefact of the single late case that prompted this whole line
+of questioning.
+
+**Column-offset error caught and fixed mid-measurement.** The first pass read `nves` as the second-to-
+last field and returned only 3 seeds. The fin2 and older logs predate the `lumH2O` column and are 19
+fields wide, not 20, so `nves` is the LAST field there. Detecting the width per file recovered 10 seeds
+instead of 3. This is the same class of error as the header-offset mistake earlier in this project, and
+it would have understated the tail by a factor of three.
+
+**Prediction for the running arms, stated before their data exists.** Corpus hazard is
+12 formations / (70 runs x 1.6M) = **0.107 per seed-M**. The em5+em6 extension window is 12 seeds x 0.8M
+= 9.6 seed-M, so the expected number of NEW first-formations between 1.6M and 2.4M is **1.03**. Poisson:
+
+| outcome | probability |
+|---|---|
+| exactly 0 | 0.358 |
+| exactly 1 | 0.368 |
+| >= 2 | 0.275 |
+
+The criterion fixed when those arms launched was: >= 2 confirms truncation, 0 says 1.6M is adequate,
+exactly 1 revises nothing. **The hazard estimate says the middle branch is the single most likely
+outcome at 0.368, and the "revise nothing" and "adequate" branches together carry 0.726.** So the test
+is most likely to end without a revision, and I am recording that now rather than presenting whichever
+result arrives as though it were informative.
+
+**What the test can still do.** A result of >= 2 has probability 0.275 under the null of no truncation
+bias, so it would be suggestive rather than decisive -- and that is worth knowing before rather than
+after. If the arms return >= 3 (probability 0.086) the case is much stronger.
+
+**No new simulation launched.** Load is 22 across three arms whose criteria are all fixed.
