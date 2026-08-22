@@ -11747,3 +11747,42 @@ underpowered at the compute available.
 5/22 = 0.227. A clean zero has probability 0.773^6 = 0.21 under that baseline, so it is running low but
 not anomalous. If it finishes 0/6 the pooled baseline becomes **5/28 = 0.179**, and that is the number
 future comparisons should use.
+
+## Tick — em4 breaks its duck at 1.5M with a render-confirmed vesicle
+
+**Ran.** N=300 energy at 18-24k of 50k. N=300 kinetic at 40-90k of 300k. em4 at 1.52-1.56M of 1.6M.
+
+**em4 is no longer 0/6.** Seed 7105 hit at 1 500 000 and has held four consecutive checkpoints:
+
+| step | largest | lumen_c | nenc | perc | lumH2O |
+|---|---|---|---|---|---|
+| 1 500 000 | 135 | 1220 | 1 | n | 0.925 |
+| 1 520 000 | 135 | 1291 | 1 | n | 0.808 |
+| 1 540 000 | 135 | 1250 | 1 | n | 0.942 |
+| 1 560 000 | 135 | 1193 | 1 | n | 0.887 |
+
+All four states preserved, so this hit is fully adjudicable -- the fix that made that possible has now
+paid off on a second arm.
+
+**Adjudicated VESICLE.** Unwrapped from the preserved state at 1 560 000: a large closed loop enclosing
+a substantial lumen with a long serpentine tail, 135 lipids, the same "closed ring plus appendage" form
+called VESICLE for sd1301, sd1109, sd9010 and sd9016. Lumen 1193 cells against roughly 5800 expected
+for 135 lipids, a ratio near 0.21, and water at 0.887 of bulk.
+
+**Caveat recorded.** The cluster's unwrapped span is 60.3 x 45.4 sigma in an L=65 box, so its nearest
+approach to its own periodic image is about **4.7 sigma** against an interaction cutoff of 2.5. No
+direct interaction, but the margin is thin, and a structure this large relative to its box is at the
+edge of what this geometry can host cleanly. Noted rather than used to discount the detection.
+
+**Consequence for the baseline.** Last tick I wrote that if em4 finished 0/6 the pooled length-matched
+baseline would become 5/28 = 0.179. It will not. At 1/6 the pooled figure becomes **6/28 = 0.214**,
+barely moved from the 5/22 = 0.227 it replaces. Recording the correction because I named the 0.179
+figure in advance and it is now wrong.
+
+**Late formation is itself worth noting.** This vesicle appeared at 1.50M of a 1.6M run -- the latest
+first-formation seen in this project, against 440k, 620k and 720k in earlier arms. Runs terminated at
+1.0M or 1.2M would have scored this seed a clean zero. That is a systematic argument for the 1.6M
+length being near the minimum for this measurement, not a claim about any particular rate.
+
+**No falsification criterion, because no run was launched.** Load is 36 and the N=300 energy arm remains
+the bottleneck the kappa fit needs. Its criterion is fixed and unchanged.
