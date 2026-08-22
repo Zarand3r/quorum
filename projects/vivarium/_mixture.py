@@ -890,7 +890,34 @@ if __name__ == "__main__":
     # INERTIAL at the validated dt = 8e-3: same energy, same equilibrium ensemble (verified against
     # the overdamped run over 5 seeds per rung), 28x more reduced time per minute end to end.
     dt = 8e-3
-    ig = Inertial(f, kT, dt, seed=1 + seed)
+    # VIVARIUM_ENGINE=transformer runs the step as a transformer forward pass instead of calling the
+    # integrator directly. The interaction term is then a sum of masked attention heads whose scores are
+    # a query-key inner product with a distance bias, and the velocity-Verlet update is the residual
+    # structure around it. Verified elsewhere to reproduce Inertial.step bit-for-bit on one step and to
+    # match field.forces() to 1e-16 relative on this exact production topology; this flag is what lets
+    # the same claim be tested on a full emergent run rather than on a single step.
+    _engine = os.environ.get("VIVARIUM_ENGINE", "integrator")
+    if _engine == "transformer":
+        from transformer import VivariumTransformer
+        _tf = VivariumTransformer(f)
+        class _TransformerEngine:
+            def __init__(self, tf, X, kT, dt, seed):
+                self.tf, self.kT, self.dt = tf, kT, dt
+                self.rng = np.random.default_rng(seed)
+                self.v = self.rng.normal(size=X.shape) * np.sqrt(kT)
+                self.F = tf.attention(X)
+
+            def step(self, X):
+                X, self.v, self.F = self.tf.forward(X, self.v, self.dt, self.kT,
+                                                    rng=self.rng, F=self.F)
+                return X
+
+            def temperature(self):
+                return float((self.v ** 2).mean())
+
+        ig = _TransformerEngine(_tf, X, kT, dt, 1 + seed)
+    else:
+        ig = Inertial(f, kT, dt, seed=1 + seed)
 
     print(f"MIXTURE {d}-D: {n_short} short (2 tails) + {n_long} long (4 tails) + {n_water} water, "
           f"L={L}, packing fraction {phi}, kT={kT}, start={plant}", flush=True)

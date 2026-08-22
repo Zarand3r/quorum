@@ -12422,3 +12422,42 @@ correction.
 **No falsification criterion, because no run was launched.** Load has fallen to 12 as em5 finished. The
 remaining arms are em6 and the second half of the N=300 arc arm, both with criteria already fixed, and
 both complete within a tick or two. Adding runs now would slow the two reads that are actually imminent.
+
+## Tick — wired the transformer engine into the production driver and launched an emergence arm on it
+
+**Ran.** N=300 arc arm: **6 of 10 seeds complete** at 300k (sd0, sd1, sd2, sd3, sd4, sd8), the other four
+at 250-280k. Still **1/10** -- sd2 with 11 hits. Not read; the criterion is over all ten. em6: two seeds
+complete at 2.4M, rest at 1.84-2.26M.
+
+**Closed the last gap in the transformer work that does not need a decision.** Everything so far proved
+the refactor correct -- forces to 1e-16 on the production topology, one forward pass bit-identical to one
+integrator step, ensemble equivalence over 20 000 steps. What it had never done is **produce the science
+result**: a vesicle, from a dispersed start, through the transformer formulation.
+
+Added `VIVARIUM_ENGINE=transformer` to the production driver, so the same builder, analysis, gate and
+renderer are used and only the step changes. First attempt failed with `SyntaxError: no binding for
+nonlocal '_v'` -- the enclosing scope is module level, not a function -- fixed by holding the velocity
+and carried force as instance state.
+
+**Verified through the driver before spending compute**, same seed, same settings:
+
+| step | integrator | transformer |
+|---|---|---|
+| 0 | E/lip 4.92, largest 13, core 1.274 | identical |
+| 20 | E/lip 0.75, largest 13, core 1.300 | identical |
+| 40 | E/lip 0.83, largest 13, core 1.253 | identical |
+
+**Launching -- 6 emergence seeds at 1.6M on the transformer engine, criterion stated BEFORE the run.**
+
+* **PRIMARY, and the one with power: the mean largest-cluster trajectory must agree with the integrator
+  corpus within error bars.** That is a continuous observable sampled at 80 checkpoints per run, so it
+  can actually discriminate. Agreement means the transformer formulation reproduces the emergent physics
+  end to end, not merely the force law.
+* **A systematic divergence in that trajectory** means something in the production path differs from the
+  verified single-step behaviour, and the engine flag is withdrawn until found.
+* **SECONDARY and explicitly underpowered: the formation count.** At the pooled rate of 7/34 = 0.206 the
+  expectation is 1.2 vesicles in six seeds, so anything from 0 to 3 is unremarkable. **A zero here would
+  NOT be evidence against the engine**, and I am recording that in advance because a zero is reasonably
+  likely (P = 0.26) and would be easy to over-read.
+
+**Nothing retracted.** Load rises from 8 to 14.
