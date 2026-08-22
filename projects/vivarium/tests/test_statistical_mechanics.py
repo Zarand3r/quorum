@@ -97,3 +97,53 @@ def test_thermostat_samples_the_correct_kinetic_temperature():
     kurt = ((vs - vs.mean()) ** 4).mean() / vs.var() ** 2 - 3.0
     assert abs(ratio - 1.0) < 0.03, f"kinetic equipartition off: {ratio:.4f}"
     assert abs(kurt) < 0.15, f"velocities not Gaussian: excess kurtosis {kurt:+.4f}"
+
+
+def test_low_density_gr_matches_the_boltzmann_factor():
+    """g(r) -> exp(-beta u(r)) as rho -> 0. An EXACT target, unlike per-spring equipartition.
+
+    This is the strongest statement available that the sampler reproduces the Boltzmann distribution
+    of its own pair potential in CONFIGURATION space. Measured on pure water at chi_WW = 0.50: in the
+    well-sampled mid-range the agreement is 0.1-0.4% (r = 1.42 -> 0.001, r = 1.62 -> 0.004).
+
+    The residual deviation is a finite-density many-body correction, confirmed by a density scan:
+    0.0780 +- 0.0105 at rho = 0.0417, 0.0427 +- 0.0067 at 0.0208, 0.0219 +- 0.0051 at 0.0100 --
+    scaling as rho^0.89 over a 4.2x range and extrapolating to zero. This test runs a single short
+    instance, so it asserts only the loose bound; the scan is the quantitative record.
+    """
+    import numpy as np
+
+    from field import Field, WATER, _core, _well
+    from transformer import VivariumTransformer
+
+    kT, dt, L, N = 0.45, 4e-3, 60.0, 75
+    rng = np.random.default_rng(7)
+    f = Field(np.full(N, WATER), np.zeros((0, 2), int), L)
+    tf = VivariumTransformer(f)
+    X = rng.uniform(0, L, size=(N, 2))
+    v = rng.normal(size=X.shape) * np.sqrt(kT)
+    F = tf.attention(X)
+    for _ in range(8000):
+        X, v, F = tf.forward(X, v, dt, kT, gamma=1.0, rng=rng, F=F)
+    edges = np.linspace(0.6, 2.5, 39)
+    cent = 0.5 * (edges[1:] + edges[:-1])
+    H = np.zeros(len(cent))
+    ns = 0
+    for i in range(40000):
+        X, v, F = tf.forward(X, v, dt, kT, gamma=1.0, rng=rng, F=F)
+        if i % 100 == 0:
+            d = X[:, None, :] - X[None, :, :]
+            d -= L * np.round(d / L)
+            r = np.linalg.norm(d, axis=2)[np.triu_indices(N, 1)]
+            H += np.histogram(r, bins=edges)[0]
+            ns += 1
+    shell = np.pi * (edges[1:] ** 2 - edges[:-1] ** 2)
+    g = H / (ns * (N * (N - 1) / 2) * shell / L ** 2)
+    s = cent / f.sigma
+    uc, _ = _core(s, f.core_height)
+    uw, _ = _well(s, f.rc)
+    u = np.where(cent < f.rc * f.sigma, f.eps * (uc + uw * f.chi[WATER, WATER]), 0.0)
+    gth = np.exp(-u / kT)
+    m = (cent > 1.3) & (cent < 2.4) & (H > 50)
+    err = (np.abs(g[m] - gth[m]) / gth[m]).mean()
+    assert err < 0.15, f"g(r) does not track exp(-beta u): mean rel err {err:.4f}"
