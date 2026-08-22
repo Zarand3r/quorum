@@ -14616,3 +14616,58 @@ read next tick.
 
 **Retracted this tick: nothing.** The corpus rate is updated, not corrected -- 7/40 was accurate for the
 sample it described.
+
+## Tick — closure calibration read at completion; kT >= 0.65 dissolves, 0.55 is marginal
+
+**Completed and read at the end**, all eight restarts at 400 000 steps.
+
+| kT | P_closed, 2 seeds | smallest cluster during the run |
+|---|---|---|
+| 0.55 | 0.049, 0.341 | **80, 62** |
+| 0.65 | 0.024, 0.171 | 41, 60 |
+| 0.75 | 0.049, 0.049 | 47, 39 |
+| 0.85 | 0.024, 0.122 | 52, 38 |
+
+**BRANCH 3 FIRES FOR `kT >= 0.65`.** The seeded 80-lipid vesicle falls to **38-47 lipids**, so it is
+**dissolving rather than opening and reclosing**. Those temperatures are unusable for a closure
+measurement, and the dissolution threshold is now documented rather than guessed: **the aggregate
+survives at 0.55 and comes apart by 0.65.**
+
+**`kT = 0.55` is the only survivor, and it is a MARGINAL pass which I am recording as a judgement call
+rather than a clean branch.** Both seeds keep the cluster intact (minimum **62** and **80** lipids,
+against my >= 60 requirement) and both states are visited. But `P_closed` reads **0.049 and 0.341** --
+a **7x spread across two seeds** -- so the mean of 0.195 is uninformative and sits **just below** the
+0.2-0.8 window I pre-registered. **Branch 1 does not fire as written.** Two seeds cannot distinguish
+poor equilibration from genuine bistability, which is exactly why I am not quoting a closure free energy
+from this.
+
+**Note on direction:** at `kT = 0.45` the forward arm sat at `P_closed = 0.55-0.90`; at 0.55-0.85 it
+drops to 0.02-0.34. **Raising temperature opens the vesicle, as it must**, and the calibration behaves
+sensibly even where it is unusable.
+
+**LAUNCHED, criteria fixed BEFORE the run: one properly powered run at `kT = 0.55` instead of another
+calibration.** 6 seeds from the sd8105 vesicle, **1.2M steps** (3x the calibration), checkpoints every
+10 000. **Equilibration is tested by comparing the first half against the second half within each seed**,
+which needs no second ensemble and cannot fall into the algebraic identity that made the earlier
+rate-versus-population test vacuous.
+
+* **`P_closed` in the second half agrees with the first half within 2 sigma, AND the seed-to-seed spread
+  is smaller than the 7x seen here** -> the run is equilibrated, and `dF_closure(kT=0.55) =
+  -kT ln(P_closed/P_open)` is a measurement at a temperature where both states are genuinely sampled.
+  With `dF_closure(0.45)` this also gives a second point, opening the same van't Hoff treatment that
+  turned the binding number into a measurement.
+* **Second half still differs from the first** -> not equilibrated even at 1.2M; report as such and
+  **stop pursuing the closure free energy by this route**, leaving `+0.22 +- 0.44 kT` as the best
+  available with its non-convergence caveat permanent.
+* **More than 2 of 6 seeds drop below 60 lipids** -> dissolution contaminates the measurement at 0.55
+  as well, and the usable temperature window for this object is empty.
+
+**I am committing in advance to the second branch ending this line of work.** Three attempts have now
+gone into measuring the closure free energy properly -- vacuous, underpowered, and this -- and the
+marginal calibration is a genuine warning. **If 1.2M does not equilibrate, the honest position is that
+closure is too slow to characterise thermodynamically in this model, which is itself a finding
+consistent with everything else measured.**
+
+**Emergence in flight:** 5 fresh baseline seeds (8700-8704) at 140-160k, largest 29-40, 0 closures.
+
+**Retracted this tick: nothing.**
