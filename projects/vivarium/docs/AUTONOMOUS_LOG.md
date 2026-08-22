@@ -15302,3 +15302,54 @@ control now launching (N=100, L=65).
 
 **Retracted this tick: nothing.** The wrap-free test is not withdrawn; its inferential reach is
 narrowed, in advance, to the asymmetric form above.
+
+## Tick — FIRST EMERGENT VESICLE at the corrected chemistry (sd8901), adjudicated small and transient
+
+**Running.** Three emergence arms, all verified at `ht-0.25`: 8900-8904 (N=160, L=65) at 1.22-1.38M,
+9100-9104 (N=100, L=110) at 180k, 9200-9204 (N=100, L=65) at 380k.
+
+**`sd8901` formed a vesicle at step 1 060 000.** Adjudicated with render and gate together, as the
+protocol requires:
+
+| observable | value |
+|---|---|
+| cluster sizes | 87 / **41** / 32 |
+| vesicle cluster | **the 41-lipid one, NOT the largest** |
+| `nves` by four-dilation gate | 1 |
+| lumen water | **0.911 of bulk** |
+| `nenc` on the largest cluster | 0 -- which is why the log line looks contradictory |
+| checkpoints with `nves > 0` | **1 of ~53** |
+
+**The render confirms it**: a closed loop of tail core with heads on both faces, enclosing a dark
+interior of water. `docs/images/VESICLE_ht25_sd8901_s1060000.png`.
+
+**Two qualifications, recorded rather than buried.** It is **small** -- 41 lipids against the 80 and 85
+of the two transformer-arm vesicles -- and it is **transient**, closing by 1.06M and open again by 1.08M.
+
+**This is exactly what the measured thermodynamics predicts.** With `dF_closure = +0.22 +- 0.44 kT`, a
+vesicle here is not a stable object but a marginal one that forms and re-opens. The event is
+simultaneously **a genuine emergent vesicle** and **an illustration of why the rate is ~15% rather than
+~100%.**
+
+**A subtlety worth recording for anyone reading the logs:** the line reads `nenc=0` and `nves=1`
+together, which looks self-contradictory. It is not -- `nenc` is computed on the **largest** cluster
+(`_mixture.py:942`) while `count_vesicles` scans **all** clusters. Here the largest cluster (87) encloses
+nothing and a smaller one (41) is the vesicle. **A future reader scanning for `nenc>0` would miss this
+event entirely.**
+
+**NOT updating the corpus rate.** Arm 8900-8904 is at 1.22-1.38M of 1.6M and incomplete; 8800-8804
+finished 0/5. Reading a partial arm is the error the last several ticks have been about.
+
+**LAUNCHED, criterion fixed BEFORE the run: nothing new.** Fifteen processes are running across three
+arms that answer the live question (does removing the wrapping artifact change the rate), and adding
+work would slow them. **The pre-registered criteria from the previous two ticks stand unchanged**, in
+particular the asymmetric reading forced by the dilution confound: more formations in the wrap-free arm
+**despite** 4.6x dilution is strong evidence; fewer or equal is ambiguous.
+
+**One criterion I am adding now, before the arms complete**, because this event exposes the gap: **vesicle
+events must be counted by `nves`, never by `nenc`**, and any historical count built on `nenc` under-counts
+vesicles formed by non-largest clusters. I have not audited whether any past number in this project used
+`nenc` as the formation criterion; **if the completing arms disagree with expectation, that audit comes
+first.**
+
+**Retracted this tick: nothing.**
