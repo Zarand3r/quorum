@@ -12506,3 +12506,47 @@ rationale for the arc programme since the beginning and the data now contradicts
 **No falsification criterion, because no run was launched.** Load is 9. The transformer emergence arm is
 at 380k of 1.6M with largest clusters 53-106 and 0 formations, which is unremarkable at 24% of length,
 and its criterion was fixed last tick.
+
+## Tick — the transformer engine reproduces emergent aggregation; arc arm final at 1/10
+
+**Completed.** gap300_sd7 finished at 300k with **0 hits**, so the N=300 arc arm is **final at 1/10**.
+Last tick's read and the retraction of the critical-size prediction stand unchanged. em6 fully complete
+at 6/6 seeds, 0/6.
+
+**PRIMARY criterion for the transformer engine, tested at matched steps.** The criterion set at launch
+was that the mean largest-cluster trajectory must agree with the integrator corpus within error bars.
+That is a continuous observable, so it is comparable at matched times rather than only at an endpoint:
+
+| step | transformer, 6 seeds | integrator corpus, 22 seeds | difference |
+|---|---|---|---|
+| 100 000 | 32.3 +- 3.0 | 32.6 +- 1.7 | -0.3 |
+| 200 000 | 48.3 +- 3.2 | 61.2 +- 7.4 | -12.9 |
+| 300 000 | 61.7 +- 6.3 | 57.5 +- 4.4 | +4.2 |
+| 400 000 | 71.0 +- 8.5 | 76.6 +- 6.9 | -5.6 |
+| 500 000 | 79.7 +- 12.9 | 71.5 +- 5.2 | +8.1 |
+| 600 000 | 101.5 +- 7.6 | 87.3 +- 6.4 | +14.2 |
+
+**Mean difference +1.29 +- 3.98 lipids, 0.32 sigma.** The engine reproduces the emergent aggregation
+physics, not merely the force law.
+
+**Caveat stated rather than buried:** consecutive checkpoints of the same seeds are strongly correlated,
+so treating six of them as independent makes that error bar optimistic. Because the result is a null,
+the optimism works against the conclusion rather than for it -- a tighter-than-real error bar would make
+a genuine difference easier to detect, and none appeared.
+
+**Secondary observable, as pre-registered underpowered:** 0 formations in 6 seeds at 660k of 1.6M. At
+the corpus rate that is unremarkable and was named in advance as not evidence against the engine.
+
+**Launching -- 6 more transformer-engine seeds, criterion stated BEFORE the run.** Load has fallen to 6
+with every other arm finished, and the transformer demonstration is the one live thread that does not
+need a pending decision. Doubling the arm to 12 seeds tightens both observables.
+
+* **Trajectory: the mean difference stays within 2 sigma of zero across matched checkpoints** -> the
+  engine is confirmed equivalent on the production path and the refactor is complete.
+* **A systematic drift emerging beyond 2 sigma with the larger sample** -> something in the production
+  path differs from the verified single-step behaviour, and the engine flag is withdrawn until found.
+* **Formation count over 12 seeds**: at the pooled 7/40 = 0.175 the expectation is 2.1, so 0 to 5 is
+  unremarkable. This remains secondary and cannot on its own confirm or refute the engine.
+
+**Retracted: nothing new this tick.** The arc-arm retraction from last tick is merely confirmed by its
+final seed.
