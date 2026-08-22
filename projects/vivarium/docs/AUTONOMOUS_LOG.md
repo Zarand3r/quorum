@@ -12092,3 +12092,55 @@ described above. Recorded because it was stated as the next step and is not bein
 **No new simulation launched, so no falsification criterion.** Load is 22 across the kinetic arm and two
 emergence arms, all with criteria already fixed. The refactor does not touch `_mixture.py`, which still
 uses the original integrator, so every result measured so far stands exactly as measured.
+
+## Tick — the transformer engine runs end to end; exact with one spring head, ensemble-equivalent with two
+
+**Ran.** N=300 kinetic at 120-190k of 300k, sd2 at 11 enclosure checkpoints. em5 at 960k-1.2M of 2.4M,
+sd7203 holding 1 hit. em6 at 460-700k of 2.4M, 0/6. Nothing complete, nothing scored.
+
+**Ran the refactored engine end to end for the first time.** Previous ticks verified forces and a single
+step. This ran 20 000 steps through `VivariumTransformer.forward` against `Inertial.step` from the same
+seed, and the energies were **identical to the last digit at every checkpoint**, with matching late-run
+mean and standard deviation.
+
+**That result was too good, and chasing it found the boundary.** An earlier 120-token test had diverged
+by 4.9e-08 at 400 steps. The difference is the number of spring heads:
+
+| configuration | spring heads | max abs dX after 3000 steps |
+|---|---|---|
+| bonds only | 1 | **0.000e+00** |
+| chains of three | 2 | **1.97e+01** (box is L=20, so fully decorrelated) |
+
+With one head my summation order happens to coincide with `field.forces()` and the trajectory stays
+bit-identical indefinitely. With two heads the orders differ in the last bit, and molecular dynamics
+amplifies that to complete decorrelation within 3 000 steps. **So the 20 000-step exact match is the
+one-head special case, not a general property**, and it is recorded as such rather than as the headline.
+
+**Which forced the real test: are the engines equivalent as ENSEMBLES when trajectories decorrelate?**
+Criterion stated before running: mean energy across seeds must agree within error bars. Five seeds, two
+spring heads, energies averaged over the second half of each 20 000-step run:
+
+| seed | integrator | transformer | difference |
+|---|---|---|---|
+| 0 | 211.4463 | 211.4922 | -0.0459 |
+| 1 | 322.6158 | 322.7314 | -0.1156 |
+| 2 | 168.8145 | 168.7273 | +0.0872 |
+| 3 | 224.3839 | 224.4991 | -0.1152 |
+| 4 | 224.5263 | 224.5776 | -0.0513 |
+
+**Paired difference -0.0482 +- 0.0370, 1.30 sigma, 0.021% of the mean energy.** Consistent with zero.
+The engines are the same physics.
+
+**Corrected my own statistic mid-analysis.** The first version compared unpaired means and reported
+**0.00 sigma** -- which looks like perfect agreement and is actually uninformative, because the
+between-seed spread (168 to 322) swamps a difference of 0.05. The seeds share initial conditions, so
+the paired test is the correct one, and it is simultaneously tighter and less flattering: 1.30 sigma
+rather than 0.00. Reporting the unpaired number would have overstated the agreement while hiding a real
+signal.
+
+**No falsification criterion for a new simulation, because none was launched.** Load is 22 across three
+arms with criteria already fixed. The refactor still does not touch `_mixture.py`.
+
+**Still blocked on a decision, not on work.** Making "always alive" non-vacuous means weights changing
+during the forward passes, which stops conserving energy and therefore changes the physics rather than
+re-expressing it. Every number in RESULTS.md would need re-deriving against it. That is the user's call.
