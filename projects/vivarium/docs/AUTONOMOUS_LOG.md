@@ -14333,3 +14333,76 @@ the mean potential energy of bound and free lipids in the same runs.
 
 **Retracted this tick: nothing.** Versions 1 and 2 of the exchange test were already recorded as vacuous
 and underpowered respectively; version 3 supersedes them with adequate power.
+
+## Tick — the binding thermodynamics measured; my cross-check was invalid by construction
+
+**Completed and read at the end.** The van't Hoff scan finished: 5 seeds at each of `kT = 0.8, 1.0, 1.2,
+1.4, 1.6`, 300 000 steps each.
+
+| kT | P_bound | ln K | direct `<U>_b - <U>_f` (eps) |
+|---|---|---|---|
+| 0.8 | 0.9503 | 2.9622 +- 0.0848 | -6.706 +- 0.186 |
+| 1.0 | 0.8887 | 2.1062 +- 0.1408 | -5.884 +- 0.309 |
+| 1.2 | 0.8141 | 1.4791 +- 0.0401 | -4.312 +- 0.103 |
+| 1.4 | 0.7514 | 1.1088 +- 0.0528 | -3.590 +- 0.085 |
+| 1.6 | 0.7042 | 0.8688 +- 0.0427 | -3.062 +- 0.079 |
+
+**The fit is well behaved: `ln K` is LINEAR in `1/kT`, chi2/dof = 0.86, residuals within +-0.06.**
+
+* **`dE_bind = -3.316 +- 0.142 eps`**
+* **`dS_bind/k = -1.243 +- 0.113`** -- binding costs entropy, as it must
+* At the production `kT = 0.45`: **`dF_bind = -2.76 eps = -6.1 kT` per lipid**
+
+**THE NUMBER THAT MATTERS, and it quantifies every render in this project.** Binding a lipid to an
+aggregate is worth **-6.1 kT**. Closing a ribbon into a vesicle is worth **+0.22 +- 0.44 kT**, i.e.
+nothing. **Aggregation is driven and closure is not, by a factor of ~30 in free energy.** That is the
+quantitative statement of what the frames show: lipids find each other readily, build large ribbons, and
+then sit with open ends.
+
+**MY PRE-REGISTERED CROSS-CHECK WAS INVALID BY CONSTRUCTION, and I am reporting that rather than the
+comparison.** I registered that `dE_vH` should match the direct `<U>_bound - <U>_free` within 2 sigma.
+It does not: **-3.316 +- 0.142 against -4.711**, a 6.6 sigma gap. **But the two were never the same
+quantity.** The van't Hoff slope is the TOTAL binding enthalpy including solvent reorganisation, while
+my direct measure records only the tagged lipid's pair energy with everything else and **omits the
+change in water-water energy on binding -- which is precisely the hydrophobic contribution.** The
+disagreement therefore tests nothing about the model and everything about my instrument.
+
+**Neither branch 2 nor branch 3 fires as written.** Branch 2's condition (>2 sigma disagreement) is met
+but its stated interpretation -- "the van't Hoff assumption of temperature-independent dE and dS fails"
+-- is **contradicted by the linearity**, chi2/dof = 0.86. Branch 3 (visible non-linearity) does not fire
+at all. **My branches assumed the two quantities were comparable; they were not, so the branch structure
+was wrong before the data arrived.** Third instrument-design failure in this sequence, after a vacuous
+test and an underpowered one.
+
+**One genuine observation survives from the direct measure, stated as observation not explanation.** The
+lipid-only `<U>_b - <U>_f` is strongly temperature-dependent, **-6.706 to -3.062 across the range, an
+18.0 sigma change** -- while the total enthalpy from the fit is constant enough to give a linear plot.
+If both are right, the solvent-reorganisation term must carry a compensating temperature dependence.
+**That is a hypothesis I have not tested and am not asserting.**
+
+**LAUNCHED, criterion fixed BEFORE the run: an EXTRAPOLATION test, which the fit makes falsifiable.**
+The fit was built on `kT = 0.8-1.6`. It predicts, outside and below that range:
+
+| kT | predicted ln K | predicted P_bound |
+|---|---|---|
+| 0.7 | 3.494 | 0.9705 |
+| 0.6 | 4.284 | 0.9864 |
+
+**The 2-seed pilot at kT = 0.6 measured `P_bound = 0.9695`, i.e. `ln K = 3.46` against a predicted
+4.28** -- but that pilot ran only 60 000 steps and may not have equilibrated, so it is a reason to test,
+not a result. **Launching 5 seeds each at `kT = 0.6` and `kT = 0.7`, 600 000 steps** (10x the pilot) so
+equilibration is not the limiting factor.
+
+* **Both temperatures land within 2 sigma of the predicted `ln K`** -> the linear van't Hoff form
+  extrapolates below its fitted range, `dE` and `dS` are genuinely constant, and the -6.1 kT binding
+  free energy at production temperature is supported by more than extrapolation.
+* **Either falls outside** -> the linear form does NOT extrapolate, `dCp != 0`, and **the -6.1 kT figure
+  at `kT = 0.45` is an extrapolation beyond its evidence and must be quoted with that caveat.** Given
+  the 18 sigma temperature dependence in the lipid-only energy, **this is the branch I expect.**
+* **Runs fail to equilibrate at kT = 0.6** (arms drifting, or `P_bound` still moving at the end) ->
+  report as underpowered and quote the fit only over its fitted range.
+
+**Emergence in flight:** 4 baseline seeds (8600-8603) at 780-820k, largest 57-117, 0 closures.
+
+**Retracted this tick: the pre-registered van't Hoff cross-check**, as invalid by construction. The fit
+itself and its parameters stand.
