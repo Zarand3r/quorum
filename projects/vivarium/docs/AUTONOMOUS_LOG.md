@@ -14992,3 +14992,57 @@ lipid-observations each.
 **Emergence in flight:** 5 seeds at `ht-0.25`, 580-620k, largest 46-84, 0 closures.
 
 **Retracted this tick: nothing.** The snapshot-protocol-bias branch is closed as consistent.
+
+## Tick — nothing complete; `mix` checked against its definition and DOWNGRADED
+
+**Running, NOT read.** 5 binding runs at `ht-0.25` (print only at completion). 5 emergence seeds at
+840-860k, largest 68-100, 0 closures. **All processes verified at `VIVARIUM_CHI_HT=-0.25`.**
+
+**I CHECKED `mix` AGAINST ITS DEFINITION BEFORE LEANING ON IT FURTHER, and it does not support the
+weight I put on it last tick.** `_mixture.py:691`: `mix = frac / is_tail.mean()`, where `frac` is the
+fraction of a head's neighbours within 1.5 sigma that are tail beads. **It is normalised by the bulk
+tail fraction, so 1.0 is random mixing and below 1 is segregation.**
+
+| system | mix | reading |
+|---|---|---|
+| planted ring, `ht-0.25` | **0.123 +- 0.069** | strongly segregated |
+| planted ring, `ht+0.20` | **0.590 +- 0.132** | partly segregated |
+| emergent, `ht-0.25` (4 seeds) | **0.830 +- 0.004** | near random |
+| emergent, `ht+0.20` (11 seeds) | **0.865 +- 0.002** | near random |
+
+**Emergent: the chemistry difference is +0.036 +- 0.004, i.e. 8.8 sigma but only a 4% effect** -- against
+a **4.8x** gap on planted rings.
+
+**Why I am not drawing the obvious conclusion.** It is tempting to read "emergent mix ~ 0.83 means the
+ribbons are barely segregated." **That does not follow**, because `mix` is computed over **all lipid
+beads in the box**, including free monomers and small clusters, which at 200-800k are numerous. A
+planted ring is a single ordered object filling the metric; an emergent frame is one large ribbon plus
+scattered debris. **The absolute values are not comparable across those geometries**, and I have already
+been burned once this session by quoting `burial` without checking what it measured.
+
+**DOWNGRADE, stated plainly:** last tick I said `mix` "would have caught the ten-tick regression on day
+one." **That holds for the planted-ring comparison (4.8x) and is much weaker for emergent runs (4%).**
+`mix` is a usable **relative** discriminator between chemistries on matched geometry, and is **not** an
+absolute membrane-quality score. The conclusion that the guard should read the chemistry from the
+filename -- which is now implemented and passing -- is unaffected; that guard never depended on `mix`.
+
+**LAUNCHED, criterion fixed BEFORE the run: 5 more EMERGENCE seeds at `ht-0.25`.** The corpus at the
+amphiphile chemistry still rests on **7/40** plus the transformer arm's **2/18**; the recent **0/7** was
+entirely at `ht+0.20` and was correctly excluded. Ten seeds at the correct chemistry are now in flight
+or launched.
+
+* **>= 2 formations across the 10 `ht-0.25` seeds** -> consistent with the 7/40 corpus rate (expected
+  1.75); the rate estimate tightens and the drought is confirmed as a chemistry artifact.
+* **0 formations across 10** -> P = 0.147 at the corpus rate, **still not significant**, and I am
+  recording that in advance so a null is not over-read as a change. It would however make the pooled
+  `ht-0.25` estimate 7/50 = 0.140.
+* **>= 5 formations across 10** -> P = 0.019 at the corpus rate, which would suggest the correct
+  chemistry produces vesicles substantially more often than the historical 7/40 -- and that some of the
+  historical corpus may itself be chemistry-mixed and need auditing the way this session's runs were.
+
+**That last branch matters more than it looks:** the corpus of 7/40 predates this session, and **I have
+not audited its chemistry the way I audited my own runs.** If the new seeds come in high, that audit
+becomes the next priority.
+
+**Retracted this tick: my characterisation of `mix` as a general membrane-quality metric.** The metric
+itself is fine; my use of it was too broad.
