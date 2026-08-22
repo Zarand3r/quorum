@@ -11390,3 +11390,43 @@ nothing does, so neither could reveal one.
 **Load note.** This takes 21 running simulations to 41. The suite timed out once at 44 and I recorded
 that as a timeout rather than a pass; I am not running the suite while this arm is in flight, and if I
 do and it times out it will again be reported as a timeout.
+
+## Tick — the N=70 gap dose-response is complete: capture radius is about 8 sigma
+
+**Ran.** 9.6-sigma arm: N=70 complete, N=120 at 190k, N=200 at 60k, N=300 at 40k. 6-sigma arm: N=70 at
+80k, others at 0-20k. em4 emergence at 820-840k of 1.6M, **0/6**.
+
+**Measured -- closure versus end-gap at FIXED radius (N=70, R ~ 12.5).** The 6-sigma N=70 seeds read
+e6, e7, 0, e2, e4, so **4 of 5 have closed** at 80k. Reading that before 300k is sound for the same
+monotone reason as before: a seed that has closed has closed.
+
+| end-gap | closure | source |
+|---|---|---|
+| 3.3 sigma | 5/5 | positive control, complete |
+| 6.6 sigma | 4/5 | this arm, established at 80k |
+| 9.6 sigma | 1/5 | size test, complete |
+
+A clean dose-response with one variable. Interpolating between 0.8 at 6.6 sigma and 0.2 at 9.6 sigma
+puts the 50% point near **8 sigma**, which is a capture radius for this ribbon.
+
+**Reframing what the size test actually measures, stated before its data arrives.** The standing plan
+says bending paid = pi*kappa/R falls with size, so a bigger arc should tolerate a longer reach before
+closure stops being favourable. The physical observable is therefore not "closure fraction at one gap"
+but **the gap at which closure falls to 50% -- the capture radius -- and whether it GROWS with R.**
+
+The running design gives two gap points per size, which is exactly what is needed to see the curve
+shift: at N=70 the pair is (6.6 -> 4/5, 9.6 -> 1/5). If capture radius grows with R, larger N should sit
+higher at BOTH gaps, and 9.6 sigma is the discriminating one because N=70 is already down to 1/5 there
+and has room to rise. If capture radius is size-independent, every size reproduces roughly 4/5 and 1/5.
+
+This is a sharpening of the pre-registered criterion, not a replacement, and I am recording it before
+the N=120/200/300 points exist. The branches stand as written: rises with N -> bending is the barrier;
+flat or falling -> the continuum argument is retracted; all-or-none -> bisect.
+
+**Risk named in advance.** 6 sigma may saturate: N=70 already gives 4/5 there, so if larger radii close
+more readily every size will read 4-5/5 and that arm will not discriminate. The 9.6-sigma arm carries
+the discriminating power, and if IT saturates too then the capture radius exceeds 9.6 sigma for large
+arcs, which would itself be the size effect and would need a wider gap to quantify.
+
+**No new arm launched.** Load is 41 simulations, both arc arms are mid-flight, and the emergence
+requirement is met by em4. Adding runs now would slow the two arms that constitute the experiment.
