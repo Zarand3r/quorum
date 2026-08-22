@@ -13644,3 +13644,80 @@ requirement is to keep emergence in flight.
 sigma and `chi_TW=-0.50` at 0.86 sigma were measured with a protocol now shown to carry ~2.4x more noise
 per pair than necessary. **They are reclassified from "no effect" to "underpowered, effect not
 excluded"**, which is a weaker claim than I made at the time.
+
+## Tick — the 1M convergence test does not converge; the matched baseline is unreliable by its own gate
+
+**Two arms completed and read at the end. Both returned results I cannot bank.**
+
+### READ 1 -- the 1M detailed-balance test, pre-registered two ticks ago
+
+| arm | P_closed at 1M, 6 seeds |
+|---|---|
+| FORWARD (from closed 80) | **0.552 +- 0.158** |
+| REVERSE (from open 71) | **0.033 +- 0.033** |
+
+**Time course, the pre-registered discriminator:**
+
+| window | FORWARD | REVERSE |
+|---|---|---|
+| 10-200k | 0.742 +- 0.156 | 0.000 +- 0.000 |
+| 200-400k | 0.633 +- 0.194 | 0.025 +- 0.025 |
+| 400-600k | 0.475 +- 0.165 | 0.008 +- 0.008 |
+| 600-800k | **0.392 +- 0.198** | 0.025 +- 0.025 |
+| 800k-1M | 0.500 +- 0.209 | 0.108 +- 0.108 |
+
+**Branch 2 is REFUTED, which is the one genuinely good piece of news.** I pre-registered that "forward
+stays >= 0.8 through 1M" would mean the counted transitions were gate flicker and the rate-based number
+had to go. **Forward did not stay high** -- it fell from 0.895 at 200k to 0.552 at 1M, passing through
+0.392 in the 600-800k window, which is at the lower edge of the predicted 0.40-0.51 equilibrium band.
+The forward arm genuinely relaxes, so the transitions are not pure detector noise.
+
+**But branch 3 fires: not converged.** FORWARD - REVERSE = **+0.519 +- 0.162, 3.21 sigma** at 1M, and
+the paired forward decay is **+0.242 +- 0.190, only 1.27 sigma** despite falling monotonically across
+four consecutive windows. The reverse arm barely moved. **The rate-based closure free energy
+(+0.22 +- 0.44 kT) therefore stands UNVALIDATED** -- neither confirmed nor refuted.
+
+**The asymmetry was predicted in advance and I am not now using it as an excuse.** Two ticks ago I
+recorded: "closure is encounter-limited with a capture radius of ~8 sigma, so I expect the reverse arm
+to close rarely within 200 000 steps even if closed and open are thermodynamically degenerate. **A low
+reverse P_closed is therefore NOT by itself evidence of trapping** -- the discriminating observable is
+whether the forward arm DECAYS." The forward arm decayed. That is the predicted direction, at 1.27
+sigma, which is suggestive and not a result.
+
+### READ 2 -- the protocol-matched lambda baseline
+
+| chemistry | lambda, time-averaged, 6 pairs | SE |
+|---|---|---|
+| chi_TW = 0.00 | +2.80 +- 2.62 eps (1.07 sigma) | **2.62** |
+| chi_TW = -0.20 | +1.40 +- 1.28 eps (1.09 sigma) | 1.28 |
+
+**THE PRE-REGISTERED UNRELIABILITY BRANCH FIRES: SE = 2.62 eps exceeds the 2 eps gate, so I am not
+quoting the comparison.** For the record it would have been -1.41 +- 2.92 (0.48 sigma), but I set that
+gate precisely so I could not report an underpowered null as a negative, and it applies to me here.
+
+**Why the baseline is noisier than the perturbed arm** -- per-seed ring-arc at 0.00 runs
+[-16.28, +16.35, +3.38, -9.84, -12.64, -14.64], a 33 eps spread with a sign flip, against a 15 eps
+spread at -0.20. The floppier baseline membrane samples a much wider range of configurations. **Time
+averaging alone does not fix this; it needs more seeds.**
+
+**LAUNCHED, criterion fixed BEFORE the run: 8 additional paired seeds at `chi_TW=0.00`**, identical
+protocol (100 000 steps, checkpoints every 2 000, time-averaged over steps >= 30 000), pooling to **14
+pairs**. From the observed per-seed spread, 14 pairs give an expected **SE ~ 1.7 eps**, under the gate.
+
+* **Pooled SE <= 2 eps AND lambda(0.00) differs from lambda(-0.20) by > 2 sigma** -> chi_TW does price
+  the edge; this would not revive it as a route, since the 5.0 sigma membrane degradation kills it
+  independently, but it would mean the mechanism in `field.py:98` is real.
+* **Pooled SE <= 2 eps AND within 2 sigma** -> chi_TW genuinely does not price the edge at these
+  magnitudes, now at adequate power, and that null is finally reportable as a negative.
+* **Pooled SE still > 2 eps at 14 pairs** -> the ring-arc energy difference is too noisy to resolve a
+  ~3 eps effect at any affordable seed count, and **the entire lambda-by-energy-difference approach
+  should be abandoned** in favour of the rate route, whatever its own difficulties.
+
+**Emergence in flight:** 3 baseline seeds (8500-8502) at 100-120k, largest 23-33, 0 closures. Early
+aggregation. **Noting explicitly that at 120k the baseline also looks like compact clumps rather than
+ribbons** -- the ribbon morphology I have been contrasting with the chi_TW blobs appears later, and the
+frames I used for that contrast were at 280k and beyond. **This frame does not demonstrate the
+difference and I am not presenting it as if it does.**
+
+**Retracted this tick: nothing.** Two results are recorded as unvalidated / unreliable rather than as
+findings, which is the honest disposition for both.
