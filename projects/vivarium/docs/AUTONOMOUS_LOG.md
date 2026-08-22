@@ -13494,3 +13494,79 @@ with no drive.** I judge that worth it because the planted result arrives within
 emergent runs take hours, so serialising them wastes more than the bet costs.
 
 **Retracted this tick: nothing.** `chi_HT` is recorded as an excluded lever, not a withdrawn claim.
+
+## Tick — chi_TW prices nothing and destroys the bilayer; the bet I flagged has lost
+
+**Completed and read at the end.** The `chi_TW=-0.50` planted arm finished 16/16. **Void branch clean:
+0 of 8 rings came apart, 0 of 8 arcs closed**, so all 8 pairs are usable -- a better survival rate than
+`ht-0.75`, where 2 of 8 rings failed.
+
+**RESPONSE CURVE in the parameter the source names as the edge-pricing term:**
+
+| chi_TW | lambda per end | pairs |
+|---|---|---|
+| 0.00 | **-0.20 +- 1.95 eps** | 15 |
+| -0.50 | **+2.91 +- 3.04 eps** | 8 |
+| difference | **+3.11 +- 3.61, 0.86 sigma** | |
+
+**The pre-registered second branch fires again.** Both levers now behave identically: `chi_HT` gave
++3.24 +- 3.90 (0.83 sigma), `chi_TW` gives +3.11 +- 3.61 (0.86 sigma). **Two different parameters, the
+same +3 eps shift, the same ~0.85 sigma, the same null.** That pattern says the limit is my precision,
+not the physics -- see the methodological fix below.
+
+**BUT THE RENDER SHOWED SOMETHING NO LOGGED METRIC FLAGGED, and it is the more important result.** At
+`chi_TW=-0.50` the emergent aggregates are **thick condensed lumps with heads scattered through the
+interior**, not two-lipid-thick bilayer ribbons with heads coating both faces. Quantified on the largest
+cluster, 4 frozen states per chemistry:
+
+| observable | chi_TW=-0.50 | chi_TW=0.00 | separation |
+|---|---|---|---|
+| deepest tails' distance from water (p95) | **6.91 +- 0.15** | **2.93 +- 0.02** | **26 sigma** |
+| local lipid packing (neighbours < 2.5) | 15.47 +- 0.12 | 13.40 +- 0.05 | 16 sigma |
+| head/tail water-distance ratio | 0.909 +- 0.011 | 0.569 +- 0.004 | 33 sigma |
+
+A bilayer keeps every tail within ~3 sigma of water. At 6.91 sigma this is several lipids thick, and the
+head/tail ratio near 0.91 means the heads barely segregate to the surface at all. **Making tails
+hydrophobic did not build better membranes; it collapsed them into lumps with degraded amphiphilic
+ordering, and bought no line tension in the process.**
+
+**Two dead ends I walked into and am recording as such.** I first tried *global* shape anisotropy to
+test "ribbon versus blob" and got **1.89 +- 0.29 at -0.50 against 1.14 +- 0.05 at baseline** -- backwards
+from the visual reading. The observable was wrong: a wandering ribbon that fills the box is **globally
+round while locally thin**, so gyration anisotropy cannot see thickness. I also quoted `burial` (3.57 vs
+1.48) before checking its definition; `bilayer3d.py` defines burial as a fraction <= 1 while `_mixture`
+prints values above 3, so the two are not the same quantity and **I do not interpret its direction**.
+Local tail depth is the observable that answers the question, and it is unambiguous.
+
+**THE BET I FLAGGED LAST TICK HAS LOST.** I launched 4 emergence seeds at `chi_TW=-0.50` before the
+planted result existed, and stated the risk explicitly. The chemistry does not make bilayers, so those
+runs cannot produce vesicles. **Killing them at 360k rather than spending hours to confirm a foregone
+outcome.** The bet was reasonable given the timing asymmetry and it still lost; both facts stand.
+
+**What I should have done, and now will: measure membrane quality ALONGSIDE lambda, not after it.**
+Optimising an edge cost while silently destroying the membrane is exactly the failure this project's
+render-and-metric rule exists to catch, and only the render caught it.
+
+**METHODOLOGICAL FIX, and the reason the next run is different.** Every lambda here comes from a
+**single snapshot** at 50 000 steps, giving a per-pair spread of ~8 eps. The original lambda protocol in
+this project **time-averaged over steps >= 30 000**. `E/lip` is `energy_solute/n_lip` and is printed at
+**every checkpoint** (`_mixture.py:952`), so time-averaging costs nothing but denser logging.
+
+**LAUNCHED, criteria fixed BEFORE the run: 6 paired seeds ring vs arc0.75 at `chi_TW=-0.20`, 100 000
+steps, checkpoints every 2 000**, lambda time-averaged over steps >= 30 000, plus **4 emergence seeds at
+the same -0.20**. The milder value is chosen to look for a window between "prices nothing" (0.00) and
+"destroys the bilayer" (-0.50).
+
+* **lambda(-0.20) exceeds lambda(0.00) by > 2 sigma AND tail depth p95 stays within 2 sigma of 2.93**
+  -> a usable window exists: the edge is priced without collapsing the membrane, and there is finally a
+  designed route to closure.
+* **lambda shifts but tail depth also rises** -> edge cost and membrane collapse are inseparable in this
+  parameter, and `chi_TW` is dead as a route regardless of what it does to lambda.
+* **neither shifts** -> no window at this magnitude either.
+* **time-averaged standard error is still > 2 eps** -> the precision fix failed and every "null" in this
+  series remains underpowered rather than negative. **I am stating this threshold now** because two
+  levers have already returned +3 eps at 0.85 sigma, and without a precision target I would keep
+  reporting underpowered nulls as results.
+
+**Retracted this tick: nothing.** `chi_TW` at -0.50 is recorded as an excluded lever on two independent
+grounds -- no lambda gain, and membrane collapse.
