@@ -12658,3 +12658,18 @@ asked.
 
 **No new run launched.** Twelve seeds are in flight; the first six complete within a tick or two, at
 which point the arm reads against the criterion fixed three ticks ago. Adding runs now would slow that.
+
+**Addendum, same tick -- the transformer engine reproduces the INTERMITTENCY too.** sd8105's hit
+timeline, in thousands of steps:
+
+    1120 1140 1180 1200 1220 1240 1260 1280 1300 1320 1340 1360 1380 1400 1420  ...gap...  1520
+
+Closed continuously from 1 120 000 to 1 420 000, then **four consecutive zero checkpoints** (1440-1500k,
+80 000 steps), then closure returns at 1 520 000 with a **larger** lumen, 523 cells against the 391-445
+of the first episode. The largest cluster is **80 lipids at every one of those checkpoints**, including
+the gap -- the aggregate never breaks, only the enclosure comes and goes.
+
+That is the same non-absorbing behaviour measured on the integrator engine much earlier in this project,
+where a vesicle was absorbed into its own aggregate and re-emerged rather than dissolving. The
+transformer formulation reproduces it without being tuned to, which is a stronger consistency check than
+the mean-trajectory statistic because it is a qualitative behaviour rather than a fitted number.
