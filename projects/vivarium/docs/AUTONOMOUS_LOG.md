@@ -11255,3 +11255,37 @@ seeds, 300k steps.
   encounter-limited rather than bending-limited, and it must be repeated at a smaller gap.
 
 All three are reachable: each size can independently close 0-5 of its seeds.
+
+## Tick — launching the positive control the arc test needs to be interpretable
+
+**Ran.** Constant-gap arc test at 0-130k of 300k (PLANTED, unread per the standing rule). em4 emergence
+at 420k of 1.6M, **0/6** by gate, largest clusters 39-72.
+
+**Why a positive control is the highest-value thing now.** Last tick's completed N=70 arm at span 0.75
+ended with all five seeds neither closed nor unrolled -- a metastable open arc after 300 000 steps. That
+raises a question that would invalidate the running test: **if nothing happens in 300k, a null at every
+size means nothing.** The third pre-registered branch ("no arc closes at any size -> the test is
+encounter-limited, repeat at smaller gap") would fire, but I would not be able to tell whether the cause
+was the gap, the run length, or the physics.
+
+The gap scan gives a condition where closure is known to happen: **3 sigma between the ends closed 5/5**.
+Running that as a control at N=70 separates the three explanations.
+
+**Launching -- positive control, criterion stated BEFORE the run.** N=70, span 0.9562, verified to plant
+at R_mid 12.00 with an end-gap of **3.3 sigma**, E/lipid -7.36, no percolation, L=60 satisfying L >= 4R.
+5 seeds, 300 000 steps, identical settings to the main arc test.
+
+* **>= 4 of 5 close within 300k** -> 300 000 steps is adequate and the main test's run length is sound,
+  so a null there would be a real statement about bending versus gap.
+* **<= 1 of 5 close** -> either 300k is too short or the gap-scan 5/5 does not reproduce under these
+  settings. Either way the main arc test is mis-scoped and must be re-run longer before it is read, and
+  the established "3 sigma -> 5/5" figure needs re-examination.
+* **2 or 3 of 5** -> marginal; report the count, extend the run length, and read nothing from the main
+  test until it is resolved.
+
+Reachability: all three branches are reachable, since 0-5 of 5 seeds can close independently.
+
+**Note on what this control is really testing.** It doubles as a reproduction check on an *established*
+number. "3 sigma -> 5/5" sits in the Established block of every tick prompt, and it was measured before
+several instrument fixes -- the boundary-straddling enclosure bug among them. If it fails to reproduce,
+that is worth more than the arc test itself.
