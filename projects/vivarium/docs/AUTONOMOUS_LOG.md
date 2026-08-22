@@ -14857,3 +14857,67 @@ slow the arm that answers the open question.**
 
 **Retracted this tick: nothing new. PARTIALLY REVERSED: the chi_HT lever retraction**, which was
 over-broad -- that arm set its chemistry explicitly and its result is valid.
+
+## Tick — the direct kappa route fails too; kappa recorded as NOT MEASURABLE by three routes
+
+**Completed and read at the end.** All 25 kappa arcs reached 100 000 at `ht-0.25`. **The chemistry guard
+test PASSES under bazel** (184.8s), so `assert_chemistry` is now a permanent gate.
+
+**THE NULL BRANCH FIRES, AND MY PRE-REGISTERED POWER CALCULATION WAS WRONG BY ~7x.** I registered that a
+null would "bound kappa below roughly 15 kT". It does not:
+
+| fit | slope | chi2/dof | kappa | 95% bound |
+|---|---|---|---|---|
+| all five fractions | +554.8 +- 771.1 (0.72 sigma) | 3.32 | +35.5 +- 49.3 kT | ~134 kT |
+| excluding f=0.50 | -77.2 +- 810.5 (0.10 sigma) | 1.77 | -4.7 +- 49.2 kT | **~103 kT** |
+
+**A bound of ~103 kT is nearly useless** against the brief's ~150 kT threshold. **My error was in the
+lever arm, not the energy precision**: `1/R^2` spans only 0.0025 to 0.0072, so `sigma_slope ~
+sigma_E / range = 2.5 / 0.0046 ~ 540`, and I never computed that. **Stating a power calculation in
+advance does not help if the calculation itself is wrong**, and this one was optimistic in exactly the
+direction that made the experiment look worth running.
+
+**The noise-free version fails harder, and diagnoses the whole approach.** Step-0 planted energies carry
+no thermal noise at all, yet the fit gives **chi2/dof = 8.40** and **kappa = 1349 kT** -- absurd, 9x the
+threshold. The cause is visible in the raw geometry: **`R_mid` is non-monotonic in arc fraction even at
+step 0** -- 16.52 at f=0.50 against 18.93 at f=0.60, and arc-length-per-lipid 0.777 against ~1.03 for
+the others. **The planted arcs differ in packing and solvation as well as curvature**, so `E` versus
+`1/R^2` is not a pure bending series and never was.
+
+**KAPPA IS RECORDED AS NOT MEASURABLE IN THIS MODEL AT AFFORDABLE COST.** Three independent routes have
+now failed:
+
+1. **Undulation spectrum** -- per-mode kappa scattered 16.7x at 60 lipids, 1712x at 120, flat in q: the
+   estimator measured its own sampling noise.
+2. **Critical size** -- prediction retracted; N=70 closed 1/10 and N=300 closed 1/10, Fisher p = 1.000
+   across a 3.9x span in radius.
+3. **Direct energy versus curvature** -- thermal version gives +-49 kT, useless; noise-free version is
+   confounded because planted arcs are not a pure curvature series.
+
+**I am not attempting a fourth.** The failures share one cause, and it is physical rather than
+technical: **a membrane with `lambda ~ 0` and closure free energy `~ 0` is soft enough that its bending
+term sits below the energy fluctuations of a 70-lipid aggregate.** That is consistent with everything
+else measured here, and "kappa is too small to separate from noise by any method tried" is itself the
+answer to the brief's standing question.
+
+**LAUNCHED, criteria fixed BEFORE the run: re-establish `lambda` at the CORRECT chemistry with the
+better protocol.** The surviving `ht-0.25` value, **-0.20 +- 1.95 eps**, came from single snapshots;
+time-averaging cut the error **2.4x per pair** when I applied it later. And the membrane-quality
+reference `tail depth p95 = 3.08 +- 0.03` was measured at `ht+0.20`, so there is currently **no healthy
+-baseline reference at all**.
+
+**14 paired seeds, ring vs arc0.75, N=70, L=60, `VIVARIUM_CHI_HT=-0.25`, 100 000 steps, checkpoints
+every 2 000, time-averaged over steps >= 30 000**, recording tail depth and head/tail ratio in the same
+runs.
+
+* **SE on lambda <= 2 eps** -> the value stands as the project's line tension at the amphiphile
+  chemistry, replacing the snapshot estimate, and the membrane reference is re-established.
+* **SE > 2 eps** -> the ring/arc energy difference is too noisy at `ht-0.25` as well, and the snapshot
+  value remains the best available.
+* **lambda differs from -0.20 +- 1.95 by > 2 sigma** -> the snapshot protocol was biased, not merely
+  noisy, and every lambda in this project needs re-reading.
+
+**Emergence in flight:** 5 seeds (8800-8804) at `ht-0.25`, 220-280k, largest 30-62, 0 closures.
+
+**Retracted this tick: my pre-registered ~15 kT power claim for the kappa experiment**, wrong by ~7x.
+The kappa null itself stands but bounds only ~103 kT.
