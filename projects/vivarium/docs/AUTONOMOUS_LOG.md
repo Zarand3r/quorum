@@ -14485,3 +14485,84 @@ ticks ago.
 
 **Retracted this tick: `dF_bind = -6.1 kT` as reported last tick**, superseded by -6.5 to -7.6 kT with
 the linear model it came from shown inadequate at chi2/dof = 2.86.
+
+## Tick — branch 1 fires: dCp model validated, linear excluded, and dF_bind is now MEASURED
+
+**Completed and read at the end.** 5 seeds at `kT = 0.45`, 2.4M steps, 36 000 lipid-observations each.
+
+| seed | P_bound | ln K |
+|---|---|---|
+| 1 | 0.99981 | 8.568 |
+| 2 | 0.99978 | 8.422 |
+| 3 | 0.99864 | **6.599** |
+| 4 | 0.99984 | 8.740 |
+| 5 | 0.99987 | 8.948 |
+
+**Mean `ln K = 8.255 +- 0.423`, `P_bound = 0.99959`, free fraction `4.12e-4`.**
+
+**THE FIRST PRE-REGISTERED BRANCH FIRES.**
+
+| model | predicted ln K | verdict |
+|---|---|---|
+| 7-point linear | 6.534 +- 0.30 | **3.32 sigma -> EXCLUDED** |
+| 7-point with `dCp` | 7.604 +- 0.55 | **0.94 sigma -> consistent** |
+
+**The heat-capacity model is validated at production temperature and the linear form is dead.** The two
+models were separated by a factor of 2.9 in predicted free fraction, and the measurement lands on the
+`dCp` side.
+
+**But the more useful outcome is that the extrapolation is no longer needed.** Measuring `ln K` **at**
+`kT = 0.45` gives the binding free energy directly:
+
+**`dF_bind(kT = 0.45) = -8.26 +- 0.42 kT`, MEASURED.**
+
+**This supersedes the whole chain of corrections I have been issuing:** `-6.1 kT` (5-point linear,
+reported two ticks ago), then `-6.5 / -7.6 kT` (7-point linear / `dCp`, last tick), now **-8.26 +- 0.42
+kT measured directly**. **Each correction moved the number further from the first estimate, and the
+first estimate came from the model with the worst fit.** That is the pattern to remember: the
+convenient early number was the least trustworthy one.
+
+**Seed 3 is an outlier** at `ln K = 6.599` against 8.42-8.95 for the other four, and it inflates the
+error bar roughly fourfold. **I am keeping it.** Dropping it would give `-8.67 +- 0.11 kT`, but I have
+no independent reason to call the run bad, and trimming an inconvenient seed after seeing the numbers is
+exactly the move this project's discipline exists to prevent.
+
+**The direct energy continues its trend:** `<U>_b - <U>_f = -9.52 +- 0.32 eps` at `kT = 0.45`, extending
+the series -9.166, -7.900, -6.706, -5.884, -4.312, -3.590, -3.062 across 0.6 to 1.6. **A factor of 3.1
+across the range, which is the heat capacity the fit now confirms.**
+
+### The thermodynamics of this model, settled
+
+| quantity | value | basis |
+|---|---|---|
+| **binding a lipid to an aggregate** | **-8.26 +- 0.42 kT** | measured at production T |
+| **closing a ribbon into a vesicle** | **+0.22 +- 0.44 kT** | rates, forward/reverse arms |
+| line tension `lambda` | +1.23 +- 1.67 eps | 14 paired seeds, time-averaged |
+| `dCp/k` for binding | +2.268 +- 0.741 | 7-temperature fit, 3.06 sigma |
+
+**Aggregation is driven hard; closure is not driven at all.** That is the whole result, and every render
+in this project shows it.
+
+**THE REMAINING WEAK LINK, and the run that addresses it.** `dF_closure = +0.22 +- 0.44 kT` is the only
+headline number NOT measured the way the binding number now is. It came from transition rates on
+forward/reverse arms that **never converged** -- 3.21 sigma apart after 1M steps -- and its error bar
+was widened once already for gate flicker. **The binding measurement only became trustworthy when I
+moved to a temperature where both states are populated.** The same fix should be applied to closure.
+
+**LAUNCHED, criterion fixed BEFORE the run: a calibration scan for the closure equilibrium.** Restart
+from the sd8105 vesicle at `kT = 0.55, 0.65, 0.75, 0.85`, 2 seeds each, 400 000 steps, recording
+`P_closed` and whether the cluster survives at all.
+
+* **A temperature exists where `P_closed` sits between 0.2 and 0.8 AND the cluster stays intact
+  (largest >= 60 lipids throughout)** -> that is the state point for a proper closure measurement, and
+  the next tick runs the full two-ensemble version there.
+* **The vesicle stays closed at every temperature until the aggregate dissolves** -> open and closed are
+  not reversibly connected at any usable temperature, the closure free energy cannot be measured this
+  way, and **`+0.22 +- 0.44 kT` stands as the best available with its non-convergence caveat permanent.**
+* **The cluster fragments below `P_closed = 0.8`** -> same conclusion; report the dissolution
+  temperature so the limit is documented rather than guessed.
+
+**Emergence in flight:** 4 baseline seeds (8600-8603) at 1.36-1.40M, largest 59-128, 0 closures.
+
+**Retracted this tick: `dF_bind = -6.5 to -7.6 kT`**, superseded by the direct measurement of
+**-8.26 +- 0.42 kT**. The 7-point linear model is additionally **excluded at 3.32 sigma**.
