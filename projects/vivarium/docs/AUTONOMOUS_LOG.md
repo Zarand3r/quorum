@@ -14795,3 +14795,65 @@ R = 12-22 sigma.
 result against an artifact -- render against metric, log against npz, counts against files. **None of
 them checks that the RUN CONDITIONS are what I think they are.** The filename carried the truth in every
 one of ten ticks. The fix is mechanical: **assert the chemistry when reading, not just when launching.**
+
+## Tick — chemistry audited from artifacts; guard built; one retraction partially reversed
+
+**Running, NOT read.** 25 kappa arcs at `ht-0.25`, none yet at 100 000. 5 emergence seeds (8800-8804)
+at 60-80k, largest 17-26, 0 closures. **All 30 processes verified at `VIVARIUM_CHI_HT=-0.25` by reading
+`/proc/<pid>/environ`, not by trusting the launch command.**
+
+### AUDIT: which measurements were at which chemistry, established from the ARTIFACTS
+
+The lesson from the regression was "verify from artifacts, not memory," so I applied it to my own
+survival list rather than asserting it again.
+
+| measurement family | artifact tag | chemistry |
+|---|---|---|
+| transformer emergence (2/18) | `..._ht-0.25_ww0.50_enginetransformer` | **-0.25 valid** |
+| 1M closure arms, forward | `mix2d_restart8105_..._kT0.45_..._ht-0.25_ww0.50` | **-0.25 valid** |
+| 1M closure arms, reverse | `mix2d_restart8101_..._kT0.45_..._ht-0.25_ww0.50` | **-0.25 valid** |
+| lambda, 15 paired seeds | `ring_N70_L60_..._ht-0.25_ww0.50` | **-0.25 valid** |
+| chi_HT lever arm | `ring_N70_L60_..._ht-0.75_ww0.50` | **-0.75, explicit** |
+| lambda "baseline", 14 pairs | `ring_N70_L60_..._ww0.50` (no `ht`) | +0.20 degraded |
+| chi_TW scan, cells A/B | `..._tw-0.20_`, `_tw-0.50_`, `_hh-0.50_` (no `ht`) | +0.20 degraded |
+| closure calibration, kT=0.55 | `restart8105_..._kT0.55_..._ww0.50` (no `ht`) | +0.20 degraded |
+
+**ONE RETRACTION IS PARTIALLY REVERSED.** I retracted "the entire chi_TW scan and cells A/B" and, in the
+same breath, the `chi_HT` lever result. **The `chi_HT` lever test is valid**: both arms set the flag
+explicitly (`-0.25` against `-0.75`), so that comparison was chemistry-consistent and its
+**0.83 sigma null stands**. Over-retracting is its own error and I am correcting it rather than leaving
+the safer-sounding version in place.
+
+**A consequence I had not drawn:** the membrane-quality reference **`tail depth p95 = 3.08 +- 0.03`
+(n=39)**, which I used as "healthy bilayer" throughout the `chi_TW` scan, was itself measured at
+`ht+0.20`. **So the chi_TW degradation results were degraded-versus-more-degraded**, and the reference
+for a healthy membrane must be re-established at `ht-0.25` before any of those comparisons mean
+anything.
+
+### THE GUARD, built so this cannot recur
+
+`projects/vivarium/chemistry.py` -- `chemistry_of(name)` parses the `VIVARIUM_*` overrides `_env_tag`
+wrote into a filename, and `assert_chemistry(name)` raises unless they match the amphiphile chemistry.
+**A missing key reads as ABSENT, never defaulted**, because silently substituting +0.20 is exactly what
+hid the bug for ten ticks.
+
+Smoke-tested against the two real filenames: the vesicle run parses to `{ht: -0.25, ww: 0.5}` and
+passes; the file I analysed as "baseline" for ten ticks raises
+`chemistry mismatch ... ht: expected -0.25, file has None`.
+
+`tests/test_chemistry_guard.py` pins six cases, including **the exact filename that fooled me** and a
+wrong-value case (`-0.75`) so the guard catches more than absence. Running under bazel.
+
+**Why this guard and not more process discipline:** every existing check in this project compares a
+result to an independent artifact. **None checked the run conditions.** The information was in the
+filename the entire time; the defect was that no code path read it back. A guard that reads it is a
+mechanical fix; resolving to be more careful is not.
+
+**LAUNCHED: nothing new.** 30 processes are already running at the corrected chemistry and the machine
+is at capacity. **The kappa criteria stand exactly as registered two ticks ago** -- slope of `E` against
+`1/R^2` positive at >2 sigma measures kappa; a null bounds it below ~15 kT and **will not be reported as
+a measurement**; non-linearity means continuum bending fails at R = 12-22 sigma. **Adding runs now would
+slow the arm that answers the open question.**
+
+**Retracted this tick: nothing new. PARTIALLY REVERSED: the chi_HT lever retraction**, which was
+over-broad -- that arm set its chemistry explicitly and its result is valid.
