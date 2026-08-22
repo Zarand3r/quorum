@@ -13570,3 +13570,77 @@ the same -0.20**. The milder value is chosen to look for a window between "price
 
 **Retracted this tick: nothing.** `chi_TW` at -0.50 is recorded as an excluded lever on two independent
 grounds -- no lambda gain, and membrane collapse.
+
+## Tick — the precision fix works; chi_TW is dead as a route on membrane grounds
+
+**Completed and read at the end.** The `chi_TW=-0.20` planted arm finished 12/12 with dense checkpoints,
+36 energy samples per run after the 30 000-step burn-in.
+
+**THE PRECISION FIX WORKED, and it is the reusable result of this tick.**
+
+| protocol | pairs | SE on lambda |
+|---|---|---|
+| single snapshot at 50k | 15 | +-1.95 eps |
+| single snapshot at 50k | 8 | +-3.04 eps |
+| **time-averaged, steps >= 30k** | **6** | **+-1.28 eps** |
+
+**Six time-averaged pairs beat fifteen snapshot pairs by 1.5x**, i.e. roughly 2.4x better per pair. The
+pre-registered precision target (SE < 2 eps) **passes**. This retroactively weakens the whole
+lambda-lever series: the repeated 0.85 sigma "nulls" were measured with a protocol carrying ~8 eps of
+per-pair noise, so they were **partly an artifact of a noisy estimator**, not clean negatives.
+
+**lambda(chi_TW=-0.20) = +1.40 +- 1.28 eps**, 1.09 sigma from zero.
+
+**MEMBRANE QUALITY, matched planted rings, N=70, L=60 -- the check I added after the -0.50 failure:**
+
+| chi_TW | tail depth p95 | head/tail water-distance ratio | rings closed |
+|---|---|---|---|
+| 0.00 | **3.08 +- 0.03** (n=39) | 0.555 +- 0.004 | 39/40 |
+| -0.20 | **3.70 +- 0.12** (n=5) | 0.666 +- 0.011 | 5/6 |
+| -0.50 | **4.05 +- 0.04** (n=8) | 0.700 +- 0.011 | 8/8 |
+
+**Monotonic degradation, and -0.20 is already 5.0 sigma worse than baseline.** The emergent render at
+-0.20 agrees: compact blobs with heads scattered through the interior, not thin ribbons with heads on
+the faces. Same failure as -0.50, milder.
+
+**THE PRE-REGISTERED SECOND BRANCH FIRES: `chi_TW` is dead as a route.** The criterion was "lambda
+shifts but tail depth also rises -> edge cost and membrane collapse are inseparable in this parameter,
+and chi_TW is dead regardless of what it does to lambda." Tail depth rises at **5.0 sigma** while lambda
+moves about **1 sigma**. **The membrane degrades faster than the edge gets priced.** There is no window
+between "prices nothing" at 0.00 and "destroys the bilayer" at -0.50; the degradation begins immediately.
+
+**A comparison I am NOT making, and why.** lambda(-0.20) = +1.40 +- 1.28 is time-averaged; lambda(0.00)
+= -0.20 +- 1.95 is a single snapshot. **Those two protocols are not comparable**, and quoting a
+difference between them would be exactly the kind of mismatched comparison this project has already been
+burned by. The membrane result stands on its own because it IS protocol-matched (all planted rings, same
+N, L, steps). **The lambda comparison waits for a protocol-matched baseline, which is what I am
+launching.**
+
+**Killing the `chi_TW=-0.20` emergence arm** (sd8400-8403, at 140-180k). Its chemistry is 5 sigma
+degraded on the planted rings and visibly blob-forming in its own render, so it cannot produce a bilayer
+vesicle. Killed by individually verified PID.
+
+**LAUNCHED, criteria fixed BEFORE the run:**
+
+**(a) Protocol-matched baseline: 6 paired seeds ring vs arc0.75 at `chi_TW=0.00`, 100 000 steps,
+checkpoints every 2 000, lambda time-averaged over steps >= 30 000** -- identical in every respect to the
+-0.20 arm so the two are finally comparable.
+
+* **lambda(0.00) time-averaged differs from lambda(-0.20) = +1.40 +- 1.28 by > 2 sigma** -> chi_TW does
+  price the edge after all, and the earlier nulls were underpowered rather than negative. This would not
+  revive chi_TW as a route -- the membrane result kills it independently -- but it would mean the
+  mechanism in `field.py:98` is real and the search should continue in some other parameter that prices
+  an edge without thickening the membrane.
+* **within 2 sigma at SE <= 1.3 eps** -> chi_TW genuinely does not price the edge even at the improved
+  precision, and the documented mechanism does not operate at these magnitudes.
+* **SE > 2 eps** -> the dense protocol failed to reproduce its own precision and I report the
+  measurement as unreliable rather than quoting either branch.
+
+**(b) 3 EMERGENCE seeds at baseline `chi_TW=0.00`** to restore a dispersed-start run on the only
+chemistry known to make proper bilayers, since the -0.20 arm is being killed and the standing
+requirement is to keep emergence in flight.
+
+**Retracted this tick: nothing outright, but the lambda-lever nulls are downgraded.** `chi_HT` at 0.83
+sigma and `chi_TW=-0.50` at 0.86 sigma were measured with a protocol now shown to carry ~2.4x more noise
+per pair than necessary. **They are reclassified from "no effect" to "underpowered, effect not
+excluded"**, which is a weaker claim than I made at the time.
