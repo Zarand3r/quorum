@@ -11624,3 +11624,49 @@ whatever the result.
 * **Error bars overlap at n=10** -> underpowered at the compute available; report both and claim no
   trend. Given the 3.2-sigma projection this is the least likely branch, which is precisely why it is
   worth naming before the data exists.
+
+## Tick — kappa measured without a spectrum at last: -13 +- 125 kT, consistent with zero
+
+**Ran.** N=70 ring/arc energy COMPLETE with 10 seeds. N=300 energy at 4-8k of 50k (slow). 9.6-sigma
+N=300 kinetic at 30-80k. em4 at 1.30-1.34M, **0/6**.
+
+**Result, reported as pre-registered and extended separately, exactly as committed last tick.**
+
+| analysis | ring | arc | delta total | sigma |
+|---|---|---|---|---|
+| **pre-registered n=5** | -7.4078 +- 0.0725 | -7.2711 +- 0.0590 | **-9.6 +- 6.5 eps** | 1.5 |
+| **EXTENDED n=10** | -7.3415 +- 0.0588 | -7.2498 +- 0.0371 | **-6.4 +- 4.9 eps** | 1.3 |
+
+The estimate has now gone -31.7 (n=1), -9.6 (n=5), -6.4 (n=10): **monotonically shrinking as seeds are
+added**, which is the signature of a noise-driven initial value rather than a real effect being
+resolved. Neither analysis is significant. As committed, the target stays at 10 and I am not extending
+again.
+
+**The result exposed a stale number in the standing Established block.** If lambda were +18.31 eps as
+the tick prompt states, closing a ribbon would gain 2*lambda = 36.6 eps before bending is paid, and we
+measure only 6.4 +- 4.9. Checking RESULTS.md: **lambda = +2.8 +- 2.8 eps**, my own re-measurement that
+traced the larger figure to `chi[TAIL,WATER] = 0.00` and superseded it. The prompt's Established block
+has been repeating a value this project retracted.
+
+**With the correct lambda, kappa follows -- which is what the standing plan set out to obtain.**
+From E_ring - E_arc = 0.4375*pi*kappa/R - 2*lambda at R = 10.4:
+
+> **kappa = -6.1 +- 56.3 eps = -13 +- 125 kT**, consistent with zero.
+
+For contrast, using the prompt's stale lambda gives kappa = 508 +- 252 kT, which would put closure far
+outside the favourable regime and contradict the fact that vesicles demonstrably form here. The
+corrected value does not.
+
+**What this does and does not establish.** The standing plan's stated goal was "kappa without a
+spectrum", and this is that measurement: no undulation spectrum, no per-mode fitting, just an energy
+difference between two planted configurations at known radius. Its central value is consistent with
+zero bending stiffness, which would make closure thermodynamically free. But the 150 kT threshold sits
+only **1.3 sigma** from the centre, so the data is *consistent with* closure being favoured and does not
+establish it tightly. One radius alone also cannot separate kappa from lambda without assuming lambda;
+the N=300 point is what breaks that degeneracy, and it is still running.
+
+**No falsification criterion for a new run, because none was launched.** The N=300 energy arm is the
+bottleneck at 4-8k of 50 000 and its criterion is already fixed: delta more negative by >= 14 eps with
+non-overlapping bars supports the continuum form; less negative with bars excluding zero slope retracts
+it; overlapping bars means underpowered. Load is 38 and adding runs would slow the very point the fit
+needs.
