@@ -14406,3 +14406,82 @@ equilibration is not the limiting factor.
 
 **Retracted this tick: the pre-registered van't Hoff cross-check**, as invalid by construction. The fit
 itself and its parameters stand.
+
+## Tick — the extrapolation fails as predicted; dCp != 0 at 3.06 sigma, and last tick's number is corrected
+
+**Completed and read at the end.** 5 seeds each at `kT = 0.6` and `0.7`, 600 000 steps (10x the pilot).
+
+**THE EXTRAPOLATION TEST FAILS, which is the branch I registered in advance as the one I expected.**
+
+| kT | ln K measured | ln K predicted from the 0.8-1.6 fit | sigma |
+|---|---|---|---|
+| 0.6 | 4.710 +- 0.296 | 4.284 +- 0.262 | 1.08 |
+| 0.7 | **4.086 +- 0.148** | 3.494 +- 0.232 | **2.15** |
+
+**Both lie ABOVE prediction with the same sign** (+0.426 and +0.592), and `kT = 0.7` is outside the
+2 sigma gate. The consistent sign matters more than either individual significance.
+
+**The pilot was indeed unequilibrated, as I flagged when I used it.** Two seeds at 60 000 steps gave
+`P_bound = 0.9695` at `kT = 0.6`; five seeds at 600 000 steps give **0.9897**. The pilot was a reason to
+test, not a result, and treating it that way was correct.
+
+**REFITTING ALL SEVEN TEMPERATURES SETTLES IT.**
+
+| model | parameters | chi2/dof |
+|---|---|---|
+| linear, `dCp = 0` | `dE = -3.591 +- 0.114`, `dS/k = -1.446 +- 0.095` | **2.86** |
+| with heat capacity | `A = 6.016 +- 0.800`, `B = -3.954 +- 0.824`, **`dCp/k = +2.268 +- 0.741`** | **1.22** |
+
+**`dCp/k` differs from zero by 3.06 sigma, and chi2 drops 14.28 -> 4.90 for one extra parameter.** The
+linear residuals are structured (+0.171, +0.402 at the two lowest temperatures); the heat-capacity
+residuals are not. **The linear van't Hoff form is inadequate for this system.**
+
+**This corroborates the observation I recorded last tick but refused to explain**: the directly measured
+lipid-only `<U>_b - <U>_f` runs **-9.166, -7.900, -6.706, -5.884, -4.312, -3.590, -3.062** eps across
+`kT = 0.6` to `1.6` -- a factor of 3. A binding energy that varies that strongly with temperature IS a
+heat capacity, and the fit now shows one at 3 sigma. **Two independent signals, from populations and
+from energies, agree.**
+
+**CORRECTION TO LAST TICK'S HEADLINE NUMBER.** I reported `dF_bind = -6.1 kT` at production temperature
+from the five-point linear fit. That model is now shown inadequate.
+
+| model | extrapolated `dF_bind(kT=0.45)` |
+|---|---|
+| 5-point linear (reported last tick) | -6.1 kT |
+| 7-point linear | **-6.53 kT** |
+| 7-point with `dCp` | **-7.60 kT** |
+
+**The honest figure is -6.5 to -7.6 kT, with the heat-capacity value preferred**, and **all of them
+remain extrapolations below the measured range of 0.6-1.6.**
+
+**What is untouched is the comparison the project turns on:** binding a lipid is worth **-6.5 to -7.6
+kT**; closing a ribbon is worth **+0.22 +- 0.44 kT**. The ~30x asymmetry stands and is if anything
+strengthened. **Aggregation is strongly driven, closure is not driven at all.**
+
+**LAUNCHED, criterion fixed BEFORE the run: measure `P_bound` AT the production temperature `kT = 0.45`
+and let the two models compete on a prediction they disagree about.**
+
+| model | predicted `P_bound(0.45)` | predicted free fraction |
+|---|---|---|
+| 7-point linear | 0.99855 | 1.45e-3 |
+| 7-point with `dCp` | **0.99950** | **5.0e-4** |
+
+The free fraction differs by **2.9x**, which is resolvable. **5 seeds, 2.4M steps, sampled every 200**
+-- about 192 000 lipid-observations per condition, so the expected free counts are ~280 against ~96 and
+Poisson noise cannot confuse them. Runs start from the aggregated state, which is the equilibrium at
+this temperature, so equilibration is not the limiting factor as it was in the kT = 0.45 attempts three
+ticks ago.
+
+* **`P_bound` within 2 sigma of 0.99950 and excluding 0.99855** -> the heat-capacity model is validated
+  at production temperature, and `dF_bind = -7.6 kT` is a measurement rather than an extrapolation.
+* **Within 2 sigma of 0.99855 and excluding 0.99950** -> the linear form wins at production temperature
+  despite fitting worse over 0.6-1.6, which would mean the curvature is confined to the high-temperature
+  end and neither extrapolation is trustworthy.
+* **Consistent with both, or with neither** -> the extrapolation cannot be resolved at this temperature;
+  I report `dF_bind` only over the measured range 0.6-1.6 and stop quoting a production-temperature
+  value.
+
+**Emergence in flight:** 4 baseline seeds (8600-8603) at 960k-1.0M, largest 59-117, 0 closures.
+
+**Retracted this tick: `dF_bind = -6.1 kT` as reported last tick**, superseded by -6.5 to -7.6 kT with
+the linear model it came from shown inadequate at chi2/dof = 2.86.
