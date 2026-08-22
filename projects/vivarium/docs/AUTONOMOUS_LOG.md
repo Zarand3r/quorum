@@ -11942,3 +11942,55 @@ evidence that the cheap route does not exist. Naming what it would take rather t
 
 **No falsification criterion, because no run was launched.** Load is 36 across three arms, all with
 criteria already fixed: the N=300 energy fit, the N=300 kinetic comparison, and the em5 truncation test.
+
+## Tick — pre-registered the kappa fit, and found in advance that it will be WORSE than what I have
+
+**Ran.** N=300 energy at 42-46k of 50k -- completes next tick, still not previewed. N=300 kinetic at
+60-110k of 300k, sd2 at 4 enclosure checkpoints. em5 at 260k of 2.4M, **0/6**. Nothing complete.
+
+**Built the two-point fit machinery and validated it on synthetic data with known answers.** Solving
+dE(R) = 0.4375*pi*kappa/R - 2*lambda at two radii recovers both constants exactly:
+
+| true kappa | true lambda | recovered |
+|---|---|---|
+| 100.0 | 2.80 | 100.000, 2.800 |
+| 0.0 | 2.80 | 0.000, 2.800 |
+| 250.0 | 10.00 | 250.000, 10.000 |
+
+Machine precision, no noise. The algebra is right.
+
+**The sensitivity analysis is the finding, and it is unwelcome.** With R1 = 11.65 and R2 = 49.93,
+1/R1 - 1/R2 = 0.0658, and kappa's error is sqrt(s1^2 + s2^2) divided by 0.4375*pi*0.0658. So:
+
+| error per energy point | kappa uncertainty |
+|---|---|
+| **+-4.9 eps (what N=70 actually gave)** | **+-170 kT** |
+| +-3.0 eps | +-104 kT |
+| +-2.0 eps | +-69 kT |
+
+**The two-point fit will be less precise than the single-point result I already have** (-13 +- 125 kT,
+which uses the independently measured lambda as a constraint). I am recording this BEFORE the N=300 data
+lands, specifically so that next tick I cannot present the two-point number as an advance when it is
+not. Its virtue is independence from lambda, not precision.
+
+**A harder limit follows.** Reaching +-69 kT needs +-2.0 eps per point, and error falls as 1/sqrt(n), so
+that is (4.9/2.0)^2 = 6x the seeds -- about 60 per condition, 240 runs. Not affordable here. So this
+measurement's precision is effectively capped near **+-125 kT**, and the 150 kT closure threshold will
+stay roughly one sigma from the centre whatever I do at this compute budget.
+
+**Consequence, stated plainly: the standing plan's goal is achievable but not decisive.** "kappa without
+a spectrum" is delivered -- the number exists, from planted energies rather than an undulation fit. But
+it cannot answer the question the Established block poses, whether kappa is below ~150 kT, because the
+error bar is comparable to the threshold. That is a limit of the method at this budget, not a failure of
+execution, and it should be stated in RESULTS.md rather than discovered by a reader.
+
+**Falsification for next tick's read, fixed now.** When N=300 completes I will report **three** numbers:
+the single-point kappa using lambda (already -13 +- 125 kT), the two-point fit independent of lambda,
+and the two-point lambda itself as a check against the +2.8 +- 2.8 in RESULTS.md.
+
+* **Two-point lambda agrees with +2.8 +- 2.8 within errors** -> the geometry and the energy measurement
+  are mutually consistent and the kappa value is reinforced.
+* **Two-point lambda disagrees at > 2 sigma** -> something in the ring/arc comparison is wrong, and the
+  kappa number derived from it is withdrawn rather than defended.
+* **Two-point kappa error exceeds +-200 kT** -> the fit is uninformative and only the single-point value
+  is reported.
