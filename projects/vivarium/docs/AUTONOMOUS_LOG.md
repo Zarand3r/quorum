@@ -15046,3 +15046,76 @@ becomes the next priority.
 
 **Retracted this tick: my characterisation of `mix` as a general membrane-quality metric.** The metric
 itself is fine; my use of it was too broad.
+
+## Tick — binding is chemistry-dependent (4.57 sigma); the historical corpus audits CLEAN
+
+**Completed and read at the end.** 5 binding runs at `ht-0.25`, `kT = 0.45`, 2.4M steps, 36 000
+lipid-observations each. **All 10 mixture processes verified at `VIVARIUM_CHI_HT=-0.25`.**
+
+**THE SECOND PRE-REGISTERED BRANCH FIRES: the binding free energy does NOT transfer between
+chemistries.**
+
+| chemistry | per-seed ln K | ln K | dF_bind |
+|---|---|---|---|
+| `ht-0.25` correct | 5.137, 4.602, 6.507, 5.844, 6.393 | **5.697 +- 0.366** | **-5.70 +- 0.37 kT** |
+| `ht+0.20` degraded | -- | 8.255 +- 0.423 | -8.26 +- 0.42 kT |
+| difference | | **-2.558 +- 0.559** | **4.57 sigma** |
+
+**`dF_bind = -8.26 kT` is restated as `-5.70 +- 0.37 kT`.** Binding is **weaker** at the correct
+chemistry, which is the sensible direction: when heads and tails attract equally, everything sticks to
+everything.
+
+**The asymmetry that defines this project, now entirely at the correct chemistry:**
+
+| quantity | value |
+|---|---|
+| binding a lipid to an aggregate | **-5.70 +- 0.37 kT** |
+| closing a ribbon into a vesicle | **+0.22 +- 0.44 kT** |
+| ratio | **26x** (was ~38x with the degraded binding value) |
+
+**Aggregation is strongly driven; closure is not driven at all.** The conclusion is unchanged by the
+correction, but every number in it now comes from the amphiphile chemistry.
+
+### CORPUS AUDIT -- the historical 7/40 is chemistry-CONSISTENT
+
+Last tick I flagged that I had never audited the pre-session corpus the way I audited my own runs, and
+that a high formation count would make that audit urgent. **I did it anyway rather than waiting for a
+result to force it.**
+
+| tag | states |
+|---|---|
+| `..._checkpoint_every20000_ht-0.25_ww0.50` | 50 |
+| `..._ht-0.25_ww0.50` | 45 |
+| `..._ht-0.25_ww0.50_enginetransformer` | 18 |
+| **`..._ww0.50` (no `ht`)** | **12** |
+| `..._tw-0.50_ww0.50` / `..._tw-0.20_ww0.50` | 4 / 4 |
+
+**95 corpus states carry `ht-0.25`. The only chemistry-mixed runs in the entire project are the twelve
+I produced during the regression.** The project's most-cited emergent number rests on consistent
+chemistry, and the `0/7` drought was correctly excluded from it.
+
+**One thing the audit surfaced that I had not noticed:** five seeds (sd300-304) carry `bend0.10` and
+five carry `bend0.15` -- a `VIVARIUM_BEND` scan. **These are a separate deliberate arm, not corpus
+members**, and they do not contaminate the rate. Recording it because I found it by looking, and a
+future reader scanning tags will hit it too.
+
+**LAUNCHED, criteria fixed BEFORE the run: redo the closure calibration at `ht-0.25`.** The earlier
+calibration restarted the sd8105 vesicle -- **built at `ht-0.25`** -- into `ht+0.20`, so the structure
+was evolving in a field it never formed in. That mismatch alone could explain `P_closed` of 0.02-0.34
+and the dissolution above `kT = 0.65`. **2 seeds at each of `kT = 0.55, 0.65, 0.75, 0.85`, 400 000
+steps**, this time matching the vesicle's own chemistry.
+
+* **A temperature exists with `P_closed` between 0.2 and 0.8 and the cluster >= 60 lipids throughout**
+  -> that is the state point for a proper closure measurement, and the full two-ensemble run follows.
+* **The vesicle dissolves above some temperature as before** -> report the dissolution threshold at the
+  correct chemistry and compare it to the `ht+0.20` threshold of 0.65; a higher threshold would confirm
+  the mismatch was the cause.
+* **`P_closed` stays below 0.2 at every surviving temperature** -> open and closed are not reversibly
+  connected even at matched chemistry, and **`+0.22 +- 0.44 kT` keeps its non-convergence caveat
+  permanently.** I stop pursuing it at that point, as committed two ticks ago.
+
+**Emergence in flight:** 10 seeds at `ht-0.25` -- 8800-8804 at 1.00-1.02M (largest 69-160) and
+8900-8904 at 120k (largest 29-53). **0 closures, 0 hits.**
+
+**Retracted this tick: `dF_bind = -8.26 +- 0.42 kT`**, which was measured at `ht+0.20`. Superseded by
+**-5.70 +- 0.37 kT** at the correct chemistry.
