@@ -11862,3 +11862,39 @@ arc because the centroid is offset from the ring centre. The earlier series unde
 **No falsification criterion, because no run was launched.** Load is 36 across three arms: the N=300
 energy fit (the kappa bottleneck), the N=300 kinetic comparison, and the em5 truncation test whose
 criterion was fixed last tick and is unchanged.
+
+## Tick — no test debt after all; corrected a stale rate in the deliverable
+
+**Ran.** N=300 energy at 34-38k of 50k. N=300 kinetic at 60-110k of 300k, sd2 now at 3 enclosure
+checkpoints. em5 truncation arm at 140k of 2.4M, largest clusters 24-58, **0/6**.
+
+**Deliberately did not preview the N=300 energy.** There are now 3-5 samples past the 30 000-step
+averaging threshold, so a number could be computed. But the pre-registered analysis is over a completed
+50 000-step run, and looking now would make the final read non-blind. Waiting.
+
+**Checked for test debt and found none, which was not what I expected.** I had added `_mol_centroids`,
+`_fill_lumen_grid`, `lumen_water_density`, hit-state preservation and an unwrap inside `_interior_mask`
+since I last thought about the suite. Bazel returns **(cached) PASSED in 182.4s, "Executed 0 out of 1
+test"** -- its input hashing confirms no code input has changed since the suite last actually ran. All
+those changes landed in the same commit as the last test change (69ece26c), so they were covered.
+Reporting this as **cached, not as a fresh pass**, because those are different claims.
+
+**Corrected a stale figure in RESULTS.md.** The document carried "10 of 62 dispersed runs produced a
+vesicle, 16.1%, CI 9.0-27.2%". The corpus reached **12 of 70 = 17.1%, CI 10.1-27.6%** when the fin2 arm
+completed, and the deliverable was never updated. Fixed.
+
+**Added the length-matched figure beside it rather than replacing one with the other.**
+
+| basis | rate | Wilson 95% |
+|---|---|---|
+| all dispersed runs, mixed lengths | 12/70 = **17.1%** | 10.1-27.6% |
+| runs that all reached exactly 1.6M | 6/28 = **21.4%** | 10.2-39.5% |
+
+They overlap heavily and neither is the more correct number: the pooled figure has the tighter
+interval, the length-matched one is free of the truncation question. Both are flagged in the document
+as lower bounds while that question is open, since one vesicle first appeared at 1 500 000 steps --
+later than any other here, and later than several arms ever ran.
+
+**No falsification criterion, because no run was launched.** Load is 36-40 across the three arms. The
+em5 truncation criterion was fixed two ticks ago and is unchanged; the N=300 energy and kinetic criteria
+are likewise fixed.
