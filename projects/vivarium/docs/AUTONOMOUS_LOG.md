@@ -12350,3 +12350,40 @@ drop is a fact about timing, and this tick only rules out one candidate cause fo
 
 **No falsification criterion, because no run was launched.** Load is 22 across three arms with fixed
 criteria. The N=300 arc arm completes within a tick or two and is the next thing that will actually read.
+
+## Tick — the truncation test is underpowered by 6.3x and cannot settle its own question
+
+**Ran.** N=300 arc arm: sd1 and sd4 COMPLETE at 300k with 0 hits, sd2 at 260k holding 11, rest at
+210-290k. em5: three seeds COMPLETE at 2.4M. em6 at 1.42-2.12M. Truncation-window at-risk exposure now
+**4.92 seed-M** of an eventual 8.8, still **0** formations.
+
+**Computed the power of the truncation test before its result arrives, and it is not adequate.** At the
+late-time hazard of 0.0543 per seed-M measured two ticks ago:
+
+| quantity | value |
+|---|---|
+| exposure needed to reject "formation continues" on a ZERO result (P(0) < 0.05) | **55 seed-M**, i.e. 69 seeds |
+| exposure available (11 at-risk seeds x 0.8M) | **8.8 seed-M** |
+| shortfall | **6.3x** |
+
+With lambda = 0.48, **P(observing zero) = 0.620**. A zero result is the modal outcome and rules out
+nothing. The test only becomes capable if the true late hazard is much larger than estimated: at 5x the
+estimate P(>= 2) = 0.689, at 10x it is 0.951.
+
+**Consequence, stated before the read: this experiment cannot settle whether 1.6M truncates.** What it
+can do is rule out a LARGE truncation effect -- a hazard several times the late-time estimate would show
+up. A modest one, which is exactly the size the data suggests, is invisible at this exposure.
+
+I am recording this now so that the most likely outcome, zero new formations, is not reported next tick
+as evidence that 1.6M is adequate. It would be no such thing. The pre-registered branches stand, but
+their interpretation is narrowed: **0 means "no large effect", not "no effect"**.
+
+**Why I am not fixing it with more seeds.** Closing a 6.3x shortfall needs about 58 additional 2.4M
+runs. At the throughput this machine sustains that is not affordable, and it would displace the arms
+already in flight. The honest resolution is to leave the run-length caveat standing as a stated
+limitation in RESULTS.md rather than pretending an underpowered test resolved it.
+
+**Nothing retracted.** The hazard numbers from two ticks ago are unchanged; this tick only measures what
+can be concluded from them.
+
+**No falsification criterion, because no run was launched.** Load is 17 and falling as em5 finishes.
