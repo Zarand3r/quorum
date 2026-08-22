@@ -14104,3 +14104,89 @@ measured in the same trajectories.
 
 **Retracted this tick: nothing.** Last tick's underpowered dilute point is now **superseded** by a
 properly powered measurement rather than retracted -- it was labelled non-evidence when reported.
+
+## Tick — two of my own instruments failed; the physics results are untouched
+
+**Completed and read at the end.** The monomer-exchange arm finished (6 seeds) and the bazel run of the
+expanded test file finished. **Both failed, in different ways, and neither failure is in the model.**
+
+### FAILURE 1 -- the g(r) test I committed last tick is not a gate
+
+`//projects/vivarium:test_suite` **FAILED**: `g(r) does not track exp(-beta u): mean rel err 1.2696`
+against my own 0.15 bound, where the standalone runs gave ~0.04.
+
+**Cause: environment dependence.** `Field` reads `VIVARIUM_CHI_WW` from the environment and **defaults
+it to 1.00**, while every production run and every script in the scan exported **0.50**. At 1.00 the
+water self-attracts strongly and **condenses into a droplet**, so the local density is high and the
+dilute identity `g -> exp(-beta u)` does not apply at all. **The test passed standalone only because the
+shell that ran it happened to set the variable.**
+
+**Fixed** by building the chi table explicitly and passing it via `Field(..., chi=chi)`, with the reason
+recorded in the docstring. Re-running under bazel.
+
+**Scope, checked rather than assumed: the validation RESULT is unaffected.** The density scan
+(0.0780 / 0.0427 / 0.0219 at rho = 0.0417 / 0.0208 / 0.0100) ran with `chi_WW = 0.50` throughout, which
+is the production value, and the theory curve was computed from the same chi the dynamics used. **What
+was broken was the committed gate, not the measurement.** That distinction matters and I am not
+blurring it.
+
+**A genuine model fact falls out of the failure:** at the DEFAULT `chi_WW = 1.00` this water is a
+condensed phase, not a gas. Production has always used 0.50. Worth knowing before anyone runs at
+defaults.
+
+### FAILURE 2 -- the monomer-exchange test is vacuous by construction
+
+| seed | P_bound | K_pop | K_rate | b2f | f2b |
+|---|---|---|---|---|---|
+| 1 | 0.99985 | 6856.14 | **6856.14** | 12 | 12 |
+| 2 | 0.99982 | 5646.06 | **5646.06** | 10 | 10 |
+| 3 | 0.99227 | 128.38 | 171.17 | 3 | 4 |
+| 4 | 0.99797 | 491.31 | 467.91 | 21 | 20 |
+| 5 | 0.99986 | 7383.62 | **7383.62** | 10 | 10 |
+| 6 | 0.99917 | 1199.00 | **1199.00** | 18 | 18 |
+
+**Agreement to the digit on four of six seeds is not confirmation, it is algebra.** Over a single
+stationary trajectory the up- and down-transition counts can differ by at most one, so
+`K_rate = (f2b/n_free)/(b2f/n_bound)` collapses to `n_bound/n_free = K_pop` **identically** whenever
+`b2f = f2b`. **A test that cannot fail tests nothing.** It was independently underpowered as well:
+`P_bound = 0.999` with only **3-21 transitions per seed**, against the 30-per-seed floor I registered.
+
+**The lesson is worth more than the test.** The rates-versus-populations check has content **only when
+the two are estimated from DIFFERENT ensembles.** The vesicle forward/reverse arms did exactly that --
+one prepared closed, one prepared open -- which is why their **3.21 sigma** disagreement was meaningful
+and this one is not. **My design replaced a hard test with a tautology and I did not notice until the
+numbers came back suspiciously exact.**
+
+**Consequence: the thermodynamic-consistency gap is NOT closed, and I am not claiming it is.** The six
+statistical-mechanics checks stand -- forces are exact gradients, energy drift scales as `dt^1.85`,
+kinetic equipartition 1.0002 +- 0.0015, velocities Gaussian, configurational equipartition
+1.0037 +- 0.0054, and `g(r) -> exp(-beta u)` as `rho^0.89`. **Consistency between rate-derived and
+population-derived free energies remains untested.**
+
+**Emergence: the baseline arm is FINAL at 0/3** -- sd8501 complete at 1.6M, sd8500 and sd8502 at 1.58M+,
+largest clusters 67-85, **0 closures, 0 hits**. The pooled baseline corpus is unchanged at 7/40 = 0.175.
+
+**LAUNCHED, criteria fixed BEFORE the run.** Two things, since the emergence arm has ended and the
+consistency gap needs a design that can actually fail:
+
+**(a) 4 fresh EMERGENCE seeds at baseline chemistry**, 1.6M steps, to keep a dispersed-start run in
+flight as required.
+
+**(b) The consistency test rebuilt so it CAN fail: two ensembles, not one.** Same monomer-exchange
+system, but 6 seeds started **fully dispersed** and 6 started **fully aggregated**, each run 300 000
+steps. `K_pop` is taken from the dispersed arm and `K_rate` from the aggregated arm and vice versa, so
+the algebraic identity that killed version 1 cannot arise -- the counts come from different
+trajectories.
+
+* **`K_rate/K_pop = 1.00` within 2 sigma across the cross-ensemble comparison** -> detailed balance
+  holds and thermodynamic consistency is established.
+* **Differs by more than 2 sigma** -> the dynamics violates detailed balance despite sampling
+  `exp(-beta u)` correctly, which would point at the thermostat splitting and **invalidate every
+  rate-derived number here**, including the closure free energy of +0.22 +- 0.44 kT.
+* **Either arm shows fewer than 30 transitions, or the two arms have not converged to a common
+  `P_bound` within 2 sigma by the end** -> underpowered or unequilibrated; report as such and quote no
+  ratio. **This branch is likely** -- version 1 gave `P_bound = 0.999`, so the box may need a smaller
+  aggregate or a weaker tail-tail chi to put the equilibrium somewhere both states are populated.
+
+**Retracted this tick: the monomer-exchange consistency test in its version-1 form**, as vacuous. **The
+committed g(r) gate is corrected, not retracted** -- the measurement it was meant to protect stands.

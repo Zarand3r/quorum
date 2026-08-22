@@ -113,12 +113,20 @@ def test_low_density_gr_matches_the_boltzmann_factor():
     """
     import numpy as np
 
-    from field import Field, WATER, _core, _well
+    from field import Field, WATER, _core, _well, default_chi
     from transformer import VivariumTransformer
+
+    # chi MUST be passed explicitly. Field reads VIVARIUM_CHI_WW from the environment and defaults it
+    # to 1.00, at which water self-attracts strongly and CONDENSES -- the box is then a dense droplet,
+    # the dilute limit does not apply, and g(r) misses exp(-beta u) by 1.27 rather than 0.04. This
+    # test passed standalone only because the shell that ran it happened to export 0.50, the value
+    # every production run uses. An environment-dependent test is not a gate.
+    chi = default_chi()
+    chi[WATER, WATER] = 0.50
 
     kT, dt, L, N = 0.45, 4e-3, 60.0, 75
     rng = np.random.default_rng(7)
-    f = Field(np.full(N, WATER), np.zeros((0, 2), int), L)
+    f = Field(np.full(N, WATER), np.zeros((0, 2), int), L, chi=chi)
     tf = VivariumTransformer(f)
     X = rng.uniform(0, L, size=(N, 2))
     v = rng.normal(size=X.shape) * np.sqrt(kT)
@@ -142,7 +150,7 @@ def test_low_density_gr_matches_the_boltzmann_factor():
     s = cent / f.sigma
     uc, _ = _core(s, f.core_height)
     uw, _ = _well(s, f.rc)
-    u = np.where(cent < f.rc * f.sigma, f.eps * (uc + uw * f.chi[WATER, WATER]), 0.0)
+    u = np.where(cent < f.rc * f.sigma, f.eps * (uc + uw * chi[WATER, WATER]), 0.0)
     gth = np.exp(-u / kT)
     m = (cent > 1.3) & (cent < 2.4) & (H > 50)
     err = (np.abs(g[m] - gth[m]) / gth[m]).mean()
