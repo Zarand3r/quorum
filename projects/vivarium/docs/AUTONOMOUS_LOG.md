@@ -13168,3 +13168,91 @@ closure free energy on the object the project actually cares about.
 **RETRACTED this tick:** the microscopic-origin question for lambda, as void -- lambda is zero, so there
 is nothing to attribute. **Re-confirmed as withdrawn:** lambda = 18.31 eps and the ~81 kT closure budget,
 which the brief still carries. **Nothing new is claimed about kappa.**
+
+## Tick — a detailed-balance control for the occupancy method, before its number is used
+
+**Running, deliberately NOT read.** The 10 vesicle restarts (sd9200-9209) are at **80-100k of 200k**.
+They start from a closed vesicle, so their current tally -- 92 of 100 checkpoints closed -- is dominated
+by the initial condition, not by the physics. Reading it now would be reading an early checkpoint of a
+planted structure as a trend, which the brief forbids and which this project has already been burned by.
+All 10 loaded correctly (largest 80-81, `nves=1` at step 0). No number is reported from them this tick.
+
+**Emergence: 8200-8205 at 940-960k of 1.6M, largest 72-160, 0 formations.** Seed 8205 reached
+**largest = 160 -- every lipid in the box in ONE cluster -- with `perc=n`, `nenc=0`, `nves=0`** for three
+consecutive checkpoints, then fell back to 126. One long system-spanning ribbon, not a vesicle. **That is
+the clearest confirmation yet of the lambda = 0 result**: with no edge cost there is no drive pulling two
+ends together, so the system grows a wandering ribbon instead of closing. Aggregation and closure are
+separate problems here, and only the first one is happening.
+
+**THE PROBLEM WITH LAST TICK'S CROSS-CHECK, stated against my own result.** I reported that vesicle
+occupancy gives lambda ~ +0.03 eps, agreeing with the static measurement. That inference assumes the
+open and closed states are in **equilibrium**, so that `dF = -kT ln(P_closed/P_open)`. If instead the
+vesicle is kinetically trapped, occupancy measures how long the trap holds and **is not a free energy at
+all** -- and the agreement I reported would be a coincidence between two numbers that both happen to sit
+near zero. **The pre-registered test as launched cannot tell these apart, because every restart starts
+from the closed state.**
+
+**THE CONTROL, which exists on disk and costs one short run.** Detailed balance requires that the same
+equilibrium be reached from either direction. The final state of emergence seed **sd8107 at 1 600 000 is
+an OPEN 84-lipid cluster** (`enc=0`, `nves=0`), nearly the same size as sd8105's **closed 80-lipid**
+vesicle at the same N, L and kT. Restarting from the open side gives the reverse direction.
+
+**LAUNCHED, criterion fixed BEFORE the run: 10 restarts from the sd8107 open state, 200 000 steps,
+fresh thermal seeds, checkpoints every 10 000 -- identical protocol to the forward arm so the two pool.**
+
+* **Forward and reverse P_closed converge to within their error bars** -> the two states are in
+  equilibrium, occupancy IS a free energy, and last tick's lambda ~ 0 cross-check stands.
+* **Forward stays high and reverse stays low, not converging** -> the vesicle is **kinetically trapped**,
+  occupancy is a trapping time and not a free energy, and **I withdraw the occupancy cross-check from
+  last tick.** The static measurement lambda = -0.20 +- 1.95 eps is unaffected -- it never used
+  occupancy -- but it would lose its independent corroboration.
+* **Reverse closes readily while forward stays closed** -> closure is favoured after all and the static
+  measurement is the thing in trouble.
+
+**Also to be applied to the forward arm when it completes, fixed now:** P_closed over the first half
+against the second half. **If the first half is materially higher, the initial condition has not washed
+out and even the forward number is not equilibrium.** This check costs nothing and should have been in
+the original pre-registration.
+
+**A limitation stated in advance, not after:** the two clusters are 80 and 84 lipids and are different
+configurations, so this is a near-reverse rather than an exact one. It can demonstrate non-convergence
+(the trapping verdict) decisively; a convergence verdict would be suggestive rather than conclusive.
+
+**Retracted this tick: nothing.** One prior claim -- the occupancy cross-check -- is now formally **at
+risk**, and the run that can kill it is in flight.
+
+**CORRECTION, same tick: my first reverse control was compromised, and the second attempt was worse.**
+
+**(a) The sd8107 arm is biased toward my own prior conclusion.** I selected sd8107's final state as
+"open" using `n_enclosed` over **all 160 molecules**, which returned 0. But `_mixture.py:942` computes
+the logged `nenc` over the **largest cluster only**, and by that convention -- the project's own -- the
+84-lipid cluster gives **`nenc=1`**. It scores `nves=0`, so it is a non-vesicle by the scoring criterion
+and the arm is not worthless, but it starts closer to closed than a typical open ribbon. **That biases
+the reverse arm toward closing, which is the direction that would CONFIRM last tick's claim.** A control
+that leans toward the result it is meant to test is a weak control, and I am labelling it as the weaker
+of the two rather than quietly reporting it.
+
+**(b) A live checkpoint file cannot be used as a control at all.** `_save_state` is called at **every
+checkpoint** (`:965`), not only at the end, so `docs/states/*_sd8201.npz` is continuously overwritten by
+the running job. I measured that seed at **78 lipids, `nenc=0`** and, one minute later, froze a copy that
+had already become **79 lipids, `nenc=1`**. The file moved between measurement and use. **Any control
+frozen from a running seed is a race, and the number that qualified it does not describe the file that
+actually gets used.** This also refines last tick's account: the killed lambda runs kept only their plant
+because they died before their FIRST checkpoint, not because the final save is special.
+
+**(c) The control actually used.** `sd8101` is from the **completed** 8100-series, so its file is
+stable. Verified after freezing to `docs/controls/open71_from_sd8101.npz`: largest cluster **71 lipids,
+`nenc(largest) = 0`, `nves = 0`** -- genuinely open by both conventions, and size-comparable to sd8105's
+closed 80.
+
+**LAUNCHED: 10 restarts from the frozen open-71 control, 200 000 steps, checkpoints every 10 000,
+identical protocol to the forward arm.** The criteria stated above are unchanged and now apply to this
+arm as the primary reverse direction, with the sd8107 arm retained as a secondary, closure-biased one.
+Two reverse arms bracketing openness is strictly more informative than the one I first launched.
+
+**A prediction I am recording so it cannot be adjusted later:** the open-71 cluster is smaller than the
+80-lipid vesicle, and closure is encounter-limited with a capture radius of ~8 sigma, so I expect the
+reverse arm to close **rarely within 200 000 steps** even if closed and open are thermodynamically
+degenerate. **A low reverse P_closed is therefore NOT by itself evidence of trapping** -- the
+discriminating observable is whether the forward arm DECAYS toward the reverse value, not whether the
+two match at 200 000 steps. I am stating this now because after the fact it would read as an excuse.
