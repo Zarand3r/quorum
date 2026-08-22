@@ -11713,3 +11713,37 @@ the N=300 point will be valid when it finishes.
 **No falsification criterion for a new run, because none was launched.** Load is 36, the N=300 energy
 arm is the bottleneck the kappa fit needs, and adding runs would slow it. The criterion for that arm is
 already fixed and unchanged.
+
+## Tick — nothing decidable; moved the kappa result into the deliverable
+
+**Ran.** N=300 energy at 12-16k of 50k. 9.6-sigma N=300 kinetic at 30-80k of 300k, with sd2 showing its
+first enclosure checkpoint. em4 at 1.42-1.46M of 1.6M, **0/6**. Nothing complete, nothing scored.
+
+**What I did instead.** The spectrum-free kappa measurement -- the standing plan's stated goal -- existed
+only in this log. RESULTS.md is the deliverable and did not mention kappa at all. Added it there, with
+its limits attached rather than as a bare number:
+
+* the derivation and the numerically verified geometry (ring 2*pi*11.65 = 73.2 against arc
+  0.75*2*pi*15.53 = 73.2, so arc length is preserved and the 1.333 radius ratio holds);
+* the 10-seed result, ring -7.3415 +- 0.0588 against arc -7.2498 +- 0.0371, difference **-6.4 +- 4.9
+  eps at 1.3 sigma**;
+* **kappa = -13 +- 125 kT**, consistent with zero;
+* that the 150 kT threshold sits 1.3 sigma from the centre, so this is consistent with favourable
+  closure without establishing it;
+* that one radius cannot separate kappa from lambda, and N=300 is running to break the degeneracy;
+* the two cautions found while verifying -- R_mid is not the ring radius for an arc, and the
+  single-seed version of this measurement read -31.7 eps and fell monotonically to -6.4 as seeds were
+  added;
+* the stale-lambda correction, and what the stale value would have implied (kappa = 508 +- 252 kT,
+  contradicting the emergent vesicles the same document reports).
+
+**No falsification criterion, because no run was launched.** Load is 36 and the N=300 energy arm is the
+bottleneck the kappa fit needs; adding runs would slow it. Its criterion is already fixed and unchanged:
+delta more negative by >= 14 eps with non-overlapping bars supports the continuum form and the slope
+gives kappa; less negative with bars excluding zero slope retracts it; overlapping bars means
+underpowered at the compute available.
+
+**Note on the emergence arm.** em4 is 0/6 with 140 000 steps left, against a length-matched baseline of
+5/22 = 0.227. A clean zero has probability 0.773^6 = 0.21 under that baseline, so it is running low but
+not anomalous. If it finishes 0/6 the pooled baseline becomes **5/28 = 0.179**, and that is the number
+future comparisons should use.
