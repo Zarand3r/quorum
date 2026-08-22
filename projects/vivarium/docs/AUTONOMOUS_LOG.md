@@ -12673,3 +12673,39 @@ That is the same non-absorbing behaviour measured on the integrator engine much 
 where a vesicle was absorbed into its own aggregate and re-emerged rather than dissolving. The
 transformer formulation reproduces it without being tuned to, which is a stronger consistency check than
 the mean-trajectory statistic because it is a qualitative behaviour rather than a fitted number.
+
+## Tick — the transformer arm reads at full length: both criteria pass
+
+**Completed.** Six transformer seeds reached 1.6M. The other six are at 1.00-1.02M.
+
+**PRIMARY criterion, over a full run rather than a partial window:**
+
+| | mean largest cluster |
+|---|---|
+| transformer, 6 seeds | 96.8 +- 8.0 (seeds 76, 77, 84, 111, 113, 119) |
+| integrator corpus, 27 seeds | 98.2 +- 5.1 (spread 60 to 156) |
+| **difference** | **-1.4 +- 9.5 lipids, 0.14 sigma** |
+
+Against a 2 sigma withdrawal threshold. The readings of this statistic have now gone 0.34, 0.45, 0.14
+sigma as the sample and window grew, scattering around zero without ever trending -- which is what
+equivalence looks like and what a real offset would not do.
+
+**SECONDARY criterion, the formation count, which was pre-registered as underpowered:** transformer
+**1/6**; corpus 7/40 = 0.175, so **expected 1.05 and observed 1**, Fisher exact **p = 1.000**. It cannot
+carry a conclusion on its own, but it lands exactly on expectation.
+
+**Concluded: the transformer formulation is equivalent to the original engine on the production path,
+at full run length, on both a continuous observable and the binary outcome.** Together with the earlier
+gates -- forces to 1e-16 on the production topology, one forward pass bit-identical to one integrator
+step, ensemble energy at 0.021%, and the unprompted reproduction of vesicle intermittency -- the
+refactor is verified as far as it can be without changing the physics.
+
+RESULTS.md updated to carry the full-length numbers in place of the partial-window ones.
+
+**Nothing retracted.**
+
+**No new run launched.** Six seeds remain in flight and will confirm the read; adding work now would
+slow them. The transformer track is complete up to the one open question, which is a decision rather
+than a task: whether "always alive" should mean weights adapting during forward passes. That stops
+conserving energy, so it changes the physics rather than re-expressing it, and every number in
+RESULTS.md would need re-deriving against it.

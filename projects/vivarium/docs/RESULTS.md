@@ -168,7 +168,8 @@ simulation step. The non-bonded force already had that shape; the bonds did not,
 | token-channel q.k vs the species table, 30186 real pairs | **0.000e+00** |
 | MLP is live, not decorative | non-zero weights change h AND the forces |
 | ensemble equivalence, 5 paired seeds x 20000 steps | paired energy difference **0.021%**, 1.30 sigma |
-| emergent aggregation, seed-level over 100k-820k | **-2.6 +- 7.6 lipids, 0.34 sigma** |
+| emergent aggregation, seed-level over a full 1.6M run, 6 seeds vs 27 | **-1.4 +- 9.5 lipids, 0.14 sigma** |
+| emergent formation rate, 6 full runs | **1/6 against the corpus 7/40; expected 1.05, observed 1, Fisher p = 1.000** |
 
 Every force is a masked attention head: the non-bonded score is `a(r) + b(r) * (q_i . k_j)`, the bonds
 and the 1-3 stiffener are the same score-times-relative-position shape on a pair mask. Values are
