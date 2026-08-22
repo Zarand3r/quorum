@@ -11823,3 +11823,42 @@ draw from the same distribution as the baseline, so it also adds six runs to the
 the extension shows.
 
 **Load.** 32 running, and em4's six are finishing, so this adds six against six retiring.
+
+## Tick — nothing decidable; moved the capture-radius result into the deliverable
+
+**Ran.** N=300 energy at 26-32k of 50k -- only one sample past the 30k averaging threshold, so reading
+it now would be premature and I did not. N=300 kinetic at 50-100k of 300k. em5 (the 2.4M truncation
+arm) at 40k, largest clusters 16-26. Nothing complete, nothing scored.
+
+**Moved the re-measured capture radius into RESULTS.md.** The encounter section carried only the
+original gap scan and not the re-measurement done on the corrected instrument. Added:
+
+| end-gap | closed | seeds |
+|---|---|---|
+| 3.4 sigma | 5/5 | 5 |
+| 6.7 sigma | 4/5 | 5 |
+| 10.1 sigma | **1/10** | 10 |
+
+with the 50% point near **8 sigma**.
+
+**Found and preserved an inconsistency in the existing table rather than tidying it.** Its header reads
+"at fixed N = 300" while its first row is labelled N = 80. I do not know which is right -- that scan
+predates this stretch of work -- so the discrepancy is now noted in the document instead of being
+silently corrected in one direction.
+
+**Two substantive changes to what that section claimed.**
+
+1. The widest-gap rate is **1/10, not 2/5**. Better powered and lower.
+2. The section said "no hard capture radius -- even 9 sigma closes given time." That is not supported.
+   At 3.4 sigma four of five seeds closed by the FIRST checkpoint, 10 000 steps into a 300 000-step
+   budget, so closure is fast when it happens at all. **Reach is the limiting variable, not time**, and
+   the "given time" reading is withdrawn.
+
+**Also recorded the gap-quoting correction.** Gaps are now quoted from the plant formula rather than the
+logged `R_mid`, which is a median distance from the aggregate centroid and reads about 10% low for an
+arc because the centroid is offset from the ring centre. The earlier series understated its gaps by
+4-11%, all in the same direction, so its ordering survives.
+
+**No falsification criterion, because no run was launched.** Load is 36 across three arms: the N=300
+energy fit (the kappa bottleneck), the N=300 kinetic comparison, and the em5 truncation test whose
+criterion was fixed last tick and is unchanged.
