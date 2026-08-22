@@ -14921,3 +14921,74 @@ runs.
 
 **Retracted this tick: my pre-registered ~15 kT power claim for the kappa experiment**, wrong by ~7x.
 The kappa null itself stands but bounds only ~103 kT.
+
+## Tick — lambda re-established at the correct chemistry; my membrane metrics were blind to the bug
+
+**Completed and read at the end.** 14 paired ring/arc seeds at `ht-0.25`, 100 000 steps, dense
+checkpoints, time-averaged over steps >= 30 000. **All processes verified at `VIVARIUM_CHI_HT=-0.25`.**
+
+**LAMBDA AT THE AMPHIPHILE CHEMISTRY: `-1.46 +- 1.24 eps`.**
+
+| check | result |
+|---|---|
+| SE gate (<= 2 eps) | **1.24 -> PASS** |
+| from zero | 1.18 sigma |
+| against the snapshot value `-0.20 +- 1.95` | **0.55 sigma -> consistent** |
+| closure budget `2*lambda/kT` | **-6.5 +- 5.5 kT** |
+
+**The third branch is closed: the snapshot protocol was noisy, not biased.** The two estimates agree at
+0.55 sigma, so no earlier lambda needs re-reading on that account.
+
+**With `dF_closure = +0.22 +- 0.44 kT` -- measured at this chemistry and surviving the audit -- "closure
+is not driven" now stands on correct-chemistry footing.** Both routes are consistent with zero.
+
+### MY MEMBRANE-QUALITY METRICS ARE BLIND TO THE BUG THAT MATTERED
+
+Planted rings, 10/14 intact, at the two chemistries:
+
+| metric | `ht-0.25` correct | `ht+0.20` degraded | separation |
+|---|---|---|---|
+| tail depth p95 | 3.01 +- 0.03 | 3.08 +- 0.03 | **1.5 sigma** |
+| head/tail water ratio | 0.586 +- 0.006 | 0.555 +- 0.004 | wrong direction |
+
+**Neither metric distinguishes them.** Both respond to `chi_TW`, which directly sets tail-water contact
+-- that is why they moved so sharply during the `chi_TW` scan (tail depth 4.05 vs 3.08, 26 sigma). **They
+are blind to `chi_HT`**, which is the parameter that decides whether a bilayer is stable at all.
+
+**The metric that DOES separate them was already logged in column 7 of every run in this project:**
+
+| chemistry | `mix`, 5 seeds | mean |
+|---|---|---|
+| `ht-0.25` | 0.090, 0.023, 0.113, 0.388, 0.000 | **0.123 +- 0.069** |
+| `ht+0.20` | 0.678, 0.686, 0.777, 0.738, 0.071 | **0.590 +- 0.132** |
+
+**A 4.8x difference at 3.1 sigma with only 5 seeds.** `mix` is head/tail mixing -- exactly what
+`chi_HT` controls, and exactly what `field.py:91` says goes to 0.899 when the ordered bilayer stops
+being a local minimum.
+
+**So the instrument that would have caught the ten-tick regression on day one was already writing to
+disk, and I built two new ones that could not see it.** This is the same pattern as the `chi_TW` answer
+sitting in a code comment: **the information was already there and I added instruments instead of
+reading it.** Recording it as a distinct failure mode from the earlier ones -- not "no guard existed"
+but "a guard existed, was logged every run, and I did not use it."
+
+**Also caught this tick, in my own analysis:** the membrane reference first returned `0/0 rings` because
+I globbed `*ht-0.25*every2000*` while the tag is `..._every2000_ht-0.25_...`. **Glob-order bug**, same
+class as the Cell B contamination several ticks ago. Caught by the impossible `0/0`, fixed, rerun.
+
+**LAUNCHED, criteria fixed BEFORE the run: re-measure the binding free energy at the correct chemistry.**
+`dF_bind = -8.26 +- 0.42 kT` is the other headline number and it was measured entirely at `ht+0.20`.
+The method that worked -- direct measurement of `P_bound` at the production temperature, no
+extrapolation -- is repeated at `ht-0.25`: **5 seeds, 2.4M steps, sampled every 200**, ~36 000
+lipid-observations each.
+
+* **`dF_bind` at `ht-0.25` within 2 sigma of `-8.26 +- 0.42 kT`** -> binding is insensitive to `chi_HT`,
+  the degraded-chemistry value transfers, and the binding/closure asymmetry stands as measured.
+* **Differs by more than 2 sigma** -> the headline binding number must be restated at the correct
+  chemistry, and the ~38x binding-versus-closure asymmetry needs recomputing.
+* **`P_bound` exceeds 0.9999** (fewer than ~20 free observations) -> underpowered at this chemistry;
+  report as such rather than quoting a free energy from a handful of events.
+
+**Emergence in flight:** 5 seeds at `ht-0.25`, 580-620k, largest 46-84, 0 closures.
+
+**Retracted this tick: nothing.** The snapshot-protocol-bias branch is closed as consistent.
