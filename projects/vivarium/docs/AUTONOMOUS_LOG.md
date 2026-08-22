@@ -13099,3 +13099,72 @@ by individually verified PID (load 36), so **25 paired seeds is the achievable p
 40**. Six emergence seeds continued advancing throughout (580k -> 660k).
 
 **Retracted this tick: nothing.** Challenged: the value of lambda and the ~81 kT closure budget.
+
+## Tick — lambda is zero on the current field, confirmed by two independent methods
+
+**Ran.** All 30 lambda runs (15 pairs, seeds 10-24) reached 50 000 and were read at the end, never as a
+trend. Emergence seeds 8200-8205 at **780-800k of 1.6M** (49%), largest **59-112**, **0 formations**.
+
+**A FOURTH label-versus-content error, and this one nearly produced the headline number.** Selecting
+states by the npz `steps` field gave 40 ring and 40 arc states "at step 50000" -- including the 15 pairs
+I killed last tick, which the logs show reached only **step 0**. `_mixture.py:68` stamps `steps=steps`,
+the **configured total**, when it saves the planted structure; `:976` stamps `steps=t`, the achieved
+step. A completed run overwrites its plant, so the field is right for survivors and wrong for
+casualties. That contaminated set gave lambda = +1.97 +- 1.15 eps at "39 pairs" -- a tighter and
+entirely fake error bar built on unequilibrated plants. **Caught by the logs, an artifact independent of
+the npz.** Same pattern as the previous three: colour map, reference filenames, column index, now a
+provenance field. In all four the code was self-consistent and only an outside artifact exposed it.
+
+**THE MEASUREMENT, 15 log-verified paired seeds, ring versus arc0.75, N=70, L=60, step 50 000:**
+
+| term | paired ring-arc (eps) | sigma |
+|---|---|---|
+| head-head | -0.46 +- 0.23 | 2.04 |
+| head-tail | -1.34 +- 0.38 | 3.52 |
+| tail-tail | -5.43 +- 3.02 | 1.80 |
+| head-water | +3.88 +- 2.97 | 1.31 |
+| tail-water | +0.21 +- 0.48 | 0.43 |
+| springs | +3.54 +- 2.90 | 1.22 |
+| **TOTAL** | **+0.40 +- 3.90** | **0.10** |
+
+**lambda = -0.20 +- 1.95 eps.** The individual terms are large and **cancel**: tail-tail cohesion
+(-5.43) is offset by head-water (+3.88) and springs (+3.54). There is no net edge cost.
+
+**This voids last tick's question rather than answering it.** I set out to find the microscopic origin
+of lambda. On the current force field **there is no lambda to explain.** The coordination hypothesis is
+not confirmed or refuted; it is moot, and I am recording it as void rather than leaving it open.
+
+**The brief is stale, and its staleness is now documented twice over.** `lambda = 18.31 +- 7.07` and
+"closure has ~81 kT to gain" **were already withdrawn in an earlier tick** ("Note on the standing
+brief"), because 18.31 was measured on the **OLD force field**, before the branch-angle fix and the
+head-tail sign change -- a model that did not make bilayers. Today's number is consistent with the
+prior direct measurement (+0.5 +- 6.0, **0.11 sigma**) and tightens it **3.1x**. Against the brief's
+18.31 it sits at 2.52 sigma; against the ribbon-intercept 10.12 +- 5.08, at 1.90 sigma.
+
+**INDEPENDENT CROSS-CHECK, from emergent vesicles and requiring no new run.** If closure gained ~81 kT a
+formed vesicle could never re-open; P(open) would be e^-81. Both transformer vesicles re-opened:
+
+| seed | checkpoints closed, after first closure | P_closed | implied closure free energy |
+|---|---|---|---|
+| sd8105 | 20 of 26 | 0.769 | -1.20 kT (closed favoured) |
+| sd8107 | 7 of 26 | 0.269 | +1.00 kT (open favoured) |
+
+**Implied lambda from occupancy: +0.27 and -0.22 eps, mean ~+0.03 eps.** A kinetic measurement on
+*emergent* structures and a static energy measurement on *planted* ones, sharing no code path, agree
+that lambda is zero. **The observed intermittency is not noise -- it is the direct signature of a
+vanishing closure drive**, and it was reported two ticks ago as an unexplained curiosity.
+
+**LAUNCHED, criterion fixed BEFORE the run: 10 restarts from the sd8105 hit state at step 1 600 000,
+fresh thermal seeds, 200 000 steps, checkpoints every 10 000.** This converts the occupancy estimate
+from 2 trajectories into 10 independent ones and is the only method of the three that measures the
+closure free energy on the object the project actually cares about.
+
+* **Mean closure free energy within +-2 kT of zero across >=8 usable restarts** -> marginal stability
+  confirmed by a third independent method; the vesicle persists kinetically, not thermodynamically.
+* **|closure free energy| > 2 kT** -> the static measurement and the occupancy estimate disagree, and I
+  report the conflict rather than choosing the convenient one.
+* **Fewer than 8 restarts stay intact enough to score** -> underpowered, reported as such, no number.
+
+**RETRACTED this tick:** the microscopic-origin question for lambda, as void -- lambda is zero, so there
+is nothing to attribute. **Re-confirmed as withdrawn:** lambda = 18.31 eps and the ~81 kT closure budget,
+which the brief still carries. **Nothing new is claimed about kappa.**
