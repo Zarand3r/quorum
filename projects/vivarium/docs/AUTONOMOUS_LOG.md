@@ -12982,3 +12982,120 @@ experiment used **430 emergent, 172 ring and 238 arc states already on disk** an
 time, which is the cheap decisive measurement the brief asks to prefer over long runs.
 
 **Retracted this tick: the tail-exposure explanation of line tension.** The value of lambda is untouched.
+
+## Tick — decomposing the line tension into its microscopic terms
+
+**Running.** Six transformer emergence seeds (8200-8205) at **580k of 1.6M** (36%), largest clusters
+**42-97**, **0 formations**, 0 hit states written. Unremarkable at this fraction of the run -- corpus
+first-formation times are 1.1M and later -- and not read as a trend.
+
+**Column error caught before it reached a number.** I first read `nves` as field `NF-4` and got 1.00 on
+all six seeds, which contradicted the zero hit files on disk, since `_mixture` writes a hit state
+whenever `nves > 0`. The header says `nves` is field **19**; field 16 is `shortOUT`, which is 1.00 by
+construction in an all-long-lipid run. The true count is **0 on all six**. This is the third
+label-versus-content error in three ticks (colour map, reference filenames, now column index), and in
+all three the error was caught by a **consistency check against an independent artifact** rather than by
+re-reading the code: bead counts, measured topology, and here the absence of hit files.
+
+**The question.** Last tick excluded hydrophobic tail exposure as the origin of lambda at 3.6 sigma and
+left one candidate: lost head-head and tail-tail cohesion at a terminus. Rather than test that proxy by
+coordination number, the energy itself decomposes. lambda was measured from `Field.energy_solute`, which
+is a sum over pair types plus springs, so **the same difference can be split into exactly the terms that
+could be responsible.** That answers "which interaction carries lambda" directly instead of one
+hypothesis at a time.
+
+**Decomposition:** HEAD-HEAD, HEAD-TAIL, TAIL-TAIL (lipid-lipid nonbonded), HEAD-WATER, TAIL-WATER
+(lipid-solvent), and the bond and angle springs. 8 verified closed rings against 8 verified open arcs,
+matched L=60, N=70, topology confirmed by `n_enclosed`.
+
+**VALIDATION GATE, fixed before the numbers are read.** The terms must sum to `energy_solute` to
+**within 1e-6 eps** on every state. This is the check the three dead end-detectors never had: a
+decomposition that does not reconstitute its own total is a bug, and if the gate fails the measurement
+is discarded and no origin is reported.
+
+**CONSISTENCY CHECK, also fixed in advance.** Closure saves two ends, so the total must reproduce
+**E(ring) - E(arc) ~ -2*lambda = -36.6 eps**. If the measured total difference is inconsistent with the
+established lambda = +18.31 +- 7.07 eps, then these states are not the ensemble lambda came from and the
+decomposition cannot be attributed to it -- I report that rather than proceeding.
+
+**FALSIFICATION CRITERIA for the origin, conditional on both gates passing:**
+
+* **TAIL-WATER carries the majority of the difference** -> directly contradicts last tick's 3.6 sigma
+  exclusion. One of the two measurements is wrong and I say so rather than picking the convenient one.
+* **TAIL-TAIL and/or HEAD-HEAD cohesion carries the majority** -> the coordination hypothesis is
+  confirmed and lambda has a stated microscopic origin for the first time in this project.
+* **No single term exceeds 50% and the terms partly cancel** -> lambda has no single microscopic origin
+  in this model; it is a distributed effect, and the intuitive "edge exposes tails" language must be
+  dropped from RESULTS.md entirely rather than replaced.
+
+**Nothing retracted yet this tick.** The tail-exposure retraction stands from last tick.
+
+**VALIDATION GATE: PASS.** Max |sum(terms) - `energy_solute`| = **2.27e-13 eps** over every state. The
+decomposition exactly reconstitutes the quantity lambda was measured from.
+
+**Two contaminants found in the ensemble before the numbers were trusted.** The arc states at L=60,
+N=70 are **not homogeneous**: they span arc fractions 0.75, 0.879, 0.9161 and 0.9562, one state sits at
+**step 10** (the unequilibrated planted configuration), and seeds 0-4 appear at both 300k and 50k, so
+they are not independent of each other. A nearly-closed 0.9562 arc has its two ends adjacent, which
+partially heals them and biases the apparent edge cost **downward** -- the same direction as the
+discrepancy below, so this had to be excluded before anything could be concluded.
+
+**Heterogeneity is NOT the explanation.** Implied lambda by arc fraction: **0.75 -> +4.92 +- 2.40,
+0.879 -> +1.13 +- 3.02, 0.9161 -> +6.01 +- 5.62, 0.9562 -> +5.21 +- 8.23**. Flat, with no trend toward
+the established value in the most-open group. A pure edge term should be gap-independent, and it is.
+
+**THE CLEAN MEASUREMENT: 10 seeds, ring against arc0.75, all at step 50 000, PAIRED by seed.**
+
+| term | ring | arc | paired ring-arc | sigma |
+|---|---|---|---|---|
+| head-head | -3.51 | -3.29 | -0.22 +- 0.27 | 0.80 |
+| head-tail | -17.49 | -16.64 | -0.85 +- 0.51 | 1.68 |
+| **tail-tail** | **-485.22** | **-477.14** | **-8.08 +- 5.22** | **1.55** |
+| head-water | -139.14 | -137.05 | -2.10 +- 4.24 | 0.50 |
+| **tail-water** | **+2.42** | **+1.64** | **+0.78 +- 0.18** | **4.27** |
+| springs | +85.61 | +87.13 | -1.52 +- 2.26 | 0.67 |
+| **TOTAL** | **-557.33** | **-545.35** | **-11.98 +- 5.02** | **2.39** |
+
+**Which branch fired: the second, but only in point estimate.** **TAIL-TAIL cohesion carries 67% of the
+total** and has the right sign for the coordination hypothesis -- an end costs energy because lipids
+there have fewer neighbours. But at **1.55 sigma it is not established**, so the coordination origin is
+now the *leading candidate*, not a result.
+
+**The sharpest number in the table refutes the old picture again, by an independent method.**
+**TAIL-WATER is +0.78 +- 0.18, or 4.27 sigma, and the sign is backwards**: the closed ring pays MORE
+tail-water energy than the two-ended arc. Last tick excluded tail exposure by counting contacts; this
+excludes it by energy, on different states, with a sharper statistic. Two independent methods now agree,
+and they agree in sign. **The tail-exposure explanation of line tension is dead.**
+
+**AN UNEXPECTED AND MORE CONSEQUENTIAL RESULT: lambda itself does not reproduce.** This paired ensemble
+gives **lambda = +5.99 +- 2.51 eps** against the established **+18.31 +- 7.07 eps**, a gap of
+**12.32 +- 7.50 = 1.64 sigma**. Compatible, so **not a retraction** -- but the central value is **three
+times smaller**, and the estimate was stable at 3.72, 3.93 and 5.99 across three different selections of
+states.
+
+**The consequence lands on a headline number in the brief.** "Closure has ~81 kT to gain" is
+`2*lambda/kT` at lambda = 18.31. At this ensemble's lambda it is **26.6 kT, not 81 kT**. The established
+lambda is itself only 2.6 sigma from zero, so the closure budget rests on a marginal number that an
+independent estimate does not reproduce. **I am flagging this as CHALLENGED, not retracted**, because
+1.64 sigma does not overturn it -- but every downstream argument built on ~81 kT should be read with
+that gap in view, including "closure is favoured whenever kappa < ~150 kT", whose threshold scales
+directly with lambda and would fall to **~50 kT** at the lower value.
+
+**LAUNCHED, criterion fixed BEFORE the run: 15 new paired seeds (10-24), ring and arc0.75, N=70, L=60,
+50 000 steps, same protocol as the existing 10 so they pool.** 25 paired seeds shrink the error bars by
+1.58x. Planted structures, so they are read at 50 000 and never as a trend.
+
+* **lambda resolves above 3 sigma and lands below 10 eps** -> the established 18.31 is superseded, and
+  the closure budget must be restated at ~27 kT with the kappa threshold at ~50 kT.
+* **lambda lands within error of 18.31** -> the snapshot estimate was biased low, the headline stands,
+  and I say so.
+* **tail-tail reaches above 3 sigma while remaining the majority term** -> lambda has a confirmed
+  microscopic origin in lost cohesion, the first one this project has had.
+* **tail-tail stays below 3 sigma** -> the origin remains unattributed and I do not claim one.
+
+**Load management, stated because it constrains the result.** 30 pairs put the machine at load 64 on 32
+cores, which would have starved the emergence arm I am required to keep running. I trimmed to 15 pairs
+by individually verified PID (load 36), so **25 paired seeds is the achievable precision this tick, not
+40**. Six emergence seeds continued advancing throughout (580k -> 660k).
+
+**Retracted this tick: nothing.** Challenged: the value of lambda and the ~81 kT closure budget.
