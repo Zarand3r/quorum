@@ -15119,3 +15119,62 @@ steps**, this time matching the vesicle's own chemistry.
 
 **Retracted this tick: `dF_bind = -8.26 +- 0.42 kT`**, which was measured at `ht+0.20`. Superseded by
 **-5.70 +- 0.37 kT** at the correct chemistry.
+
+## Tick — the periodic-wrapping confound is REAL at the correct chemistry; my earlier refutation was chemistry-invalid
+
+**Running, NOT read.** Closure calibration at `ht-0.25` is at 230-380k of 400 000 (58-95%) -- planted,
+so no verdict. Emergence: 10 seeds at `ht-0.25`, 8800-8804 at 1.28-1.42M (largest 86-160) and 8900-8904
+at 400-540k (largest 49-89). **0 closures, 0 hits.** All 18 processes verified at `ht-0.25`.
+
+**I RE-RAN THE PERIODIC-WRAPPING TEST AT THE CORRECT CHEMISTRY AND IT NO LONGER REFUTES THE CONFOUND.**
+Several ticks ago I froze four states, found **0 wrapping edges in all four**, and concluded that the
+ribbons "have real free ends and are declining to close." **That test was run at `ht+0.20`.** Redone at
+`ht-0.25`:
+
+| state | lipids | wrapping edges | unwrapped extent | nenc |
+|---|---|---|---|---|
+| sd8801 | 140 | 0 | 72.5 x 54.5 | 1 |
+| **sd8802** | **160** | **7** | 84.2 x 58.6 | 0 |
+| **sd8803** | **160** | **9** | 84.0 x 57.0 | 0 |
+| sd8804 | 73 | 0 | 46.2 x 37.2 | 0 |
+
+**Two of four now wrap the periodic box.** A wrapped ribbon has **no free ends** and cannot form a
+vesicle however long it runs; its failure to close carries no information about line tension.
+
+**Tested against the arm where formation outcomes are known.** The 18-seed transformer arm at `ht-0.25`,
+2 of which formed vesicles:
+
+| group | wrapping edges | wrapped fraction |
+|---|---|---|
+| **formed** (sd8105, sd8107) | 0, 0 | **0/2** |
+| non-formed | 0,0,0,7,6,7,19,0,0,0 | **4/10** |
+
+**Fisher exact p = 0.515 -- suggestive, not significant**, and it cannot be significant with only two
+formations. But **40% of non-forming runs ending topologically unable to close is a large effect on the
+denominator.**
+
+**The implication, stated as arithmetic and not as a claim.** If ~40% of runs end ineligible, then
+`7/40 = 0.175` over all runs corresponds to roughly **0.29 over runs that remain eligible**. **That would
+mean the emergent rate has been depressed by a box-size artifact rather than by physics** -- a
+materially different and more hopeful reading than "closure is not driven."
+
+**I am not asserting it.** The end-state wrapping does not establish when the run wrapped; a seed could
+wrap late, after having had ample opportunity to close. The correlation is p = 0.515.
+
+**LAUNCHED, criteria fixed BEFORE the run: emergence in a box large enough that a 160-lipid ribbon
+cannot span it.** At `L = 65` a ribbon of ~160 sigma wraps easily. **5 seeds at `L = 100`, N = 160,
+same chemistry, same packing fraction, 1.6M steps** -- 6202 water beads against 2159, so ~3x the cost
+per step, which is why 5 seeds rather than 10.
+
+* **>= 2 formations in 5 seeds AND wrapping absent in the final states** -> box size was suppressing
+  closure; the corpus rate is a finite-size underestimate and every closure conclusion in this project
+  needs restating against an eligible-run denominator.
+* **0-1 formations with wrapping absent** -> the larger box removes the artifact and the rate does not
+  rise, so wrapping was **not** the limiting factor and "closure is not driven" stands. **P(0 in 5) at
+  the eligible-run rate 0.29 is 0.18**, so a single null arm cannot settle this and I say so now.
+* **Wrapping still occurs at L = 100** -> the box is still too small; report the ribbon length at which
+  it happens and treat `L = 100` as a lower bound rather than a test.
+
+**Retracted this tick: my refutation of the periodic-wrapping confound.** It was measured at `ht+0.20`
+and does not hold at the amphiphile chemistry. **The confound is live again**, and the finding that
+"ribbons have genuine free ends" applies only to the smaller aggregates.
