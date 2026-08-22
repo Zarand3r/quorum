@@ -12045,3 +12045,50 @@ to 12 runs and adding 12 runs to the rate corpus.
   run-length limited.
 * **0 of 12** -> 1.6M is adequate and sd7105's late formation was a tail event.
 * **exactly 1 of 12** -> consistent with what has been seen; revise nothing.
+
+## Tick — the MLP goes on the token channel, not the radial function, and the reason is arithmetic
+
+**Ran.** N=300 kinetic at 90-150k of 300k. em5 at 660-740k of 2.4M with sd7203 registering a first hit.
+em6 at 180-260k of 2.4M, 0/6. Nothing complete, nothing scored.
+
+**Advanced the transformer-only refactor.** The plan last tick was to move the radial functions a(r) and
+b(r) into an MLP, on the grounds that a distance-conditioned MLP is what equivariant transformers use.
+**Reading the functions killed that plan:**
+
+* `core'` is `-2*height*(1-s)` for s < 1 -- exactly one ReLU unit, representable;
+* `well'` is `0.5*pi*sin(pi*z)/(rc-1)` -- **sinusoidal**, which no ReLU MLP represents exactly;
+* both carry a `1/r` factor, which an MLP cannot produce from r without approximating.
+
+So putting the MLP there would have traded an exact force law for an approximation, purely to satisfy
+the letter of the constraint. A fixed distance-dependent bias inside an attention score is already a
+standard transformer component -- ALiBi is precisely that -- so a(r) and b(r) stay analytic and are
+documented as the bias term.
+
+**The MLP went where it does real work instead.** q and k are now read from a per-token channel h rather
+than a species table: q_i = h_i Wq, k_i = h_i Wk, with h initialised to the one-hot species and Wq, Wk
+the eigendecomposition factors the Field already used. That is algebraically the same numbers, verified:
+`q_i . k_j` from the channel matches `content_pairs` to < 1e-12. The MLP is a residual on h, driven by h
+and one rotation-invariant message per token.
+
+**Gates, all passing, and two of them are new.**
+
+| gate | result |
+|---|---|
+| sum of masked heads vs `field.forces()` | ~1e-16 relative |
+| one forward pass vs `Inertial.step` | **max abs difference exactly 0.0** |
+| equivariance, no pair wrapping | passes |
+| token-channel q.k vs species table | < 1e-12 |
+| **MLP is live, not decorative** | non-zero weights change h AND change the forces |
+
+That last gate exists because the failure mode of this whole exercise is an MLP that is present,
+satisfies the architecture on paper, and does nothing. The zero-weight case is covered by the
+bit-identity gate; this covers the other side.
+
+Full suite **PASSED in 346.1s** under a 22-simulation load, with the five new tests included.
+
+**Retracted from my own plan last tick:** "move the radial functions into an MLP" is withdrawn as
+described above. Recorded because it was stated as the next step and is not being done.
+
+**No new simulation launched, so no falsification criterion.** Load is 22 across the kinetic arm and two
+emergence arms, all with criteria already fixed. The refactor does not touch `_mixture.py`, which still
+uses the original integrator, so every result measured so far stands exactly as measured.

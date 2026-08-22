@@ -96,10 +96,40 @@ def test_attention_output_is_equivariant_when_no_pair_wraps():
     assert np.abs(Fr - F0 @ R.T).max() < 1e-9
 
 
-def test_hidden_state_exists_and_starts_inert():
-    """The invariant token channel the MLP will act on. Zero at reset, so dynamics is unchanged."""
-    X, f = _system(n=30)
+def test_token_channel_reproduces_chi_exactly():
+    """q_i . k_j built from the token channel equals the Field's species lookup, to floating point.
+
+    This is what makes the MLP insertable without changing anything: the interaction matrix is now read
+    out of h rather than out of a table, and at h = one-hot species the two are the same numbers.
+    """
+    X, f = _system(n=60)
     tf = VivariumTransformer(f)
-    tf.reset(len(X), width=4)
-    assert tf.h.shape == (len(X), 4)
-    assert np.all(tf.h == 0.0)
+    _, _, iu = f._pairs(X)
+    from_table = f.content_pairs(iu[0], iu[1])
+    from_channel = np.einsum("ic,ic->i", tf.q()[iu[0]], tf.k()[iu[1]])
+    assert np.abs(from_table - from_channel).max() < 1e-12
+
+
+def test_mlp_is_live_not_decorative():
+    """With non-zero weights the MLP changes h, which changes the forces.
+
+    Without this the MLP could be present, satisfy the architecture on paper, and have no effect --
+    which is the failure mode this whole refactor is meant to avoid. The zero-weight case is asserted
+    separately by the bit-identity test above; this asserts the other side, that the block is wired to
+    something.
+    """
+    X, f = _system(n=60)
+    tf = VivariumTransformer(f)
+    F_before = tf.attention(X)
+
+    pairs, sep, dist = tf._nonbonded_pairs(X)
+    scores = tf._score_nonbonded(dist, pairs)
+    rng = np.random.default_rng(1)
+    tf.W1 = rng.normal(scale=0.05, size=tf.W1.shape)
+    tf.W2 = rng.normal(scale=0.05, size=tf.W2.shape)
+    dh = tf.mlp(X, pairs, sep, dist, scores)
+    assert np.abs(dh).max() > 0.0, "MLP produced no residual with non-zero weights"
+
+    tf.h = tf.h + dh
+    F_after = tf.attention(X)
+    assert np.abs(F_after - F_before).max() > 1e-6, "MLP changed h but not the forces"

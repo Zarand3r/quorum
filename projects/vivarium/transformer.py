@@ -60,9 +60,11 @@ class VivariumTransformer:
     identical to the pre-existing integrator, which is what makes the change verifiable.
     """
 
-    def __init__(self, field):
+    def __init__(self, field, mlp_width=8):
         self.f = field
-        self.h = None                       # invariant per-token state, set by reset()
+        self.mlp_width = int(mlp_width)
+        self.h = None                       # invariant per-token channel, set by reset()
+        self.reset()
 
     # ---- masks -------------------------------------------------------------------------------
 
@@ -78,15 +80,33 @@ class VivariumTransformer:
     # ---- scores ------------------------------------------------------------------------------
 
     def _score_nonbonded(self, r, pairs):
-        """a(r) + b(r) * (q_i . k_j), zeroed beyond the cutoff exactly as `field.forces` does."""
+        """a(r) + b(r) * (q_i . k_j), zeroed beyond the cutoff exactly as `field.forces` does.
+
+        The query and key come from the TOKEN CHANNEL h, not from a species lookup: q_i = h_i W_q and
+        k_i = h_i W_k. With h the one-hot species this is algebraically identical to the original
+        `content_pairs`, which is what lets the MLP below change interactions without changing anything
+        else.
+
+        a(r) and b(r) stay analytic. They are a fixed distance-dependent bias inside the attention
+        score -- the same role ALiBi plays in a language model -- and that is a transformer component
+        already. Replacing them with an MLP of r was considered and rejected: core' is exactly one ReLU
+        unit, but well' is sinusoidal and both carry a 1/r factor, so an MLP could only approximate
+        them. That would trade an exact force law for architectural box-ticking.
+        """
         f = self.f
         s = r / f.sigma
         _, duc = _core(s, f.core_height)
         _, duw = _well(s, f.rc)
-        chi = f.content_pairs(pairs[0], pairs[1])
+        chi = np.einsum("ic,ic->i", self.q()[pairs[0]], self.k()[pairs[1]])
         dudr = f.eps * (duc + duw * chi) / f.sigma
         dudr = np.where(r < f.rc * f.sigma, dudr, 0.0)
         return -dudr / np.maximum(r, 1e-12)
+
+    def q(self):
+        return self.h @ self.Wq
+
+    def k(self):
+        return self.h @ self.Wk
 
     @staticmethod
     def _score_spring(k, r0):
@@ -108,9 +128,34 @@ class VivariumTransformer:
 
     # ---- forward pass ------------------------------------------------------------------------
 
-    def reset(self, n, width=4):
-        """Initialise the invariant token state. Zero width means no MLP channel at all."""
-        self.h = np.zeros((n, width))
+    def reset(self):
+        """Initialise the token channel and the projections that read it.
+
+        h starts as the one-hot species, and Wq/Wk are the eigendecomposition factors the Field already
+        uses, so q_i . k_j reproduces chi exactly. The MLP starts at zero, so the first forward pass is
+        bit-identical to the pre-existing integrator -- that identity is the regression gate for
+        everything built on top.
+        """
+        sp = np.asarray(self.f.species)
+        self.h = np.eye(len(self.f.q))[sp]        # one-hot species, (n, N_SPECIES)
+        self.Wq = np.asarray(self.f.q)            # (N_SPECIES, C)
+        self.Wk = np.asarray(self.f.k)
+        self.W1 = np.zeros((self.h.shape[1] + 1, self.mlp_width))
+        self.W2 = np.zeros((self.mlp_width, self.h.shape[1]))
+
+    def mlp(self, X, pairs, sep, dist, scores):
+        """Per-token MLP on the invariant channel.
+
+        Its input is h and one invariant message per token -- the summed attention score, which is a
+        rotation-invariant summary of the neighbourhood. Output is a residual on h, so with W2 = 0 the
+        channel is frozen and the dynamics is unchanged. This is where an MLP can act without
+        approximating anything, unlike the radial functions.
+        """
+        m = np.zeros(len(X))
+        np.add.at(m, pairs[0], scores)
+        np.add.at(m, pairs[1], scores)
+        z = np.concatenate([self.h, m[:, None]], axis=1)
+        return np.maximum(z @ self.W1, 0.0) @ self.W2
 
     def forward(self, X, v, dt, kT, gamma=1.0, mass=1.0, rng=None, F=None):
         """One simulation step as one forward pass.
