@@ -14190,3 +14190,64 @@ trajectories.
 
 **Retracted this tick: the monomer-exchange consistency test in its version-1 form**, as vacuous. **The
 committed g(r) gate is corrected, not retracted** -- the measurement it was meant to protect stands.
+
+## Tick — the SM suite is green under bazel; the consistency test is underpowered, cause diagnosed
+
+**BAZEL: `//projects/vivarium:test_suite` PASSED in 160.1s.** The environment-dependence bug found last
+tick is fixed, so **four gates are now permanent and verified independently of my shell**: force =
+`-grad U`, energy conservation, kinetic equipartition, and `g(r) -> exp(-beta u)`. The g(r) test now
+builds its chi table explicitly and passes it via `Field(..., chi=chi)` instead of inheriting
+`VIVARIUM_CHI_WW` from the environment.
+
+**Two-ensemble consistency test: BRANCH 3 FIRES ON BOTH CONDITIONS. No ratio quoted.**
+
+| arm | transitions per seed | below the 30 floor | P_bound |
+|---|---|---|---|
+| dispersed | 21, 34, 9, 35, 25, 28 | **4/6** | 0.99309 +- 0.00182 |
+| aggregated | 13, 8, 3, 17, 10, 18 | **6/6** | 0.99786 +- 0.00125 |
+
+**The arms differ by 0.00477 +- 0.00221 = 2.16 sigma, so they have not mixed.** Both the transition
+floor and the convergence requirement fail, and I registered in advance that this was the likely
+outcome. **The cross-ensemble ratio would have been 12.81; I am not reporting it as a result.**
+
+**The cause is diagnosed rather than guessed.** At `kT = 0.45` the bound state holds ~99% of the
+population, so the free state is barely visited and neither arm can accumulate transitions or forget its
+start. A temperature scan, 2 seeds each:
+
+| kT | 0.6 | 0.9 | 1.2 | 1.6 |
+|---|---|---|---|---|
+| P_bound | 0.996, 0.943 | 0.906, 0.908 | 0.846, 0.819 | **0.702, 0.652** |
+
+**`kT = 1.6` gives a genuinely two-state equilibrium at `P_bound ~ 0.68`.** Detailed balance must hold at
+every temperature, so moving the test to a populated state point is legitimate and simply better
+powered.
+
+**A point of logic I want on the record, because it bounds how much this test is worth.** Checks 5 and 6
+already establish that the sampler reproduces the Boltzmann distribution -- configurational equipartition
+against an exact target, and `g(r) -> exp(-beta u)` extrapolating to zero deviation. **Free energies
+taken from POPULATION ratios therefore rest on validated ground already.** What detailed balance adds is
+specifically the licence to derive free energies from RATES, which is a stronger condition that a
+splitting scheme can violate while still sampling the right static distribution. **The only rate-derived
+number in this project is the closure free energy of +0.22 +- 0.44 kT, and it already agrees with the
+static lambda = +1.23 +- 1.67 eps.** So this test is a second-order check on one number that has
+independent corroboration -- worth one properly powered attempt, not indefinite pursuit.
+
+**LAUNCHED, criteria fixed BEFORE the run: the two-ensemble test at `kT = 1.6`, 6 seeds started
+dispersed and 6 started aggregated, 300 000 steps, sampled every 50.** `K_pop` and `K_rate` are taken
+from different arms so the algebraic identity that made version 1 vacuous cannot arise.
+
+* **`K_rate/K_pop = 1.00` within 2 sigma, with >= 30 transitions per seed and the two arms' `P_bound`
+  agreeing within 2 sigma** -> detailed balance holds, and rate-derived free energies in this project
+  are licensed.
+* **Differs by more than 2 sigma with those power conditions met** -> the dynamics violates detailed
+  balance despite sampling `exp(-beta u)` correctly, which would point at the thermostat splitting and
+  put a caveat on the +0.22 +- 0.44 kT closure free energy. The static lambda would be unaffected.
+* **Power conditions still unmet at kT = 1.6** -> I stop pursuing this. **I am committing to that in
+  advance** rather than engineering a fourth variant: at that point the honest statement is that the
+  static distribution is validated, population-derived quantities are sound, and the single
+  rate-derived number carries an untested assumption with independent corroboration.
+
+**Emergence in flight:** 4 fresh baseline seeds (8600-8603) at 120-180k, largest 33-43, 0 closures.
+
+**Retracted this tick: nothing.** The version-1 exchange test was retracted last tick; version 2 is
+reported as underpowered rather than as a result.
