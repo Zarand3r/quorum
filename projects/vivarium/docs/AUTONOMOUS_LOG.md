@@ -11289,3 +11289,54 @@ Reachability: all three branches are reachable, since 0-5 of 5 seeds can close i
 number. "3 sigma -> 5/5" sits in the Established block of every tick prompt, and it was measured before
 several instrument fixes -- the boundary-straddling enclosure bug among them. If it fails to reproduce,
 that is worth more than the arc test itself.
+
+## Tick — positive control PASSES 5/5 and closure is immediate; "3 sigma -> 5/5" reproduces
+
+**Ran.** 3-sigma control at 80k of 300k. Constant-gap size test at 20-230k. em4 emergence at 500k of
+1.6M, **0/6**.
+
+**The control is already decided, and the early read is legitimate.** All five seeds have closed, with
+first closure at:
+
+| seed | first closure | R_mid | lumen_c |
+|---|---|---|---|
+| sd0 | 20 000 | 12.25 | 1158 |
+| sd1 | **10 000** | 12.23 | 1160 |
+| sd2 | **10 000** | 12.35 | 1142 |
+| sd3 | **10 000** | 12.48 | 1194 |
+| sd4 | **10 000** | 12.02 | 1076 |
+
+Four of five closed at the FIRST checkpoint. Reading this before 300k is sound because closure
+accumulates monotonically -- a seed that has closed has closed -- the same logic used to exclude the
+<= 1/18 branch on the primary arm. The **>= 4 of 5** branch is satisfied and cannot be undone.
+
+**Two conclusions.**
+
+1. **Run length is not the limiter.** Closure at a 3.3-sigma gap takes under 10 000 steps against a
+   300 000-step budget, a factor of 30. So the constant-gap size test at 9.6 sigma, which has run
+   220 000 steps at N=70 with essentially nothing, is limited by the GAP and not by time. A null there
+   will be a real statement.
+2. **An established number reproduces.** "3 sigma -> 5/5" sits in the Established block of every tick
+   prompt and was measured before the boundary-straddling enclosure fix, the clustering fix and the
+   unwrapped-render work. It survives all of them at 5/5. That is worth recording explicitly, because
+   several other pre-fix numbers in this project did NOT survive re-derivation.
+
+**Size test, not read.** N=70 at 220-230k shows 4 seeds with no enclosure and sd3 with 2 enclosure
+checkpoints; N=120/200/300 are at 70k or less. Planted, incomplete, unread per the standing rule.
+
+**No new arm launched this tick, and the arithmetic is the reason.** Load is 31 simulations. The natural
+follow-up -- the same size test at an intermediate 6-sigma gap, where the scan gave 3/5 and which is
+more likely to land in a discriminating band than 9.6 sigma -- costs 20 runs and would take the load to
+51. The test suite already timed out once at 44 concurrent sims and I recorded that as a timeout rather
+than a pass. The 9.6-sigma N=70 arm completes within about one tick and frees five slots, so the 6-sigma
+arm is queued for then rather than piled on now.
+
+**Falsification for that queued run, stated now so it is fixed before the data exists.** Same design,
+end-gap held at 6 sigma, 4 sizes x 5 seeds.
+
+* **Closure fraction rises with N at 6 sigma** -> bending is the barrier and the threshold radius gives
+  kappa without a spectrum.
+* **Flat or falling with N** -> bending is not the barrier at these sizes and the continuum argument
+  behind the standing plan is retracted.
+* **All close or none close at 6 sigma** -> the gap is saturating or excluding at every radius, and the
+  discriminating gap lies between 3 and 6 sigma or between 6 and 9.6; report and bisect.
