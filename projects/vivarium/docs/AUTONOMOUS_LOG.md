@@ -12461,3 +12461,48 @@ and carried force as instance state.
   likely (P = 0.26) and would be easy to over-read.
 
 **Nothing retracted.** Load rises from 8 to 14.
+
+## Tick — TWO reads land: capture radius is size-independent, and the truncation test returns its null
+
+**READ 1 -- the critical-size question, answered.** The N=300 arc arm reached 300k on 9 of 10 seeds
+(sd7 at 290k with zero, and hits accumulate monotonically so its count can only rise). At a fixed
+end-gap of 10.1 sigma:
+
+| condition | ring radius | closed |
+|---|---|---|
+| N=70 | 12.8 | **1/10** |
+| N=300 | 49.3 | **1/10** |
+
+**Fisher exact p = 1.000** across a **3.9x span in radius**. The pre-registered branches were: N=300
+>= 8/10 with N=70 <= 2/10 means capture radius grows with R; both within 2 of each other means it is
+size-independent and the continuum argument is retracted; anything between is underpowered. **The second
+branch fires, and it is robust** -- even if sd7 hits in its last 10k the count becomes 2/10 and the same
+branch still fires.
+
+**So the capture radius does NOT grow with ribbon size.** The standing plan's reasoning -- edge saved
+2*lambda constant, bending paid pi*kappa/R falling with size, therefore a threshold length exists --
+predicts larger arcs should close more readily across a given gap. Over a fourfold range of radius they
+close identically. **That prediction is retracted.**
+
+This is consistent with the two other things measured here: kappa is -15 +- 140 kT, consistent with
+zero, so there is little bending penalty for a small ring to be relieved of; and closure is
+encounter-limited, which is a kinetic constraint that has no reason to care about R.
+
+**READ 2 -- the truncation test, returning exactly the null it was predicted to.** em6 reached 2.4M on
+5 of 6 seeds, **0/6**. Combined at-risk exposure across em5 and em6 is **8.64 seed-M with 0 new first
+formations**. At the late-time hazard that predicts 0.47 and gives **P(observe 0) = 0.626**.
+
+The pre-registered branch for zero was "1.6M is adequate". **I am not reporting it that way**, because
+three ticks ago I computed that this test is underpowered by 6.3x and recorded in advance that a zero
+would mean "no LARGE truncation effect", not "no effect". That narrowing stands. The run-length caveat
+remains a stated limitation.
+
+**Pooled length-matched rate**, with em6 scored at 1.6M: **7/40 = 0.175, CI 0.087-0.320** (was 7/34 =
+0.206).
+
+**Retracted this tick: the critical-size prediction of the standing plan.** It has been the stated
+rationale for the arc programme since the beginning and the data now contradicts it directly.
+
+**No falsification criterion, because no run was launched.** Load is 9. The transformer emergence arm is
+at 380k of 1.6M with largest clusters 53-106 and 0 formations, which is unremarkable at 24% of length,
+and its criterion was fixed last tick.
