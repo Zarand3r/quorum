@@ -13372,3 +13372,62 @@ and no outcome visible, so that it is a correction and not a retrofit.
 **The falsification branches are otherwise unchanged**, including the one that kills the rate number:
 forward remaining >= 0.8 through 1M means the counted transitions were gate flicker and the rate-based
 free energy goes too.
+
+## Tick — the periodic-wrapping confound is tested and refuted; testing whether lambda is tunable at all
+
+**Running, not read.** The 1M forward/reverse arms are at **130-220k of 1M (13-22%)**, planted from a
+state, so nothing is concluded from them. Emergence 8200-8205 at **1.40-1.50M of 1.6M**, **0 formations,
+0 hits**, with 8200/8202/8205 at `largest = 160` and 8201/8203/8204 at 75-106.
+
+**A confound that would have invalidated the whole lambda interpretation, tested before it could.** Three
+seeds sit with every lipid in one cluster and never close. I have been reading that as the signature of
+lambda ~ 0 -- ends cost nothing, so the system grows one wandering ribbon. **But a ribbon that closes on
+itself THROUGH the periodic boundary has no free ends at all**, and its failure to form a vesicle would
+be a finite-size artifact carrying no information about line tension. Nothing in the logged metrics
+distinguishes the two: `largest = 160` and `nves = 0` look identical either way.
+
+**Method.** Froze the four largest-cluster states first, since `_save_state` overwrites every checkpoint
+and a live file is a race (learned last tick). Then BFS-unwrapped each cluster accumulating periodic
+offsets, and checked **every contact edge** for consistency in the unwrapped frame. A cluster that wraps
+must contain at least one edge whose unwrapped separation is a lattice vector rather than a contact
+distance.
+
+| state | lipids | wrapping edges | worst unwrapped edge | unwrapped extent | box |
+|---|---|---|---|---|---|
+| sd8200 | 160 | **0** | 0.0 | 63.9 x 57.6 | 65 |
+| sd8202 | 160 | **0** | 0.0 | 69.5 x 78.6 | 65 |
+| sd8203 | 106 | **0** | 0.0 | 38.2 x 52.3 | 65 |
+| sd8205 | 160 | **0** | 0.0 | 80.8 x 52.5 | 65 |
+
+**Zero wrapping edges in all four.** The ribbons extend to 69-81 sigma in a 65 sigma box, so they are
+genuinely longer than the box and yet do NOT join through the boundary. **They have real free ends and
+are declining to close.** The confound is refuted and the energetic reading survives a test that could
+have killed it. Recording this as a test that could have gone the other way and did not.
+
+**The question this leaves is the actionable one: can this model have an edge cost AT ALL?** Everything
+measured says lambda ~ 0 on the current chemistry -- static ring/arc **-0.20 +- 1.95 eps**, rate-based
+closure **+0.22 +- 0.44 kT**. If line tension is simply absent from this force field at any parameter,
+then emergent vesicles here will always be marginal accidents and the 17.5% corpus rate is the ceiling.
+If instead lambda is **tunable**, there is a designed route to reliable closure.
+
+**The obvious lever is `chi_HT`, the head-tail interaction.** The current runs use **-0.25**. Earlier
+work in this tree used **-0.75**, and a more repulsive head-tail term should make it costlier to expose
+a tail-lined edge -- which is precisely the term an edge would charge for. It also directly probes the
+mechanism: last tick's decomposition found the head-tail term to be the only individually significant
+one (**-1.34 +- 0.38 eps, 3.52 sigma**) even while the total cancelled to zero.
+
+**LAUNCHED, criterion fixed BEFORE the run: 8 paired seeds, planted ring vs arc0.75, N=70, L=60,
+50 000 steps, explicit solvent, at `VIVARIUM_CHI_HT=-0.75`** -- identical to the arm that produced
+lambda = -0.20 +- 1.95 eps except for that one parameter, so the two are directly comparable and pool
+into a two-point response curve.
+
+* **lambda(-0.75) exceeds lambda(-0.25) by more than 2 sigma** -> line tension is tunable by head-tail
+  repulsion, and there is a designed route to a closure drive rather than waiting for accidents.
+* **lambda(-0.75) is within 2 sigma of lambda(-0.25)** -> the edge cost is not controlled by this
+  parameter, and the search for a closure drive must move to a different term or be abandoned.
+* **The planted rings fail to survive 50 000 steps at -0.75** -> the chemistry is unusable at this value
+  and the comparison is void; I report that rather than quoting a lambda from broken structures.
+  **This branch is real: at `ht-0.25` one ring in 40 already came apart within 50 000 steps.**
+
+**Retracted this tick: nothing.** The periodic-wrapping alternative explanation is refuted rather than
+retracted, since it was never asserted -- it was a competing hypothesis that has now been excluded.
