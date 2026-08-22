@@ -13721,3 +13721,75 @@ difference and I am not presenting it as if it does.**
 
 **Retracted this tick: nothing.** Two results are recorded as unvalidated / unreliable rather than as
 findings, which is the honest disposition for both.
+
+## Tick — the lambda programme reaches a clean endpoint; launching the two-axis scan
+
+**Completed and read at the end.** The baseline lambda arm pooled to **14 paired seeds**, all reaching
+100 000 steps with dense checkpoints, time-averaged over steps >= 30 000.
+
+**THE PRE-REGISTERED GATE PASSES: pooled SE = 1.67 eps, under the 2 eps threshold.** That converts the
+chi_TW result from an underpowered null into a reportable negative.
+
+| condition | pairs | lambda | from zero |
+|---|---|---|---|
+| chi_TW = 0.00 | **14** | **+1.23 +- 1.67 eps** | 0.74 sigma |
+| chi_TW = -0.20 | 6 | +1.40 +- 1.28 eps | 1.09 sigma |
+| **difference** | | **+0.16 +- 2.10** | **0.08 sigma** |
+
+**The pre-registered second branch fires: `chi_TW` genuinely does not price the edge at these
+magnitudes, now at adequate power.** Combined with the 5.0 sigma membrane degradation at -0.20 and 26
+sigma at -0.50, the parameter is dead on **both** grounds -- it buys nothing and it costs the bilayer.
+
+**Baseline line tension on the current force field: lambda = +1.23 +- 1.67 eps**, a closure budget of
+**2*lambda/kT = 5.5 kT**. The brief's **81 kT** sits **2.35 sigma** away and was measured on the old
+force field. **The 14-pair value is now the best-powered lambda this project has for the current
+field**, and it is consistent with zero.
+
+**Why the baseline needed 14 pairs while the perturbed arm needed 6:** per-seed ring-arc spread is
+**12.5 eps at chi_TW=0.00** against **6.3 eps at -0.20**. The floppier baseline membrane samples a much
+wider configuration range. That is a property of the system, not of the estimator, and it sets the seed
+cost of any future lambda measurement on this field.
+
+**THE PHYSICS THE PROGRAMME HAS ESTABLISHED, stated plainly.** A real bilayer edge costs energy because
+the hydrophobic core is exposed to water, and real edge tensions are of order 10-30 pN, i.e. a few kT
+per nm. **This model has `chi[TAIL,WATER] = 0.00`, so it contains no hydrophobic effect at all**, and
+lambda ~ 0 is the model faithfully reporting that. Turning hydrophobicity on alone does not help,
+because nothing then stops the tails from minimising their own surface area and balling into a droplet
+-- which is exactly what -0.20 and -0.50 produced. **Real lipids avoid that because their head groups
+are bulky, charged and hydrated, holding the packing parameter P = v/(a0*l) in the bilayer band. This
+model has one head bead against four tail beads, so the head is far too small to resist collapse.**
+
+**Every previous scan moved ONE axis and could therefore only ever find "no drive" or "collapsed".**
+
+**LAUNCHED, criteria fixed BEFORE the run. Two-axis scan, dense checkpoints, 100 000 steps,
+time-averaged over steps >= 30 000, ring vs arc0.75 at N=70, L=60, with membrane quality measured
+alongside lambda in the same runs:**
+
+* **Cell A -- both axes: `chi_TW=-0.50, chi_HH=-0.50`, 8 pairs.** Hydrophobic tails plus mutually
+  repelling heads, the combination real lipids use.
+* **Cell B -- head axis alone: `chi_TW=0.00, chi_HH=-0.50`, 6 pairs.** Isolates what head repulsion does
+  by itself, so any effect in A can be attributed.
+
+`chi_HH` defaults to 0.20; chi scales the attractive well, so driving it negative makes heads repel and
+raises the effective head area a0. It is the only head-bulk knob exposed without editing source.
+
+* **Cell A: lambda exceeds the 14-pair baseline by > 2 sigma AND tail depth p95 stays within 2 sigma of
+  3.08** -> the window exists, there is a designed route to a closure drive, and an emergence arm should
+  be launched there immediately.
+* **Cell A: lambda rises but tail depth also rises** -> head repulsion is insufficient to hold the
+  bilayer against hydrophobic collapse, and the coupling is intrinsic to this lipid geometry rather than
+  to the particular parameter.
+* **Cell A: neither moves** -> no window at this corner; the next axis to try is tail count
+  (`VIVARIUM_TAILS`), which changes P through v rather than a0.
+* **Cell B shows the same lambda shift as A** -> the effect is head repulsion alone and hydrophobicity
+  is irrelevant, which would contradict the physical picture and require rethinking it.
+* **Rings fail to survive 50 000 steps, or pooled SE > 2 eps** -> that cell is void and no lambda is
+  quoted from it.
+
+**NOT launching an emergence arm at the new chemistry this tick.** I lost that bet two ticks ago by
+starting 1.6M runs before the planted result existed. The planted cells land within a tick; emergence at
+the winning corner waits for them. **Three baseline emergence seeds (8500-8502) remain in flight** at
+520-540k, largest 52-85, 0 closures, so there is still a dispersed-start run to show.
+
+**Retracted this tick: nothing.** The chi_TW null is *upgraded* from "underpowered, effect not excluded"
+to a reportable negative at adequate power.
