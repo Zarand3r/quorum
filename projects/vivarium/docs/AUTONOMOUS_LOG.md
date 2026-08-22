@@ -11994,3 +11994,54 @@ and the two-point lambda itself as a check against the +2.8 +- 2.8 in RESULTS.md
   kappa number derived from it is withdrawn rather than defended.
 * **Two-point kappa error exceeds +-200 kT** -> the fit is uninformative and only the single-point value
   is reported.
+
+## Tick — N=300 energy COMPLETE. Two pre-registered criteria fire, and both limit the result.
+
+**Completed.** All 20 N=300 energy runs at 50k. Read against criteria fixed before the data existed.
+
+| N | R_ring | ring E/lipid | arc E/lipid | delta total |
+|---|---|---|---|---|
+| 70 | 11.65 | -7.3415 +- 0.0588 | -7.2498 +- 0.0371 | **-6.4 +- 4.9 eps** |
+| 300 | 49.93 | -7.5572 +- 0.0241 | -7.5103 +- 0.0206 | **-14.1 +- 9.5 eps** |
+
+**Criterion 1, set when the N=300 arm launched: the delta trend.** The branches were, more negative by
+>= 14 eps with non-overlapping bars supports the continuum form; less negative with bars excluding zero
+slope retracts it; overlapping bars means underpowered. Result: **-14.1 against -6.4 is more negative by
+7.7 +- 10.7 eps, 0.7 sigma, bars overlapping heavily.** Third branch fires -- **underpowered, both
+reported, no trend claimed.** The sign is the direction the standing plan predicts, and that is not
+evidence at 0.7 sigma.
+
+**Criterion 2, set last tick: the three-number read.**
+
+1. **Single-point kappa using the independent lambda** -- at N=70, **-15 +- 140 kT**. (Slightly revised
+   from -13 +- 125 because R_ring is 11.65, measured from the plant, not the 10.4 I used earlier.) At
+   N=300 the same method gives -684 +- 891 kT: consistent, and useless, because the R prefactor
+   amplifies everything.
+2. **Two-point kappa, independent of lambda: 188 +- 263 kT.** The pre-registered rule was that an error
+   beyond +-200 kT makes the fit uninformative and only the single-point value is reported. **263 > 200,
+   so that is what happens.** It is not the headline.
+3. **Two-point lambda, as a check: 8.20 +- 7.38 eps against the RESULTS.md value of +2.8 +- 2.8** --
+   agreement at **0.68 sigma**. The branch for this was that agreement reinforces the kappa value and
+   disagreement beyond 2 sigma withdraws it. It agrees, so the geometry and the energy measurement are
+   mutually consistent and nothing is withdrawn.
+
+**My own forecast was optimistic and that is worth recording.** Last tick I predicted the two-point fit
+would land at +-170 kT. It came in at **+-263**, because N=300's energy error is +-9.5 eps rather than
+the +-4.9 I assumed by analogy with N=70. The absolute error scales with N -- delta is a per-lipid
+difference multiplied by lipid count -- so larger rings are intrinsically noisier in total energy. That
+makes the wide-lever-arm strategy self-defeating, which I had not anticipated.
+
+**Consequence, and it closes the standing plan.** kappa without a spectrum is **-15 +- 140 kT**. The
+threshold that matters, ~150 kT, sits about 1.2 sigma away, so the measurement is consistent with
+closure being favourable and cannot establish it. Improving this is not a matter of more seeds: halving
+the error needs 4x the runs at N=70, and going to larger R makes the per-point error grow faster than
+the lever arm improves. **The method is capped near +-140 kT at any budget available here.**
+
+**Launching -- 6 more emergence seeds at 2.4M, criterion restated.** Load has dropped to 16 with the
+energy arms finished. These join em5 under its existing criterion, taking the truncation sample from 6
+to 12 runs and adding 12 runs to the rate corpus.
+
+* **>= 2 of 12 gain a FIRST hit between 1.6M and 2.4M** -> 1.6M truncates and every rate here is
+  run-length limited.
+* **0 of 12** -> 1.6M is adequate and sd7105's late formation was a tail event.
+* **exactly 1 of 12** -> consistent with what has been seen; revise nothing.

@@ -163,7 +163,29 @@ configuration**:
 
 With lambda = +2.8 +- 2.8 eps (below), this gives
 
-> **kappa = -6.1 +- 56.3 eps = -13 +- 125 kT**, consistent with zero.
+> **kappa = -15 +- 140 kT**, consistent with zero.
+
+(Revised from -13 +- 125 kT: R_ring is 11.65 measured from the plant, not the 10.4 first used.)
+
+A second radius was then run to break the kappa-lambda degeneracy. N = 300, R_ring = 49.93, 10 seeds
+per configuration, gives **delta = -14.1 +- 9.5 eps** against N = 70's -6.4 +- 4.9. Two things came out
+of it, both negative:
+
+* The **two-point fit is less precise, not more**: **kappa = 188 +- 263 kT**. The radii are too close
+  (1/R1 - 1/R2 = 0.066), so dividing by that difference amplifies the error, and the absolute energy
+  error grows with lipid count because delta is a per-lipid difference times N. A wider lever arm makes
+  the noise grow faster than the leverage improves.
+* The **two-point lambda is 8.20 +- 7.38 eps**, agreeing with the +2.8 +- 2.8 measured independently at
+  0.68 sigma. That is a genuine consistency check on the geometry and the energy measurement, and it
+  passes.
+
+The delta values also trend in the direction the continuum picture predicts -- more favourable closure
+at larger R -- but by 7.7 +- 10.7 eps, which is 0.7 sigma and is not evidence.
+
+**The measurement is capped.** The ~150 kT threshold sits about 1.2 sigma from the central value, so
+this is consistent with closure being favourable and cannot establish it. Halving the error needs four
+times the runs, and moving to larger radii makes it worse rather than better. **kappa without a
+spectrum is obtainable here; kappa precise enough to decide the threshold is not.**
 
 **What this establishes and what it does not.** The central value implies bending is essentially free,
 which would make closure thermodynamically favourable at any size. But the ~150 kT threshold above
