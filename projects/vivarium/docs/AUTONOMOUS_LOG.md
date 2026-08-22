@@ -12742,3 +12742,81 @@ intermittency recorded last tick. Nothing about the attention formulation change
 **No falsification criterion, because no run was launched.** Six seeds remain in flight and complete
 within a tick or two. The transformer track is finished except for those confirmations and the open
 decision about whether weights should adapt during forward passes.
+
+## Tick — TRANSFORMER ARM COMPLETE at 2/12. Both criteria pass; the refactor is finished.
+
+**Completed.** All twelve transformer seeds reached 1.6M. Final: **2/12** (sd8105 at 1 120 000, sd8107 at
+1 260 000).
+
+**PRIMARY, mean largest cluster over full runs, seed-level, 12 seeds against 27:**
+**+2.9 +- 7.1 lipids, 0.41 sigma**, against a 2 sigma withdrawal threshold.
+
+**SECONDARY, formation rate:** transformer **2/12 = 0.167** (CI 0.047-0.448) against the corpus
+**7/40 = 0.175** (CI 0.087-0.320). Expected 2.10, observed 2, **Fisher exact p = 1.000**.
+
+**The history of the primary statistic is the most convincing part:**
+
+| sample | sigma |
+|---|---|
+| 6 seeds, to 820k | 0.34 |
+| 12 seeds, to 840k | 0.45 |
+| 6 seeds, full run | 0.14 |
+| **12 seeds, full run** | **0.41** |
+
+Four readings across growing samples and windows, scattering between 0.14 and 0.45 with the sign
+flipping, never trending. That is what equivalence looks like. A real offset would have held its sign
+and grown in significance as the sample doubled -- and one tick it appeared to, until the unit of
+analysis was corrected from checkpoints to seeds.
+
+**Concluded: the transformer refactor is finished and verified.** The full gate list, all passing:
+forces to 1e-16 relative on the production topology; one forward pass bit-identical to one integrator
+step; token-channel q.k reproducing the species table to exactly zero on 30186 real pairs; the MLP
+demonstrably live rather than decorative; ensemble energy equivalence at 0.021% over five paired seeds;
+aggregation trajectory at 0.41 sigma over twelve full runs; formation rate at p = 1.000; and the
+unprompted reproduction of vesicle intermittency, which was never tuned for.
+
+RESULTS.md updated with the final numbers and both vesicles.
+
+**Launching -- 6 emergence seeds on the transformer engine, criterion stated BEFORE the run.** Nothing
+was in flight after the arm finished. Now that the engine is validated as equivalent, it is the natural
+default for further emergence work, since it is the architecture this project exists to demonstrate.
+These add to both the corpus rate and the transformer sample.
+
+* **Pooled transformer rate over 18 seeds stays within the corpus CI of 0.087-0.320** -> equivalence
+  holds at larger sample and the engine is settled.
+* **Pooled rate falls outside that interval** -> a difference has appeared that twelve seeds could not
+  see, and the equivalence claim is re-opened rather than defended.
+* Expected formations in six more runs at 0.175: **1.05**, so 0 to 3 is unremarkable and this is again
+  a secondary observable, not a test on its own.
+
+**Nothing retracted.**
+
+### Render of the transformer vesicle, and a colour-map near-miss worth recording
+
+Rendered sd8105 at its final frame (step 1 600 000) and looked at it. It is a **closed bilayer ring of
+radius ~6 sigma with a long ribbon appendage**: heads outside, tail core inside, lumen visible in the
+image at the size the metric reports. 80 lipids, lumen 393-445 cells against ~2037 expected
+(ratio 0.214), lumen water 0.69 of bulk, no percolation, 1 vesicle by the four-dilation gate.
+
+**The first render was wrong and I nearly reported it.** `_shot.py` uses `0=water, 1=head, 2=tail`;
+`field.py:58` uses `HEAD, TAIL, WATER = 0, 1, 2`. Rendering a `_mixture` state through `_shot`'s map
+inverts head and water, and the image came out as an orange sea of "tails" with thin blue strands and
+no visible membrane. The correct map shows an ordinary bilayer. The same inversion also corrupted the
+lumen-water number: reading water as species 0 gave **2.41** of bulk, against the true **0.69**.
+
+Two conventions for the same three integers exist in this tree, and nothing checks that a renderer and
+a state agree. **The count is the guard**: 160 lipids, so the head species must have exactly 160 members
+and the tail species exactly 640. That check takes one line and would have caught this immediately. It
+is what caught it in the end.
+
+This is the failure mode the protocol exists for, arriving from the direction the protocol did not
+anticipate. The rule was written as "a metric can flatter a render." Here a mislabeled render and a
+mislabeled metric were wrong *together and consistently*, because both read the same wrong column, so
+cross-checking them against each other would have confirmed the error rather than exposing it.
+**Agreement between a render and a metric is only evidence when they fail independently.**
+
+**One caveat visible in the image and not in any number:** the ring is compact, but its appendage makes
+the connected cluster span 30.3 sigma against a 32.5 sigma half-box. Metrics built on minimum-image
+centroids are outside their documented precondition on this object. The enclosure gate and
+`unwrap_cluster` are grid- and connectivity-based and are unaffected; **R_mid on this cluster is not
+trustworthy** and is not quoted.

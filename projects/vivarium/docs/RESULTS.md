@@ -168,8 +168,8 @@ simulation step. The non-bonded force already had that shape; the bonds did not,
 | token-channel q.k vs the species table, 30186 real pairs | **0.000e+00** |
 | MLP is live, not decorative | non-zero weights change h AND the forces |
 | ensemble equivalence, 5 paired seeds x 20000 steps | paired energy difference **0.021%**, 1.30 sigma |
-| emergent aggregation, seed-level over a full 1.6M run, 6 seeds vs 27 | **-1.4 +- 9.5 lipids, 0.14 sigma** |
-| emergent formation rate, 6 full runs | **1/6 against the corpus 7/40; expected 1.05, observed 1, Fisher p = 1.000** |
+| emergent aggregation, seed-level over full 1.6M runs, **12 seeds vs 27** | **+2.9 +- 7.1 lipids, 0.41 sigma** |
+| emergent formation rate, **12 full runs** | **2/12 = 0.167 (CI 0.047-0.448) against the corpus 7/40 = 0.175; expected 2.10, observed 2, Fisher p = 1.000** |
 
 Every force is a masked attention head: the non-bonded score is `a(r) + b(r) * (q_i . k_j)`, the bonds
 and the 1-3 stiffener are the same score-times-relative-position shape on a pair mask. Values are
@@ -177,10 +177,18 @@ relative positions, which is what makes the output equivariant. Velocity Verlet 
 structure around it.
 
 **And it produces the result, not just the forces.** Running the production driver with
-`VIVARIUM_ENGINE=transformer`, seed 8105 formed a vesicle from a dispersed start at step 1 120 000 and
-held it for six checkpoints: 80 lipids, lumen 393-445 cells against ~2037 expected (ratio 0.214), lumen
-water 0.68-0.90 of bulk, no percolation. Unwrapped it is a closed ring with a long appendage, the same
-form classified as a vesicle throughout this document.
+`VIVARIUM_ENGINE=transformer`, **two of twelve seeds formed vesicles**, matching the 2.10 expected at the
+corpus rate:
+
+* **sd8105**, first closure at step 1 120 000, 80 lipids, lumen 393-445 cells against ~2037 expected
+  (ratio 0.214), lumen water 0.68-0.90 of bulk. It also reproduced the **intermittency**: closed
+  continuously to 1 420 000, went dark for four checkpoints with the 80-lipid cluster intact throughout,
+  then re-closed with a larger lumen and was still closed at the final frame.
+* **sd8107**, first closure at 1 260 000, 85 lipids, lumen 402-463 cells, lumen water 1.24-1.56 of bulk,
+  stable across seven checkpoints.
+
+Both unwrap to a closed ring carrying an appendage -- the same object the original engine produces, at
+the same sizes and lumen ratios. The attention formulation does not change what forms.
 
 **What is honestly NOT satisfied.** The attention is **unnormalised**. Softmax cannot be used: forces are
 an extensive sum over neighbours while softmax produces a convex combination, so normalising would make
