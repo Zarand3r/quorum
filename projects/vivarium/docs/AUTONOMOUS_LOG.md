@@ -15479,3 +15479,58 @@ N=60 arm.
 
 **Retracted this tick: the N=100/L=110 wrap-free arm as a viable test.** Not its motivation -- the
 wrapping question stands -- but that specific design, which could not reach the phenomenon.
+
+## Tick — the wrap-proof redesign is viable; and my "dilution" diagnosis was wrong, it was BOX SIZE
+
+**Running, NOT read.** Three arms at `ht-0.25`, all 15 processes verified: wrap-proof N=60 L=65 at 380k
+(largest 11-24), matched-N N=100 L=65 at 1.20-1.22M (largest 34-66), standard N=160 L=65 at 540k
+(largest 70-109). **0 formations in any.**
+
+**THE PRE-REGISTERED VIABILITY CHECK PASSES.** Last tick I killed an arm for being unable to reach
+vesicle size and registered the same failure branch for its replacement. Normalising largest cluster by
+lipid count:
+
+| step | N160 L65 | N100 L65 | **N60 L65** |
+|---|---|---|---|
+| 100 000 | 0.223 | 0.156 | 0.183 |
+| 200 000 | 0.300 | 0.220 | 0.250 |
+| **380 000** | 0.280 | 0.256 | **0.283** |
+| 800 000 | 0.466 | 0.472 | -- |
+| 1 600 000 | **0.739** | -- | -- |
+
+**In this normalisation the three arms track each other**, and N=60 is **not lagging** -- 0.283 against
+N160's 0.280 at the same step. Following the same curve to 0.739 projects **~44 lipids at 1.6M**, above
+the **41** of the smallest vesicle observed. **Marginally reachable, so the arm stands.**
+
+**MY DIAGNOSIS LAST TICK WAS WRONG, AND THIS CORRECTS IT.** I attributed the killed arm's slowness to
+**dilution**. But:
+
+| arm | rho | box | fraction at 380k |
+|---|---|---|---|
+| N=60, L=65 | 0.0142 (2.7x dilute) | **65** | **0.283 -- keeps pace** |
+| N=100, L=110 (killed) | 0.0083 (4.6x dilute) | **110** | ~0.13 -- fell far behind |
+
+**N=60 is dilute and keeps pace; the killed arm had a 2.9x larger box.** Aggregation fraction here is
+roughly density-independent over this range and strongly **box-size** dependent, because lipids must
+diffuse across the box to meet. **It was box size, not concentration, that put the killed design out of
+range.** I recorded the dilution confound carefully for three ticks and had the mechanism wrong.
+
+**This also means the wrap-proof design is better than I claimed:** matching the corpus box (L=65) is
+what preserves the encounter geometry, and the residual 2.7x dilution appears not to matter much for
+aggregation rate. The remaining difference from the corpus is lipid count, not kinetics.
+
+**LAUNCHED, criterion fixed BEFORE the run: 5 MORE seeds on the wrap-proof arm (N=60, L=65), taking it
+to 10.** Nothing new -- this arm answers the live question and the only thing it lacks is power.
+
+* **>= 1 formation in 10 wrap-proof seeds** -> closure occurs when wrapping is geometrically excluded.
+  Combined with 3/3 historical formations having been unwrapped, this makes wrapping a live suppressor
+  rather than a correlate.
+* **0 formations in 10, with largest cluster reaching >= 40** -> **P(0 in 10) = 0.16** at the
+  eligible-run rate 0.167, so this is meaningful evidence against wrapping being the limiter, though not
+  conclusive. **With 5 seeds it would have been P = 0.40, which is why I am doubling rather than
+  starting something new.**
+* **Largest cluster stalls below 40** -> the projection was wrong, and the wrap-free approach is
+  abandoned in 2-D as registered last tick.
+
+**Retracted this tick: my attribution of the killed arm's failure to dilution.** The mechanism was box
+size. The decision to kill that arm was still correct; the reason I gave for it was not.
