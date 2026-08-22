@@ -11340,3 +11340,53 @@ end-gap held at 6 sigma, 4 sizes x 5 seeds.
   behind the standing plan is retracted.
 * **All close or none close at 6 sigma** -> the gap is saturating or excluding at every radius, and the
   discriminating gap lies between 3 and 6 sigma or between 6 and 9.6; report and bisect.
+
+## Tick — gap dominates at fixed size: 5/5 at 3.3 sigma against 1/5 at 9.6 sigma, same N=70
+
+**Two arms COMPLETE.**
+
+**3-sigma positive control, final at 300k: 5 of 5**, with 29, 21, 16, 15 and 30 enclosure checkpoints.
+The >= 4/5 branch is confirmed at full length, not just on the early read. "3 sigma -> 5/5" reproduces
+after every instrument fix.
+
+**9.6-sigma size test, N=70 complete at 300k: 1 of 5** (sd3 with 9 enclosure checkpoints; the other four
+zero throughout).
+
+**Measured -- gap dependence at FIXED radius.** Same N=70, same R (~12.5), same 300k budget:
+
+| end-gap | closure |
+|---|---|
+| 3.3 sigma | **5/5** |
+| 9.6 sigma | **1/5** |
+
+That is a clean one-variable result: with size held constant, the end-gap alone takes closure from
+certain to rare. It reproduces the original gap scan (3 sigma 5/5, 6 sigma 3/5, 9 sigma 2/5) using the
+current, repeatedly-fixed instrument, and it confirms that the 9.6-sigma size test is gap-limited rather
+than time-limited -- consistent with last tick's finding that closure at 3.3 sigma takes under 10 000
+steps.
+
+**Not read.** 9.6-sigma arm at N=120 (160k), N=200 (50k), N=300 (30k) -- planted and incomplete.
+em4 emergence at 740-760k of 1.6M, **0/6** by gate.
+
+**Launching the queued 6-sigma arm, criterion FIXED LAST TICK before any of this data existed.** Span
+per size to hold the end-gap at 6 sigma: 0.9161, 0.9493, 0.9689, 0.9791 for N = 70, 120, 200, 300.
+Verified by planting: N=70 gives R_mid 12.56 and gap 6.6 sigma; N=300 gives R_mid 48.86 and gap 6.4
+sigma. Energies -7.28 and -8.65, neither percolating, both satisfying L >= 4R. Radius varies 3.9x at
+constant gap.
+
+Restating the criterion verbatim rather than rewriting it now that N=70's 9.6-sigma point is known:
+
+* **Closure fraction rises with N at 6 sigma** -> bending is the barrier and the threshold radius gives
+  kappa without a spectrum.
+* **Flat or falling with N** -> bending is not the barrier at these sizes and the continuum argument
+  behind the standing plan is retracted.
+* **All close or none close at 6 sigma** -> the gap is saturating or excluding at every radius; report
+  and bisect between 3 and 6, or 6 and 9.6.
+
+6 sigma is chosen because the original scan put it at 3/5 -- the middle of the dynamic range, where a
+size effect has room to show in either direction. At 3.3 sigma everything closes and at 9.6 sigma almost
+nothing does, so neither could reveal one.
+
+**Load note.** This takes 21 running simulations to 41. The suite timed out once at 44 and I recorded
+that as a timeout rather than a pass; I am not running the suite while this arm is in flight, and if I
+do and it times out it will again be reported as a timeout.
