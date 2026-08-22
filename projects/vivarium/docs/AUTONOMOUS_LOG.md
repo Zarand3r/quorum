@@ -13256,3 +13256,119 @@ reverse arm to close **rarely within 200 000 steps** even if closed and open are
 degenerate. **A low reverse P_closed is therefore NOT by itself evidence of trapping** -- the
 discriminating observable is whether the forward arm DECAYS toward the reverse value, not whether the
 two match at 200 000 steps. I am stating this now because after the fact it would read as an excuse.
+
+## Tick — the control fired against me; the occupancy estimator is withdrawn and replaced by rates
+
+**Completed and read at the end**, all three restart arms at 200 000 steps, 10 seeds each, seed-level
+(not pooled checkpoints, which would be pseudo-replication):
+
+| arm | start | P_closed |
+|---|---|---|
+| FORWARD | closed 80-lipid vesicle (sd8105) | **0.895 +- 0.069** |
+| REVERSE-A | sd8107, closure-biased | **0.200 +- 0.051** |
+| REVERSE-B | clean open 71 (sd8101) | **0.043 +- 0.030** |
+
+**FORWARD - REVERSE-B = +0.852 +- 0.076, or 11.3 sigma. No convergence.** And the pre-registered
+discriminating observable, the forward decay, is **flat**: 0.980, 0.820, 0.900, 0.860 across the four
+windows, first half minus second half **+0.029 +- 0.067 (0.43 sigma)**.
+
+**The pre-registered branch fires against my own prior claim. I WITHDRAW the occupancy cross-check
+reported two ticks ago.** A 200 000-step occupancy is demonstrably not an equilibrium quantity here:
+two arms prepared differently sit 11 sigma apart and neither is moving appreciably. The lambda ~ +0.03
+eps I derived from sd8105 and sd8107 occupancies **was computed with an invalid estimator** and is
+withdrawn as such, independent of whether its value was near the truth.
+
+**What the same data supports instead, and why it is legitimate.** Occupancy needs equilibration; **rates
+do not.** Each rate is measured inside its own state, so `K = k_close/k_open` is an equilibrium constant
+even when the populations have not equilibrated. There are **plenty of transitions** -- the system is not
+deeply trapped, it is merely slow to equilibrate:
+
+| arm | C->O | closed exposure | O->C | open exposure |
+|---|---|---|---|---|
+| FORWARD | 7 | 1.79 seed-Msteps | 6 | 0.21 |
+| REVERSE-A | 22 | 0.39 | 25 | 1.61 |
+| REVERSE-B | 3 | 0.08 | 4 | 1.92 |
+| **pooled** | **32** | **2.26** | **35** | **3.74** |
+
+`k_open = 14.16`, `k_close = 9.36` per seed-Mstep, **K = 0.661 +- 0.162** (Poisson).
+
+**Closure free energy = -kT ln K = +0.41 +- 0.24 kT** -- closure is very slightly UNfavourable and
+consistent with zero. Implied **lambda = +0.09 +- 0.06 eps per end**, agreeing with the static
+**-0.20 +- 1.95 eps** and **30x tighter**.
+
+**The strongest evidence that this is right is that it predicts the disagreement it was derived from.**
+Equilibrium `P_closed = K/(1+K) = 0.398`. The forward arm sits at 0.895 above it and reverse-B at 0.043
+below it: **the two arms bracket the predicted equilibrium**, which is exactly the signature of two
+preparations relaxing toward a common value from opposite sides and not arriving within 200 000 steps.
+The original emergent occupancies, sd8105 at 0.769 and sd8107 at 0.269, bracket 0.398 as well.
+
+**Honest accounting: the estimator I used was invalid and the conclusion survived anyway under a valid
+one.** These are separate facts and I am not letting the second excuse the first.
+
+**A limitation that could still overturn this.** `nves` is a strict four-dilation gate, so a marginal
+vesicle could flicker across it between checkpoints without any real structural change. That would
+inflate both rates and leave K roughly intact, but it would mean I am timing a detector and not a
+physical transition. **This is the leading remaining threat to the number.**
+
+**LAUNCHED, criteria fixed BEFORE the run: 6 forward + 6 reverse-B restarts at 1 000 000 steps**,
+checkpoints every 10 000, same states and protocol so they pool with the 200k data. Five times the
+duration is what the bracketing prediction needs to be tested.
+
+* **Both arms converge to P_closed = 0.40 +- 0.10** -> the rate-based free energy is validated by a
+  prediction made before the run, and lambda ~ 0 is settled by a third independent route.
+* **Forward stays >= 0.8 through 1M** -> the rate estimate is wrong, most likely because the counted
+  transitions are gate flicker rather than physical events, and I withdraw the rate-based number too.
+* **Both arms move toward each other but neither reaches 0.40** -> equilibration is slower than 1M and
+  the number stands unvalidated, reported as such.
+
+Additionally, and costing nothing: **transitions will be checked for clustering in time.** Genuine
+barrier crossings should be spread across the trajectory; flicker will bunch at checkpoints adjacent to
+one another.
+
+**Emergence: 8200-8205 at 1.22-1.26M of 1.6M, 0 formations, 0 hits.** Three of six seeds
+(8200, 8202, 8205) now sit at **largest = 160** -- every lipid in one connected cluster -- and stay
+there. Past 1.1M, where the corpus begins producing vesicles, this arm has produced none. The
+system-spanning ribbon is the dominant outcome, which is what lambda ~ 0 predicts.
+
+**RETRACTED this tick: the occupancy-based cross-check of lambda** (invalid estimator, superseded by
+rates). **Not retracted:** the static lambda = -0.20 +- 1.95 eps, which never used occupancy.
+
+**FLICKER CHECK RUN IMMEDIATELY, and it partly undercuts the number above. Correcting it here rather
+than waiting for the 1M runs.**
+
+Dwell-time distribution over all 30 restarts (checkpoints of 10 000 steps):
+
+| state | dwells | median | frac of length 1 | expected if memoryless at observed rate |
+|---|---|---|---|---|
+| closed | 45 | 2.0 | **0.400** | 0.132 |
+| open | 52 | 2.0 | **0.288** | 0.089 |
+
+**Single-checkpoint dwells are 3x more common than a memoryless process at these rates would give.**
+That is the signature of the `nves` gate flickering, not of physical barrier crossings, and it means a
+large share of the 32 and 35 counted transitions are detector noise.
+
+**Re-derived with flicker suppressed** -- requiring the new state to persist for k consecutive
+checkpoints before a change is accepted:
+
+| estimator | C->O | O->C | K | closure dF | P_closed at equilibrium |
+|---|---|---|---|---|---|
+| raw (as first reported) | 32 | 35 | 0.661 +- 0.162 | **+0.41 +- 0.24 kT** | 0.398 |
+| debounce 2 checkpoints | 9 | 12 | 0.800 +- 0.353 | **+0.22 +- 0.44 kT** | 0.444 |
+| debounce 3 checkpoints | 3 | 6 | 1.046 +- 0.739 | **-0.04 +- 0.71 kT** | 0.511 |
+
+**What survives and what does not.** The conclusion is robust: every estimator gives a closure free
+energy consistent with zero, and the three agree with each other. **The precision does not survive.**
+Two thirds of the raw transitions vanish under a 2-checkpoint debounce, so the raw **+-0.24 kT
+understates the true uncertainty**; the honest figure is **+0.22 +- 0.44 kT**. **My claim that this is
+"30x tighter than the static measurement" is withdrawn** -- it is roughly 4x tighter, not 30x.
+
+**AMENDING THE PRE-REGISTERED CRITERION, before any 1M result can be read.** I set the convergence
+target at `P_closed = 0.40 +- 0.10` from the raw estimator alone. The debounced estimators put it at
+0.444 and 0.511, so that window was too narrow and centred on the least trustworthy of the three. The
+amended target is **P_closed = 0.40 to 0.51**, the span of the three estimators, and convergence counts
+if both arms land in it. I am recording the amendment and its reason now, with the runs 40 000 steps in
+and no outcome visible, so that it is a correction and not a retrofit.
+
+**The falsification branches are otherwise unchanged**, including the one that kills the rate number:
+forward remaining >= 0.8 through 1M means the counted transitions were gate flicker and the rate-based
+free energy goes too.
