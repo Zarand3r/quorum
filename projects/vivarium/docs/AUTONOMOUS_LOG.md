@@ -12144,3 +12144,44 @@ arms with criteria already fixed. The refactor still does not touch `_mixture.py
 **Still blocked on a decision, not on work.** Making "always alive" non-vacuous means weights changing
 during the forward passes, which stops conserving energy and therefore changes the physics rather than
 re-expressing it. Every number in RESULTS.md would need re-deriving against it. That is the user's call.
+
+## Tick — the refactor is validated on the PRODUCTION topology, not just toy chains
+
+**Ran.** N=300 kinetic at 130-210k of 300k, sd2 holding 11 enclosure checkpoints. em5 at 1.10-1.40M of
+2.4M, 1/6 (sd7203). em6 at 600-900k of 2.4M, 0/6. Nothing complete, nothing scored.
+
+**Closed a validation gap I had left open.** Every transformer test so far built its own bonds -- simple
+chains of two or three. The production system is not that: `_mixture.build` makes branched five-bead
+lipids in explicit water. A refactor that is exact on toy chains and wrong on the real topology would
+have passed every gate written so far.
+
+Ran the heads against `field.forces()` on the full production construction:
+
+| quantity | value |
+|---|---|
+| system | 2959 beads: 800 lipid, 2159 water |
+| topology | 640 bonds, 320 angle terms, both spring heads populated |
+| max abs force difference | 1.421e-14 |
+| force scale | 1.028e+02 |
+| **relative error** | **1.383e-16** |
+| token-channel chi vs species table, 30186 real pairs | **0.000e+00** |
+
+Machine precision on the system the science actually runs on. The token channel reproduces the
+interaction matrix exactly, not approximately, on real species composition.
+
+**Added as a suite gate**, at reduced size so the suite stays quick, with the full-size numbers recorded
+in the test docstring. It asserts both spring heads are populated and that water is present, so it fails
+loudly if the production builder ever stops exercising them.
+
+**Nothing retracted this tick.** The one-head/two-head distinction from last tick still stands and is
+unaffected: forces agree to machine precision in both cases, and it is only multi-step trajectories that
+decorrelate when summation orders differ.
+
+**No falsification criterion, because no simulation was launched.** Load is 22 across three arms with
+criteria already fixed. `_mixture.py` remains untouched by the refactor, so every measured result stands.
+
+**The transformer track is now complete up to the pending decision.** Forces, one step, equivariance,
+token channel, MLP liveness, ensemble equivalence and the production topology are all gated. What
+remains is whether "always alive" should mean weights adapting during forward passes -- which changes
+the physics rather than re-expressing it, and would require re-deriving every number in RESULTS.md.
+That is a decision, not a task.
