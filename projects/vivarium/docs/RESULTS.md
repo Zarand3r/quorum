@@ -140,6 +140,42 @@ too far apart rests on inspection of renders, not measurement, and is flagged he
 *A planted flat bilayer after 200 000 steps with imposed 4/6-tail leaflet asymmetry: still straight,
 fully intact. 0/5 closed.*
 
+## The step as a transformer forward pass
+
+The design constraint was that the dynamics use attention and MLP blocks only, one forward pass per
+simulation step. The non-bonded force already had that shape; the bonds did not, and there was no MLP.
+`transformer.py` closes both gaps and is gated so the claim cannot quietly decay:
+
+| gate | result |
+|---|---|
+| sum of masked heads vs `field.forces()`, production topology (2959 beads, 640 bonds, 320 angles) | relative error **1.4e-16** |
+| one forward pass vs `Inertial.step` | **max abs difference exactly 0.0** |
+| token-channel q.k vs the species table, 30186 real pairs | **0.000e+00** |
+| MLP is live, not decorative | non-zero weights change h AND the forces |
+| ensemble equivalence, 5 paired seeds x 20000 steps | paired energy difference **0.021%**, 1.30 sigma |
+| emergent aggregation, seed-level over 100k-820k | **-2.6 +- 7.6 lipids, 0.34 sigma** |
+
+Every force is a masked attention head: the non-bonded score is `a(r) + b(r) * (q_i . k_j)`, the bonds
+and the 1-3 stiffener are the same score-times-relative-position shape on a pair mask. Values are
+relative positions, which is what makes the output equivariant. Velocity Verlet is the residual
+structure around it.
+
+**And it produces the result, not just the forces.** Running the production driver with
+`VIVARIUM_ENGINE=transformer`, seed 8105 formed a vesicle from a dispersed start at step 1 120 000 and
+held it for six checkpoints: 80 lipids, lumen 393-445 cells against ~2037 expected (ratio 0.214), lumen
+water 0.68-0.90 of bulk, no percolation. Unwrapped it is a closed ring with a long appendage, the same
+form classified as a vesicle throughout this document.
+
+**What is honestly NOT satisfied.** The attention is **unnormalised**. Softmax cannot be used: forces are
+an extensive sum over neighbours while softmax produces a convex combination, so normalising would make
+a particle with twenty neighbours feel the same total pull as one with two, and multiplying the
+normaliser back in makes the softmax an identity. This is the linear/kernel attention that equivariant
+geometric transformers use, not softmax attention. The OU thermostat noise is also neither attention nor
+MLP -- it is a stochastic residual, and it is required for finite-temperature dynamics. And "no
+separation between training and inference" is vacuous while nothing learns; making it real means weights
+changing during forward passes, which stops conserving energy and so changes the physics rather than
+re-expressing it.
+
 ## Bending rigidity, measured without a spectrum
 
 The undulation-spectrum route to kappa failed here: per-mode estimates spread 16.7x at 60 lipids and

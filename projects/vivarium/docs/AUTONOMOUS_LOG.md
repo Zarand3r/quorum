@@ -12587,3 +12587,40 @@ entry, but it was the number I was about to act on, and it is wrong.
 
 **No new run launched.** Twelve seeds are in flight and the six new ones need to mature before the
 comparison tightens. The criterion set last tick stands unchanged.
+
+## Tick — the TRANSFORMER ENGINE produced an emergent vesicle
+
+**Ran.** Transformer arm: six mature seeds at 1.22-1.24M, six newer at 560-580k.
+
+**sd8105 formed a vesicle, on the attention formulation, from a dispersed start.** First hit at
+**1 120 000**, held six checkpoints:
+
+| step | largest | lumen_c | nenc | perc | lumH2O |
+|---|---|---|---|---|---|
+| 1 120 000 | 80 | 393 | 1 | n | 0.726 |
+| 1 180 000 | 80 | 445 | 1 | n | 0.901 |
+| 1 240 000 | 80 | 435 | 1 | n | 0.830 |
+
+Lumen ratio 435/2037 = **0.214**. All six states preserved; adjudicated from the state at 1 240 000,
+unwrapped: a closed ring with a long appendage, span 30.2 x 48.1 sigma, the same form classified as a
+vesicle throughout this project.
+
+**This closes the loop the refactor was built for.** Every prior gate proved the engine CORRECT -- forces
+to 1e-16 on the production topology, one forward pass bit-identical to one integrator step, ensemble
+energy equivalence at 0.021%, aggregation trajectory at 0.34 sigma. None of them showed it produce the
+science result. It now has.
+
+**Formation count is on expectation.** 1 of 6 mature seeds by 1.24M; at the pooled length-matched rate
+of 7/40 = 0.175 the expectation over six full runs is 1.05. This was pre-registered as the secondary,
+underpowered observable and it neither confirms nor refutes on its own -- but it is consistent, and the
+primary observable already passed.
+
+**Recorded in RESULTS.md**, with the gate table and with what is honestly NOT satisfied: the attention
+is unnormalised and cannot be softmax without breaking the physics; the thermostat noise is neither
+attention nor MLP; and "no separation between training and inference" stays vacuous while nothing learns.
+
+**Nothing retracted.** Last tick's unit-of-analysis correction stands and is what makes the 0.34 sigma
+figure trustworthy.
+
+**No new run launched.** Twelve seeds are in flight, six still maturing, and the criterion set two ticks
+ago stands unchanged.
