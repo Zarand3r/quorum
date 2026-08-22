@@ -11670,3 +11670,46 @@ bottleneck at 4-8k of 50 000 and its criterion is already fixed: delta more nega
 non-overlapping bars supports the continuum form; less negative with bars excluding zero slope retracts
 it; overlapping bars means underpowered. Load is 38 and adding runs would slow the very point the fit
 needs.
+
+## Tick — verified the load-bearing geometric factor behind kappa; it survives, with two caveats found
+
+**Ran.** N=300 energy at 8-14k of 50k. N=300 kinetic at 30-80k of 300k. em4 at 1.36-1.40M, **0/6**.
+Nothing complete, nothing scored.
+
+**Verified the factor 0.4375 that kappa scales directly with.** Last tick's derivation assumed an arc at
+span 0.75 carries the same arc length at 1.333x the ring radius. Measured planted radii:
+
+| N | R_ring | R_arc (measured) | ratio |
+|---|---|---|---|
+| 70 | 11.65 | 14.03 | 1.204 |
+| 300 | 48.24 | 74.91 | 1.553 |
+
+Neither is 1.333 and they disagree with each other, which looked like the derivation failing.
+
+**It is a measurement artifact, not a geometry error.** For a three-quarter arc the centroid is offset
+from the ring centre, so `R_mid` -- a median distance from the centroid -- is not the ring radius. From
+the plant formula with lat = 2.091 (back-computed from the ring), the arc's true radius at N=70 is
+15.53 against a measured 14.03. The check that settles it is arc length: 0.75 * 2*pi * 15.53 = 73.2 and
+the ring's 2*pi * 11.65 = 73.2, **identical**. Arc length is preserved, the 1.333 ratio holds in truth,
+and **kappa = -13 +- 125 kT stands unchanged.**
+
+**Caveat 1, recorded so it is not repeated: never use measured R_mid for an ARC.** It reads about 10%
+below the true ring radius at span 0.75, and the error grows as span falls. It is correct for a full
+ring, where the centroid is the centre.
+
+**Caveat 2: the reported gaps in the kinetic series were slightly understated**, because they were
+computed from measured R_mid. True gaps from the formula: the "3-sigma" arm is 3.35, the "6-sigma" arm
+6.70, the "9.6-sigma" arm 10.08. Errors of 4-11%, all in the same direction, so the series remains a
+clean monotone ladder and no conclusion changes. The dose-response is properly stated as **5/5 at 3.4
+sigma, 4/5 at 6.7 sigma, 1/10 at 10.1 sigma**.
+
+**Checked the N=300 energy runs for the periodic-image problem that has bitten this project three
+times.** The N=300 arc has true radius 66.6 and extent 133 in an L=200 box, exceeding the half-box, so
+its measured R_mid is unreliable -- but the physics is not: the nearest approach between the arc and its
+own image is L - extent = 67 sigma, against an interaction cutoff of 2.5. **The energies are sound**,
+and the kappa fit uses R_ring from the ring runs (49.93, satisfying 4R <= L), not the arc's radius. So
+the N=300 point will be valid when it finishes.
+
+**No falsification criterion for a new run, because none was launched.** Load is 36, the N=300 energy
+arm is the bottleneck the kappa fit needs, and adding runs would slow it. The criterion for that arm is
+already fixed and unchanged.
