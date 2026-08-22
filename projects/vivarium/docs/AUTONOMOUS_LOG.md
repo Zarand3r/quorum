@@ -12311,3 +12311,42 @@ That number came from the constant-hazard assumption I have just retracted.
 
 **No new simulation launched.** Load is 22; the N=300 arc arm completes within a tick or two and the
 emergence arms are the only source of window exposure. Adding runs would slow both.
+
+## Tick — the simplest explanation for the formation burst does not survive
+
+**Ran.** N=300 arc arm at 180-280k of 300k, still 1/10. em5 at 1.90-2.30M of 2.4M. em6 at 1.18-1.78M.
+Truncation-window at-risk exposure now **2.52 seed-M** of an eventual 8.8, **0** formations. Nothing
+complete.
+
+**Tested why formation is bursty.** Last tick established an eightfold hazard drop -- 0.446 per seed-M
+between 400k and 800k, 0.054 afterwards. The obvious explanation is aggregation state: early on there
+are many short ribbons whose ends are close, and later they coalesce into fewer, longer, branched
+networks whose ends are far apart. That would connect the burst directly to the measured ~8 sigma
+capture radius. It is testable from existing logs.
+
+| window | mean largest cluster | median | formations |
+|---|---|---|---|
+| 0-400k | 44.1 | 41 | 0 |
+| **400-800k** | **81.4** | **75** | **5** |
+| 800-1200k | 107.7 | 110 | 0 |
+| 1200-1600k | 117.4 | 122 | 1 |
+
+The system does coarsen monotonically, 44 to 117. But the largest cluster **at the moment of first
+formation** was 86, 85, 67, 65, 141 and 135 -- mean 96.5, range 65 to 141.
+
+**That range contains the later windows' typical values.** Windows sitting at means of 108 and 117 are
+squarely inside 65-141 and yet produced one formation between them across 46 seed-M of exposure. And the
+two latest formations occurred at largest clusters of 141 and 135, LARGER than typical rather than
+smaller, which cuts against a "only small clusters close" reading as well.
+
+**Concluded: aggregation state does not explain the burst at this sample size.** With six formation
+events the hypothesis is not cleanly refuted either -- it is underpowered -- but the data as it stands
+argues against the simplest version, because the later windows occupy the same cluster-size range where
+formation demonstrably happens. Recorded as a rejected simple explanation rather than an open lead, so
+it is not re-proposed later.
+
+**Nothing retracted this tick.** Last tick's hazard retraction stands and is unaffected: the eightfold
+drop is a fact about timing, and this tick only rules out one candidate cause for it.
+
+**No falsification criterion, because no run was launched.** Load is 22 across three arms with fixed
+criteria. The N=300 arc arm completes within a tick or two and is the next thing that will actually read.
