@@ -11476,3 +11476,56 @@ against N=300 at 9.6 sigma, 10 seeds each.
 * **Anything between** -> underpowered even at 10 seeds; report both counts and claim no effect.
 
 Reachability: all three branches are reachable, since each size can independently close 0-10.
+
+## Tick — the arc-gap experiment measures KINETICS; the standing plan asks a THERMODYNAMIC question
+
+**Ran.** 6-sigma N=70 anchor COMPLETE at 300k: e29, e9, e0, e22, e26 -> **4/5**, confirming the early
+read. 9.6-sigma N=70 seeds 5-9 at 200-210k, all zero so far. N=200 at 80-90k, N=300 at 10-60k. em4 at
+1.04-1.08M, **0/6**.
+
+**The N=70 dose-response is now complete at three gaps, all at 300k:**
+
+| end-gap | closure |
+|---|---|
+| 3.3 sigma | 5/5 |
+| 6.6 sigma | 4/5 |
+| 9.6 sigma | 1/5 |
+
+**Conceptual problem with the design, which I should have seen before launching it.** The quantity this
+measures is a **capture radius**: how far apart two ribbon ends can be and still find each other by
+diffusion within 300 000 steps. That is KINETICS.
+
+The standing plan is a THERMODYNAMIC argument: edge saved = 2*lambda is constant, bending paid =
+pi*kappa/R falls with size, so above some R the closed state is lower in energy. That balance says
+nothing about how ends diffuse. A larger arc could be thermodynamically eager to close and still never
+close in 300k because its ends are far apart -- and conversely.
+
+So the gap experiment cannot deliver "kappa without a spectrum", which is the standing plan's stated
+purpose. It delivers a capture radius, which is a real and useful number -- it explains why emergent
+ribbons with ends tens of sigma apart do not close in a million steps -- but it is not the measurement
+the plan asks for. Recording this rather than letting the arm finish and reporting its result as if it
+bore on kappa.
+
+**The thermodynamic question is directly measurable and cheap.** Given N lipids, is the closed ring
+lower in energy than the open arc? Plant both, equilibrate, compare. No diffusion, no waiting for ends
+to meet. If the standing plan's form holds, the per-configuration difference should follow
+2*lambda - pi*kappa/R with R growing as 0.198*N, so a fit across sizes yields both constants.
+
+**Launching -- ring versus arc energy at four sizes, criterion stated BEFORE the run.** N = 70, 120, 200,
+300; span 1.0 (closed ring) against span 0.75 (open arc with two ends) at identical N; 20 000 steps to
+equilibrate; energy averaged over the last checkpoints. Boxes as already verified: 60, 100, 170, 200.
+
+* **E(ring) < E(arc) at every N, with the gap widening as R grows** -> the closed state is favoured and
+  the trend matches 2*lambda - pi*kappa/R; fit gives kappa and lambda directly.
+* **E(ring) > E(arc) at small N and crossing over at large N** -> a critical size is measured directly,
+  which is exactly what the standing plan predicts.
+* **The difference is flat in 1/R, or has the wrong sign everywhere** -> the continuum form does not
+  describe this system and the standing plan's argument is retracted.
+
+Reachability: all three are reachable, since the sign and slope of the difference are unconstrained by
+anything measured so far.
+
+**Note on what this does NOT settle.** Even a clean thermodynamic answer leaves the kinetic barrier in
+place: emergent ribbons still have to find their own ends, and the capture radius of ~8 sigma at N=70
+says they usually will not. Favourable and reachable are separate conditions and this project has now
+measured one of each.
