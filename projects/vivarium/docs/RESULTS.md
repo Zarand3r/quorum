@@ -276,7 +276,17 @@ reported above.
   **The run-level figure, across the whole corpus.** Consecutive checkpoints within a run are not
   independent -- a vesicle persists across several -- so the independent unit is the run:
 
-      10 of 62 dispersed runs produced a vesicle.   16.1%,  Wilson 95% CI  9.0% to 27.2%
+      12 of 70 dispersed runs produced a vesicle.   17.1%,  Wilson 95% CI  10.1% to 27.6%
+
+  That figure pools runs of different lengths, which matters because one vesicle first appeared at
+  1 500 000 steps of a 1.6M run -- later than any other in this project, and later than several arms
+  ever ran. Restricting to the runs that all reached exactly 1.6M gives a cleaner, smaller sample:
+
+      6 of 28 length-matched runs produced a vesicle.   21.4%,  Wilson 95% CI  10.2% to 39.5%
+
+  The two overlap heavily and neither is the more correct number; the pooled figure has the tighter
+  interval, the length-matched one is free of the truncation question. Both are lower bounds while that
+  question is open -- a 2.4M arm is running to settle whether 1.6M cuts runs short.
 
   **The two instruments AGREE, once the better one has 20 runs:**
 
