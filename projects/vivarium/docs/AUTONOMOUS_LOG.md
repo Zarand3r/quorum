@@ -12235,3 +12235,39 @@ bias, so it would be suggestive rather than decisive -- and that is worth knowin
 after. If the arms return >= 3 (probability 0.086) the case is much stronger.
 
 **No new simulation launched.** Load is 22 across three arms whose criteria are all fixed.
+
+## Tick — the N=300 arc DOES close at a 10-sigma gap, in 1 seed of 10 so far
+
+**Ran.** N=300 kinetic at 160-260k of 300k. em5 at 1.54-1.92M of 2.4M. em6 at 960k-1.40M. Nothing
+complete.
+
+**The truncation window has opened, and is on prediction.** Four em5 seeds are past 1.6M. Excluding
+sd7203, which had already formed at 580 000 and so is not at risk of a FIRST formation, the accumulated
+exposure in the 1.6M-2.4M window is **0.56 seed-M** of an eventual 8.8. At the corpus hazard of 0.107
+per seed-M the expectation so far is **0.06 formations**, and **0 are observed**. Exactly what was
+predicted last tick; nothing decidable and nothing read.
+
+**Checked whether the N=300 arc arm's one hit is real, and it is.** sd2 reads `nves = 1` at all 11 of
+its enclosure checkpoints, not merely `nenc >= 1`:
+
+| step | largest | lumen_c | nves | lumH2O |
+|---|---|---|---|---|
+| 80 000 | 300 | 27 064 | 1 | 1.015 |
+| 130 000 | 300 | 27 173 | 1 | 1.010 |
+
+All 300 lipids in one cluster, lumen ~27 100 cells against ~28 650 expected for that count -- a **lumen
+ratio of 0.946**, which is a near-perfect closed ring, and water at bulk density. A planted arc that
+closes becomes essentially an ideal vesicle, which is the cleanest possible positive.
+
+**So a 300-lipid arc CAN close across a 10.1-sigma gap.** That matters because the capture radius
+measured at N=70 was ~8 sigma, and 10.1 sigma gave 1/10 there. N=300 currently also stands at **1/10**,
+with five seeds at 220-260k and five at 160-190k of 300k.
+
+**What that will mean if it holds.** The pre-registered branches were: N=300 closing >= 8/10 while N=70
+stays <= 2/10 means capture radius grows with R; both within 2 of each other means it is
+size-independent and the continuum argument behind the standing plan is retracted; anything between is
+underpowered. **1/10 against 1/10 is the middle branch** -- capture radius independent of ribbon size
+over a 4.3x range in radius. Not read yet, because five seeds are only halfway.
+
+**No new simulation launched.** Load is 22 across three arms with criteria already fixed. No retraction
+this tick.
