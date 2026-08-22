@@ -15250,3 +15250,55 @@ still exceeds the ~80 that the observed vesicles used. 7973 water beads against 
 **Retracted this tick: my chemistry-mismatch explanation for the closure calibration** -- tested at
 matched chemistry and refuted. **The closure free energy line of work is closed**, not retracted; the
 number stands with its caveat.
+
+## Tick — the wrap-free test is confounded with dilution, and that is not fixable by design
+
+**Running, NOT read.** Wrap-free arm (N=100, L=110) at 40k, largest 5-8 -- 2.5% of the run, and slower
+than the corpus arm because it is far more dilute. L=65 arm 8900-8904 at 820-980k, largest 63-90,
+**0 closures**. All 10 processes verified at `ht-0.25`.
+
+**A CONFOUND IN MY OWN TEST, IDENTIFIED BEFORE ANY RESULT EXISTS.**
+
+| arm | N | L | rho (lipids/sigma^2) | ribbon vs box | wraps? |
+|---|---|---|---|---|---|
+| corpus | 160 | 65 | **0.0379** | 160 vs 65 | yes |
+| wrap-free | 100 | 110 | **0.0083** | 100 vs 110 | no |
+
+**The wrap-free arm is 4.6x more dilute than the corpus.** That is not a choice I made carelessly -- **it
+is forced.** Preventing a wrap requires `N < L`; holding the corpus density requires `N = 0.0379 L^2`.
+Together: `0.0379 L^2 < L`, so `L < 26.4` and `N < 26` lipids -- **far below the ~80 that the observed
+vesicles used.**
+
+**In 2-D periodic boundaries, removing the wrapping artifact NECESSARILY means diluting.** The two
+cannot be separated by choosing a box. I am recording this as a structural limit of the geometry, not as
+a mistake to be corrected next tick.
+
+**What that does to the inference.** Dilution lowers the encounter rate, and closure here is
+encounter-limited (capture radius ~8 sigma). So the test is now **asymmetric**:
+
+* **More formations DESPITE 4.6x dilution** -> strong evidence that wrapping was suppressing closure,
+  because the confound pushes the opposite way.
+* **Fewer or equal formations** -> **ambiguous**, since dilution alone could account for it. This branch
+  cannot distinguish "wrapping did not matter" from "wrapping mattered but dilution cancelled it."
+
+**I am stating the ambiguity now** because after the fact a null is easy to present as though it settled
+the question, and it will not.
+
+**LAUNCHED, criteria fixed BEFORE the run: the matched-N control, `N = 100` at `L = 65`, 5 seeds,
+1.6M steps, `ht-0.25`.** Same lipid count as the wrap-free arm, same box as the corpus, `rho = 0.0237`.
+It still wraps (100 > 65), which is the point: comparing it against `N=100, L=110` isolates **box size**
+at fixed lipid number, leaving density as the single residual difference.
+
+* **Control (N=100, L=65) forms at a rate consistent with the corpus 7/40** -> lipid count is not the
+  driver, and any difference in the wrap-free arm is attributable to box size plus density.
+* **Control forms much less than the corpus** -> reducing lipids from 160 to 100 itself suppresses
+  formation, and the wrap-free arm's result cannot be read against the corpus at all -- only against
+  this control.
+* **Control wraps in fewer than 3 of 5 final states** -> my ribbon-length model over-predicts wrapping at
+  N=100, and the whole geometric argument needs re-deriving before either arm is interpretable.
+
+**Emergence in flight:** three arms -- 8900-8904 (N=160, L=65), 9100-9104 (N=100, L=110), and the
+control now launching (N=100, L=65).
+
+**Retracted this tick: nothing.** The wrap-free test is not withdrawn; its inferential reach is
+narrowed, in advance, to the asymmetric form above.
