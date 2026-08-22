@@ -11430,3 +11430,49 @@ arcs, which would itself be the size effect and would need a wider gap to quanti
 
 **No new arm launched.** Load is 41 simulations, both arc arms are mid-flight, and the emergence
 requirement is met by em4. Adding runs now would slow the two arms that constitute the experiment.
+
+## Tick — the size test was underpowered at 5 seeds; reallocated compute instead of adding it
+
+**Ran.** 9.6-sigma arm: N=70 complete (1/5), N=120 at 200k, N=200 at 60k, N=300 at 40k. 6-sigma arm:
+N=70 at 130-140k (4/5 established), N=120 at 40k, N=200 at 10k, N=300 at 0k. em4 at 860-880k, **0/6**.
+
+**Checked the power of the size comparison BEFORE waiting for it, and it fails.** N=70 at 9.6 sigma gave
+1/5. Against that, Fisher exact across every possible outcome at 5 seeds:
+
+    0/5 p=1.000   1/5 p=1.000   2/5 p=1.000
+    3/5 p=0.524   4/5 p=0.206   5/5 p=0.0476  <- the only significant outcome
+
+**Only a perfect 5/5 is detectable.** This is the same failure I found on the N=240 experiment, where
+only 6/6 could reach significance, and I said then that the calculation belonged at design time. I did
+it at design time here and it still came out badly, because 5 seeds is simply too few for a proportion
+contrast. At 10 seeds per size, 8/10 against 2/10 gives p=0.023 -- a reachable target.
+
+**Throughput was the second problem.** At 41 concurrent simulations the N=200 and N=300 arms had reached
+only 60k and 40k of 300k. Adding seeds on top would have made both problems worse.
+
+**Reallocated rather than expanded.** Retired 20 runs by verified explicit PID (21 matched; one was my
+own shell, as it has been every time):
+
+* **6-sigma arm at N=120, 200, 300** (15 runs, at 40k/10k/0k so little was lost). Justification: the
+  6-sigma arm risks saturation -- N=70 already reads 4/5 there -- so it is the *less* discriminating of
+  the two gaps. Its N=70 anchor is kept and already establishes 4/5.
+* **9.6-sigma arm at N=120** (5 runs at 200k, the real cost of this decision). Justification: it is the
+  middle point of four, and with the compute available a well-powered contrast at the extremes beats an
+  underpowered four-point curve.
+
+**What is lost, stated plainly.** The "closure rises monotonically with N" shape needs three or more
+points; I will have N=70, N=200 and N=300 at 9.6 sigma, with 10 seeds at the extremes and 5 in the
+middle. The middle point is an indicator of shape, not a powered comparison, and will be reported as
+such. The second gap point at large N is gone entirely, so if 9.6 sigma saturates for big arcs I will
+have to re-open a wider gap rather than interpolate.
+
+**Falsification, restated for the reallocated design BEFORE the new seeds run.** Contrast is N=70
+against N=300 at 9.6 sigma, 10 seeds each.
+
+* **N=300 closes >= 8/10 while N=70 stays <= 2/10** -> capture radius grows with R, bending is the
+  barrier, and the threshold gives kappa without a spectrum (p <= 0.023).
+* **Both within 2 of each other** -> capture radius is size-independent at these radii and the continuum
+  argument behind the standing plan is retracted.
+* **Anything between** -> underpowered even at 10 seeds; report both counts and claim no effect.
+
+Reachability: all three branches are reachable, since each size can independently close 0-10.
