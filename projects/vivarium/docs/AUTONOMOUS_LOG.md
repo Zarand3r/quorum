@@ -15353,3 +15353,68 @@ vesicles formed by non-largest clusters. I have not audited whether any past num
 first.**
 
 **Retracted this tick: nothing.**
+
+## Tick — session arm final at 1/5; wrapping-corrected rate 1/6; 3/3 formations were unwrapped
+
+**Read at the end.** Arm 8900-8904 is complete on 4 of 5 seeds at 1.6M (sd8900 at 1.48M, and hits
+accumulate monotonically so its count can only rise). **Final: 1/5**, the sd8901 vesicle. With 8800-8804
+at **0/5**, this session's ten `ht-0.25` seeds give **1/10**.
+
+**WRAPPING STATUS OF ALL TEN COMPLETED SEEDS**, chemistry asserted on every file:
+
+| seed | largest | wrapEdges | formed |
+|---|---|---|---|
+| sd8800 | 86 | 0 | |
+| sd8801 | 135 | **6** | |
+| sd8802 | 160 | **8** | |
+| sd8803 | 160 | **7** | |
+| sd8804 | 73 | 0 | |
+| sd8900 | 97 | 0 | |
+| **sd8901** | **128** | **0** | **FORMED** |
+| sd8902 | 159 | **8** | |
+| sd8903 | 68 | 0 | |
+| sd8904 | 77 | 0 | |
+
+**4 of 10 wrapped** -- consistent with the 27.9% corpus-wide figure and the transformer arm's 4/10.
+
+| denominator | rate | 95% Wilson CI |
+|---|---|---|
+| raw, all runs | 1/10 = 0.100 | 0.018-0.404 |
+| **eligible (unwrapped)** | **1/6 = 0.167** | 0.030-0.564 |
+| corpus + session, raw | **8/50 = 0.160** | 0.083-0.285 |
+
+**THE PATTERN HAS NOW SURVIVED A SECOND INDEPENDENT ARM.** Every vesicle this project has produced
+formed in an unwrapped run:
+
+| arm | formed, wrapped | non-formed, wrapped |
+|---|---|---|
+| transformer (18 seeds) | 0/2 | 4/10 |
+| this session (10 seeds) | 0/1 | 4/9 |
+| **pooled** | **0/3** | **8/19 (42%)** |
+
+**Fisher exact p = 0.273.** Not significant, and **it cannot be with three formations** -- the minimum
+attainable p for 0/3 against 8/19 is bounded well above 0.05. **What has changed is not the p-value but
+the replication**: the direction held in a second arm collected under a corrected chemistry, which the
+first arm was not.
+
+**I am not claiming wrapping causes the failures.** The alternative remains that large aggregates both
+wrap and fail to close for a common reason (size), and end-state wrapping does not establish when a run
+wrapped. **The wrap-free arm is the test**, and it is at 280k of 1.6M -- slow precisely because the
+dilution it requires also slows aggregation, which is the confound recorded two ticks ago.
+
+**LAUNCHED, criterion fixed BEFORE the run: 5 more seeds at the standard condition (N=160, L=65,
+`ht-0.25`).** The corpus rate is the number every other result in this project is compared against, and
+it currently rests on 50 runs with a CI spanning 0.083-0.285 -- a factor of 3.4. Ten more seeds would
+narrow it materially, and unlike the other two arms these are directly poolable with the historical
+corpus.
+
+* **>= 1 formation in 5** -> pooled 9/55 = 0.164, CI narrows to roughly 0.088-0.287.
+* **0 in 5** -> pooled 8/55 = 0.145, CI roughly 0.075-0.267. **P(0 in 5) at 0.16 is 0.42**, so a null is
+  the single most likely outcome and must not be read as a decline.
+* **>= 3 in 5** -> P = 0.028 at the pooled rate; that would indicate the rate is materially higher than
+  0.16 and that the wrapping correction is understating it further.
+
+**Emergence in flight:** four arms -- 9100-9104 (N=100, L=110, wrap-free), 9200-9204 (N=100, L=65,
+matched-N control), the new 5 at N=160 L=65, and sd8900 finishing.
+
+**Retracted this tick: nothing.**
