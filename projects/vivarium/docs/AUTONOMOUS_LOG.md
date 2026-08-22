@@ -11529,3 +11529,53 @@ anything measured so far.
 place: emergent ribbons still have to find their own ends, and the capture radius of ~8 sigma at N=70
 says they usually will not. Favourable and reachable are separate conditions and this project has now
 measured one of each.
+
+## Tick — ring beats arc, but the noise is the size of the signal at n=1
+
+**Ran.** Ring-vs-arc energy at N=70 and N=120 complete at 20k; N=200 and N=300 still equilibrating.
+9.6-sigma kinetic arms continuing. em4 at 1.16-1.20M of 1.6M, **0/6**.
+
+**Measured, and NOT reported as a result.** Averaging E/lipid over the last four checkpoints:
+
+| N | R_ring | ring | arc | delta per lipid | delta total |
+|---|---|---|---|---|---|
+| 70 | 10.4 | -7.5850 | -7.1325 | -0.4525 | **-31.7 eps** |
+| 120 | 17.9 | -7.5050 | -7.4250 | -0.0800 | **-9.6 eps** |
+
+The closed ring is lower in both cases, but its advantage SHRINKS with size -- the opposite of the
+standing plan, where pi*kappa/R falls so the closed state should become MORE favourable as R grows.
+
+Working the geometry through: an arc at span 0.75 carries the same arc length at 1.333x the radius, so
+E_ring - E_arc = 0.4375*pi*kappa/R - 2*lambda. Fitting the two points above gives **negative kappa**,
+which is unphysical.
+
+**Why that is not being reported.** Two reasons, both disqualifying on their own.
+
+1. **n = 1 seed per condition.** My standing rule in this project is >= 5 seeds for any difference I
+   intend to report, and I have violated it often enough to have retracted results for it.
+2. **The noise is the size of the signal.** The E/lipid trace for ring N=70 runs -7.31, -7.68, -7.43,
+   -7.58, -7.80, -7.53 across successive checkpoints -- a spread of about 0.5 eps/lipid, which over 70
+   lipids is **35 eps**, comparable to the entire 31.7 eps effect. The four samples I averaged are also
+   time-correlated within one trajectory, so their spread understates the true error.
+
+A two-point fit through two noisy single-seed numbers producing an unphysical constant is exactly the
+shape of result this project has repeatedly had to withdraw. It is recorded as indicative and nothing
+more.
+
+**Launching the properly powered version, criterion stated BEFORE the run.** N = 70 and N = 300 (radii
+10.4 and 44.6, a 4.3x lever arm for the 1/R fit), ring and arc, **5 seeds each = 20 runs**, 50 000 steps
+with checkpoints every 2 000 to give 25 samples per run rather than 4.
+
+* **delta_total is negative at both sizes and becomes MORE negative as R grows** -> the closed state is
+  favoured and the trend matches 2*lambda - pi*kappa/R; the slope gives kappa and the intercept lambda.
+* **delta_total becomes LESS negative as R grows, with error bars excluding zero slope** -> the
+  continuum form has the wrong sign and the standing plan's argument is retracted outright.
+* **Error bars on the two sizes overlap** -> underpowered even at 5 seeds; report both and claim no
+  trend.
+
+Reachability: all three are reachable, since sign and slope are unconstrained by anything measured with
+adequate n.
+
+**Funded by retiring the 9.6-sigma N=200 kinetic arm** (5 runs at ~90k), on the same reasoning used when
+N=120 was retired: with limited compute a powered comparison at the extremes beats an underpowered
+middle point. The kinetic arms at N=70 (10 seeds, near complete) and N=300 (10 seeds) continue.
