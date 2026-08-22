@@ -15418,3 +15418,64 @@ corpus.
 matched-N control), the new 5 at N=160 L=65, and sd8900 finishing.
 
 **Retracted this tick: nothing.**
+
+## Tick — I killed my own wrap-free test: it could never have reached vesicle size
+
+**Read at the end.** Arm 8900-8904 is **fully complete at 1/5** (all five at 1.6M). All 15 processes
+verified at `ht-0.25`.
+
+**GROWTH CURVES ACROSS THE THREE DENSITIES -- mean largest cluster, 5 seeds each:**
+
+| step | N160 L65 (rho .0379) | N100 L65 (rho .0237) | N100 L110 (rho .0083) |
+|---|---|---|---|
+| 100 000 | 36 | 16 | **8** |
+| 200 000 | 48 | 22 | 12 |
+| 300 000 | 50 | 26 | **13** |
+| 600 000 | 77 | 38 | -- |
+| 800 000 | 75 | 47 | -- |
+| 1 200 000 | 98 | -- | -- |
+| 1 600 000 | 118 | -- | -- |
+
+**THE WRAP-FREE ARM PROJECTS TO ~25-30 LIPIDS AT 1.6M.** The smallest vesicle this project has ever
+produced was **41 lipids** (sd8901); the others were 80 and 85. **A cluster that never reaches ~40
+lipids cannot close, so the arm could not have tested the hypothesis it was built for -- whatever the
+outcome.**
+
+**Killed at 320-340k rather than spending the remaining 80% of five 1.6M runs.**
+
+**What I got wrong, precisely.** Two ticks ago I identified that removing wrapping forces dilution, and
+recorded the resulting inference as asymmetric. **That analysis was correct but incomplete: I checked
+what dilution does to the INTERPRETATION and never checked what it does to the REACHABILITY of the
+phenomenon.** A confound that slows aggregation 3x does not merely weaken the test, it can put the
+observable out of range entirely.
+
+**THE FIX FOLLOWS FROM THE SAME GEOMETRY.** Wrapping is impossible when the lipid count is below the box
+edge, so the densest legal design at a given box is `N` just under `L`:
+
+| design | rho | wraps? | vs corpus |
+|---|---|---|---|
+| corpus, N=160 L=65 | 0.0379 | yes | -- |
+| killed arm, N=100 L=110 | 0.0083 | no | 4.6x dilute |
+| **new arm, N=60 L=65** | **0.0142** | **no** | **2.7x dilute** |
+
+**`N=60, L=65` is 1.7x denser than the arm I killed, still wrap-proof, and runs in the SAME BOX as the
+corpus** -- so box geometry is matched and dilution is the only remaining difference. At `L=65` the
+ceiling for a wrap-proof run is 64 lipids; this is the best the geometry allows.
+
+**LAUNCHED, criteria fixed BEFORE the run: 5 seeds at N=60, L=65, `ht-0.25`, 1.6M steps.**
+
+* **Largest cluster fails to reach 40 by 1.6M** -> the arm is again out of range and **the wrap-free
+  approach is abandoned in 2-D**, with the geometric reason recorded: no wrap-proof design at any box
+  size reaches corpus density, and the reachable densities aggregate too slowly.
+* **Largest cluster reaches >= 40, and >= 1 formation in 5** -> closure occurs when wrapping is
+  geometrically excluded; combined with 3/3 formations having been unwrapped, this would make wrapping
+  a live suppressor rather than a correlate.
+* **Largest cluster reaches >= 40 with 0 formations in 5** -> at the eligible-run rate 0.167,
+  **P(0 in 5) = 0.40**, so this settles nothing on its own and must not be read as evidence against
+  wrapping mattering.
+
+**Emergence in flight:** 9200-9204 (N=100, L=65) at 820k, 9300-9304 (N=160, L=65) at 140k, and the new
+N=60 arm.
+
+**Retracted this tick: the N=100/L=110 wrap-free arm as a viable test.** Not its motivation -- the
+wrapping question stands -- but that specific design, which could not reach the phenomenon.
