@@ -11898,3 +11898,47 @@ later than any other here, and later than several arms ever ran.
 **No falsification criterion, because no run was launched.** Load is 36-40 across the three arms. The
 em5 truncation criterion was fixed two ticks ago and is unchanged; the N=300 energy and kinetic criteria
 are likewise fixed.
+
+## Tick — DISCARDED an end-gap metric, and it is the second time this project built the same broken one
+
+**Ran.** N=300 energy at 38-44k of 50k, still not previewed. N=300 kinetic at 60-110k of 300k. em5 at
+220k of 2.4M, **0/6**, largest clusters 27-58. Nothing complete.
+
+**Tried to measure a claim I had been asserting.** RESULTS.md said emergent ribbons "routinely carry
+ends tens of sigma apart, far outside the capture radius, which is why a million steps can pass with no
+closure." I wrote that from looking at renders. It is exactly the kind of claim this project requires a
+number for, and the number would connect the planted capture radius (~8 sigma) to the emergent
+formation rate quantitatively.
+
+**Built the detector control-first, and the control killed it.** Termini identified as molecules of
+contact-degree <= 1, gap as the smallest terminus-to-terminus separation:
+
+| planted structure, known answer | measured gap | termini found |
+|---|---|---|
+| arc, gap 3.4 sigma | 2.69 | 4 |
+| arc, gap 6.7 sigma | 2.70 | 4 |
+| arc, gap 10.1 sigma | 2.54 | 9 |
+| **closed ring, should be nan** | **2.52** | **16** |
+
+It returns ~2.5 regardless of the true gap and finds sixteen termini in a structure that has none.
+**Discarded.**
+
+**The part worth recording is that this was a repeat.** Checking the log afterwards: a tip-counting
+metric was built and discarded much earlier in this project, for the same purpose, and killed by the
+same control -- a planted N=300 ring read **134 tips**. Both approaches fail for one reason: local
+contact degree cannot locate the end of a BILAYER, where the two leaflets join in a rounded cap, so
+what gets measured is boundary roughness. I did not check the log for prior attempts before building
+this, and would have saved the tick if I had. Recording the process failure, not just the metric
+failure.
+
+**Consequence: qualified the claim in RESULTS.md rather than leaving it standing.** The document now
+says the encounter explanation holds *provided* emergent ends are further apart than the capture radius,
+that this premise is unmeasured, that two detectors have failed the same control, and why. The claim
+rests on render inspection and is flagged as such.
+
+**Not attempting a third detector this tick.** A principled version would have to find where a leaflet
+normal reverses, which is real work with real failure modes, and two degree-based failures are enough
+evidence that the cheap route does not exist. Naming what it would take rather than iterating blindly.
+
+**No falsification criterion, because no run was launched.** Load is 36 across three arms, all with
+criteria already fixed: the N=300 energy fit, the N=300 kinetic comparison, and the em5 truncation test.

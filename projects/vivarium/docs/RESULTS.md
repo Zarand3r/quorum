@@ -127,8 +127,13 @@ checkpoint at 10 000 steps, against a 300 000-step budget. So the earlier readin
 given time" is not supported at 10 σ; time is not the limiting variable, reach is.
 
 The emergent vesicle is this process at work: a long meandering ribbon whose ends found each other. It
-also explains the failures directly — emergent ribbons routinely carry ends tens of σ apart, far outside
-the capture radius, which is why a million steps can pass with no closure.
+also explains the failures directly, **provided** emergent ribbons carry ends further apart than the
+capture radius. That premise is **not measured**. Two attempts to quantify an end-to-end gap on saved
+states have failed the same positive control: a closed ring, which has no termini at all, reads 134
+tips under a tip-counting metric and 16 termini under a contact-degree metric. Local degree cannot
+locate the end of a *bilayer*, where the two leaflets join in a rounded cap, so both metrics measure
+boundary roughness instead. Until a detector passes that control, the statement that emergent ends are
+too far apart rests on inspection of renders, not measurement, and is flagged here as such.
 
 ![flat stays flat](figures/04_flat_bilayer_does_not_curl.png)
 
