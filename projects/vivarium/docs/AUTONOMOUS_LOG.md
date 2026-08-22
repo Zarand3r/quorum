@@ -12387,3 +12387,38 @@ limitation in RESULTS.md rather than pretending an underpowered test resolved it
 can be concluded from them.
 
 **No falsification criterion, because no run was launched.** Load is 17 and falling as em5 finishes.
+
+## Tick — em5 COMPLETE: 1/6 at 1.6M, and 0 new formations in its half of the truncation window
+
+**Completed.** All six em5 seeds reached 2.4M. Scored twice, exactly as pre-registered when it launched.
+
+**Score 1, at 1.6M for comparability.** **1/6** -- sd7203, first formation at 580 000. Folded into the
+length-matched pool:
+
+| pool | rate | Wilson 95% |
+|---|---|---|
+| previous | 6/28 = 0.214 | 0.102-0.395 |
+| **with em5 at 1.6M** | **7/34 = 0.206** | **0.103-0.368** |
+
+Barely moved, and the interval tightened slightly, which is what adding six runs with one hit should do.
+
+**Score 2, the truncation window.** Five at-risk seeds (sd7203 had already formed, so it is not at risk
+of a FIRST formation) x 0.8M = **4.0 seed-M**, with **0 new first formations**. At the late-time hazard
+of 0.0543 that predicts 0.22 formations and gives **P(observe 0) = 0.805**. So zero is the expected
+outcome and carries essentially no information, exactly as the power analysis said last tick.
+
+**This is the half-way point of a test I have already declared underpowered, and the declaration holds.**
+em6 will add its own at-risk exposure when it finishes, bringing the total to ~8.8 seed-M against the
+55 needed to make a zero result meaningful. Nothing about em5's result changes that arithmetic, and I am
+not going to present 0-in-4.0-seed-M as support for 1.6M being adequate.
+
+**Also nearly done: the N=300 arc arm.** sd0, sd1, sd3 and sd4 are complete at 300k with 0 hits; sd2 is
+at 290k holding 11; the second five are at 230-280k. **1 of the first 5.** Not read -- the
+pre-registered criterion is over all 10 seeds and half the arm is still running.
+
+**Nothing retracted.** The pooled rate moved 0.214 to 0.206, which is a data update rather than a
+correction.
+
+**No falsification criterion, because no run was launched.** Load has fallen to 12 as em5 finished. The
+remaining arms are em6 and the second half of the N=300 arc arm, both with criteria already fixed, and
+both complete within a tick or two. Adding runs now would slow the two reads that are actually imminent.
