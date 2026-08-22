@@ -14671,3 +14671,55 @@ consistent with everything else measured.**
 **Emergence in flight:** 5 fresh baseline seeds (8700-8704) at 140-160k, largest 29-40, 0 closures.
 
 **Retracted this tick: nothing.**
+
+## Tick — nothing complete; launching a DIRECT measurement of kappa, without a spectrum
+
+**Running, NOT read.** The `kT = 0.55` closure runs are at **400 000 of 1.2M** and planted from a hit, so
+no verdict is drawn. **One incidental check passed:** seeds 1 and 2 reproduce the calibration counts
+**exactly** (2/41 and 14/41 at the 400k mark), confirming the engine is deterministic given a seed --
+worth noting because the six seeds currently span 2 to 20 closed checkpoints and it would be easy to
+suspect the sampler rather than genuine seed variance.
+
+**Emergence: 5 baseline seeds (8700-8704) at 560k, largest 44-80, 0 closures, 0 hits.**
+
+**THE EXPERIMENT: kappa by a direct route.** This is the one quantity the project has wanted since the
+beginning and never obtained. The **undulation-spectrum method failed** -- per-mode kappa scattered
+**16.7x at 60 lipids and 1712x at 120**, with a flat-in-q spectrum, which means the estimator was
+measuring its own sampling noise. The brief's **critical-size workaround was tested and retracted**
+several ticks ago (N=70 closed 1/10, N=300 closed 1/10, Fisher p = 1.000 across a 3.9x span in radius).
+
+**The direct route avoids fluctuations entirely.** Plant arcs of the SAME 70 lipids at different
+curvatures and measure the energy. Bending costs `(1/2) kappa L / R^2`, so energy against `1/R^2` has
+slope `(1/2) kappa L`. Arc fraction sets the radius at fixed arc length: `R = L / (2 pi f)`.
+
+| arc fraction f | 0.50 | 0.60 | 0.75 | 0.879 | 0.9562 |
+|---|---|---|---|---|---|
+| radius R (sigma) | 22.3 | 18.6 | 14.9 | 12.7 | 11.6 |
+| `1/R^2` | 0.0020 | 0.0029 | 0.0045 | 0.0062 | 0.0074 |
+
+**A 3.7x range in `1/R^2`.** 5 fractions x 5 seeds, 100 000 steps, checkpoints every 2 000, energies
+time-averaged over steps >= 30 000 -- the protocol that cut the lambda error **2.4x per pair**.
+
+**CRITERIA FIXED BEFORE THE RUN, including an honest power calculation.** My time-averaged energy
+precision is about **1.3 eps**. The predicted energy spread across this curvature range is
+`(1/2) kappa L (1/R_min^2 - 1/R_max^2)` = about **0.9 eps for kappa = 10 kT** but **4.3 eps for
+kappa = 50 kT**.
+
+* **Slope positive at > 2 sigma, and E linear in `1/R^2`** -> **kappa is measured directly**, the first
+  quantitative value in this project, and the spectrum failure is confirmed as an estimator problem
+  rather than an absence of bending rigidity.
+* **Slope consistent with zero** -> this bounds **kappa below roughly 15 kT** at my precision. That is
+  NOT a measurement of kappa and I will not report it as one, but it is the first quantitative statement
+  about kappa here, and it would sit consistently with `lambda ~ 0` and a closure free energy of
+  `+0.22 +- 0.44 kT` -- a membrane that is cheap to bend and cheap to leave open.
+* **E is non-linear in `1/R^2`** -> the continuum bending model does not apply at radii of 12-22 sigma
+  for this ribbon, which would itself explain why every continuum-based prediction in this project has
+  failed, including the retracted critical-size argument.
+* **Planted arcs do not survive 100 000 steps at f = 0.9562** (the tightest, most strained) -> that
+  point is void and the fit uses the surviving fractions, with the loss reported rather than silently
+  dropped.
+
+**I am recording the power calculation in advance specifically because the likely outcome is a bound
+rather than a value**, and after the fact a bound is easy to present as if it were a measurement.
+
+**Retracted this tick: nothing.**
