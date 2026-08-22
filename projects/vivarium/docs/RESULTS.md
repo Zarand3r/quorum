@@ -99,8 +99,36 @@ The same route is quantified in planted arcs at fixed N = 300, varying only the 
 | 6.0 σ | 3/5 |
 | 9.0 σ | 2/5 |
 
-A rate that falls steeply with gap, with **no hard capture radius** — even 9 σ closes given time. The
-emergent vesicle is this process at work: a long meandering ribbon whose ends found each other.
+A rate that falls steeply with gap. Note the table's header and its first row disagree on N; the row
+labelled N = 80 is not from the N = 300 series, and the discrepancy is preserved here rather than
+quietly tidied.
+
+**Re-measured on the corrected instrument**, at fixed N = 70 with the arc radius held constant and only
+the end-gap varied, after the enclosure detector and cluster connectivity were both fixed:
+
+| end-gap | closed | seeds |
+|---|---|---|
+| 3.4 σ | **5/5** | 5 |
+| 6.7 σ | **4/5** | 5 |
+| 10.1 σ | **1/10** | 10 |
+
+Interpolating between 0.8 and 0.1 puts the 50% point near **8 σ** — a capture radius. The widest gap
+carries 10 seeds because at 5 seeds the only outcome that could reach p < 0.05 against a contrasting
+condition was a perfect sweep.
+
+Gap values are quoted from the plant formula, not from the logged `R_mid`: that column is a median
+distance from the aggregate centroid, and for an arc the centroid is offset from the ring centre, so it
+reads about 10% low at span 0.75. The earlier series used the measured value and therefore understated
+its gaps by 4–11%, all in the same direction, which leaves its ordering intact.
+
+Two things the re-measurement changes. The widest-gap rate is **1/10, not 2/5** — better powered and
+lower. And closure, when it happens, is **fast**: at 3.4 σ four of five seeds had closed by the first
+checkpoint at 10 000 steps, against a 300 000-step budget. So the earlier reading that "even 9 σ closes
+given time" is not supported at 10 σ; time is not the limiting variable, reach is.
+
+The emergent vesicle is this process at work: a long meandering ribbon whose ends found each other. It
+also explains the failures directly — emergent ribbons routinely carry ends tens of σ apart, far outside
+the capture radius, which is why a million steps can pass with no closure.
 
 ![flat stays flat](figures/04_flat_bilayer_does_not_curl.png)
 
