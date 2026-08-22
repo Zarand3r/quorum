@@ -12271,3 +12271,43 @@ over a 4.3x range in radius. Not read yet, because five seeds are only halfway.
 
 **No new simulation launched.** Load is 22 across three arms with criteria already fixed. No retraction
 this tick.
+
+## Tick — RETRACTED my own truncation prediction: the hazard is not constant, and is barely determined
+
+**Ran.** N=300 arc arm at 180-270k of 300k, still 1/10 (sd2). em5 at 1.76-2.14M of 2.4M. em6 at
+1.08-1.64M. Nothing complete. Truncation-window at-risk exposure is now **1.60 seed-M** of an eventual
+8.8, with **0** formations.
+
+**RETRACTED: the prediction of 1.03 formations in the truncation window.** Two ticks ago I estimated the
+expected yield from a pooled corpus hazard of 0.107 per seed-M. That assumed a constant hazard, and the
+data does not support it. On the length-matched 28-run set, with at-risk counts decrementing properly:
+
+| window | formations | at risk | hazard per seed-M |
+|---|---|---|---|
+| 0-400k | 0 | 28 | 0 |
+| **400-800k** | **5** | 28 | **0.446** |
+| 800-1200k | 0 | 23 | 0 |
+| 1200-1600k | 1 | 23 | 0.109 |
+
+Formation arrives in a **burst between 400k and 800k** and then nearly stops. The rate relevant to
+extrapolating BEYOND 1.6M is the late one, 1 event in 18.4 seed-M = **0.054 per seed-M**, which is
+exactly **half** the pooled figure I used. On that basis the window expectation is **0.48, not 1.03**,
+and P(>= 2) is **0.084, not 0.275**.
+
+**But the correction is itself barely determined, and saying so is the point.** The late-time hazard
+rests on a **single event**. Its exact Poisson 95% interval is 0.0014 to 0.303 per seed-M -- a factor of
+**220**. That propagates to a window expectation anywhere from 0.01 to 2.66, and P(>= 2) anywhere from
+0.000 to 0.745.
+
+So the honest position is: **the hazard clearly declines after the early burst** -- 0.446 against 0.054
+is an eightfold drop and does not depend on the thin late statistics -- **but no sharp prediction for
+the window is available.** My "1.03" was overconfident, and "0.48" would be overconfident in the same
+way if I presented it as the expectation rather than as a point estimate with a 200-fold range.
+
+**What this changes about the running test.** The pre-registered branches stand as written (>= 2 confirms
+truncation, 0 says adequate, 1 revises nothing). What changes is that I can no longer say in advance
+which is most likely, and I withdraw last tick's statement that the no-revision branches "carry 0.726".
+That number came from the constant-hazard assumption I have just retracted.
+
+**No new simulation launched.** Load is 22; the N=300 arc arm completes within a tick or two and the
+emergence arms are the only source of window exposure. Adding runs would slow both.
