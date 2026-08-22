@@ -107,6 +107,51 @@ emergent vesicle is this process at work: a long meandering ribbon whose ends fo
 *A planted flat bilayer after 200 000 steps with imposed 4/6-tail leaflet asymmetry: still straight,
 fully intact. 0/5 closed.*
 
+## Bending rigidity, measured without a spectrum
+
+The undulation-spectrum route to kappa failed here: per-mode estimates spread 16.7x at 60 lipids and
+1712x at 120, with a flat-in-q spectrum, meaning the estimator was measuring its own sampling noise.
+The replacement is a plain energy difference between two PLANTED configurations of the same lipid
+count -- a closed ring and a three-quarter arc -- at a known radius. No spectrum, no per-mode fit.
+
+Geometry: the arc carries the same arc length at 1.333x the ring radius, verified numerically (ring
+2*pi*11.65 = 73.2 against arc 0.75*2*pi*15.53 = 73.2). So
+
+> E_ring - E_arc = 0.4375 * pi * kappa / R - 2 * lambda
+
+Measured at N = 70, R_ring = 11.65, averaging E/lipid over steps >= 30 000, **10 independent seeds per
+configuration**:
+
+| | E/lipid |
+|---|---|
+| ring | -7.3415 +- 0.0588 |
+| arc | -7.2498 +- 0.0371 |
+| **difference** | **-6.4 +- 4.9 eps total (1.3 sigma)** |
+
+With lambda = +2.8 +- 2.8 eps (below), this gives
+
+> **kappa = -6.1 +- 56.3 eps = -13 +- 125 kT**, consistent with zero.
+
+**What this establishes and what it does not.** The central value implies bending is essentially free,
+which would make closure thermodynamically favourable at any size. But the ~150 kT threshold above
+which closure stops being favoured sits only **1.3 sigma** from the centre, so the measurement is
+*consistent with* favourable closure without establishing it tightly. A single radius also cannot
+separate kappa from lambda -- the two are degenerate along the line above -- so this number depends on
+the independent lambda. A second radius (N = 300) breaks the degeneracy and is in progress.
+
+**Two cautions found while verifying it.** The measured `R_mid` column is NOT the ring radius for an
+arc: the arc's centroid is offset from its ring centre, so R_mid reads about 10% low at span 0.75 and
+worse as span falls. It is correct for a full ring. And an earlier single-seed version of this same
+measurement gave -31.7 eps, five times the 10-seed value; the estimate fell monotonically as seeds were
+added (-31.7, -9.6, -6.4), which is the signature of a noise-driven number rather than a real effect
+being resolved.
+
+**A stale figure corrected.** The project's standing brief carried lambda = +18.31 +- 7.07 eps. That
+value was superseded by the re-measurement recorded below (+2.8 +- 2.8, traced to
+`chi[TAIL,WATER] = 0.00`). Using the stale figure with the same energy data would give kappa = 508 +-
+252 kT, placing closure far outside the favourable regime and contradicting the emergent vesicles
+reported above.
+
 ## Limits
 
 - **It is a vesicle with appendages, and the split is measured.** `shell_split()` counts which lipids
