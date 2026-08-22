@@ -15178,3 +15178,75 @@ per step, which is why 5 seeds rather than 10.
 **Retracted this tick: my refutation of the periodic-wrapping confound.** It was measured at `ht+0.20`
 and does not hold at the amphiphile chemistry. **The confound is live again**, and the finding that
 "ribbons have genuine free ends" applies only to the smaller aggregates.
+
+## Tick — closure line CLOSED as committed; wrapping quantified at 27.9%; my L=100 test was geometrically wrong
+
+**Completed and read at the end.** Closure calibration at `ht-0.25`, all 8 runs at 400 000.
+
+| kT | P_closed (2 seeds) | mean | min cluster |
+|---|---|---|---|
+| 0.55 | 0.122, 0.171 | **0.147** | 58, 54 |
+| 0.65 | 0.073, 0.171 | 0.122 | 45, 36 |
+| 0.75 | 0.146, 0.122 | 0.134 | 31, 21 |
+| 0.85 | 0.073, 0.073 | 0.073 | 25, 22 |
+
+**BRANCH 3 FIRES: `P_closed` never reaches 0.2 at any temperature.** Open and closed are not reversibly
+connected at any usable state point, so **`dF_closure = +0.22 +- 0.44 kT` keeps its non-convergence
+caveat permanently and I stop pursuing it**, exactly as committed two ticks ago.
+
+**MY HYPOTHESIS WAS WRONG AND THE TEST SAYS SO.** I proposed that the earlier calibration failed because
+it evolved an `ht-0.25` vesicle in an `ht+0.20` field. **At matched chemistry the result is essentially
+unchanged**: `P_closed` 0.07-0.17 against 0.02-0.34 before, and the vesicle still comes apart above
+`kT = 0.65` (min cluster 21-45 against 38-47). **The mismatch was real but was not the cause.** The
+matched runs are tighter seed-to-seed, which is the only improvement.
+
+### THE WRAPPING CONFOUND, QUANTIFIED ACROSS THE CORPUS
+
+68 `ht-0.25` N=160 L=65 emergence final states, chemistry asserted on every file:
+
+| group | wrapped | fraction |
+|---|---|---|
+| **all states** | **19/68** | **27.9%** |
+| largest >= 140 lipids | **16/31** | **51.6%** |
+| largest < 140 lipids | 3/37 | 8.1% |
+
+**Roughly a quarter of runs end topologically unable to close, and it is concentrated in exactly the
+runs that aggregate most completely.** A ribbon that wraps the box has no free ends; its failure to form
+a vesicle carries no information about closure thermodynamics.
+
+**Emergence arm 8800-8804 is FINAL at 0/5** -- and **2 of those 5 ended wrapped** (sd8802, sd8803, both
+largest=160), so the eligible denominator for that arm is 3, not 5.
+
+### THE L=100 TEST I LAUNCHED LAST TICK WAS GEOMETRICALLY WRONG
+
+A ribbon of N lipids is roughly N sigma long and can wrap whenever its length exceeds the box edge:
+
+| N | L | ribbon vs box | wraps? |
+|---|---|---|---|
+| 160 | 65 | 160 vs 65 | yes |
+| **160** | **100** | **160 vs 100** | **YES -- the test I launched** |
+| 100 | 110 | 100 vs 110 | no |
+| 80 | 100 | 80 vs 100 | no |
+
+**`L = 100` with `N = 160` does not remove the confound it was built to test.** I wrote "a box large
+enough that a 160-lipid ribbon cannot span it" and then chose a box smaller than the ribbon. **Caught
+before any result existed**, killed at 5% in, cost ~5 seed-minutes.
+
+**LAUNCHED, criteria fixed BEFORE the run: `N = 100`, `L = 110`, 5 seeds, 1.6M steps, `ht-0.25`.**
+Ribbon ~100 sigma against a 110 sigma box, so **wrapping is geometrically impossible**, while 100 lipids
+still exceeds the ~80 that the observed vesicles used. 7973 water beads against 2159.
+
+* **>= 2 formations in 5 seeds, with 0 wrapped final states** -> wrapping was suppressing closure; the
+  corpus rate is a finite-size underestimate and the eligible-run rate (~0.24 by the 27.9% correction)
+  is the right figure.
+* **0-1 formations with 0 wrapped states** -> removing the artifact does not raise the rate, so wrapping
+  was not limiting and "closure is not driven" stands. **P(0 in 5) at 0.24 is 0.25**, so one null arm
+  cannot settle it and I record that now.
+* **Any wrapped final state at `N=100, L=110`** -> my ribbon-length model is wrong and the geometric
+  argument above needs rebuilding before the test means anything.
+
+**Emergence in flight:** 8900-8904 at `L=65` (640-840k, largest 63-76) and 9100-9104 at `L=110`.
+
+**Retracted this tick: my chemistry-mismatch explanation for the closure calibration** -- tested at
+matched chemistry and refuted. **The closure free energy line of work is closed**, not retracted; the
+number stands with its caveat.
