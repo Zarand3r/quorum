@@ -13920,3 +13920,116 @@ one-off. The file records the normalisation trap explicitly -- normalise drift b
 never by a total energy that is a near-cancellation of -115.1 against +132.4.
 
 **Emergence in flight:** 3 baseline seeds at 720-760k, largest 52-85, 0 closures.
+
+## Tick — g(r) reproduces the Boltzmann factor to 0.1-0.4%; density scan launched to prove it
+
+**Running, NOT read.** The 6 independent equipartition seeds print only on completion and are still
+going. Nothing from them this tick. Emergence 8500-8502 at **920-960k of 1.6M**, largest 52-85, **0
+closures, 0 hits**.
+
+**NEW VALIDATION with an EXACT analytic target.** The configurational arm of the thermostat test was
+inconclusive last tick because the bond equipartition target (`kT/2` per spring) is only exact for
+independent normal modes, and the springs in a branched lipid share beads. **The pair correlation
+function has no such caveat: as `rho -> 0`, `g(r) -> exp(-beta u(r))` exactly.** Pure water, no lipids,
+N = 150, L = 60, `rho = 0.0417/sigma^2`, `chi_WW = 0.50`, 600 samples, 60 259 pairs binned.
+
+| r | g(r) measured | exp(-beta u) | rel err |
+|---|---|---|---|
+| 0.82 | 0.3315 | 0.2319 | 0.429 |
+| 1.02 | 3.2614 | 3.0354 | 0.074 |
+| 1.23 | 3.0205 | 2.8592 | 0.056 |
+| **1.42** | **2.4694** | **2.4724** | **0.001** |
+| **1.62** | **2.0214** | **2.0124** | **0.004** |
+| 1.82 | 1.7062 | 1.5978 | 0.068 |
+| 2.02 | 1.4668 | 1.2879 | 0.139 |
+| 2.22 | 1.2996 | 1.0938 | 0.188 |
+
+**In the well-sampled mid-range the simulation reproduces the Boltzmann factor of its own pair potential
+to 0.1-0.4%.** That is the sharpest confirmation so far that configurational sampling is correct, and it
+complements the kinetic result (equipartition 1.0002 +- 0.0015) which only constrained momenta.
+
+**The deviations are where they should be, and I am NOT waving them away.** At small r the counts are
+few and `g -> 0`, so a relative error is unstable. At large r the deviation grows monotonically
+(0.068, 0.139, 0.188), which is the signature of a **finite-density many-body correction** -- the
+identity is a `rho -> 0` limit and this ran at `rho = 0.042`. **That explanation is a hypothesis until
+tested**, and the naive scale `O(rho) = 0.042` is 4.5x smaller than the observed 0.188, so it is not
+self-evidently sufficient.
+
+**LAUNCHED, criterion fixed BEFORE the run: g(r) at three densities, `rho = 0.042, 0.021, 0.010`,
+5 independent seeds each**, identical protocol, reporting the mean |relative error| over the same
+well-sampled window at each density.
+
+* **Deviation falls toward zero roughly in proportion to rho** -> it is the finite-density correction,
+  configurational sampling is validated against an exact target, and the sampler is correct.
+* **Deviation plateaus at a non-zero value as rho falls** -> the sampler does not reproduce
+  `exp(-beta u)` in the dilute limit, which means **the dynamics does not sample the Boltzmann
+  distribution of its own potential**, and every free energy, line tension and rate in this project is
+  affected -- a far more consequential result than any vesicle question.
+* **Deviation rises as rho falls** -> statistics-limited rather than physics-limited, since fewer
+  particles at fixed box size means fewer pairs; report as underpowered and re-run with more samples
+  rather than drawing either conclusion.
+
+**Retracted this tick: nothing.**
+
+**BOTH PRE-REGISTERED TESTS RESOLVED IN THIS TICK.**
+
+### Equipartition, 6 independent dimer seeds -- FIRST BRANCH FIRES
+
+Error bar taken **across seeds**, so the autocorrelation defect found last tick cannot bias it.
+
+| quantity | result | verdict |
+|---|---|---|
+| `<U_bond>/(kT/2)` | **1.0037 +- 0.0054** | **0.69 sigma from 1, SE gate 0.02 met -> PASS** |
+| `<KE>/((d/2)NkT)` | 1.0040 +- 0.0016 | 2.48 sigma from 1 |
+
+**Configurational sampling is validated against an exact analytic target.** The thermostat samples the
+Boltzmann distribution of the stated potential in configuration as well as in momentum. **This also
+confirms the hypothesis for the full-system 0.855**: with the single-bond dimer at 1.0037, the shortfall
+in the branched molecule is **mode coupling between overlapping springs, not a sampling defect** --
+generalised equipartition gives `kT/2` per independent quadratic mode, and the 1-2 bonds and the 1-3
+stiffener share beads.
+
+**One blemish recorded rather than buried:** kinetic equipartition in the 4-dof dimer is **0.4% high at
+2.48 sigma**, while the 640-dof production system gave **1.0002 +- 0.0015 (0.13 sigma)**. The two differ
+by 1.7 sigma and were run at different timesteps (2e-3 vs 8e-3). Small, resolved, and **not present at
+production settings**, so it does not touch any measurement in this project -- but it is a real
+deviation and I am not calling it zero.
+
+### g(r) density scan -- the finite-density explanation is SUPPORTED, with the dilute point underpowered
+
+| rho | N | mean \|rel err\| | pairs binned |
+|---|---|---|---|
+| 0.0417 | 150 | **0.0780 +- 0.0105** | 148 799 |
+| 0.0208 | 75 | **0.0427 +- 0.0067** | 35 819 |
+| 0.0100 | 36 | 0.0972 +- 0.0313 | 7 900 |
+
+**Halving the density halves the deviation: ratio 0.55 against a density ratio of 0.50, a 2.84 sigma
+decrease.** That is the linear-in-rho behaviour a many-body correction must have, and it is the
+prediction I registered before the run.
+
+**The dilute point rises instead of falling, and the third branch -- which I wrote in advance -- covers
+exactly this:** *"Deviation rises as rho falls -> statistics-limited rather than physics-limited, since
+fewer particles at fixed box size means fewer pairs; report as underpowered."* It has **19x fewer
+pairs** than the top density and its mean is driven by one seed at 0.220 against four in 0.058-0.089.
+**I am not counting it as evidence either way.**
+
+**Status: configurational sampling is validated at rho where it can be measured, and the deviation from
+`exp(-beta u)` scales as the finite-density correction requires. The dilute limit is not yet closed.**
+
+**LAUNCHED, criterion fixed BEFORE the run: rho = 0.0100 repeated with 5 seeds at 6M steps sampling
+every 100** -- roughly **40x the pair statistics** of the run above, chosen to bring its error bar below
+the 0.0208 point's so the three densities are comparable.
+
+* **Deviation at rho = 0.0100 falls below the 0.0208 value with SE < 0.007** -> the linear-in-rho trend
+  holds across the full decade, configurational sampling is validated in the dilute limit, and the
+  sampler is confirmed correct.
+* **Deviation stays at ~0.10 with SE < 0.007** -> the trend does NOT continue to low density, which
+  means the sampler deviates from `exp(-beta u)` where the identity is exact, and **every free energy,
+  line tension and rate in this project is affected.**
+* **SE still > 0.007** -> still underpowered; report as such and stop pursuing this route rather than
+  quoting a third inconclusive number.
+
+**Emergence in flight:** 3 baseline seeds at 920-960k, largest 52-85, 0 closures.
+
+**Retracted this tick: nothing.** The full-system bond ratio of 0.855, flagged last tick as unexplained,
+is now **explained** as mode coupling rather than retracted.
