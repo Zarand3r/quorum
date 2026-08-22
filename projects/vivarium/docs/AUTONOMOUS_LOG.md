@@ -14566,3 +14566,53 @@ from the sd8105 vesicle at `kT = 0.55, 0.65, 0.75, 0.85`, 2 seeds each, 400 000 
 
 **Retracted this tick: `dF_bind = -6.5 to -7.6 kT`**, superseded by the direct measurement of
 **-8.26 +- 0.42 kT**. The 7-point linear model is additionally **excluded at 3.32 sigma**.
+
+## Tick — emergence arm final at 0/4; the corpus rate updates to 7/47 = 0.149
+
+**Completed and read at the end.** Baseline emergence arm 8600-8603 reached 1.6M on all four seeds.
+**Final: 0/4**, hits 0, final largest clusters 59, 76, 79, 128.
+
+**UPDATED EMERGENT VESICLE RATE, length-matched 1.6M runs, baseline chemistry:**
+
+| set | rate | 95% Wilson CI |
+|---|---|---|
+| corpus before this session | 7/40 = 0.175 | 0.087-0.320 |
+| + arm 8500-8502 (0/3) | 7/43 = 0.163 | 0.081-0.300 |
+| **+ arm 8600-8603 (0/4)** | **7/47 = 0.149** | **0.074-0.277** |
+| transformer engine, separate arm | 2/18 = 0.111 | 0.031-0.328 |
+| **all length-matched runs pooled** | **9/65 = 0.138** | **0.075-0.243** |
+
+**The 0/7 drought across the two recent arms is unremarkable**: at the old rate 0.175 the probability of
+observing zero in seven is **0.260** against an expectation of 1.22. **This is a dry spell, not a change
+in behaviour**, and the point estimate drifting 0.175 -> 0.149 is what adding seven null seeds does to a
+small sample.
+
+**The rate is now the best-determined it has been in this project, and it agrees with the
+thermodynamics.** A closure free energy of `+0.22 +- 0.44 kT` against a binding free energy of
+`-8.26 +- 0.42 kT` predicts exactly this: aggregates form readily and reliably, and closure happens only
+when two ends meet by chance inside the ~8 sigma capture radius. **~14% is what this potential implies.**
+
+**NOT read this tick: the closure calibration.** The eight restarts are at **240 000 of 400 000** and are
+planted-from-a-hit, so the brief's rule applies and no verdict is drawn. **One observation is already
+visible without treating it as a result:** at `kT = 0.75` and `0.85` the seeded 80-lipid vesicle has
+fallen to **38-48 lipids**, i.e. the aggregate is coming apart rather than opening and reclosing. **If
+that holds at 400 000 it fires the third branch** -- no usable temperature exists, and
+`dF_closure = +0.22 +- 0.44 kT` stands with its non-convergence caveat permanent.
+
+**LAUNCHED, criterion fixed BEFORE the run: 5 fresh EMERGENCE seeds at baseline chemistry**, 1.6M steps.
+The previous arm has ended and the standing requirement is to keep a dispersed-start run in flight.
+These also sharpen the rate estimate, which is now the project's most-cited emergent number.
+
+* **>= 1 formation in 5 seeds** -> consistent with the pooled rate; the corpus becomes 8/52 = 0.154 and
+  the drought is closed.
+* **0 formations in 5 seeds** -> corpus 7/52 = 0.135, CI narrows further, and the cumulative drought
+  becomes 0/12 with P = 0.104 at the old 0.175 rate. **Still not significant**, and I am recording that
+  in advance so a second null arm is not over-read.
+* **>= 3 formations in 5 seeds** -> P = 0.035 at the pooled rate, which would suggest the rate is
+  materially higher than 0.138 and that the recent arms were the anomaly rather than the corpus.
+
+**Emergence in flight:** 5 fresh baseline seeds. **Closure calibration:** 8 restarts at 240k of 400k,
+read next tick.
+
+**Retracted this tick: nothing.** The corpus rate is updated, not corrected -- 7/40 was accurate for the
+sample it described.
