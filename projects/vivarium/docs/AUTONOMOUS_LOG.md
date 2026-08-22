@@ -14723,3 +14723,75 @@ kappa = 50 kT**.
 rather than a value**, and after the fact a bound is easy to present as if it were a measurement.
 
 **Retracted this tick: nothing.**
+
+## CHEMISTRY REGRESSION — I silently dropped chi_HT and ran ~10 ticks on a degraded amphiphile
+
+**Found by a user question, not by me:** why did the vesicle-producing runs look better than the recent
+ones? **Because they were a different chemistry, and I changed it without noticing or flagging it.**
+
+| | vesicle-producing runs | every run since the chi_TW scan |
+|---|---|---|
+| `chi_HT` | **-0.25** (explicit) | **+0.20** (default, flag dropped) |
+| head prefers tail over head by | **-0.45** | **0.00** |
+| state tag | `..._ht-0.25_ww0.50_...` | `..._ww0.50_...` (no `ht`) |
+
+**`field.py:91` documents exactly what +0.20 costs, as a MEASURED statement:** *"THE HEAD-TAIL CROSS TERM
+IS WHAT MAKES AN AMPHIPHILE. At 0.20 it equals head-head, so a head is indifferent between a head
+neighbour and a tail neighbour, and nothing holds a leaflet together... head/tail mixing goes 0.624 ->
+0.899 within 150 steps while the energy falls monotonically. **The ordered bilayer is not a local
+minimum.**"*
+
+**So the recent "baseline" was not the baseline. It was a chemistry in which an ordered bilayer is not
+even metastable.** The compact blobs with heads scattered through the interior that I repeatedly sent
+and attributed to early aggregation were **this**. I flagged that exact signature as degradation when
+scanning `chi_TW`, and did not recognise it in my own control.
+
+**Where it started:** the `chi_TW=-0.50` scan set `VIVARIUM_CHI_TW` and dropped `VIVARIUM_CHI_HT`.
+Everything after inherited the omission. `_env_tag` recorded it faithfully in every filename -- the
+evidence was in front of me for ten ticks.
+
+### What is RETRACTED
+
+* **Corpus rate 7/47 = 0.149 and pooled 9/65 = 0.138.** These pooled `0/3` and `0/4` runs at `ht+0.20`
+  into a corpus measured at `ht-0.25`. **Different systems.** The corpus stands at **7/40 = 0.175** for
+  the amphiphile-correct chemistry; the recent `0/7` describes a different model.
+* **`lambda = +1.23 +- 1.67 eps` as "baseline".** Measured at `ht+0.20`. The realistic-chemistry value
+  is the earlier **`-0.20 +- 1.95 eps`**.
+* **The entire `chi_TW` scan and cells A/B.** All measured against, and relative to, a degraded baseline.
+* **`dF_bind = -8.26 +- 0.42 kT`, `dCp/k = +2.268 +- 0.741`, and the van't Hoff series.** All at
+  `ht+0.20`.
+* **The closure calibration and the `kT=0.55` runs.** Worse than mislabelled: they restart the sd8105
+  vesicle -- built at `ht-0.25` -- into `ht+0.20`. **A chemistry mismatch between the structure and the
+  field it evolves in**, which alone explains why that vesicle opened so readily (`P_closed` 0.02-0.34).
+* **The kappa arcs launched last tick.** Also `ht+0.20`; killed before they produced a number.
+
+### What SURVIVES
+
+* **All seven statistical-mechanics validation checks.** They validate the **engine**, not a chemistry:
+  forces are exact gradients, energy conservation scales as `dt^1.85`, equipartition, Gaussian
+  velocities, `g(r) -> exp(-beta u)` (which passed its own explicit chi table), and detailed balance.
+  **Chemistry-independent, and they stand.**
+* **`lambda = -0.20 +- 1.95 eps` at `ht-0.25`** (15 paired seeds).
+* **`dF_closure = +0.22 +- 0.44 kT`** -- the forward/reverse arms were launched with
+  `VIVARIUM_CHI_HT=-0.25`, verified in the launch commands.
+* **The emergent vesicle rate `7/40 = 0.175` and the transformer arm `2/18`**, both at `ht-0.25`.
+
+**So the project's headline science is intact and the degraded work is the recent thermodynamics.** That
+is the opposite of the usual failure mode and worth stating plainly.
+
+**ACTION TAKEN.** Killed all 36 running processes after verifying each one's environment for a missing
+`VIVARIUM_CHI_HT`, then relaunched at `-0.25`, confirmed by reading `/proc/<pid>/environ`:
+
+* **5 emergence seeds (8800-8804)** at `ht-0.25`, dispersed start.
+* **25 kappa arcs** (5 fractions x 5 seeds) at `ht-0.25`, so the direct kappa measurement runs on the
+  amphiphile that actually forms bilayers.
+
+**Criteria for the kappa run are unchanged from last tick** and were registered before any data existed:
+slope of `E` against `1/R^2` positive at >2 sigma gives kappa directly; a null bounds it below ~15 kT
+and **will not be reported as a measurement**; non-linearity means continuum bending fails at
+R = 12-22 sigma.
+
+**PROCESS LESSON, and it is not the one I would have guessed.** Every guard in this project checks a
+result against an artifact -- render against metric, log against npz, counts against files. **None of
+them checks that the RUN CONDITIONS are what I think they are.** The filename carried the truth in every
+one of ten ticks. The fix is mechanical: **assert the chemistry when reading, not just when launching.**
