@@ -11579,3 +11579,48 @@ adequate n.
 **Funded by retiring the 9.6-sigma N=200 kinetic arm** (5 runs at ~90k), on the same reasoning used when
 N=120 was retired: with limited compute a powered comparison at the extremes beats an underpowered
 middle point. The kinetic arms at N=70 (10 seeds, near complete) and N=300 (10 seeds) continue.
+
+## Tick — the properly powered ring-vs-arc effect is 3.3x smaller than the n=1 estimate and not significant
+
+**Ran.** Ring/arc energy at N=70 complete (5 seeds each, 50k). N=300 energy at 2k. 9.6-sigma kinetic arm
+at N=70 COMPLETE with 10 seeds. N=300 kinetic at 20-70k. em4 at 1.22-1.26M, **0/6**.
+
+**Result 1 -- kinetic, N=70 at 9.6 sigma with the full 10 seeds: 1/10.** The earlier 5-seed read was
+1/5; doubling the seeds halved the estimate rather than confirming it, which is the ordinary behaviour
+of a small-sample proportion and the reason the 10-seed target was set.
+
+**Result 2 -- ring versus arc at N=70, 5 independent seeds, averaged over steps >= 30 000:**
+
+| | E/lipid |
+|---|---|
+| ring | -7.4078 +- 0.0725 |
+| arc | -7.2711 +- 0.0590 |
+| **delta** | **-0.1367 +- 0.0935 per lipid = -9.6 +- 6.5 eps total, 1.5 sigma** |
+
+**The n=1 estimate last tick was -31.7 eps -- 3.3x too large, and the properly powered value is not
+significant.** Per-seed ring energies run -7.19 to -7.58, so seed-to-seed spread dominates. The
+"negative kappa" two-point fit reported last tick as indicative was noise, and is now formally
+withdrawn: nothing in this data supports an unphysical kappa, or any kappa.
+
+That is the second time in this project a striking single-seed number has collapsed under replication.
+I declined to report it last tick on exactly this suspicion, and the decision was correct.
+
+**Power check for the remaining comparison, done now rather than at the read.** If the standing plan's
+form holds and delta(70) is genuinely -9.6, then kappa = 204 eps and the plan predicts
+**delta(300) = -30.3 eps** -- a 20.7 eps gap between the two sizes. With +-6.5 per point that is 2.3
+sigma at n=5, and 3.2 sigma at n=10.
+
+**Launching 5 more seeds per condition at BOTH sizes, and declaring the optional-stopping problem.** I
+pre-registered 5 seeds. Adding seeds after seeing a 1.5-sigma result is optional stopping and inflates
+the false-positive rate if the two are then pooled silently. So: the pre-registered n=5 result above
+stands as reported, and the extended n=10 analysis will be reported **separately and labelled as
+extended**, not merged into it. I am fixing the target at 10 seeds now and will not extend again
+whatever the result.
+
+* **delta(300) more negative than delta(70) by >= 14 eps with non-overlapping error bars** -> the
+  closed state becomes more favourable as R grows, the continuum form holds, and the slope gives kappa.
+* **delta(300) less negative than delta(70), error bars excluding zero slope** -> the form has the wrong
+  sign and the standing plan is retracted.
+* **Error bars overlap at n=10** -> underpowered at the compute available; report both and claim no
+  trend. Given the 3.2-sigma projection this is the least likely branch, which is precisely why it is
+  worth naming before the data exists.
