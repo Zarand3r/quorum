@@ -13793,3 +13793,130 @@ the winning corner waits for them. **Three baseline emergence seeds (8500-8502) 
 
 **Retracted this tick: nothing.** The chi_TW null is *upgraded* from "underpowered, effect not excluded"
 to a reportable negative at adequate power.
+
+## Tick — two-axis cells read; programme redirected from tuning to validation
+
+**Completed and read at the end.** Cells A and B finished (16/16 and 12/12 at 100 000 steps, dense
+checkpoints, time-averaged over steps >= 30 000), with membrane quality measured in the same runs.
+
+| cell | chi_TW | chi_HH | lambda (eps) | rings survived | tail depth p95 | membrane |
+|---|---|---|---|---|---|---|
+| baseline | 0.00 | 0.20 | +1.23 +- 1.67 (14 pairs) | 39/40 | 3.08 +- 0.03 | reference |
+| **A** | -0.50 | -0.50 | +2.57 +- 1.21 (8 pairs) | **4/8** | 4.17 +- 0.10 | **degraded 10.0 sigma** |
+| **B** | 0.00 | -0.50 | **+4.42 +- 1.06** (6 pairs) | **6/6** | 3.24 +- 0.06 | degraded 2.5 sigma |
+
+**Cell A fails, exactly as predicted before the read.** Last turn I worked out that baseline
+hydrophobicity is already `chi_TW - (chi_TT + chi_WW)/2 = 0 - (0.70+0.50)/2 = -0.60`, so setting
+`chi_TW = -0.50` drives it to **-1.10** and over-segregates the tails. Cell A collapses the membrane at
+10 sigma and half its rings came apart. **The prediction was recorded before the data existed.**
+
+**Cell B is the interesting one and I am reporting it as suggestive, not established.** lambda =
+**+4.42 +- 1.06 eps is 4.2 sigma from ZERO** -- the first line tension in this project clearly distinct
+from zero on the current force field -- with **6/6 rings intact** and only 2.5 sigma of membrane
+degradation. **But against baseline the difference is +3.19 +- 1.98, which is 1.61 sigma, below the
+2 sigma threshold I pre-registered.** The "window found" branch does **not** fire. Resolving baseline
+versus B needs roughly 4x the seeds, and under the redirection below I am not spending them.
+
+**A glob error caught before it reached the table.** Cell B's membrane numbers first read
+`8/12 rings closed, tail depth 3.48 +- 0.17` because the pattern `*hh-0.50*` also matches Cell A's
+files, which carry both tags. The exact tag gives **6/6 and 3.24 +- 0.06**. Fifth label-versus-content
+error in this series, and again caught by an inconsistency -- 12 files for a 6-seed cell.
+
+### REDIRECTION: the goal is physics that matches reality, not guaranteed vesicles
+
+Per explicit instruction, chasing a chemistry that produces vesicles is **tuning toward a desired
+outcome, not validating physics**. If faithful physics gives marginal closure and ~17% vesicles, that is
+the answer. **The parameter scans stop here.** Cells A and B are reported and not pursued.
+
+**What replaces them: consistency tests, which are the only way to assert correctness without a target
+outcome.** Two ran this tick and both passed. Neither existed in the suite before --
+`test_physics_invariants.py` covered Newton's third law, boundedness and locality, but never that the
+forces match the stated potential.
+
+| test | result |
+|---|---|
+| **force = -grad U**, central difference, production topology | max relative error **1.8e-8** over 64 components |
+| **energy conservation**, transformer forward pass, thermostat off | drift ~ **dt^1.85**; **0.196%** of thermal energy over 3000 steps at production dt=8e-3 |
+
+The `dt^1.85` scaling is the signature of velocity-Verlet truncation rather than a force error -- a wrong
+force does not scale this way. **This matters retroactively: non-conservative forces would mean the
+dynamics samples no Boltzmann distribution at all, and lambda, dF and every rate here would be
+artifacts. They are not.**
+
+**One correction inside the tick:** my first conservation run printed "NOT CONSERVED" because I
+normalised by total energy, which is a near-cancellation of -115.1 potential against +132.4 kinetic.
+Wrong denominator; the numbers above use the thermal scale (ndof/2)kT = 144 eps.
+
+**NEXT TEST, criteria fixed BEFORE the run: does the OU thermostat actually sample Boltzmann?** Unlike
+the closure free energy, this has **exact analytic targets**, so it is decidable rather than merely
+measurable.
+
+* **Kinetic equipartition:** `<KE>/((d/2) N kT)` must equal **1.000 +- 0.01**. Velocities are exactly
+  Gaussian in equilibrium regardless of the potential, so there is no modelling caveat on this one.
+* **Velocity distribution:** each component must be Gaussian with variance `kT/m`; excess kurtosis
+  within **+-0.1** of zero.
+* **Configurational sampling:** mean bond potential against the `kT/2` equipartition value, reported
+  **with the 2-D radial-Jacobian caveat stated** -- in 2-D the bond measure carries a factor r, so the
+  agreement is only exact in the stiff-spring limit and I will not read a small deviation as failure.
+
+**If kinetic equipartition or the velocity distribution fails, the thermostat does not sample the
+Boltzmann distribution, and every free energy, rate and line tension measured in this project is
+invalid** -- a far more consequential outcome than any vesicle question.
+
+**Emergence in flight:** 3 baseline seeds (8500-8502) at 720-760k, largest 52-85, 0 closures.
+
+**Retracted this tick: nothing.** Cell B is recorded as suggestive-below-threshold, and the parameter
+programme is closed by instruction rather than by falsification.
+
+**THERMOSTAT RESULT: the kinetic arm passes cleanly; the configurational arm is statistics-limited and
+my error bars on it were wrong.**
+
+| test | result | verdict |
+|---|---|---|
+| kinetic equipartition, 640 dof | **1.0002 +- 0.0015** | **PASS** (target 1.000 +- 0.010) |
+| velocity distribution | var 0.4501 vs kT = 0.4500; excess kurtosis **+0.006** | **PASS** |
+| bond potential, full system | 0.855 of kT/2 | see below |
+| bond potential, isolated dimer | 1.092 +- 0.040 (blocked) | 2.29 sigma high |
+
+**The two obvious explanations for the bond number are both dead.** A **dt scan** gives
+0.855 / 0.859 / 0.826 / 0.842 at dt = 8e-3 down to 1e-3 -- **flat, so it is not a timestep artifact**.
+And with `k = 200, r0 = 1.0` the 2-D radial-Jacobian correction is `kT/(k*r0^2) = 0.0023`, i.e. **0.2%,
+not 15%**. I had pre-registered the Jacobian as the caveat and it does not cover this.
+
+**The remaining explanation is that the springs are not independent normal modes.** In the full molecule
+the 1-2 bonds and the 1-3 stiffener share beads, so `<U> = kT/2` per spring does not hold -- generalised
+equipartition applies to independent quadratic modes, not to overlapping springs. The isolated dimer
+tests exactly that, since its single bond IS the only internal mode.
+
+**A METHODOLOGICAL DEFECT FOUND IN MY OWN ANALYSIS.** The dimer first read **1.1316 +- 0.0115**, which
+would be 11 sigma. That error bar assumed independent samples. With `gamma = 1` the correlation time is
+~1 time unit while samples were 0.04 apart, so they are heavily correlated. **A Flyvbjerg-Petersen
+blocking analysis gives +-0.0402, larger by 2.2x**, and the discrepancy falls to 2.29 sigma.
+
+**Scope of that defect, checked rather than assumed:** it affects only observables averaged **within a
+single trajectory**, which is these new thermostat tests. **The lambda, rate and occupancy numbers are
+unaffected** -- their error bars were computed across independent SEEDS, not across correlated samples
+within a run. I verified this in the analysis scripts rather than asserting it.
+
+**What is established: the dynamics is conservative, the integrator is correct, and the thermostat holds
+the right kinetic temperature to 0.15%.** Configurational sampling is consistent within ~2 sigma but not
+tightly validated, and the small-system test is limited by having only 4 degrees of freedom.
+
+**LAUNCHED, criteria fixed BEFORE the run: 6 INDEPENDENT dimer seeds, 4M steps each at dt = 2e-3,
+sampled every 200 steps.** Per-seed means are independent, so the error bar is taken **across seeds**
+and the autocorrelation problem disappears by construction rather than by correction.
+
+* **`<U_bond>/(kT/2) = 1.00` within 2 sigma across 6 seeds** -> configurational sampling is validated,
+  the thermostat samples Boltzmann in both momentum and configuration, and the full-system 0.855 is
+  confirmed as mode-coupling rather than a sampling defect.
+* **Ratio differs from 1 by more than 2 sigma with SE < 0.02** -> the OU thermostat does **not** sample
+  the Boltzmann distribution of the stated potential, and **every free energy, rate and line tension in
+  this project is invalid** regardless of how carefully it was measured.
+* **SE across seeds still > 0.02** -> underpowered, reported as such, no verdict.
+
+**Also committed to the suite: `tests/test_statistical_mechanics.py`**, holding the gradient test, the
+energy-conservation test and the kinetic-temperature test, so these gates are permanent rather than
+one-off. The file records the normalisation trap explicitly -- normalise drift by the thermal scale,
+never by a total energy that is a near-cancellation of -115.1 against +132.4.
+
+**Emergence in flight:** 3 baseline seeds at 720-760k, largest 52-85, 0 closures.
