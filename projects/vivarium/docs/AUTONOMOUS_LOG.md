@@ -12709,3 +12709,36 @@ slow them. The transformer track is complete up to the one open question, which 
 than a task: whether "always alive" should mean weights adapting during forward passes. That stops
 conserving energy, so it changes the physics rather than re-expressing it, and every number in
 RESULTS.md would need re-deriving against it.
+
+## Tick — a SECOND vesicle on the transformer engine; arm now 2/12 against an expectation of 2.1
+
+**Ran.** Transformer arm: six seeds complete at 1.6M, six at 1.42-1.44M.
+
+**sd8107 formed, first hit at 1 260 000, held seven checkpoints:**
+
+| step | largest | lumen_c | nenc | perc | lumH2O |
+|---|---|---|---|---|---|
+| 1 260 000 | 85 | 402 | 1 | n | 1.451 |
+| 1 380 000 | 85 | 461 | 1 | n | 1.465 |
+| 1 420 000 | 85 | 463 | 1 | n | 1.412 |
+
+All seven states preserved. Adjudicated unwrapped from the last: a **closed ring with a long tail**, 85
+lipids, span 28.8 x 47.5 sigma. **VESICLE**, the same form classified that way throughout this project.
+
+Its lumen water runs 1.24-1.56 of bulk, at the high end of what has been measured here -- planted
+vesicles read 1.068-1.366 -- but inside the range, and the enclosure is stable across seven checkpoints.
+
+**Running tally on the transformer engine: 2 formations in 12 seeds**, six of which are complete and six
+at ~89% of length. At the corpus rate of 7/40 = 0.175 the expectation over twelve full runs is **2.1**.
+Observed 2 with a third of the exposure still outstanding, so if anything it is running slightly ahead
+of expectation rather than behind.
+
+**Both formations are structurally the same object as the integrator engine produces**: a closed ring
+carrying an appendage, 80 and 85 lipids, lumen ratios near 0.21, stable over many checkpoints, with the
+intermittency recorded last tick. Nothing about the attention formulation changes what forms.
+
+**Nothing retracted.**
+
+**No falsification criterion, because no run was launched.** Six seeds remain in flight and complete
+within a tick or two. The transformer track is finished except for those confirmations and the open
+decision about whether weights should adapt during forward passes.
