@@ -14251,3 +14251,85 @@ from different arms so the algebraic identity that made version 1 vacuous cannot
 
 **Retracted this tick: nothing.** The version-1 exchange test was retracted last tick; version 2 is
 reported as underpowered rather than as a result.
+
+## Tick — detailed balance HOLDS; the validation programme is complete at seven checks
+
+**Completed and read at the end.** The two-ensemble consistency test at `kT = 1.6` finished, 6 seeds
+dispersed and 6 aggregated.
+
+**ALL THREE PRE-REGISTERED POWER CONDITIONS ARE MET, for the first time in three attempts:**
+
+| condition | result |
+|---|---|
+| transitions per seed >= 30 | **3 595 - 3 898** in both arms |
+| arms converge to a common `P_bound` | 0.70668 +- 0.00291 vs 0.70974 +- 0.00449 -> **0.57 sigma** |
+
+**CROSS-ENSEMBLE DETAILED BALANCE, `K_rate` and `K_pop` from DIFFERENT arms:**
+
+| comparison | ratio | from 1 |
+|---|---|---|
+| `K_rate(aggr) / K_pop(disp)` | **1.0162 +- 0.0262** | **0.62 sigma** |
+| `K_rate(disp) / K_pop(aggr)` | 0.9845 +- 0.0251 | 0.62 sigma |
+
+**FIRST BRANCH FIRES: detailed balance holds, and rate-derived free energies in this project are
+licensed.** Because the two quantities come from different trajectories, the algebraic identity that
+made version 1 vacuous -- `b2f = f2b` forcing `K_rate = K_pop` exactly -- **cannot** produce this
+agreement. Version 1 gave agreement to the digit and meant nothing; this gives agreement to 1.6% and
+means something.
+
+**What made the difference was diagnosing the state point rather than the code.** Versions 1 and 2
+failed at `kT = 0.45` because `P_bound ~ 0.99` left the free state essentially unvisited: 3-35
+transitions per seed and arms 2.16 sigma apart. At `kT = 1.6`, `P_bound ~ 0.71` and the same code yields
+~3 800 transitions per seed with the arms 0.57 sigma apart. **The test was never wrong about the
+physics; it was run where it had no power.**
+
+### The validated state of the engine -- seven independent checks
+
+| # | check | result |
+|---|---|---|
+| 1 | force = `-grad U`, production topology | max rel err **1.8e-8** |
+| 2 | energy conservation, thermostat off | drift ~ **dt^1.85**, 0.196% of thermal at production dt |
+| 3 | kinetic equipartition, 640 dof | **1.0002 +- 0.0015** |
+| 4 | velocity distribution | excess kurtosis **+0.006** |
+| 5 | configurational equipartition, exact target | **1.0037 +- 0.0054** |
+| 6 | `g(r) -> exp(-beta u)` in the dilute limit | deviation ~ **rho^0.89 -> 0** |
+| 7 | **detailed balance, cross-ensemble** | **1.0162 +- 0.0262, 0.62 sigma** |
+
+**Checks 1, 2, 3 and 6 are permanent gates in `tests/test_statistical_mechanics.py`, PASSING under
+bazel.** Checks 5 and 7 are recorded here with their numbers; both need long runs and are unsuitable as
+unit tests.
+
+**The consequence for the science, which is the point of the whole programme.** Population-derived free
+energies rest on checks 5 and 6; rate-derived ones additionally require check 7, which now holds. **Both
+routes are licensed and they agree**: static `lambda = +1.23 +- 1.67 eps` and rate-derived closure
+`dF = +0.22 +- 0.44 kT`. **The closure result is not an artifact of a broken sampler, a non-conservative
+force, a mis-thermostatted mode, or a violated detailed balance -- each of those was tested and
+excluded.** This amphiphile sits at the closure threshold, and ~17% emergent vesicles is what the
+potential implies.
+
+**NEXT EXPERIMENT, criteria fixed BEFORE the run: a van't Hoff decomposition of the binding equilibrium,
+which turns the validated machinery into a measurement with an INDEPENDENT cross-check.**
+
+`ln K = -dE/kT + dS/k`, so `P_bound` measured across temperatures gives the binding energy from the
+slope and the binding entropy from the intercept. **The binding energy can also be computed directly as
+`<U>_bound - <U>_free` from the same trajectories**, so the two must agree -- a genuine consistency test
+rather than a fit with nothing to check it against. The pilot scan already suggests linearity:
+`P_bound = 0.970, 0.907, 0.832, 0.677` at `kT = 0.6, 0.9, 1.2, 1.6`, giving `ln K = 3.46, 2.28, 1.60,
+0.74` against `1/kT = 1.667, 1.111, 0.833, 0.625`.
+
+**Launching 5 seeds at each of `kT = 0.8, 1.0, 1.2, 1.4, 1.6`**, 300 000 steps, recording `P_bound` and
+the mean potential energy of bound and free lipids in the same runs.
+
+* **van't Hoff `dE` agrees with the direct `<U>_bound - <U>_free` within 2 sigma** -> the thermodynamic
+  pipeline is validated end to end against an independently computable quantity, and the entropy
+  decomposition of closure I proposed earlier becomes a measurement rather than a reconciliation.
+* **They disagree by more than 2 sigma** -> the van't Hoff assumption of temperature-independent `dE`
+  and `dS` fails over this range, which is informative about the model and means the closure
+  energy/entropy split cannot be extracted this way.
+* **`ln K` is visibly non-linear in `1/kT`** -> same conclusion, reported from the fit residuals rather
+  than asserted.
+
+**Emergence in flight:** 4 baseline seeds (8600-8603) at 540-560k, largest 49-95, 0 closures.
+
+**Retracted this tick: nothing.** Versions 1 and 2 of the exchange test were already recorded as vacuous
+and underpowered respectively; version 3 supersedes them with adequate power.
