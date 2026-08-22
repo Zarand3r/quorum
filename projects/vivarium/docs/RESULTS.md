@@ -121,6 +121,21 @@ distance from the aggregate centroid, and for an arc the centroid is offset from
 reads about 10% low at span 0.75. The earlier series used the measured value and therefore understated
 its gaps by 4–11%, all in the same direction, which leaves its ordering intact.
 
+**The capture radius does not depend on ribbon size.** The obvious follow-up is whether a bigger ribbon
+reaches further, which is what the continuum argument predicts: edge saved is 2*lambda and constant,
+bending paid is pi*kappa/R and falls with size, so above some radius closure should become easy. Tested
+at a fixed 10.1 sigma end-gap with the radius held by construction:
+
+| condition | ring radius | closed |
+|---|---|---|
+| N = 70 | 12.8 | **1/10** |
+| N = 300 | 49.3 | **1/10** |
+
+**Fisher exact p = 1.000 across a 3.9x span in radius.** The prediction is not supported: over a fourfold
+range the arcs close identically. That is consistent with the two other things measured here -- kappa is
+-15 +- 140 kT, consistent with zero, so there is little bending penalty for a larger ring to be relieved
+of, and closure is a kinetic constraint that has no reason to care about R.
+
 Two things the re-measurement changes. The widest-gap rate is **1/10, not 2/5** — better powered and
 lower. And closure, when it happens, is **fast**: at 3.4 σ four of five seeds had closed by the first
 checkpoint at 10 000 steps, against a 300 000-step budget. So the earlier reading that "even 9 σ closes

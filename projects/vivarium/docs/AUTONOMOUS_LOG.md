@@ -12624,3 +12624,37 @@ figure trustworthy.
 
 **No new run launched.** Twelve seeds are in flight, six still maturing, and the criterion set two ticks
 ago stands unchanged.
+
+## Tick — primary criterion passes at double the sample; recorded the size-independence in the deliverable
+
+**Ran.** Transformer arm: six seeds at 1.48-1.50M, six at 840k. sd8105 now at **15 hits**, persisting
+since 1 120 000. Nothing complete.
+
+**PRIMARY criterion, now with all twelve transformer seeds** over the common window 100k-840k:
+
+| sample | difference vs integrator corpus |
+|---|---|
+| 6 seeds, to 820k | -2.6 +- 7.6, 0.34 sigma |
+| **12 seeds, to 840k** | **+3.3 +- 7.4, 0.45 sigma** |
+
+Transformer seed means run 64 to 111; the integrator corpus spans 46 to 156 across 27 seeds, so the two
+overlap fully. Well inside the 2 sigma withdrawal threshold.
+
+**The sign flipped between the two readings, and that is the useful part.** An estimate that moves from
+-2.6 to +3.3 while its magnitude stays near 0.4 sigma is noise scattering around zero, which is what
+equivalence looks like. A real offset would hold its sign and grow in significance as the sample doubled.
+
+**Audited the deliverable against my own retractions, and found a gap.** RESULTS.md correctly does NOT
+assert the critical-size prediction retracted two ticks ago -- but it also did not record the measurement
+that retracted it. Added to the encounter section: 1/10 at radius 12.8 and 1/10 at radius 49.3 at a fixed
+10.1 sigma gap, Fisher p = 1.000 across a 3.9x span, with the note that this is consistent with kappa
+being consistent with zero and with closure being kinetically rather than energetically limited.
+
+A retraction that lives only in the working log is half-done: a reader of the deliverable would have
+seen neither the claim nor its refutation, and would have had no way to know the question had been
+asked.
+
+**Nothing retracted this tick.**
+
+**No new run launched.** Twelve seeds are in flight; the first six complete within a tick or two, at
+which point the arm reads against the criterion fixed three ticks ago. Adding runs now would slow that.
