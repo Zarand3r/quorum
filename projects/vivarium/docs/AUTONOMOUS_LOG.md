@@ -12820,3 +12820,165 @@ the connected cluster span 30.3 sigma against a 32.5 sigma half-box. Metrics bui
 centroids are outside their documented precondition on this object. The enclosure gate and
 `unwrap_cluster` are grid- and connectivity-based and are unaffected; **R_mid on this cluster is not
 trustworthy** and is not quoted.
+
+## Tick — the standing plan is stale; measuring the number that twice went unmeasured
+
+**Running.** Six transformer emergence seeds (8200-8205) at 160k of 1.6M, largest clusters 28-43, no
+formations. That is 10% of length and unremarkable; the corpus first-formation times are 1.1M and later.
+Nothing is complete, and nothing is read as a trend.
+
+**The brief's standing plan is refuted, not pending.** It still lists the critical-size arc test as the
+plan, with the falsification "if arcs of 70/120/200/300 all unroll, the continuum picture is wrong."
+That test ran to completion and its prediction was **retracted three ticks ago**: at a fixed 10.1 sigma
+end-gap, **N=70 closed 1/10 and N=300 closed 1/10, Fisher exact p = 1.000, across a 3.9x span in ring
+radius (12.8 -> 49.3)**. The capture radius does not grow with ribbon size. Re-running it would rebuild
+refuted work, which is the specific process failure this project has already committed twice.
+
+**The genuinely open number.** Two entries flag the same missing measurement and neither supplies it:
+"if emergent ends sit at 20-30 sigma, the blocker is quantified", and "the encounter explanation holds
+*provided* emergent ends are further apart than the capture radius." The capture radius is **~8 sigma**,
+measured on planted arcs. **Nobody has measured how far apart the ends of emergent ribbons actually
+are.** That single number decides whether the encounter explanation of the 17.5% formation rate is
+quantitative or merely plausible. It needs no new simulation: 430 emergent states, 172 planted rings and
+238 planted arcs are already on disk.
+
+**Why this needs a gate, and why I am not simply writing the detector.** Counting ribbon ends has failed
+**twice** here. A tip-counter reported **134 tips on a closed ring**; a later end-gap detector reported
+**16 termini on a closed ring**. Both were discarded. A third naive attempt is the same mistake again,
+so the detector is validated against known answers before it is allowed near emergent data.
+
+**The detector, and why it is a different approach from the two that failed.** Both predecessors were
+geometric: they looked for local sparsity or curve termini among beads, and thermal roughness
+manufactures those everywhere along an intact membrane. This one is physical instead. An edge is where
+**hydrophobic tail beads are exposed to water** -- that exposure is the origin of the line tension
+lambda = +18.31 +- 7.07 eps already measured here. So: count water neighbours per tail bead, threshold
+it, spatially cluster the exposed tails, and the number of clusters is the number of ends.
+
+**PRE-REGISTERED DETECTOR GATE, fixed before any emergent state is touched.** One parameter set,
+calibrated on planted references only, must satisfy **both**:
+
+* **planted closed ring -> 0 ends** on at least 5 seeds, and
+* **planted open arc -> exactly 2 ends** on at least 5 seeds.
+
+**If no single parameter set clears both, the detector is discarded like its two predecessors and no
+end-gap number is reported this tick.** I am recording that branch in advance because it is the likely
+one: two previous attempts died exactly here.
+
+**The scientific criterion, conditional on the gate passing.** Applying the frozen detector to emergent
+non-closed ribbons:
+
+* **median end-to-end gap >> 8 sigma** -> emergent ends sit outside the capture radius, and the
+  encounter-limited explanation of the 17.5% rate becomes quantitative rather than a story.
+* **median gap <= 8 sigma** -> emergent ends are routinely within capture range and still do not close,
+  so encounter-limitation is NOT the blocker and the explanation standing in RESULTS.md is wrong.
+
+Both branches are informative, which is the point of measuring it.
+
+**Nothing retracted this tick.** The critical-size retraction stands from three ticks ago; I am only
+noting that the brief has not caught up with it.
+
+**GATE RESULT: FAILED. The detector is discarded, as pre-registered, and no end-gap number is reported.**
+
+It failed twice, and the first failure was a bad reference set that I caught only by checking.
+
+**First attempt, invalid references.** I selected "planted rings" by filename. Five `ring_N120_ht-0.25`
+states at step 150 000 report **`n_enclosed = 0`, `count_vesicles = 0`** -- those rings had already come
+apart, so "ring -> 0 ends" was being satisfied by an object that was not a ring. The matched arcs sat at
+L=100 against the rings' L=56, so the water density differed by 3.2x and any absolute exposure threshold
+was confounded. A third of the arc references (`sac` runs) contain **no explicit water at all**, making
+water-exposure undefined by construction. **Selecting references by filename instead of by measured
+topology is the same class of error as the colour-map inversion last tick: the label was trusted and the
+content was not checked.**
+
+**Second attempt, verified and matched references.** Selected by measured topology instead: 8 closed
+rings with `n_enclosed = 1` and 8 open arcs with `n_enclosed = 0`, all at **L=60, N=70**, identical box,
+lipid count and water density. Swept **480 parameter sets** (r_wat, n_wat, cut, min_beads).
+
+**Zero cleared the gate.** The counts do not merely miss 0-and-2, they overlap completely:
+
+| parameters | closed rings | open arcs |
+|---|---|---|
+| r=2.5, n>=1, mb=5 | 1,1,1,1,1,1,1,1 | 1,1,1,1,1,1,1,1 |
+| r=2.5, n>=2, mb=3 | 1,1,1,1,2,2,2,3 | 1,3,2,3,6,9,3,2 |
+| r=2.5, n>=3, mb=3 | 8,8,8,6,8,4,8,5 | 9,9,9,11,10,7,7,6 |
+| r=2.5, n>=5, mb=5 | 2,0,1,0,0,2,0,0 | 0,0,1,1,0,0,1,0 |
+
+**A closed ring and an open arc are not separable by tail-water exposure at any threshold.** That is the
+third end-detector to die in this project, and the first to die on controlled references.
+
+**This failure is physically informative, so I am testing what it implies rather than only recording
+it.** The detector assumed the standard microscopic picture of line tension: an edge costs energy
+*because* it exposes hydrophobic tails to water. Under that picture an arc with two ends must show more
+tail-water contact than a ring with none. The counts above say it does not.
+
+**NEXT MEASUREMENT, criterion fixed BEFORE running it.** Total tail-water contacts per lipid, a
+parameter-free scalar, 8 verified rings against 8 verified arcs at matched L=60 and N=70, reported with
+error bars over states:
+
+* **arc exceeds ring by > 2 sigma** -> the edge does expose tails, the microscopic picture behind
+  lambda = +18.31 +- 7.07 eps holds, and the detector failed for a technical reason worth another attempt.
+* **the two are within 2 sigma** -> the edge cost in this model is NOT tail exposure, the detector was
+  doomed for a physical reason rather than a coding one, and the microscopic interpretation of lambda
+  attached to every closure argument here needs restating.
+
+The second branch would not touch the *measured value* of lambda, which came from an energy difference
+and stands on its own. It would touch the *explanation* of where lambda comes from.
+
+**RESULT: the second branch fires. The edge cost in this model is not tail exposure.**
+
+Tail-water contacts per lipid, 8 verified rings against 8 verified arcs, matched L=60, N=70:
+
+| r_cut | ring (0 ends) | arc (2 ends) | arc - ring | sigma |
+|---|---|---|---|---|
+| 1.5 | 0.975 +- 0.038 | 0.875 +- 0.084 | -0.100 +- 0.092 | 1.08 |
+| 2.0 | 3.652 +- 0.102 | 3.421 +- 0.258 | -0.230 +- 0.277 | 0.83 |
+| 2.5 | 8.371 +- 0.193 | 7.871 +- 0.474 | -0.500 +- 0.512 | 0.98 |
+| 3.0 | 16.425 +- 0.265 | 15.625 +- 0.804 | -0.800 +- 0.846 | 0.95 |
+
+The arc has **less** tail-water contact than the ring at every cutoff, and the difference is consistent
+with zero. The sign is backwards for an edge that works by exposing tails.
+
+**Separating curvature from edge, because at N=70 a ring is tightly curved and splay could mask an edge
+term.** An edge contributes to a per-lipid average as 2/N; curvature does not. So the same comparison
+was repeated at N=300, with exposure normalised by bulk water density (`rho_w * pi r^2`) so that boxes
+of different water content are comparable:
+
+| normalised exposure, r=2.5 | N=70 | N=300 |
+|---|---|---|
+| ring (0 ends) | 0.1767 +- 0.0041 | 0.1421 +- 0.0241 |
+| arc (2 ends) | 0.1662 +- 0.0100 | 0.1249 +- 0.0210 |
+| **arc - ring** | **-0.0106 +- 0.0108 (0.98 sigma)** | **-0.0172 +- 0.0320 (0.54 sigma)** |
+| predicted edge term 2/N | +0.0286 | +0.0067 |
+
+**At N=70 the tail-exposure model predicts +0.0286 and the measurement is -0.0106 +- 0.0108, excluding
+it at 3.6 sigma.** The difference also fails to grow as 2/N from N=300 to N=70, which is the signature
+the model requires. **This is an exclusion, not a null.**
+
+**What this does and does not touch.** lambda = +18.31 +- 7.07 eps was measured as an energy difference
+between ring and arc and **stands unchanged** -- an edge in this model does cost energy. What is refuted
+is the microscopic *explanation* attached to it throughout this project, that the cost is hydrophobic
+tail exposure at the terminus. It is not. The remaining candidates are the loss of head-head and
+tail-tail cohesion at a terminus (fewer neighbours, not wetter ones), which is a coordination-number
+effect rather than a solvation one. That is measurable the same way and is the obvious next step.
+
+**It also explains why three end-detectors have now failed here.** All three looked for a locally
+distinctive environment at the terminus. The exposure data says the terminus is not locally
+distinctive: a lipid at an arc end sees about the same amount of water as a lipid in the middle of a
+closed ring. **The detectors were not merely buggy; they were looking for a signal that is not there.**
+That is worth more than the end-gap number I set out to get, and it retires the approach rather than
+leaving it for a fourth attempt.
+
+**Looked at the newest emergent render**, sd8200 at step 280 000 (17% of length): about 14 separate
+ribbon fragments, largest cluster 28 lipids, zero closures, which matches the corpus at this fraction of
+the run and is not read as a trend. The image shows tail cores in direct water contact along the entire
+flank of every fragment, not only at the ends -- the visual counterpart of the exclusion above. Each
+lipid carries **one head bead against four tail beads**, so there is not enough head material to shield
+the tails anywhere along a ribbon. That is a plausible structural reason for the result and is stated as
+a hypothesis, not a measurement.
+
+**No new run launched, and none is needed.** Six emergence seeds (8200-8205) are already in flight at
+280k of 1.6M, so the standing requirement to keep a dispersed-start run running is met. This tick's
+experiment used **430 emergent, 172 ring and 238 arc states already on disk** and cost no simulation
+time, which is the cheap decisive measurement the brief asks to prefer over long runs.
+
+**Retracted this tick: the tail-exposure explanation of line tension.** The value of lambda is untouched.
