@@ -13431,3 +13431,66 @@ into a two-point response curve.
 
 **Retracted this tick: nothing.** The periodic-wrapping alternative explanation is refuted rather than
 retracted, since it was never asserted -- it was a competing hypothesis that has now been excluded.
+
+## Tick — chi_HT was the wrong lever; the source already named the right one
+
+**Completed and read at the end.** The `chi_HT = -0.75` arm finished 16/16. **Void branch did not fire**
+but came close: **6 of 8 planted rings survived 50 000 steps closed, 2 came apart** (sd41, sd42), against
+1 in 40 at `ht-0.25`. All 8 arcs stayed open. 6 usable pairs, above the 5-seed floor.
+
+**Emergence arm 8200-8205 is FINAL at 0/6** -- four seeds at 1.6M, two within 40k, **hits = 0 in all
+six**, final largest clusters 75-160 with three seeds holding every lipid in one cluster. **Pooled
+transformer rate 2/18 = 0.111, inside the corpus CI 0.087-0.320**, so the pre-registered engine
+equivalence criterion holds: the transformer engine did not suppress closure.
+
+**RESULT, paired by seed, N=70, L=60, step 50 000:**
+
+| | lambda |
+|---|---|
+| `chi_HT = -0.25`, 15 pairs | **-0.20 +- 1.95 eps** |
+| `chi_HT = -0.75`, 6 pairs | **+3.04 +- 3.38 eps** |
+| difference | **+3.24 +- 3.90, 0.83 sigma** |
+
+**The pre-registered second branch fires: the edge cost is not controlled by `chi_HT`.**
+
+**PROCESS FAILURE, and the worst kind: the answer was already in the source.** `field.py:97-105`
+defines `chi[TAIL, WATER]`, defaults it to **0.00**, and the comment beside it reads: *"TAIL-WATER IS THE
+TERM THAT PRICES A BILAYER EDGE. At 0.00 a tail is INDIFFERENT to water: it gains nothing and loses
+nothing by sitting at an exposed rim... With no cost to an exposed edge there is no drive to close one,
+which is why every arc in this project has unrolled."* It even records **lambda = +2.8 +- 2.8 eps at
+N=300**, consistent with zero and with everything I have measured.
+
+I chose `chi_HT` from my own decomposition, where head-tail was the only individually significant term.
+**That was a reasonable inference from my data and it was still the wrong parameter**, because I did not
+read the chi table before picking a lever from it. This is the same failure as rebuilding a discarded
+metric without checking the log: the project had already written down the answer.
+
+**What my last three ticks actually did, stated honestly.** I independently established that tail
+exposure does not price the edge (contact counting, then energy decomposition at 4.27 sigma), that
+lambda ~ 0 (static and rate-based), and that the ribbons have genuine free ends. **Every one of those is
+a rediscovery of a documented design choice.** The measurements are sound and the confounds I killed
+were real, but the headline was in a code comment the entire time.
+
+**THE ACTUAL LEVER, and the run that tests it.** `chi` scales the attractive well, so negative is
+repulsive: driving `chi_TW` below zero makes tails hydrophobic and puts a real price on an exposed rim.
+
+**LAUNCHED, criterion fixed BEFORE the run: 8 paired seeds, ring vs arc0.75, N=70, L=60, 50 000 steps,
+at `VIVARIUM_CHI_TW=-0.50`**, identical in every other respect to the two arms above so all three pool
+into a response curve in the one parameter the source identifies.
+
+* **lambda(TW=-0.50) exceeds lambda(TW=0.00) by more than 2 sigma** -> the edge is priced by tail-water
+  as documented, and there is a designed route to a closure drive.
+* **within 2 sigma** -> even the documented mechanism does not price an edge in practice, and no
+  accessible parameter in this force field creates a closure drive.
+* **planted rings fail to survive** -> void, as at `ht-0.75` where 2 of 8 already failed; a stronger
+  perturbation makes this more likely, and I will report a void rather than a lambda from broken rings.
+
+**ALSO LAUNCHED, and flagged as a bet: 4 EMERGENCE seeds (dispersed start) at the same
+`chi_TW=-0.50`.** The standing requirement is to keep an emergence run in flight, and the previous arm
+has just ended. Running them at the new chemistry rather than the old one tests whether a nonzero edge
+cost actually produces emergent vesicles -- the question the whole project turns on. **The risk is
+explicit: if the planted test returns the null branch, these four 1.6M runs were spent on a chemistry
+with no drive.** I judge that worth it because the planted result arrives within minutes and the
+emergent runs take hours, so serialising them wastes more than the bet costs.
+
+**Retracted this tick: nothing.** `chi_HT` is recorded as an excluded lever, not a withdrawn claim.
