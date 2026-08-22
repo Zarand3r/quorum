@@ -12550,3 +12550,40 @@ need a pending decision. Doubling the arm to 12 seeds tightens both observables.
 
 **Retracted: nothing new this tick.** The arc-arm retraction from last tick is merely confirmed by its
 final seed.
+
+## Tick — the apparent drift in the transformer comparison was my own unit-of-analysis error
+
+**Ran.** Transformer arm: six mature seeds at 820k, six new seeds at 140-160k, **0 formations across all
+twelve**. Nothing else in flight; every other arm finished.
+
+**Noticed an apparent drift and chased it before reporting it.** Updating the per-checkpoint statistic
+with the extra 220k of trajectory moved it from **+1.29 +- 3.98 (0.32 sigma)** to **+4.53 +- 3.97
+(1.14 sigma)**, with the later checkpoints running positive (+23.1 at 700k). Still inside the 2 sigma
+withdrawal threshold, but moving in the wrong direction.
+
+**It was an artifact of the wrong unit of analysis.** That statistic treats eight checkpoints of the same
+six runs as independent samples. They are not -- consecutive checkpoints of one trajectory are strongly
+correlated. The independent unit is the SEED. Redoing it that way, over the window 100k-820k:
+
+| statistic | result |
+|---|---|
+| per-checkpoint, 8 correlated points | +4.53 +- 3.97, **1.14 sigma** |
+| **per-seed, the independent unit** | **-2.6 +- 7.6, 0.34 sigma** |
+
+**The sign flips.** Transformer seed means are 64, 68, 87, 77, 91, 72; the integrator corpus spans 45 to
+156 across its 27 seeds, so the transformer runs sit comfortably inside the existing spread. The
+engine is equivalent, and the drift was mine, not the code's.
+
+This is the same error class as the paired-versus-unpaired mistake in the energy comparison several
+ticks ago: in both cases the naive statistic looked more informative than it was because it counted
+correlated observations as independent. **The seed-level number is the one that stands: 0.34 sigma.**
+
+**Secondary observable, as pre-registered underpowered.** 5 of 28 length-matched runs had formed by 800k,
+so 0.179 per run; for six seeds by 820k the expectation is **1.07** and **0 are observed**, P(0) = 0.342.
+Unremarkable, and named in advance as not evidence against the engine.
+
+**Retracted: the 1.14-sigma figure computed earlier this tick.** It was never published outside this
+entry, but it was the number I was about to act on, and it is wrong.
+
+**No new run launched.** Twelve seeds are in flight and the six new ones need to mature before the
+comparison tightens. The criterion set last tick stands unchanged.
