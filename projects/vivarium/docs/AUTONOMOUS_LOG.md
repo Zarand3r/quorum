@@ -18445,3 +18445,67 @@ count moves.**
 - **POWER, stated in advance:** 8 seeds x 1.6M = 12.8 Ms gives ~2.4 expected formations at the N=160
   rate. That can detect a **doubling**, not a 30% difference. **I will not report a smaller
   difference as real.**
+
+## Tick: consolidated onto the user's two goals; seed range mapped; multi-vesicle arm launched
+
+**User goals (stated this session):** (1) a seed range that reliably emerges vesicles;
+(2) then explore how to get MULTIPLE vesicles.
+
+**Running after consolidation:** 66 sims (was 88), load 84.
+goal 1: scan 24 + em160C 24 + em160S; goal 2: multi320 6.
+
+### CONSOLIDATION -- cores moved to the stated goals
+
+Expected formers scale with **total seed-Msteps** and the machine is core-limited, so launching more
+adds nothing; only reallocation does. **Killed:**
+- **3M span series (10 procs)** -- measures lambda/kappa, **both retracted**, and serves neither goal.
+- **n200 (8 procs)** -- subsumed by multi320, which tests the same more-lipids lever at 2x scale
+  **and** directly targets goal 2.
+
+### GOAL 1: THE SEED RANGE, MAPPED
+
+All 30 std160 seeds (X = sustained vesicle past k>=2 debounce):
+
+```
+seeds 9300-9329:  ..X.....X...X.XXXX........X...
+```
+
+| seed | first sustained closure |
+|---|---|
+| 9302 | 1,220,000 |
+| 9308 | 400,000 |
+| 9312 | 900,000 |
+| 9314 | 600,000 |
+| 9315 | 480,000 |
+| 9316 | 1,500,000 |
+| 9317 | 400,000 |
+| 9326 | 1,260,000 |
+
+**Densest contiguous run: 9314-9317 = 4/4.**
+
+**CRITICAL QUALIFIER:** that window was chosen **after** seeing the outcomes, so 100% is a **LOOKUP,
+not a predictive rate.** The simulator is deterministic given its seed, so the lookup is exact --
+those seeds reproduce vesicles every run. **The honest predictive rate for an UNSEEN seed is
+8/30 = 27%.** A reliable SET exists; a reliable RULE does not, and the drought suggests one may not.
+
+### GOAL 2: multi320 launched -- N=320 in L=92
+
+Double the lipids at **identical concentration and packing (0.55)**, so two vesicles can coexist
+without competing for material. Seeded with the **six proven formers** (9302, 9308, 9312, 9314,
+9315, 9316). 6/6 verified `VIVARIUM_CHI_HT=-0.25`, kT=0.45. **Physics and temperature unchanged.**
+
+Rationale: observed vesicles consume 40-160 lipids per cluster, so at N=160 one vesicle eats most of
+the material -- which is why **max simultaneous nves has never exceeded 1** across every run in this
+project.
+
+**Falsification, stated before the run is read:**
+- **max nves >= 2 in any seed** -> multiple vesicles are achievable by supplying material; the
+  ceiling was **budget, not physics**.
+- **all six form exactly one** -> something suppresses a second, most likely the first vesicle
+  draining the monomer pool; next lever is a **larger box**, not more lipids.
+- **none form** -> seed productivity is tied to the specific N=160 configuration and does **not
+  transfer**, which would undercut the "reliable seed" idea itself.
+
+### Status of the drought (unchanged this tick)
+
+0 formers post-std160 in ~39 Ms; pooled rate 0.104/Ms vs std160's 0.191/Ms.
