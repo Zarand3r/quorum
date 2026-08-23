@@ -18556,3 +18556,59 @@ guarantee the answer being tested.
 - **clusters never reach 47 at this dilution** -> box too large, **manipulation FAILED** (the same
   null the N=100 arm hit); reported as a failed manipulation, **not** as a rate result.
 - Measured as closures per Ms-in-window, compared against 0.469 from std160.
+
+## Tick: screen's first hit is a FALSE POSITIVE; gate 2 has an uncharacterised small-n bias
+
+**Running:** 78 sims, load 76. em160C 24 at 740k-1060k; em160S 12; scan 24 at 220-260k;
+multi320 6 at 40-60k; dil160 8 at 20-40k.
+
+### The screen fired -- and the hit does not survive inspection
+
+Seed 1459 (scan block) registered nves>0 at 180k, 220k, 240k -- debounced, so it counted as a
+formation. **It would have been the first formation outside std160 and would have broken the drought.**
+
+**The overlay shows a compact 39-lipid BLOB with an interior void.** Tails fill the body, heads
+scatter on the surface, **no ring**. Genuine std160 vesicles show a clear lipid ring with heads
+lining the lumen.
+
+Supporting checks -- neither rescues it:
+- **Head-lining 3.89x**, HIGHER than known-real sd9314 (2.95x). But head enrichment was established
+  earlier as a **water-presence test, not a topology test** -- heads face any water pocket. It cannot
+  discriminate and does not here.
+- Only **9 beads** in the lining shell; a 145-cell lumen (R=3.4 sigma, perimeter ~21 sigma) needs
+  ~21 lipids to ring it. **Not enough lipids to enclose it.**
+- The trace is internally contradictory: at 220k/240k `nves=1` while `lumen_c=0, nenc=0`, because
+  those columns describe the LARGEST cluster while count_vesicles scans ALL clusters.
+
+**NOT COUNTED. The drought is not broken: still 0 real formations outside std160.**
+
+### NEW FINDING: gate 2 is size-biased toward false positives at small n
+
+ratio = lumen_cells / (n^2/pi), cut 0.10. The SAME 145-cell pocket:
+
+| cluster size | ratio | verdict |
+|---|---|---|
+| n=39 | **0.299** | **ACCEPTED** |
+| n=55 | **0.151** | **ACCEPTED** |
+| n=80 | 0.071 | rejected |
+| n=120 | 0.032 | rejected |
+| n=160 | 0.018 | rejected |
+
+**A pocket rejected in a 160-lipid cluster is accepted in a 39-lipid one, purely because the n^2
+denominator shrinks.** The gate was calibrated on planted vesicles of **120-300 lipids**; nothing in
+that calibration set was near n=39.
+
+**CONSEQUENCE: formation counts are biased UPWARD for small clusters.** Every screen hit now needs an
+overlay before it joins the reliable-seed list. std160's formers had clusters of 47-99 -- at the edge
+of this regime -- but their renders showed genuine rings, so they stand pending re-examination.
+
+### LAUNCHED: nothing
+
+The machine is at load 76 with 78 sims; expected formers scale with total seed-Msteps and are
+core-limited, so a launch adds nothing. The four arms in flight (scan, em160C, multi320, dil160)
+cover both user goals. **The highest-value action this tick was refusing to count a false positive.**
+
+**Standing falsification for the small-n bias, before any re-scoring:** re-score std160's 8 formers
+with an overlay each. **If any show blobs rather than rings, the formation corpus shrinks and the
+0.191/Ms rate falls further.** If all eight show rings, the bias affects only clusters below ~55 and
+the corpus stands.
