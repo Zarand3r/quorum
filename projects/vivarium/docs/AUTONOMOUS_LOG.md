@@ -16166,3 +16166,56 @@ span** and the analysis needs a burn-in window instead of a span count.
 
 **Retracted this tick: nothing.** `+0.22 +- 0.44 kT` is **superseded, not withdrawn** -- it was correct
 within its error bar, and the new figure agrees with it at 0.3 sigma.
+
+## Tick — burn-in scan: dF_closure = +0.04 +- 0.24 kT, and my burn-in criterion was mis-specified
+
+**Running, NOT read as trends.** kT=0.45 equilibration at 710-980k of 1.2M (0 of 10 complete). N=130 arm
+at 620-720k, **sd9501 has this arm's first formation** (1 hit, largest 60). Standard N=160 last five at
+1.10-1.28M, **sd9314 now 26 hits**, sd9312 6 hits. 25 processes verified at `ht-0.25`.
+
+**THE PRE-REGISTERED BURN-IN CHECK, RUN.** Last tick drop-0 and drop-1 differed by **0.52 kT**, above my
+0.3 kT threshold, so the scan was required:
+
+| spans dropped | closed events | tau_closed | open events | tau_open | dF (kT) |
+|---|---|---|---|---|---|
+| 0 | 48 | 150 417 | 41 | 229 512 | **+0.42 +- 0.21** |
+| **1** | **36** | **141 111** | **36** | **147 500** | **+0.04 +- 0.24** |
+| 2 | 32 | 136 250 | 25 | 186 400 | +0.31 +- 0.27 |
+| 3 | 21 | 158 571 | 23 | 140 000 | -0.12 +- 0.30 |
+| 4 | 19 | 161 579 | 14 | 171 429 | +0.06 +- 0.35 |
+
+**Every drop >= 1 value agrees with every other within errors**: drop-1 vs drop-2 is **0.75 sigma**,
+drop-1 vs drop-3 is **0.42 sigma**. **The scatter is sampling noise, not a residual trend.** One span is
+enough, and the large 0 -> 1 jump *is* the transient being removed.
+
+**MY CRITERION WAS MIS-SPECIFIED AND I AM CORRECTING IT.** I wrote: "if drop-0 and drop-1 differ by more
+than 0.3 kT, the transient is not fully removed by dropping one span." **That fires whenever a transient
+exists** -- which is precisely when dropping one span is *working*. **The diagnostic that matters is
+whether drop-1 and drop-2 differ**, and they do not. **A criterion that fires on success is worse than
+no criterion**, because it invites a redesign that is not needed.
+
+**BEST ESTIMATE: `dF_closure = +0.04 +- 0.24 kT`** at `kT = 0.45`, from **36 closed and 36 open spans**.
+Consistent with zero. **The tightest and best-controlled closure free energy this project has produced.**
+
+| route | value | agreement |
+|---|---|---|
+| rate-based (transition counts) | +0.22 +- 0.44 kT | -- |
+| **dwell ratios, one span dropped** | **+0.04 +- 0.24 kT** | **0.3 sigma** |
+
+**Two independent estimators, differently weighted, agreeing.** The dwell route supersedes the rate route
+on precision while confirming it.
+
+**LAUNCHED, criterion fixed BEFORE the run: 5 more seeds at the standard condition (N=160, L=65,
+`ht-0.25`).** The formation rate is the number every other result is compared against and currently
+rests on 20 completed runs with a CI of 0.052-0.360 -- a factor of 7. These pool directly with the
+historical corpus, unlike the N=130 arm.
+
+* **Pooled >= 1.4M rate stays within 0.10-0.25** -> the rate is settled near 0.15-0.17 and the CI
+  narrows below a factor of 3.
+* **Pooled rate moves outside 0.10-0.25** -> the earlier 20-run estimate was unrepresentative and the
+  rate needs re-establishing before anything is quoted against it.
+* **Fewer than 4 of 5 reach 1.4M before the next several ticks** -> report as incomplete rather than
+  pooling partial runs, which is the error the last several ticks have been guarding against.
+
+**Retracted this tick: my burn-in criterion as written**, replaced by the drop-1-vs-drop-2 form. **No
+measurement is retracted** -- `+0.22 +- 0.44 kT` is superseded by a tighter figure it agrees with.
