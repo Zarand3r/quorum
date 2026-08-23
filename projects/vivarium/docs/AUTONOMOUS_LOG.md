@@ -18509,3 +18509,50 @@ project.
 ### Status of the drought (unchanged this tick)
 
 0 formers post-std160 in ~39 Ms; pooled rate 0.104/Ms vs std160's 0.191/Ms.
+
+## Tick: overshoot hypothesis KILLED; window residency is the real lever; dilution test launched
+
+**Running:** 78 sims, load ~71. em160C 24 at 680-980k; em160S 12; scan 24 at 140-180k;
+multi320 6 at 0-20k; **dil160 8 NEW**. **No formations anywhere post-std160.**
+
+### The overshoot hypothesis, tested and KILLED
+
+em160C reaches largest=160 (the whole population in one cluster) without closing, while std160's
+formers all closed at 47-99. Tempting read: growing too big prevents closure. **That is the
+reverse-causation trap -- formers stop growing BECAUSE they closed.**
+
+Non-circular question: how long do non-formers spend passing THROUGH the window?
+
+| | closures | time in 47-99 window |
+|---|---|---|
+| formers (n=8) | 8 | 2.32 Ms (pre-closure) |
+| non-formers (n=22) | **0** | **14.74 Ms** |
+
+**Non-formers spend 6.4x LONGER in the productive window and never close.** Being the right size is
+**necessary but nowhere near sufficient.** Closure is a rare stochastic event *within* the window.
+
+Per-seed detail confirms it: sd9313 spent 1140k steps in-window and never closed; sd9308 closed
+after only 100k in-window. **Residency does not determine outcome.**
+
+### The correct denominator
+
+**0.469 closures per Ms-IN-WINDOW**, against **0.191/Ms** of wall-clock run time -- **2.5x higher.**
+Window residency, not run length, is the quantity to optimise.
+
+### LAUNCHED: dilution test, N=160 in L=80, 8 FRESH seeds
+
+Same 160 lipids, **1.5x the area** (3682 waters vs 2159), identical chemistry, temperature and
+packing 0.55. 8/8 verified `VIVARIUM_CHI_HT=-0.25`. More dilute -> slower coalescence -> clusters
+should linger in 47-99 instead of racing to 160.
+
+**Fresh seeds used deliberately:** the eight proven formers already form, so including them would
+guarantee the answer being tested.
+
+**Falsification, stated before the run is read:**
+- **window time roughly doubles AND formation rate doubles with it** -> dilution is a real yield
+  lever; the reliable-seed problem becomes a **tuning** problem rather than a **search** problem.
+- **window time rises but rate does not** -> the window model is wrong; residency is not what limits
+  closure, and the lever is elsewhere.
+- **clusters never reach 47 at this dilution** -> box too large, **manipulation FAILED** (the same
+  null the N=100 arm hit); reported as a failed manipulation, **not** as a rate result.
+- Measured as closures per Ms-in-window, compared against 0.469 from std160.
