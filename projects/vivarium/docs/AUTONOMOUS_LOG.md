@@ -17622,3 +17622,63 @@ cheapest system in the series, so a 10x length is affordable.
 - Read at 3,000,000 steps. Equilibration judged by the slope over the final 500k, not by eye.
 
 Emergence in flight: 6 dispersed-start seeds at 1.1-1.4M, 0 closures so far in this arm.
+
+## Tick: span series completed but NOT fitted (unequilibrated); emergent rate results survive, lambda/kappa do not
+
+**Running:** 29 processes, load 25.6. eqring40/eqarc40 (3M equilibration) at ~18% -- **not read**.
+arc300 ~70%, ring300 ~45%, em160 finishing (sd9605 complete at 1.6M).
+
+### Span series COMPLETE -- and the pre-registered fit was NOT run
+
+Equilibration test applied to the new data **before** fitting, not after:
+
+| span | arm | n | E/lip | SEM | drift in window | slope /100k |
+|---|---|---|---|---|---|---|
+| 0.50 | arc70s50 | 4 | -7.4376 | 0.0522 | -0.0303 | -0.0617 |
+| 0.75 | arc70 | 5 | -7.3718 | 0.0235 | +0.0183 | -0.0252 |
+| 0.90 | arc70s90 | 5 | -7.3309 | 0.0792 | +0.0204 | -0.0017 |
+| 1.00 | ring70 | 5 | -7.4291 | 0.0693 | -0.0005 | -0.0126 |
+
+**Total spread across all four spans: 0.1067 eps/lipid. Within-window drift: 0.02-0.06.**
+
+The drift is **comparable to the entire signal** the fit must decompose into a lambda step and an
+s^2 coefficient. **Fit NOT RUN.** Running it would repeat exactly the error identified last tick.
+The span series must be repeated at equilibrated length.
+
+### Are the EMERGENT runs equilibrated? Also no -- but it matters much less
+
+| window | mean E/lip | slope /100k |
+|---|---|---|
+| 0-500k | -6.1658 | -0.7036 |
+| 500k-1000k | -6.9377 | -0.0243 |
+| 1000k-1600k | -7.0035 | -0.0096 |
+
+**Final 400k slope: -0.0113 +- 0.0056 per 100k (2.0 sigma), 19/30 seeds still falling.** The
+relaxation decays ~70x across the run but has not stopped.
+
+**Why this does NOT invalidate the rate results, stated precisely:** the energy measurements were
+resolving **0.01 eps/lipid against 0.05 of drift**. A formation COUNT resolves nothing of the kind.
+And the formation process's stationarity was tested directly several ticks ago -- the constant-hazard
+result, **chi2 = 5.12 on 3 dof, p = 0.163** -- which is exactly the property that would fail if
+formation were riding a transient.
+
+**STILL STANDING:** emergent formation rate; its N-dependence; the pre-registered N=100 suppression
+(P(0) = 0.0024); constant hazard; detector recall 0.857-0.941 on ground truth.
+**NOT STANDING:** lambda, kappa, and every quantity derived from them.
+
+### LAUNCHED: temperature arm, 12 seeds at kT = 0.55 (working point is 0.45)
+
+N=160, L=65, dispersed start, 12/12 verified `VIVARIUM_CHI_HT=-0.25`. With the energy route blocked
+pending the 3M runs, this probes the barrier question **model-free** -- no lambda or kappa needed.
+If closure is barrier-limited, warming should raise the formation rate.
+
+**Falsification, stated before the run is read:**
+- **CONFOUND CHECK FIRST.** kT=0.70 melted the membrane outright. If the largest-cluster distribution
+  at 0.55 is materially below that at 0.45, the comparison measures **aggregation, not closure**, and
+  the result is reported **VOID**, not as a rate difference.
+- **Power, stated in advance:** at the 0.45 in-band rate, 12 seeds x 1.6M = 19.2 seed-Msteps predicts
+  ~4.8 formations. A doubling shows at only ~2.4 sigma. **A smaller difference than a doubling will
+  not be reported as real.**
+- Rate compared on the same debounced, in-band basis as the 0.45 arm.
+
+Emergence in flight: the new 12-seed kT=0.55 arm plus the finishing em160 seeds.
