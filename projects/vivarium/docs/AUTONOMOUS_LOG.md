@@ -15591,3 +15591,66 @@ wrap-proof designs are not.
 **Retracted this tick: my projection that the wrap-proof arm reaches ~44 lipids.** It projects 22, and
 the mechanism -- coalescence starvation at small N -- explains why no wrap-proof design in this geometry
 is likely to work.
+
+## Tick — my wrapping model was WRONG, and correcting it means the test was already run
+
+**Read at the end.** Matched-N arm (N=100, L=65) finishing at **0/5** -- two seeds at 1.6M, three at
+1.48-1.58M. Standard N=160 arm at 80k-960k. All 23 processes verified at `ht-0.25`.
+
+**THE PRE-REGISTERED BRANCH FIRES: THE RIBBON-LENGTH MODEL OVER-PREDICTS.**
+
+| seed | largest | wrapEdges | unwrapped extent (box 65) |
+|---|---|---|---|
+| sd9200 | 57 | **0** | 41 x 26 |
+| sd9201 | 57 | **0** | 32 x 38 |
+| sd9202 | 51 | **0** | 27 x 28 |
+| sd9203 | 72 | **0** | 44 x 26 |
+| sd9204 | 60 | **0** | 28 x 50 |
+
+**0 of 5 wrapped**, where my model said N=100 > L=65 means it can. The extents show why: **27-50 sigma in
+a 65 sigma box.** The clusters are **compact**, not ribbons of length ~N. My assumption that a
+`N`-lipid ribbon is `~N sigma` long was simply false.
+
+**THE EMPIRICAL RULE, from 83 states in L=65 boxes at `ht-0.25`:**
+
+| group | n | cluster size |
+|---|---|---|
+| wrapped | 22 | **min 127**, median 158, max 160 |
+| unwrapped | 61 | min 27, median 105, max 160 |
+
+**No wrapped state anywhere has a largest cluster below 127.** A threshold of 120 gives **zero** wrapped
+states below it and 26 unwrapped above it -- so cluster size >= ~120 is **necessary but not sufficient**
+for wrapping. **The rule is `cluster ~ 2x L`, not `N > L`.**
+
+**CONSEQUENCE: I ALREADY RAN THE WRAP-FREE TEST, THREE TICKS AGO, WITHOUT KNOWING IT.** `N=100, L=65`
+produces largest clusters of **51-72** -- comfortably below the 127 threshold, so **wrap-proof in
+practice** -- while sitting in the **corpus box** and only **1.6x dilute**. It also exceeds the
+**41-lipid** smallest vesicle observed, so closure was physically available. **Result: 0/5.**
+
+**Four ticks of design work were spent engineering around a constraint I had mis-modelled.** The
+sequence: N=100/L=110 (killed, box too large), N=60/L=65 (killed this tick), while the control I ran as
+an afterthought was the correct experiment all along.
+
+**KILLED the N=60 arm.** It was built to achieve wrap-proofing that N=100 already has, at 2.7x dilution,
+with clusters projecting to **22 lipids** -- below the size at which any vesicle can form. **It cannot
+produce a result under any outcome.**
+
+**LAUNCHED, criteria fixed BEFORE the run: 10 more seeds at `N=100, L=65`, `ht-0.25`, 1.6M steps**, the
+now-identified wrap-free condition. This takes the wrap-free sample to **15**.
+
+* **>= 2 formations in 15 wrap-free seeds** -> rate consistent with the corpus 0.160; wrapping is **not**
+  suppressing closure, and the raw corpus rate needs no eligible-run correction.
+* **0 formations in 15** -> **P = 0.075** at the corpus rate 0.160 and **P = 0.065** at the eligible-run
+  rate 0.167. Not significant at 0.05, but it would be the strongest evidence yet that **something other
+  than wrapping** limits closure at N=100 -- most likely that 51-72 lipids is near the lower size bound
+  for a stable vesicle.
+* **1 formation in 15** -> rate 0.067, consistent with both; uninformative, and I record that in advance.
+
+**A caveat I am stating now:** the wrap-free condition differs from the corpus in lipid count (100 vs
+160) as well as wrapping. If it yields 0/15 I **cannot** attribute that to the absence of wrapping
+rather than to the smaller system. **The clean comparison would be N=160 runs whose clusters happen to
+stay below 127** -- which is the conditional analysis already accumulating on the standard arm.
+
+**Retracted this tick: the ribbon-length wrapping model (`N > L`).** Replaced by the measured rule
+`largest cluster >= ~127 in a 65 sigma box`. **Two arm designs (N=100/L=110 and N=60/L=65) were
+justified by the wrong model and are void as tests**, though the decisions to kill them stand.
