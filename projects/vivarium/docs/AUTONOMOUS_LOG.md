@@ -18668,3 +18668,71 @@ sd9314** (confirmed ring) and **reject sd1459** (confirmed blob) before being ap
 else. Any score that fails either control is discarded, as this tick's was. Candidate: fraction of
 lumen-boundary cells whose nearest lipid is a HEAD **and** whose outward normal reaches bulk water
 within one membrane thickness -- which distinguishes a ring's thin wall from a blob's thick body.
+
+## Tick: REVERSAL -- last tick's "blob" re-scoring was SIZE-BIASED; discriminator #2 also failed
+
+**Running:** 78 sims, load 76. No new formations in em160C/em160S/multi320/dil160.
+
+### The pre-registered discriminator was built, and FAILED its acceptance test
+
+Wall thickness: lumen-to-bulk-water distance by BFS on the detector's own grid. A vesicle should
+have a one-bilayer wall; a blob should bury its void deep in lipid.
+
+| state | wall_min | wall_med |
+|---|---|---|
+| **sd9314** (confirmed RING, 13 hit states) | **4.50** | 7.00 |
+| **sd1459** (my "confirmed BLOB") | **5.00** | 6.50 |
+
+**No separation -- the alleged blob has a marginally THINNER wall.** Per the rule fixed last tick,
+**discarded.** That is now **two** discriminators failed on their controls (R_lumen/R_cluster, wall).
+
+### But the failure is informative -- and REVERSES last tick
+
+| seed | wall | lumen water density | head enrichment |
+|---|---|---|---|
+| sd9314 (ring) | 4.50/7.00 | 0.693-0.765 | 2.95x |
+| sd9315 | -- | 0.435-0.624 | -- |
+| sd9317 | -- | 1.069-1.314 | -- |
+| sd1459 | 5.00/6.50 | 0.866-1.057 | 3.89x |
+
+**All have one-bilayer walls and water-filled lumens.**
+
+**The geometry explains my error:**
+
+| lumen | R_lumen | wall | lumen fraction of area |
+|---|---|---|---|
+| 1017 cells | 9.00 sigma | 5 | **0.41** |
+| 354 cells | 5.31 | 5 | 0.27 |
+| 235 cells | 4.32 | 5 | 0.22 |
+| 145 cells | 3.40 | 5 | **0.16** |
+
+**At R_lumen 3.4 the wall is LARGER than the lumen radius, so a genuine small vesicle is mostly
+membrane by area and MUST look like a blob with a hole.** At R_lumen 9 the ring is obvious.
+
+### RETRACTED (this is the second reversal on this question)
+
+- **RETRACTED: last tick's "at least 3 of 8 formations are blobs."** Size-biased visual judgement.
+- **RETRACTED: the rejection of sd1459 two ticks ago.** It looks like a genuine small vesicle --
+  39 lipids, 145-cell lumen, one-bilayer wall, water-filled, heads lining at 3.89x.
+- **Consequence: the screen probably DID break the drought**, and the eight seeds are provisionally
+  restored. Rate figures stand as previously reported rather than inflated.
+
+**I have now been wrong in BOTH directions on this question.** Recorded plainly because the pattern
+matters more than either verdict.
+
+### The real gap
+
+**No labelled NEGATIVE control exists** -- a state known to contain a packing gap rather than a
+vesicle. Without one, these criteria can be shown to ACCEPT but never to REJECT. That is precisely
+why visual scoring kept flip-flopping.
+
+### LAUNCHED: nothing
+
+Load 76 with 78 sims, core-limited. **The next experiment must be a labelled negative control**, not
+more seeds.
+
+**Falsification, stated before building it:** construct a synthetic packing gap -- a dense jammed
+aggregate with a water void of 145 cells and NO bilayer wall -- and require any candidate
+discriminator to reject it while accepting sd9314. **If no measurable criterion separates a
+synthetic packing gap from sd1459, then "vesicle" is not operationally defined at small lumen size,
+and every small-lumen formation in this project is unclassifiable rather than confirmed.**
