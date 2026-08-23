@@ -17682,3 +17682,62 @@ If closure is barrier-limited, warming should raise the formation rate.
 - Rate compared on the same debounced, in-band basis as the 0.45 arm.
 
 Emergence in flight: the new 12-seed kT=0.55 arm plus the finishing em160 seeds.
+
+## Tick: confound check PASSES on the kT=0.55 arm; constant hazard re-validated at p=0.457
+
+**Running:** 40 processes, load 36.6 on 32 cores. em160T (kT=0.55) at ~110k; eqring40/eqarc40 (3M)
+at ~30% -- **not read**; arc300 ~75%; ring300 ~52%. No planted arm completed.
+
+### PRE-REGISTERED CONFOUND CHECK -- PASSED
+
+kT=0.70 melted the membrane outright, so 0.55 could have been a null manipulation. Matched time
+100,000 steps:
+
+| arm | n | median largest | mean | range |
+|---|---|---|---|---|
+| kT=0.45 | 36 | 33 | 35.2 | 19-69 |
+| kT=0.55 | 12 | 34 | 34.0 | 22-45 |
+
+**Mann-Whitney z = +0.10, p = 0.9241**, ratio of medians 1.05. **Aggregation is unaffected**, so a
+rate difference, if one appears, will be about closure. The arm is usable.
+
+### CONSTANT HAZARD RE-VALIDATED on the complete dataset
+
+With lambda and kappa retracted, every surviving result is rate-based, and their defence is that
+formation is stationary -- which would fail if formation rode the E/lip transient found two ticks ago.
+
+| window | observed | expected | at-risk (Ms) |
+|---|---|---|---|
+| 0-400k | 2 | 2.43 | 22.40 |
+| 400-800k | 2 | 2.29 | 21.08 |
+| 800-1200k | 1 | 2.22 | 20.50 |
+| 1200-1600k | 4 | 2.06 | 19.02 |
+
+**chi2 = 2.60 on 3 dof -> p = 0.457**, improved from p = 0.163 at 7 events. **9 debounced formations
+among 56 runs, 83.0 Ms at risk, pooled hazard 0.1084/Ms.** The protection holds and strengthened.
+
+### Reproducibility across independent arms -- first test
+
+| arm | seeds | events | at-risk Ms | hazard |
+|---|---|---|---|---|
+| std160 | 30 | 8 | 41.96 | 0.1907 |
+| em160 | 6 | 0 | 9.32 | 0.0000 |
+
+Pooled 0.1560/Ms; em160 expected 1.45, observed 0, **P(0) = 0.234 -> consistent.**
+**Weak by construction:** 6 seeds and 9.3 Ms can only detect a gross discrepancy. Recorded as a
+consistency check, **not a demonstration of reproducibility.**
+
+### LAUNCHED: nothing, with specific blockers
+
+- Load **36.6 on 32 cores**; the kT=0.55 arm is the decisive measurement in flight and more work
+  would slow it.
+- The obvious next geometry experiment -- **redoing the span series at equilibrated length** -- is
+  **blocked on the 3M equilibration runs (~30%)**, which have not yet said what length equilibrates.
+  Launching at a guessed length would waste compute exactly as the 300k version did.
+- Emergence requirement met: 12 dispersed-start seeds in flight.
+
+**Standing falsification for the kT=0.55 arm (unchanged, restated):** rate compared on the same
+debounced in-band basis as 0.45; ~4.8 formations expected across 19.2 seed-Msteps if unchanged, so
+only a doubling reaches ~2.4 sigma and **anything smaller will not be reported as real**; and if the
+cluster-size distributions diverge later in the run, the confound check is re-applied and the
+comparison voided.
