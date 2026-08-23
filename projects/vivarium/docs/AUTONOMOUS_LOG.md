@@ -16677,3 +16677,72 @@ against N=160 at L=65 = 0.0379, matched to 1.4%. Same material, same crowding as
 Load goes to ~37 on 32 cores, a deliberate ~12% slowdown of everything including the decisive N=100
 extension. Justified because three consecutive ticks launched nothing and this is the first
 experiment that can distinguish the two live explanations rather than tighten an error bar.
+
+## Tick: concentration arm validated; head-lining is real but is a water test, not a vesicle test
+
+**Running:** 38 processes, 34 at `VIVARIUM_CHI_HT=-0.25` (4 are the bazel server and helpers),
+load 34.7 on 32 cores. N=100 L65 at 740-820k; N=160 L65 now 17 complete; conc100 L51 at 240k.
+**No new formations** -- still 8 at N=160, 2 at N=130, 0 at N=100 L65, 0 at N=100 L51.
+
+### Pre-registered intermediate check on the concentration arm: PASSED
+
+The check stated last tick was that L=51 must raise cluster size into the forming band or the arm
+says nothing. Largest cluster at matched time 240k:
+
+| arm | n | median | range |
+|---|---|---|---|
+| N=100 L65 | 30 | 23 | 13-45 |
+| N=100 L51 | 6 | **38** | 27-63 |
+| N=160 L65 | 30 | 48 | 29-98 |
+
+**Mann-Whitney z = -3.23, p = 0.0013.** The manipulation worked and the L=51 range now overlaps
+N=160's. Zero formations at 15% is exactly on expectation (0.21 predicted) and carries no information.
+
+### Third vesicle criterion: half-confirmed, then refuted
+
+**First-layer head enrichment is REAL.** Beads within 0.6 sigma of the lumen are **2.4-3.2x**
+head-enriched over bulk. The lumens are genuinely head-faced -- correct amphiphile ordering.
+
+**My previous null was my own artifact.** At shell 2.0 sigma enrichment reads 1.00-1.12, because the
+shell catches the tail beads behind each head. Sweep:
+
+| seed | 0.6 | 0.8 | 1.0 | 1.3 | 1.6 | 2.0 | 3.0 |
+|---|---|---|---|---|---|---|---|
+| sd9317 | 3.21 | 3.00 | 2.43 | 1.91 | 1.48 | 1.12 | 0.71 |
+| sd9314 | 2.35 | 2.46 | 2.08 | 1.81 | 1.40 | 1.08 | 0.75 |
+| sd9506 | 3.24 | 2.50 | 2.06 | 1.67 | 1.22 | 1.00 | 0.72 |
+
+Worth recording separately: **`lumen_head_enrichment`'s default shell of 1.6 sits at 1.2-1.5**, too
+wide to discriminate. Both head-based helpers also centre on the RAW centroid, the defect
+`_interior_mask` was fixed for with `unwrap_cluster`, so they can disagree with the gate on any
+boundary-straddling cluster. This tick's numbers were computed in the gate's frame.
+
+**REFUTED as a vesicle test.** Applied to every enclosing state, split by gate 2:
+
+| class | n | median enrichment | fraction >= 1.8 |
+|---|---|---|---|
+| N=160 gate2 ACCEPT | 6 | 2.86 | 1.00 |
+| N=160 gate2 REJECT | 37 | **3.12** | 0.95 |
+
+Indistinguishable. The reason is principled, not technical: **heads are hydrophilic, so any
+water-filled pocket is head-lined whether or not it is a vesicle.** I built a water-presence test and
+briefly mistook it for a topology test.
+
+### Where three failed criteria leave the definition
+
+Lining-ratio (degenerate), perimeter-completeness (tautological), and head-enrichment (measures water,
+not topology) have all failed. **Vesicle-versus-tangle-pocket is a topological question and no local
+chemical or geometric measure tried here answers it.** The consequence is definitional rather than
+empirical: "vesicle" in this project means what gate 2's vesicle-DOMINANCE criterion says, and the
+count of head-lined water pockets is 6-7x larger (37 vs 6 at N=160). The formation rate is not wrong,
+but it must not be read as "closed water-filled compartments formed."
+
+### LAUNCHED: nothing, and the reason with its trigger
+
+Load is 34.7 on 32 cores. The concentration arm at 6 seeds is **underpowered by my own
+pre-registration** -- 0/6 gives P(0) = 0.24, and ~15 seeds are needed for P(0) = 0.03. Adding seeds
+now would oversubscribe to ~44/32 and slow the decisive N=100 L65 extension.
+
+**Trigger, stated in advance:** when the N=100 L65 arm completes (currently 740-820k of 1.6M, so
+roughly 15 cores free within a few ticks), extend conc100 to 15 seeds. Until then the arm stays at 6
+and **no formation count from it will be reported as decisive**, in either direction.
