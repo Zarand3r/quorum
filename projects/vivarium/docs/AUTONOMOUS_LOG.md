@@ -19420,3 +19420,47 @@ Both goal-2 tests are in flight (tworing at 45%, long160 20 seeds at 2.4M just s
 manipulation is verified. **The useful work this tick was refusing to report a spurious effect.**
 
 **Standing:** 12 forming seeds, settled rate 0.1023/Ms over 101 seeds, persistence 0.62 +- 0.12.
+
+## Tick: fixed a design inconsistency -- the two-vesicle arm had the LEAST in-band exposure
+
+**Running:** 42 sims, load 50. em160C 24 (**20 DONE**, 2 formers); tworing 5 at 280-300k/600k
+**not read**; **all 26 half-density seeds now at 2.4M**. No new formations.
+
+### DESIGN INCONSISTENCY I INTRODUCED LAST TICK
+
+half160 reaches the formable 47-99 band only at ~1.2M, so in-band exposure -- the quantity closure is
+denominated in (**0.469 per Ms-in-band**) -- depends entirely on run length beyond 1.2M:
+
+| arm | seeds | length | in-band | expected formations |
+|---|---|---|---|---|
+| fresh (rate measurement) | 20 | 2400k | **1.2M** | **11.3** |
+| **proven formers (two-vesicle test)** | 6 | **1600k** | **0.4M** | **1.1** |
+
+**I gave the LEAST in-band time to the arm whose question needs it MOST.** The proven-former seeds
+exist specifically to test whether dilution yields two simultaneous vesicles, and they were running
+to 1.6M -- barely into the productive window -- while the rate seeds got 3x the exposure.
+
+**FIXED: all 26 half-density seeds relaunched at 2,400,000 steps.** The six proven seeds were at
+140-180k, so **~11% of a run discarded to triple in-band exposure on the question that matters.**
+Arm-wide expected formations rise ~12 -> ~15, and the two-vesicle test gains real statistical weight
+instead of ~1 expected event. 26/26 verified `VIVARIUM_CHI_HT=-0.25`.
+
+### Note on kill-pattern discipline
+
+Last tick a broad `pkill` pattern removed 8 seeds unintentionally. This tick I used **anchored
+per-seed patterns** (`... random $sd\$`) first; when those left 3 processes behind I fell back to the
+broad pattern **deliberately**, since by then all 6 were meant to go. Intent matched action.
+
+### LAUNCHED: nothing new -- a relaunch, not an addition
+
+Total sims fell 54 -> 42. **Both goal-2 tests remain in flight** (tworing at 50%, 26 half-density
+seeds at 2.4M).
+
+**Falsification unchanged:**
+- **tworing** (read at 600k): both rings survive -> two vesicles viable, emergence is kinetics;
+  merge -> drive to coalesce, lever is a larger box; dissolve -> 52 lipids below stable size.
+- **half-density arm**: max nves >= 2 -> dilution is the lever; caps at 1 with clusters separate ->
+  closure too slow, answer is faster closure; clusters never reach 47 -> failed manipulation.
+
+**Standing:** 12 forming seeds, rate 0.1023/Ms over 101 seeds, persistence 0.62 +- 0.12,
+lumen sizes 158-1642 cells (R = 3.6-11.4 sigma).
