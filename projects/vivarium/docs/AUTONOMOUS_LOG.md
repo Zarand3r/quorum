@@ -17567,3 +17567,58 @@ functionally orthogonal, unlike 1/N and 1/N^2 which the length series confounded
 - Read at 300,000 steps, intact-only scoring, measured mid-surface radii.
 
 Emergence in flight: 6 dispersed-start seeds at ~1.1M.
+
+## Tick: EQUILIBRATION AUDIT -- none of the planted runs are equilibrated; every dE is a transient
+
+**Running:** 30 processes, load 26.5. Span series (arc0.50, arc0.90) at ~30% -- **NOT read**.
+arc300 ~60%, ring300 ~35%, em160 at 1.1-1.4M. No planted arm completed this tick.
+
+### The audit I had never run
+
+Every dE reported in this project rests on energy differences of 0.01-0.14 eps/lipid. Splitting the
+200k-300k averaging window in half:
+
+| arm | n | first half | second half | drift | slope /100k |
+|---|---|---|---|---|---|
+| ring40 | 15 | -7.2763 | -7.3225 | **-0.0463** | **-0.0659** |
+| arc40 | 13 | -7.3006 | -7.3242 | -0.0236 | -0.0091 |
+| arc70 | 5 | -7.3833 | -7.3649 | +0.0183 | -0.0252 |
+| ring70 | 5 | -7.4307 | -7.4312 | -0.0005 | -0.0126 |
+| arc120 | 4 | -7.4794 | -7.4872 | -0.0078 | -0.0351 |
+| arc200 | 3 | -7.5366 | -7.5039 | +0.0327 | -0.0120 |
+
+**All six slopes negative.** Two-sided sign test **p = 0.031** -- systematic relaxation, not scatter.
+
+**Why it went unnoticed:** each drift is **under 1 SEM** against seed scatter, so no individual arm
+looks broken. The problem is only visible against the SIGNAL:
+
+- ring40 drift within the window **-0.0463**, versus the dE(N=40) it measured **+0.0095**
+  -> **drift is 4.9x the signal**
+- ring40 vs arc40 **differential** drift **-0.0227** -> **2.4x the signal**
+
+**dE measures differential relaxation, not an equilibrium difference.**
+
+### Consequence
+
+This is **independent of last tick's model failure**. Even a correct model fitted to these numbers
+would be fitting a transient. Combined with last tick:
+
+- **lambda: no measured value stands in this project.**
+- **kappa: no measured value stands in this project.**
+
+Both the model AND the inputs are now known-bad. Stated plainly so no later tick reuses them.
+
+### LAUNCHED: ring40 and arc40 at 3,000,000 steps (10x), 5 seeds each
+
+10/10 verified `VIVARIUM_CHI_HT=-0.25`. Checkpoint every 25000. N=40 chosen because it is the
+cheapest system in the series, so a 10x length is affordable.
+
+**Falsification, stated before the run is read:**
+- **E/lip plateaus by ~1-1.5M** (slope over the last 500k consistent with zero) -> 300k was simply
+  too short; every dE can be re-measured on the longer runs and the geometry programme resumes.
+- **Still drifting at 3M** -> these planted structures do **not** equilibrate on accessible
+  timescales, the energy route to lambda and kappa is **dead**, and the standing plan needs a
+  DIFFERENT OBSERVABLE, not a longer run.
+- Read at 3,000,000 steps. Equilibration judged by the slope over the final 500k, not by eye.
+
+Emergence in flight: 6 dispersed-start seeds at 1.1-1.4M, 0 closures so far in this arm.
