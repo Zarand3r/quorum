@@ -19012,3 +19012,51 @@ That is the configuration the matched-race finding calls for -- half std160's de
 **Standing pre-registration for tworing (read at 600k) unchanged:** both rings survive -> two
 vesicles viable and emergence is kinetics; merge -> real drive to coalesce, lever is a larger box;
 dissolve -> 52 lipids is below the stable size at this dilution.
+
+## Tick: FOURTH formation outside std160 (sd349); pooled rate now 0.1129/Ms across 4 blocks
+
+**Running:** 70 sims, load 74.8. em160C 24 at 1080-1400k (2 formers); scan 24 at 540-600k
+(2 formers); multi320 6 at 200-220k; tworing 5 at 60-70k/600k **not read**.
+
+### NEW FORMATION: scan sd349
+
+| step | largest | lumen_c | nves | lumH2O |
+|---|---|---|---|---|
+| 500000 | 77 | **385** | 1 | 1.062 |
+| 540000 | 77 | 486 | 1 | 1.185 |
+| 560000 | 77 | 488 | 1 | 1.270 |
+| 580000 | 77 | 507 | 1 | 1.020 |
+
+**Lumen GROWS 385 -> 507** across four checkpoints -- a compartment inflating, not a transient
+pocket. Overlay confirms lipids enclosing the region with heads facing it.
+
+### POOLED RATE, now on four blocks
+
+| block | seeds | formers | exposure Ms | rate/Ms |
+|---|---|---|---|---|
+| std160 | 30 | 8 | 41.96 | 0.1907 |
+| em160C | 24 | **2** | 29.40 | 0.0680 |
+| scan | 24 | **2** | 13.36 | 0.1497 |
+| em160 + em160D + ht25_em | 23 | 0 | 21.60 | 0.0000 |
+| **TOTAL** | | **12** | **106.32** | **0.1129** |
+
+**Pooled 0.1129/Ms = P(form) 0.17 per 1.6M seed**, against **0.26** from std160 alone.
+**The honest headline rate is 17%, not 26%** -- and it now rests on 4 blocks and 12 formations
+rather than 1 block and 8.
+
+**Formation times (k steps):** 240, 400, 400, 480, 560, 600, 900, 1100, 1220, 1260, 1360, 1500.
+**Median 750k, mean 835k.** This is why the drought looked real: **any block with under ~750k
+exposure per seed is more likely than not to show nothing.**
+
+### CONFIRMED FORMING SEEDS: twelve
+
+**9302, 9308, 9312, 9314, 9315, 9316, 9317, 9326, 1459, 349, 9805, 9809.**
+
+### LAUNCHED: nothing -- THIRD consecutive hold, with the trigger restated
+
+Load 74.8 with 70 sims. **The trigger has not fired:** em160C at 1.08-1.40M of 1.6M, scan at 68%.
+Holding is arithmetically correct -- formers scale with total seed-Msteps, which is core-capped --
+but **three holds in a row reads as inaction, so the trigger is concrete:** when em160C **or** scan
+completes (24 cores either way), **sparse320 (N=320, L=130) launches immediately.**
+
+**Standing pre-registration for tworing (read at 600k) unchanged.**
