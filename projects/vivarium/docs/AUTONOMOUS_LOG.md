@@ -17962,3 +17962,72 @@ em160 launched and **before** em160C. **The binary changed between epochs and is
 - No verdict this tick: the reruns have not reached their first checkpoint under load 49.
 
 Emergence in flight: 24 contemporaneous 0.45 seeds + 12 at 0.55.
+
+## Tick: binary EXONERATED; block difference is REAL and stronger at n=24 (p=0.00081); third block launched
+
+**Running:** 65 processes, load 57.4. em160C 24 seeds; em160T 12; **em160D 12 NEW (9900-9911)**;
+eqring40/eqarc40 (3M) at ~70%, **not read**; 3 reproducibility reruns complete.
+
+### BINARY REPRODUCIBILITY TEST -- BINARY EXONERATED
+
+Historical seeds rerun with the **current** binary:
+
+| seed | original (20k/40k/60k/80k/100k) | rerun |
+|---|---|---|
+| 9300 | 15, 15, 30, 35, 35 | **15, 15, 30, 35, 35** |
+| 9301 | 20, 20, 26, 27, 46 | **20, 20, 26, 27, 46** |
+| 9302 | 24, 24, 24, 24, 24 | **24, 24, 24, 24, 24** |
+
+**Checkpoint-for-checkpoint identical.** Same seed, same result, regardless of when it runs, under
+load 49. Parameters also identical across arms: same log header, same argv, same env.
+**Launch epoch is NOT the mechanism. My prime suspect is dead.**
+
+### MY BOOTSTRAP WAS WRONG -- and correcting it did NOT rescue the result
+
+Last tick I drew 12 of 36 **without replacement** -- a permutation null, correct for splitting one
+pool, **wrong for an independent new block**, and narrower by sqrt(1 - 12/36) = 0.816.
+
+| null | mean | sd | 5-95 pct | pct of 36.0 |
+|---|---|---|---|---|
+| without replacement (used) | 45.8 | 4.89 | 40-56 | 0.0% |
+| **with replacement (correct)** | 46.4 | 6.15 | 40-60 | **0.0%** |
+
+Widening the null did **not** resolve it. **My script printed a line claiming it did; that was wrong
+and is recorded here rather than left standing.**
+
+### THE EFFECT IS STRONGER AT n=24, NOT WEAKER
+
+| block | n | median | mean |
+|---|---|---|---|
+| historical (std160 + em160) | 36 | 44.0 | 51.8 |
+| contemporaneous (em160C) | **24** | **36.0** | 39.6 |
+
+**Mann-Whitney z = -3.35, p = 0.00081.** Bootstrap null for an independent block of 24:
+mean 45.4, 5-95 pct 41-55; **observed 36.0 -> 0.00th percentile.**
+**The "unlucky 12-seed block" explanation is dead.**
+
+raw values -- historical: 32,34,35,35,36,38,39,39,40,41,41,41,43,43,44,44,45,48,49,50,52,60,60,63,
+63,74,81,85,89,94 + 37,40,41,60,69,78; em160C: 24,29,29,30,30,30,33,34,34,35,35,35,37,37,38,39,40,
+45,46,47,48,55,62,79.
+
+### What this means, without inventing a mechanism
+
+Identical code, identical parameters, deterministic reproduction -- and two seed blocks that disagree
+at p = 0.0008. **I cannot explain it and will not invent a mechanism.** The concrete consequence:
+**between-block dispersion is much larger than within-block sampling implies**, so **every comparison
+of separately-launched arms needs that dispersion in its error bar** -- including the pre-registered
+**N=100 suppression (P = 0.0024)**, which compared seeds 9200-9234 against 9300-9329 as separate
+blocks.
+
+### LAUNCHED: third independent block, 12 fresh seeds 9900-9911 (em160D)
+
+12/12 verified `VIVARIUM_CHI_HT=-0.25`, identical parameters.
+
+**Falsification, stated before the run is read:**
+- **em160D median lands near 36 (em160C)** -> **std160 was the favourable outlier**, and the headline
+  formation rate built on it is **biased high**.
+- **em160D median lands near 44 (historical)** -> em160C is the outlier, and the historical baseline
+  stands.
+- **em160D lands between, or spreads widely** -> between-block variance is simply large, which is
+  itself the number every downstream error bar needs; it gets measured rather than assumed.
+- Compared at matched step 200k, Mann-Whitney, with the bootstrap null for the achieved n.
