@@ -16433,3 +16433,48 @@ lower than the pooled rate, but cannot measure how much lower.**
 
 **Retracted this tick: nothing.** My earlier dismissal of N=100's null is **superseded by a larger
 sample**, not withdrawn -- it was sound at n=5.
+
+## Tick — N=130 arm COMPLETE at 2/10 = 0.200, identical to N=160; N=100 vs N>=130 now p = 0.087
+
+**Read at the end.** **N=130 arm complete: 2/10.** N=100 arm: 15 complete (**0/15**), 15 running. N=160
+arms: **5/25 complete**, 15 running. 39 processes verified at `ht-0.25`.
+
+**THE N-SCAN WITH THE N=130 ARM FINISHED:**
+
+| N | rate | 95% Wilson CI |
+|---|---|---|
+| 100 | **0/15 = 0.000** | 0 - 0.204 |
+| **130** | **2/10 = 0.200** | 0.057 - 0.510 |
+| 160 | 5/25 = 0.200 | 0.089 - 0.391 |
+
+| comparison | Fisher exact p |
+|---|---|
+| N=130 vs N=160 | **1.000** -- identical rates |
+| N=100 vs N=130 | 0.150 |
+| N=100 vs N=160 | 0.137 |
+| **N=100 vs N>=130 pooled (7/35 = 0.200)** | **0.087** |
+
+**The shape is a step, not a gradient.** The rate is **flat at 0.200 across N = 130-160** and possibly
+**zero at N = 100**. Pooling the two indistinguishable arms is legitimate here precisely because
+`p = 1.000` establishes they are the same population, and it buys the sharpest comparison available:
+**0.087**, still short of 0.05.
+
+**GRAND POOLED, all N plus the historical corpus: 14/90 = 0.156 (CI 0.095-0.244).**
+
+**LAUNCHED: NOTHING, and the reason is load rather than a judgement that nothing is worth doing.** The
+machine is at **load 40.6 on 32 cores** with 39 processes across the N=100 extension and the standard
+arm. **The decisive measurement is already among them.** Adding work would slow the one arm that answers
+the only open question.
+
+**The pre-registered N=100 criteria stand unchanged**, with their resolution as stated last tick:
+
+* **0 in 30** -> `P(0 | 0.159) = 0.0055`, decisive; N=100 suppresses formation.
+* **>= 2 in 30** -> consistent with pooled; the suppression was noise.
+* **exactly 1 in 30** -> `P(<=1) = 0.046`, borderline; **I committed in advance not to call it.**
+
+**A note on what this arm can and cannot deliver, restated because it bounds the conclusion:** at n=30
+with 0 successes the Wilson upper bound is **0.113**. That **excludes the pooled 0.156** but not values
+below 0.11. **The arm can establish that N=100 is lower; it cannot measure how much lower**, and a
+follow-up powered to do so would need far more seeds than the effect is worth.
+
+**Retracted this tick: nothing.**
