@@ -19060,3 +19060,55 @@ but **three holds in a row reads as inaction, so the trigger is concrete:** when
 completes (24 cores either way), **sparse320 (N=320, L=130) launches immediately.**
 
 **Standing pre-registration for tworing (read at 600k) unchanged.**
+
+## Tick: multi320 was testing the WRONG lever -- swapped for sparse320
+
+**Running:** 65 sims, load 74. em160C 24 at 1140-1480k (2 formers); scan 24 at 600-680k (2 formers);
+tworing 5 at 90-100k/600k **not read**; **sparse320 5 NEW**. No new formations.
+
+### DESIGN FLAW IN MY OWN EXPERIMENT, caught
+
+The matched-race result (closure/coalescence = 1.01) identified **dilution** as the lever: coalescence
+rate falls with dilution, closure rate does not. **But multi320 does not dilute:**
+
+| config | N | L | density (lipid/sigma^2) |
+|---|---|---|---|
+| std160 | 160 | 65 | 0.0379 |
+| **multi320** | 320 | 92 | **0.0378** |
+| **sparse320** | 320 | 130 | **0.0189** |
+
+multi320 adds material at **identical density**. It was designed before the race was identified and
+**cannot test the lever that matters.** Killed at 15%; **sparse320 launched** -- half the density,
+material for ~4 vesicles, five proven formers (9302, 9314, 9317, 1459, 9805), 5/5 verified
+`VIVARIUM_CHI_HT=-0.25`. Net one fewer process; a weaker test swapped for the right one.
+
+### Did doubling lipids at fixed density help at all?
+
+Matched-time largest-cluster medians:
+
+| step | std160 | multi320 | ratio | **ratio/2** | p |
+|---|---|---|---|---|---|
+| 60k | 29.0 | 31.0 | 1.07 | 0.53 | 0.235 |
+| 100k | 35.0 | 35.0 | 1.00 | 0.50 | 0.899 |
+| 140k | 38.0 | 41.0 | 1.08 | 0.54 | 0.899 |
+| 180k | 44.0 | 51.0 | 1.16 | 0.58 | 0.932 |
+| 220k | 44.5 | 68.0 | 1.53 | 0.76 | 0.174 |
+| 240k | 48.5 | 68.5 | 1.41 | 0.71 | 0.270 |
+
+**ratio/2 = 1.00 would mean doubling lipids simply doubled cluster size.** At **0.50-0.76** the extra
+material stays more distributed -- favourable for multiple vesicles.
+
+**BUT: no p-value is significant (0.17-0.93, n=6), and ratio/2 is RISING (0.50 -> 0.76), meaning
+coalescence catches up. Suggestive, NOT established.** Stated rather than leaned on.
+
+### LAUNCHED: sparse320 (N=320, L=130), 5 seeds
+
+**Falsification, stated before the run is read:**
+- **max nves >= 2 in any seed** -> dilution is the lever; multiple vesicles are reachable by slowing
+  coalescence, and the race framing is confirmed.
+- **nves caps at 1 with clusters staying separate** -> closure is too slow relative to any achievable
+  dilution; multiple vesicles need FASTER CLOSURE (temperature or chemistry), not more space.
+- **clusters never reach 47 lipids** -> too dilute; **failed manipulation**, reported as such, not as
+  a rate result (the same null the N=100 and dil160 arms hit).
+
+**Tally unchanged:** 12 forming seeds, pooled rate 0.1129/Ms across 4 blocks.
