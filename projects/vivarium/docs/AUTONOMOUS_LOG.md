@@ -15885,3 +15885,55 @@ the same frozen sd9302 vesicle**, with the first-half/second-half check applied 
 
 **Retracted this tick: my claim that sd9302's persistence contradicted the marginal picture.** It did
 not. The number stands; my reading of a single trajectory did not.
+
+## Tick — I tested my own "long dwell" explanation quantitatively; it holds, on thin statistics
+
+**Running, NOT read.** kT=0.45 equilibration at 130k of 1.2M (11%), planted. Standard N=160 arm: 5 seeds
+final at **1/5**, 5 at 1.12-1.24M (**sd9308 now 8 hits**), 5 at 380-460k. 26 processes verified at
+`ht-0.25`.
+
+**LAST TICK I ASSERTED AN EXPLANATION; THIS TICK I MEASURED IT.** I claimed sd9302's 400 000-step
+closure was "a long dwell in a marginal two-state system." **That is only true if closed-state dwells
+are actually long**, which I had not checked. From the sd9302 restarts at `kT = 0.45`, 10 000-step
+resolution:
+
+| quantity | value |
+|---|---|
+| completed closed dwells | **70 000 / 140 000 / 230 000 steps** |
+| mean closed dwell | **146 667 steps** |
+| completed open dwells | 110 000 |
+| censored final dwells | open 180 000, open 90 000 |
+| **P(closed dwell >= 400 000)** | **6.5%** under an exponential with that mean |
+
+**So sd9302's run was roughly a 1-in-15 event** across a project that has watched several vesicles.
+**The explanation holds quantitatively**, and is no longer just a plausible story.
+
+**THE CAVEAT, which is real: this rests on THREE completed dwells.** Propagating the standard error on
+the mean (146 667 +- 46 300) puts `P(>= 400 000)` between **1.8% and 12.6%**. **Not extreme at either
+end, so the conclusion survives** -- but I will not quote 6.5% as a precise figure, and a mean from n=3
+is exactly the kind of number this project has been burned by before.
+
+**Note on the censoring:** two of the six dwells are right-censored (the run ended mid-dwell), and both
+are **open** dwells, so they bias the *open* mean low and leave the closed mean unaffected. **The closed
+figure is the one I used.** Recorded because ignoring censoring is a standard way to get dwell
+statistics wrong.
+
+**LAUNCHED, criterion fixed BEFORE the run: 4 more seeds on the `kT = 0.45` equilibration arm**, taking
+it to 10. Nothing new -- **the same runs sharpen both open questions at once**: the equilibrium
+`P_closed` at production temperature, and the dwell distribution this tick showed to be thin.
+
+* **>= 12 completed closed dwells across the arm, with the mean stable to +-20%** -> the dwell
+  distribution is characterised, and `P(>= 400 000)` becomes a number rather than a range spanning
+  sevenfold.
+* **Mean closed dwell rises above ~400 000** -> a 400 000-step closure is typical rather than unusual,
+  and **my "1-in-15 fluctuation" reading is wrong** -- sd9302 would be ordinary and the marginal picture
+  would need the transition rate revised, not the free energy.
+* **Fewer than 12 completed dwells even at 1.2M x 10 seeds** -> transitions at production temperature
+  are too rare to characterise this way, and the dwell route is abandoned in favour of the equilibrium
+  `P_closed` alone.
+
+**Emergence in flight:** standard arm at 15 seeds, 2 formations so far, **not pooled into a rate** until
+the remaining ten finish.
+
+**Retracted this tick: nothing.** Last tick's resolution is **confirmed** rather than revised, with its
+sample size stated.
