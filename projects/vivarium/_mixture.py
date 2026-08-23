@@ -972,7 +972,12 @@ if __name__ == "__main__":
                 # actually be run.
                 _hd = pathlib.Path(os.environ.get("BUILD_WORKSPACE_DIRECTORY", ".")) / "projects" / "vivarium" / "docs" / "hits"
                 _hd.mkdir(parents=True, exist_ok=True)
-                np.savez_compressed(_hd / f"hit_N{n_lip}_L{L:g}_sd{seed}_s{t:07d}.npz",
+                # Tag hits with plant and environment. Previously `hit_N{n}_L{L}_sd{seed}_s{step}`,
+                # which collides across experiments: the reverse-closure arm and a random-start arm
+                # both used N=160, L=65, seeds 9300-9309, so their hits shared a namespace and a
+                # count taken from filenames over-reported formations by 5x. The log's `nves` column
+                # was unaffected, but the filename is the provenance record and it was incomplete.
+                np.savez_compressed(_hd / f"hit_{_ptag}_N{n_lip}_L{L:g}{_env_tag()}_sd{seed}_s{t:07d}.npz",
                                     X=X, species=species, chains=chains, L=L, d=d, phi=phi, steps=t,
                                     mols=np.array([m for m in mols], dtype=object))
     # Save the final state. Post-hoc analysis has had to RE-RUN the simulation three times in this

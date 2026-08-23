@@ -15654,3 +15654,69 @@ stay below 127** -- which is the conditional analysis already accumulating on th
 **Retracted this tick: the ribbon-length wrapping model (`N > L`).** Replaced by the measured rule
 `largest cluster >= ~127 in a 65 sigma box`. **Two arm designs (N=100/L=110 and N=60/L=65) were
 justified by the wrong model and are void as tests**, though the decisions to kill them stand.
+
+## Tick — a PERSISTENT emergent vesicle (84 lipids, 8 consecutive checkpoints), and a hit-file namespace collision
+
+**Read at the end where complete.** N=100 L=65 wrap-free arm: first 5 seeds **final at 0/5** (all at
+1.6M, largest 51-72); 10 more at 220-360k. Standard N=160 arm at 380k-1.34M. 20 processes verified at
+`ht-0.25`.
+
+**THE MOST PERSISTENT VESICLE THIS PROJECT HAS PRODUCED: `sd9302`.**
+
+| step | largest | nenc | nves | lumen water |
+|---|---|---|---|---|
+| 1 200 000 | 84 | 1 | 1 | 1.098 |
+| 1 220 000 | 84 | 1 | 1 | 1.093 |
+| 1 240 000 | 84 | 1 | 1 | 1.089 |
+| 1 260 000 | 84 | 1 | 1 | 1.059 |
+| 1 280 000 | 84 | 1 | 1 | 1.029 |
+| 1 300 000 | 84 | 1 | 1 | 0.972 |
+| 1 320 000 | 84 | 1 | 1 | 0.828 |
+| 1 340 000 | 84 | 1 | 1 | 0.853 |
+
+**Eight consecutive checkpoints, 160 000 steps of continuous closure**, an **84-lipid** vesicle that is
+the **largest** cluster with `nenc = 1` throughout -- unlike sd8901 (41 lipids, one checkpoint) and
+sd8105 (flickering). Rendered and confirmed:
+`docs/images/VESICLE_persistent_sd9302_s1340000.png`.
+
+**A second formation, `sd9308`**, at 380-400k: 66 and 76 lipids, lumen water 1.065 and 0.976.
+
+**So the standard arm stands at 2 formations in 10 seeds**, though 5 of those seeds are only 24-33%
+through. **Not pooled into a rate this tick** -- partial arms are not read.
+
+### DEFECT FOUND: hit-state filenames collide across experiments
+
+Hit files exist for **all ten** seeds of this arm while only two have `nves > 0` in the log:
+
+| seed | hit files | logged `nves` checkpoints |
+|---|---|---|
+| sd9300 | 6 | **0** |
+| sd9302 | 9 | 9 |
+| sd9303 | 9 | **0** |
+| sd9308 | 2 | 2 |
+
+**Cause:** hits were named `hit_N{n_lip}_L{L}_sd{seed}_s{step}.npz` -- **no plant type, no environment
+tag.** The reverse-closure arm used the same `N=160, L=65` with seeds 9300-9309, so both experiments
+wrote into one namespace. Timestamps confirm it: sd9300's hit files are from **06:15**, this run started
+at **17:40**.
+
+**My formation counts come from the log's `nves` column and are unaffected.** But **a count taken from
+hit filenames would have over-reported this arm five-fold**, and this is the **third** time in this
+session that a filename served as the provenance record and proved incomplete -- after the missing
+chemistry tag and the `steps` field meaning the configured total.
+
+**FIXED:** `_mixture.py` now writes `hit_{plant}_N{n}_L{L}{env_tag}_sd{seed}_s{step}.npz`, with the
+reason recorded in a comment beside it.
+
+**LAUNCHED, criterion fixed BEFORE the run: nothing new.** Twenty processes are running across the two
+arms that answer the live question, and the standard arm has 5 seeds only a third through. **Adding work
+would slow the arms whose completion decides the wrapping question.**
+
+**The pre-registered criteria stand unchanged**: the wrap-free arm at 0/15 would give P = 0.075 against
+the corpus rate; the standard arm supplies the conditional (unwrapped) denominator. **One thing this
+tick adds to them:** sd9302's vesicle is 84 lipids and the wrap-free condition tops out at 51-72, so
+**if the wrap-free arm returns 0/15 the size explanation is live** -- 84 may simply be out of its reach,
+which would confound the wrapping interpretation exactly as I flagged last tick.
+
+**Retracted this tick: nothing.** The hit-filename defect is a fix, not a retraction -- no reported
+number depended on it.
