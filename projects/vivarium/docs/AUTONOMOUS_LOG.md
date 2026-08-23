@@ -16974,3 +16974,66 @@ difference is that it starts closed. Verified sound at step 0: **R = 11.65 vs pr
 - Read at 300,000 steps, not before.
 
 Emergence stays in flight (31 dispersed-start runs).
+
+## Tick: nothing read (discipline held); ring70 at kT=0.45 launched to settle the lambda contradiction
+
+**Running:** 50 processes, load 47.3 on 32 cores -- heavily oversubscribed, everything is slow.
+N=100 L65 15 complete; N=160 L65 20 complete / 10 formations; conc100 L51 at ~1.2M.
+
+### Two experiments look decisive and were NOT read
+
+- **ring70T (kT=0.70 control), 25%:** largest 30, 55, 49, 39, 38 of 70; **nves=0 in all five.**
+  This is the "ring also fragments -> kT ladder is VOID" signature.
+- **arc200 (kT=0.45), ~48%:** sd1 at 84/200 and sd5 at 162/200 -- late shedding after being 5/5
+  intact last tick.
+
+Both are the same class of observation as the arc200 fragmentation I flagged at 27% **last tick and
+had to retract** when all five seeds returned to 200/200. Pre-registration says read at 300,000 steps.
+**Held.** No verdict on the kT ladder this tick.
+
+### The measurement that settles the biggest contradiction in the established set
+
+Two standing numbers disagree by a factor of ~2000:
+
+| quantity | value | implies |
+|---|---|---|
+| lambda | +18.31 +- 7.07 eps per end | closure gains **~81 kT** |
+| dwell-ratio dF_closure | +0.04 +- 0.24 kT | closure gains **nothing** |
+
+**arc70 at kT=0.45 is complete and gives the open-state energy:**
+
+| seed | E/lip (mean over last 100k steps) |
+|---|---|
+| sd1 | -7.4229 +- 0.2100 |
+| sd2 | -7.3352 +- 0.1676 |
+| sd3 | -7.3214 +- 0.2010 |
+| sd4 | -7.4186 +- 0.1738 |
+| sd5 | -7.3348 +- 0.2393 |
+
+**ARC: E/lip = -7.3666 +- 0.0223 (SEM over 5 seeds).**
+
+Arithmetic of the prediction: 81 kT at kT=0.45 is 36.6 eps; spread over 70 lipids that is
+**0.52 eps/lipid**. Against a SEM of 0.0223 that offset is **23 sigma** -- trivially resolvable.
+dF_closure predicts **zero** offset. Both cannot survive.
+
+### LAUNCHED: ring70, N=70, L=60, kT=0.45, 5 seeds
+
+Identical to arc70 in size, box, temperature and chemistry (5/5 verified `VIVARIUM_CHI_HT=-0.25`);
+the only difference is that it starts closed. Sound at step 0: R = 11.65 vs predicted 70/2pi = 11.14,
+nves = 1 in all five.
+
+**Falsification, stated before the run is read:**
+- **Offset ~= 0.52 eps/lipid** -> lambda stands; closure is strongly favoured; arc70's metastability
+  is a KINETIC barrier and the whole barrier picture is right.
+- **Offset ~= 0** -> the ~81 kT figure is wrong, and every interpretation resting on it (including the
+  standing critical-size plan) must be redone.
+- **Offset intermediate** -> both current numbers are wrong; lambda gets re-measured directly rather
+  than adjusted.
+- Read at 300,000 steps only.
+
+**Caveat recorded BEFORE the result:** this compares POTENTIAL energy, not free energy, so it omits
+the entropy difference between a closed ring and an arc with two mobile ends. At 70 lipids that term
+is small beside a claimed 0.52 eps/lipid but is not zero -- so a near-zero offset is a cleaner
+refutation of lambda than a partial one would be.
+
+Emergence stays in flight (31 dispersed-start runs).
