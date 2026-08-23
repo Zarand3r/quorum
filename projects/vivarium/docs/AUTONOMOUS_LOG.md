@@ -16268,3 +16268,54 @@ count matters; agreement means the rate is insensitive to N over 100-160 and the
 small-sample fluctuation (**P(0 in 5) at 0.18 is 0.37**).
 
 **Retracted this tick: nothing.**
+
+## Tick — ENGINE EQUIVALENCE holds on the emergent rate (Fisher p = 0.679); sd9314 is the largest vesicle yet
+
+**Read at the end.** Standard N=160 arm: **13 seeds at >= 1.4M**; **sd9314 crossed this tick with 36
+hits**. kT=0.45 equilibration 1 of 10. N=130 arm at 880-980k, sd9501 holding 1 hit. 29 processes
+verified at `ht-0.25`.
+
+**THE ENGINE-EQUIVALENCE CLAIM, TESTED ON THE EMERGENT RATE AT VERIFIED CHEMISTRY.** This is the arm of
+that claim never checked after the chemistry regression:
+
+| engine | rate | 95% Wilson CI |
+|---|---|---|
+| integrator | **5/24 = 0.208** | 0.092-0.405 |
+| transformer | **2/18 = 0.111** | 0.031-0.328 |
+| **pooled** | **7/42 = 0.167** | 0.083-0.306 |
+
+**Fisher exact p = 0.679 -- consistent.** The transformer engine produces emergent vesicles at the same
+rate as the integrator. **This joins the other gates**: forces to 1e-16 on the production topology, one
+forward pass bit-identical, `chi` exact on 30 186 pairs, ensemble energy 0.021% at 1.30 sigma, and
+aggregation trajectory at 0.41 sigma. **Every equivalence test the project has run now passes at the
+correct chemistry.**
+
+**sd9314: the largest and longest-lived vesicle yet.** 109 lipids, lumen water 1.073, gate-passing.
+
+**It is INTERMITTENT, not continuously closed, and I checked rather than assuming.** Its `nves` pattern
+from 560k reads `0110111111111110111111111111100011110111111`, giving spans:
+
+`open 20k | closed 40k | open 20k | closed 220k | open 20k | closed 260k | open 60k | closed 80k |
+open 20k | closed 120k (censored)`
+
+**36 closed checkpoints out of 41** in that window. **Reporting "36 hits" as a single span would have
+been wrong**, and this is the same distinction that mattered for sd9302, where the span *was*
+continuous.
+
+**A render-discipline note.** The whole-box frame at 1.4M did **not** clearly show a closed ring, because
+the vesicle is one of two clusters and off-centre. **Presenting that frame as a vesicle would have been
+the render flattering the metric.** I re-rendered centred on the gate-passing cluster before showing it.
+
+**Two incidental confirmations.** sd9314's vesicle is **109 lipids** against sd8901's **41** -- a factor
+of **2.7** in vesicle size, **further evidence against the size window retracted two ticks ago**. And the
+hit file is now named `hit_random_N160_L65_checkpoint_every20000_ht-0.25_ww0.50_sd9314_s1400000.npz`,
+confirming the **namespace-collision fix is live** -- plant type and full chemistry are in the filename.
+
+**LAUNCHED, criterion fixed BEFORE the run: nothing new.** 29 processes are running. **The N=130 arm is
+at 55-61% and is the only open scientific question with an arm assigned**; the equilibration arm is 1/10
+and still supplying dwell spans. **Adding load would slow the two measurements that remain unfinished.**
+
+**Standing criteria unchanged.** The N=130 arm: a rate differing from the pooled 0.167-0.180 beyond its
+CI means lipid count matters; agreement means the rate is insensitive to N over 100-160.
+
+**Retracted this tick: nothing.**
