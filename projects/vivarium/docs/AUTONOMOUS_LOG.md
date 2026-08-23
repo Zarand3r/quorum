@@ -18795,3 +18795,54 @@ one dominant aggregate.
 **Falsification for multi320, restated:** max nves >= 2 in any seed -> multiple vesicles achievable
 by supplying material; all six form exactly one -> a second is suppressed (likely monomer depletion)
 and the next lever is a larger box; none form -> seed productivity does not transfer across N.
+
+## Tick: detector CAN count multiple vesicles -- nves=1 is physics; two-ring stability test launched
+
+**Running:** 83 sims, load 78.8. em160C 1/24 formers (sd9809); scan 1/24 (sd1459); multi320 6 at 9%;
+dil160 8 at 10%; **tworing 5 NEW**. No new formations this tick.
+
+### INSTRUMENT CHECK I SHOULD HAVE RUN LONG AGO
+
+`nves` has never exceeded 1 in this project's history, and I have been reporting that as physics --
+one vesicle exhausting the lipid budget. **That reading assumes the instrument can report 2. It was
+never tested.**
+
+| planted rings | count_vesicles | verdict |
+|---|---|---|
+| 1 | **1** | OK |
+| 2 | **2** | OK |
+| 3 | **3** | OK |
+
+**The detector counts multiples correctly. So nves = 1 in every emergent run is PHYSICS, not an
+instrument ceiling** -- the multi-vesicle goal is measurable and multi320 can detect success.
+
+### LAUNCHED: two-ring stability test, 5 seeds, 600k steps
+
+Waiting for emergence to produce two vesicles costs 1.6M steps per seed with no guarantee. **Planting
+two and asking whether they PERSIST answers the underlying question directly, in 600k.**
+
+Wrote `mix2d_tworing_N104_L92...npz`: 104 lipids in two rings of 52 at R_mid 8.3, centres 40 sigma
+apart in L=92. Verified sound at step 0: **largest=52, nves=2**. 5/5 verified
+`VIVARIUM_CHI_HT=-0.25`, kT=0.45.
+
+**Falsification, stated before the run is read at 600k:**
+- **Both rings survive** -> two vesicles are thermodynamically viable; emergence is only a KINETICS
+  problem, and more material plus time should reach it.
+- **They merge into one** -> a real drive to coalesce exists; multiple vesicles require keeping them
+  apart, so the lever is a much LARGER BOX, not more lipids.
+- **One or both dissolve** -> 52 lipids is below the stable size at this dilution, and the earlier
+  emergent vesicles survived only because they were larger or in a tighter box.
+- **Planted structure: read at 600,000 steps, not before** -- the rule that prevented a false
+  fragmentation claim on arc200.
+
+### Standing tally (validated detector)
+
+| block | formers |
+|---|---|
+| std160 | 8/30 |
+| scan | 1/24 (sd1459) |
+| em160C | 1/24 (sd9809) |
+| multi320 | 0/6 (9%) |
+| dil160 | 0/8 (10%) |
+
+Reliable seeds: **9302, 9308, 9312, 9314, 9315, 9316, 9317, 9326, 1459, 9809.**
