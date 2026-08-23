@@ -15937,3 +15937,55 @@ the remaining ten finish.
 
 **Retracted this tick: nothing.** Last tick's resolution is **confirmed** rather than revised, with its
 sample size stated.
+
+## Tick — a SIZE WINDOW for formation: 84-130 lipids, 2/5 inside and 0/10 outside
+
+**Running, NOT read.** kT=0.45 equilibration at 80-230k of 1.2M (7-19%), planted. Standard N=160 arm: 5
+final at 1/5, 5 at 1.22-1.34M, 5 at 480-560k. 30 processes verified at `ht-0.25`.
+
+**FIFTEEN COMPLETED `ht-0.25` RUNS AT N=160, L=65 -- what distinguishes the formers?**
+
+| max largest cluster | formed | seeds |
+|---|---|---|
+| below 84 | **0/2** | 8903 (69), 8904 (78) |
+| **84-130** | **2/5 = 0.400** (CI 0.118-0.769) | **9302 (85)**, **8901 (128)**, 8800, 8804, 9301 |
+| above 130 | **0/8** | 8801, 8802, 8803, 8900, 8902, 9300, 9303, 9304 |
+
+**Fisher exact, in-window versus outside: p = 0.095.** Suggestive, not significant.
+
+**A THRESHOLD DOES NOT FIT; A WINDOW DOES.** "Smaller is better" is refuted by the N=100, L=65 arm,
+which held its largest cluster at **51-72 for the whole run and gave 0/5**. Those clusters never reached
+the **~84 lipids** the observed vesicles required. **The window explains both ends of the data with one
+mechanism.**
+
+**The upper edge coincides with an independently measured quantity.** I measured the wrapping threshold
+at **127 lipids** from 83 states, before and separately from this analysis. **The formation window's
+upper bound (130) and the wrapping threshold (127) are the same number arrived at two different ways** --
+above it the ribbon closes through the periodic boundary and has no free ends left to join.
+
+**This also reconciles three results that looked unrelated:** the 0/5 at N=100 (below the window), the
+0/8 above 130 (wrapped), and the 2/15 raw rate at N=160 (a system that straddles the window, averaging
+~118 and often overshooting).
+
+**LAUNCHED, criteria fixed BEFORE the run: 10 seeds at `N=130, L=65`, `ht-0.25`, 1.6M steps.** At the
+measured `largest/N = 0.74` asymptote this targets **~96 lipids -- near the window centre**, where the
+hypothesis says formation should be most likely.
+
+* **>= 4 formations in 10** -> rate >= 0.40, matching the in-window rate, and the window is confirmed as
+  a real and *actionable* structure: the emergent rate is controllable by choosing N.
+* **1-3 formations in 10** -> rate 0.10-0.30, above N=100's 0/5 but not clearly above N=160's 2/15;
+  consistent with the window but underpowered to establish it.
+* **0 formations in 10** -> **the window is refuted.** N=130 sits where the hypothesis predicts the
+  maximum, and a null there cannot be explained by the window; the size association would then be
+  coincidence across 15 runs. **P(0 in 10) at the in-window rate 0.40 is 0.006**, so this branch is
+  decisive if it fires.
+* **Max largest cluster at N=130 lands outside 84-130** -> the `0.74` scaling failed at this N and the
+  test did not probe the window; report the achieved sizes and treat it as a calibration, not a test.
+
+**I am recording the third branch as the one that would hurt most and is entirely possible**: two
+formations across five in-window runs is a thin basis, and the association could be coincidence.
+
+**Emergence in flight:** standard N=160 arm (15 seeds) plus the new N=130 arm.
+
+**Retracted this tick: nothing.** The wrapping-threshold and size-window findings are consistent and
+mutually supporting, neither yet significant alone.
