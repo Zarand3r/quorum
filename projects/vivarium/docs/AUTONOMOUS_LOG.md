@@ -19568,3 +19568,57 @@ route is viable but needs **3M-length runs**, which is established but not yet e
 
 Both open questions are already in flight with adequate power. **The useful work was auditing the
 claim set**, which cost no compute and corrected what the brief asserts.
+
+## Tick: vesicles form at FINAL size (0.99 +- 0.05); they enclose only 0.23 of a perfect ring
+
+**Running:** 54 sims, load 61. tworing 5 at 360-390k/600k (**63%**) **not read**; half-density arm
+38 seeds at 60-160k of 2.4M. **No new formations.**
+
+### DO VESICLES INFLATE AFTER CLOSING?
+
+Lumen over the first 200k steps after first sustained closure:
+
+| seed | at close | +40k | +80k | +120k | +200k | growth |
+|---|---|---|---|---|---|---|
+| 9302 | 499 | 519 | 544 | 534 | 532 | 1.07x |
+| 9308 | 236 | 224 | 220 | 204 | 276 | 1.17x |
+| 9314 | 960 | -- | 1033 | 1015 | 1037 | 1.08x |
+| 9315 | 261 | 325 | 206 | 213 | 188 | 0.72x |
+| 9317 | 349 | 302 | -- | -- | 313 | 0.90x |
+| 9805 | 687 | 723 | 723 | 731 | 757 | 1.10x |
+| 9809 | 1522 | 1642 | -- | 1449 | 1483 | 0.97x |
+| 349 | 486 | 507 | 475 | 456 | 444 | 0.91x |
+
+**Growth factor 0.99 +- 0.05 (n=8); 2/8 grew >10%, 2/8 shrank >10% -- symmetric.**
+
+**Vesicles form at their final size. Size is set AT closure, not by later inflation.**
+
+### WHAT SETS THE SIZE?
+
+| seed | cluster | lumen | ring prediction | observed/predicted |
+|---|---|---|---|---|
+| 9302 | 84 | 499 | 2246 | 0.22 |
+| 9308 | 66 | 236 | 1387 | 0.17 |
+| 9314 | 99 | 960 | 3120 | 0.31 |
+| 9315 | 52 | 261 | 861 | 0.30 |
+| 9317 | 92 | 349 | 2694 | 0.13 |
+| 9805 | 137 | 687 | 5974 | 0.11 |
+| 9809 | 118 | 1522 | 4432 | 0.34 |
+| 349 | 77 | 486 | 1887 | 0.26 |
+
+**Observed/predicted = 0.23 +- 0.03.** A perfect single-bilayer ring of n lipids would give 1.00.
+**The closing clusters carry ~4x more material than the ring itself** -- consistent with the
+vesicle-plus-tail structure seen in the overlays.
+
+r(cluster, lumen) = **+0.67, t = 2.23 on 6 dof -- NOT significant at n=8.** Reported as suggestive.
+
+### LAUNCHED: nothing
+
+Both open questions are in flight with adequate power (tworing 63%; 38 half-density seeds, ~21
+expected in-band formations). **Adding work would slow the tworing verdict, which is closest.**
+
+**Standing pre-registrations unchanged:**
+- **tworing** (read at 600k): both survive -> two vesicles viable; merge -> drive to coalesce;
+  dissolve -> 52 lipids below stable size.
+- **half-density arm**: max nves >= 2 -> dilution is the lever; caps at 1 -> closure too slow;
+  clusters never reach 47 -> failed manipulation; rate vs 0.1003/Ms is the unbiased comparison.
