@@ -16868,3 +16868,59 @@ after the fact.
 Load 43.3 on 32 cores with the critical-size arc test mid-flight -- the one experiment that answers
 the kappa question directly. Adding work would delay it. 33 dispersed-start runs remain in flight, so
 the emergence requirement holds.
+
+## Tick: arc70 is METASTABLE -- a fourth outcome, and the critical-size test measures kinetics
+
+**Running:** 45 processes, load 43.6 on 32 cores. N=100 L65 at 1.14-1.24M (15 complete);
+N=160 L65 **20 complete, 10 formations**; conc100 L51 at 880-920k; arc200 at 27% (NOT read).
+
+### ARC70 RESULT (4 of 5 seeds complete, 300k steps, kT=0.45)
+
+| | planted | final |
+|---|---|---|
+| R_mid | 14.02 +- 0.01 | 14.33 +- 1.09 |
+| largest cluster | 70 | 70, 70, 70, 70 |
+| closures (nves>0 at ANY checkpoint) | -- | **0 of 4** |
+
+Radius change **+0.30 +- 1.09 sigma = 0.28 sigma, consistent with zero.** Per-seed: -1.13, +0.82,
++0.14, +1.38. Excursions occur (sd3 reached R = 19.65 at 150k) and relax back.
+
+**The arc neither closes nor unrolls. It persists intact for 300,000 steps.**
+
+### This was not one of the three pre-registered outcomes
+
+Registered: (a) 70 unrolls + 200 closes -> threshold; (b) both unroll -> continuum picture wrong;
+(c) both close -> threshold below 70. **The actual outcome is none of these.**
+
+**Consequence for the standing plan.** The plan assumes a below-threshold arc UNROLLS, so that
+unrolling-vs-closing locates the critical size. It does neither, so **the test as built measures a
+KINETIC question -- does it close within 300k steps -- not the thermodynamic threshold the kappa
+argument concerns.** A persistent arc at fixed R indicates a barrier, not absent driving force.
+The three historical closure failures at ~70 lipids were therefore not "unrolling" either; that
+reading of them should be dropped.
+
+### A contradiction between two established numbers, flagged not smoothed
+
+- **lambda = +18.31 +- 7.07 eps** implies closure gains **~81 kT** -- closed state overwhelmingly favoured.
+- **dwell-ratio ΔF_closure = +0.04 +- 0.24 kT** -- essentially zero.
+
+**Two orders of magnitude apart.** Most likely resolution: the dwell-based ΔF measured DETECTOR-state
+dwells, not membrane open/closed -- consistent with the gate-2 flicker analysis two ticks ago, after
+which dwell statistics were already withdrawn as residence times. That would leave lambda standing and
+closure barrier-limited, which is exactly what arc70's persistence looks like. **Not asserted; the
+next run tests it.**
+
+### LAUNCHED: arc70 temperature ladder, kT = 0.70, 5 seeds
+
+Same geometry, same 300k steps, same chemistry (5/5 verified at `VIVARIUM_CHI_HT=-0.25`), plant intact
+(steric push-off 0.620 -> 0.850, R_mid 14.04 at step 0). Only kT changes, 0.45 -> 0.70.
+
+**Falsification, stated before the run is read:**
+- **Arcs CLOSE at kT=0.70** -> closure is barrier-limited and thermodynamically favoured; lambda's
+  ~81 kT stands and the arc70 null at 0.45 is kinetic trapping.
+- **Arcs UNROLL or FRAGMENT** -> the arc is not thermodynamically driven to close, and the +81 kT
+  figure is suspect and must be re-derived.
+- **Arcs PERSIST again** -> the barrier exceeds what this temperature probes. Reported as
+  inconclusive; I will NOT reinterpret it as either of the above.
+
+Emergence stays in flight (31 dispersed-start runs), so there is always an emergent result to show.
