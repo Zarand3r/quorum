@@ -17437,3 +17437,64 @@ actually live.** The N=40 pair has the strongest lever in the series:
 - Read at 300,000 steps, not before.
 
 Emergence in flight: 6 dispersed-start seeds at 640-820k.
+
+## Tick: kappa(N=40) = 196 +- 95 kT, consistent with kappa(N=70) -- Helfrich holds; lambda-free route FAILS
+
+**Completed:** ring40 and arc40, both 5 seeds at 300k. **Running:** ring200 (3/5 at 300k), ring300
+~25%, arc300 ~50%, em160 at 880k-1.1M, plus 20 new N=40 seeds. Load 19.5 -> ~40.
+
+### ring40 verdict (pre-registered two ticks ago)
+
+**All 5 seeds intact at 40/40 after 300,000 steps**, R = 6.50-7.12 (measured mid-surface 6.868 +-
+0.092). A closed ring is **stable at the radius where emergent vesicles live**. The pre-registered
+alternative -- that it would unroll, making emergent closures transient -- did not occur.
+
+### kappa at the emergent radius
+
+| quantity | value |
+|---|---|
+| ring40 E/lip | -7.3773 +- 0.0360 (n=5) |
+| arc40 E/lip | -7.2406 +- 0.0981 (n=4; sd4 excluded, ended 37/40) |
+| dE_total | **-5.47 +- 4.18 eps** |
+| measured radii | ring 6.868, arc 8.146 -> c = 0.1226 |
+| **kappa(N=40)** | **88.3 +- 42.5 eps = 196 +- 95 kT** at R = 6.9 sigma |
+
+Against **kappa(N=70) = 355 +- 173 kT** at R = 11.5 sigma: **0.80 sigma. CONSISTENT.**
+
+**kappa does not vary with curvature over R = 6.9 to 11.5 sigma, so the Helfrich form holds and
+resolution (c) is NOT supported.** With (b) eliminated last tick, only **(a)** -- a fault in the
+ring-arc route -- or a real effect outside the two-parameter model remains.
+
+Note also **kappa(N=40) = 196 +- 95 kT does NOT satisfy the < 66 kT the emergent closures require**;
+its lower bound is 101 kT. The contradiction stands.
+
+### PRE-REGISTERED LAMBDA-FREE CROSS-CHECK: FAILED, reported as failed
+
+| | |
+|---|---|
+| dE(40) - dE(70) | -1.46 +- 6.61 eps (lambda cancels exactly, as designed) |
+| c40 - c70 | 0.0456 |
+| **kappa** | **-71 +- 322 kT** |
+
+**Error bar 4x the central value, spanning unphysical negative kappa. Uninformative.** The cause is
+arithmetic, not a bug: differencing two dE values with 6.6 eps combined noise and dividing by a lever
+of 0.0456 amplifies the noise to 322 kT. **The largest lever the geometry offers is still too small,
+because c = 8.637/N caps the difference between any two sizes.** This route cannot be delivered at
+achievable precision. **Not quoting its central value as a measurement.**
+
+### LAUNCHED: 10 more seeds each of ring40 and arc40 (to n=15)
+
+20/20 verified `VIVARIUM_CHI_HT=-0.25`. The binding constraint is dE precision: **+-4.18 eps on a
+-5.47 eps signal.** SEM scales as 1/sqrt(n).
+
+**Falsification, stated before the run is read:**
+- **At n=15, SEM on dE should reach ~2.4 eps -> kappa to about +-55 kT.** That is the precision that
+  matters, because the emergent closures require kappa < 66 kT: +-55 kT can test it, +-95 kT cannot.
+- **kappa upper bound falls below 66 kT** -> the emergent closures are explained and the ring-arc
+  route was simply imprecise.
+- **kappa stays at ~200 kT with the tighter bar** -> resolution (a) is excluded too, and the
+  contradiction is real: emergent vesicles close where a two-parameter (lambda, kappa) continuum
+  model says they cannot, which would mean the model omits something that stabilises them.
+- Chosen at N=40 deliberately: smallest system in the series, so precision is cheapest to buy there.
+
+Emergence in flight: 6 dispersed-start seeds at 880k-1.1M.
