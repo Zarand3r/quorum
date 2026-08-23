@@ -17741,3 +17741,58 @@ debounced in-band basis as 0.45; ~4.8 formations expected across 19.2 seed-Mstep
 only a doubling reaches ~2.4 sigma and **anything smaller will not be reported as real**; and if the
 cluster-size distributions diverge later in the run, the confound check is re-applied and the
 comparison voided.
+
+## Tick: confound guard FIRES on the kT=0.55 arm; power was overstated; contemporaneous control launched
+
+**Running:** 37 -> 49 processes. em160T (kT=0.55) at 200k; eqring40/eqarc40 (3M) at ~38% -- **not
+read**; arc300 ~80%; ring300 ~57%. Nothing completed.
+
+### CORRECTION 1 -- the confound guard is firing, not passing
+
+Re-applied at a later matched time as committed:
+
+| matched time | kT=0.45 median | kT=0.55 median | ratio | Mann-Whitney p |
+|---|---|---|---|---|
+| 100k | 33 (n=36) | 34 (n=12) | 1.05 | 0.924 |
+| **200k** | **44** | **38** | **0.88** | **0.034** |
+
+Warm clusters are **smaller** -- the direction the guard watches for -- **absent at 100k, present at
+200k**, so it is growing, not flicker. Two timepoints tested, so Bonferroni gives **0.068**: marginal,
+not decisive. **The arm is NOT confirmed valid; it is on probation.**
+
+**My analysis script printed a hardcoded "still no aggregation difference" line that contradicted its
+own p-value.** Recorded here rather than left to stand.
+
+### CORRECTION 2 -- I overstated the test's power last tick
+
+Last tick I wrote **~4.8 formations expected**. That used the **in-band** rate 0.25/Ms, which applies
+only to time spent at 40-100 lipids. A fixed-length run is governed by the **whole-run hazard**:
+
+| hazard | 12 seeds x 1.6 Ms |
+|---|---|
+| 0.1084/Ms (pooled all-arm) | **2.1 expected** |
+| 0.1560/Ms (std160+em160) | **3.0 expected** |
+
+So the correct figure is **2.1-3.0, not 4.8**, and a doubling shows at only **~1.5-1.7 sigma**, below
+the 2.4 sigma quoted. **The test as sized cannot resolve a doubling.**
+
+### LAUNCHED: contemporaneous kT=0.45 control, 12 seeds (9800-9811)
+
+13/13 verified `VIVARIUM_CHI_HT=-0.25`, identical settings to the 0.55 arm, started now.
+
+**Reasoning for choosing this over adding seeds:** the obvious move was doubling the 0.55 arm for
+power, but **pouring compute into a possibly-confounded comparison is the wrong order**. The 200k
+divergence must be settled first, and every cross-arm comparison so far has leaned on **historical**
+0.45 data collected at other times under other binaries.
+
+**Falsification, stated before the run is read:**
+- **Contemporaneous 0.45 reproduces the historical cluster-size trajectory** -> the 200k divergence is
+  a real temperature effect on aggregation, and the temperature comparison is **VOID** as specified.
+- **Contemporaneous 0.45 instead matches the 0.55 arm** -> the divergence was a **launch-epoch
+  artifact**, the historical arms were the wrong baseline, and **every earlier cross-arm comparison
+  against them needs re-examination** -- including the N=100 suppression, which compared arms
+  launched at different times.
+- Compared at matched steps 100k/200k/400k with Mann-Whitney, Bonferroni-corrected for the number of
+  timepoints tested.
+
+Emergence in flight: 24 dispersed-start seeds (12 at 0.55, 12 at 0.45).
