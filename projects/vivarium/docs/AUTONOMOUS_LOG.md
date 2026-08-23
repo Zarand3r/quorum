@@ -16924,3 +16924,53 @@ Same geometry, same 300k steps, same chemistry (5/5 verified at `VIVARIUM_CHI_HT
   inconclusive; I will NOT reinterpret it as either of the above.
 
 Emergence stays in flight (31 dispersed-start runs), so there is always an emergent result to show.
+
+## Tick: arc70 COMPLETE (metastable, 5/5); arc200 fragmentation flag RETRACTED; melting control launched
+
+**Running:** 50 processes, load 45.5 on 32 cores, 64 GB free. N=100 L65 15 complete;
+N=160 L65 20 complete / 10 formations; conc100 L51 at ~1.08M; arc200 at 40%; arc70T at 40%.
+
+### ARC70 at kT=0.45 -- COMPLETE, all 5 seeds at 300,000 steps
+
+| quantity | value |
+|---|---|
+| R_mid planted | 14.03 +- 0.008 |
+| R_mid final | 14.30 +- 0.94 |
+| change | **+0.27 +- 0.42 (SEM) = 0.65 sigma** |
+| per-seed dR | +0.16, -1.13, +0.82, +0.14, +1.38 |
+| largest cluster at end | 70, 70, 70, 70, 70 -- **5/5 fully intact** |
+| checkpoints with nves>0 | 0, 0, 0, 0, 0 -- **0/5 ever closed** |
+
+**The 70-lipid arc is METASTABLE at kT=0.45: it neither closes nor unrolls.** This is the 5-seed
+confirmation of last tick's 4-seed reading, and it remains outside all three pre-registered outcomes.
+
+### RETRACTED: the arc200 fragmentation flag
+
+Last tick I reported arc200 "may be fragmenting" from largest-cluster values of 105/137/107 read at
+**27%**. Those were transients. All five seeds are now **200/200 intact** at 40%, with R drifting
+36.65 -> 37.8-40.9. The standing rule is not to read planted structures early, and passing that
+observation along even hedged was a partial breach of it. The rule earned its keep.
+
+### The kT=0.70 ladder has a design hole -- NOT being read as a result
+
+arc70T at 40%: largest = 37, 47, 28, 70, 36 of 70. Three of five have fragmented. That is nominally
+the pre-registered "unroll or fragment -> the +81 kT figure is suspect" branch. **Deliberately not
+called**, because raising temperature to lower a barrier only tests what it is meant to test if the
+membrane survives the temperature. If the bilayer melts at 0.70, the run cannot distinguish "the arc
+will not close" from "there is no membrane to close."
+
+### LAUNCHED: planted CLOSED RING, N=70, kT=0.70, 5 seeds -- the missing control
+
+Same size, same temperature, same chemistry (5/5 verified `VIVARIUM_CHI_HT=-0.25`); the only
+difference is that it starts closed. Verified sound at step 0: **R = 11.65 vs predicted 70/2pi =
+11.14, and nves = 1** -- which also serves as a positive control for the detector on a known vesicle.
+
+**Falsification, stated before the run is read:**
+- **Ring SURVIVES while arcs fragment** -> kT=0.70 is below the melting point, the fragmentation is
+  edge-driven, and arc70T becomes real evidence about lambda.
+- **Ring ALSO fragments** -> kT=0.70 is above membrane stability, **the entire kT ladder is VOID**,
+  and the barrier needs a lower temperature or a different probe. Committed in advance: this outcome
+  is reported as "experiment void", not salvaged into a claim about lambda.
+- Read at 300,000 steps, not before.
+
+Emergence stays in flight (31 dispersed-start runs).
