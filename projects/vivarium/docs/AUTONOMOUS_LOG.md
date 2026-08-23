@@ -19622,3 +19622,83 @@ expected in-band formations). **Adding work would slow the tworing verdict, whic
   dissolve -> 52 lipids below stable size.
 - **half-density arm**: max nves >= 2 -> dilution is the lever; caps at 1 -> closure too slow;
   clusters never reach 47 -> failed manipulation; rate vs 0.1003/Ms is the unbiased comparison.
+
+## Tick: the terminal state is ONE giant ribbon; 12 fresh seeds, 11.68 seed-Ms, ZERO formations
+
+### RETRACTED (1): I read the wrong log files last tick
+
+The half-density arm writes to `/tmp/long160_sd*.log` and `/tmp/long160p_sd*.log`. I reported its
+progress from `/tmp/half160_sd*.log`, which are **leftovers from the killed 0.4M incarnation**. Caught
+by `ls -l /proc/<pid>/fd/1`: log mtimes were OLDER than process elapsed time, which is impossible for a
+live writer (every `print` in `_mixture.py` carries `flush=True`).
+
+**Real progress:** long160 32 seeds at 80-180k of 2.4M; long160p 6 seeds at 100k. Largest clusters
+10-24 lipids. **maxnves = 0 everywhere.** Nothing was concluded from the stale numbers, so nothing
+downstream is affected, but the reading method was wrong.
+
+### RETRACTED (2): the 47-99 "formable band" excludes 25% of real closures
+
+Cluster size at closure for the 8 confirmed formers: **52, 66, 77, 84, 92, 99, 118, 137.**
+Two of eight closed ABOVE 99. **The 0.469 closures per Ms-in-band figure is withdrawn** -- its
+denominator counted only 47-99, so it is a rate over a window that misses a quarter of its own
+numerator. The total-time rate **0.1003 +- 0.0290 /Ms uses no band and is unaffected.**
+
+### THE EMERGENCE ARM: 12 seeds, dispersed start, N=160 L=65 kT=0.45
+
+| seed | last (Ms) | max cluster | first >99 | in-band(47-99) Ms | nves |
+|---|---|---|---|---|---|
+| 1013471 | 0.46 | 44 | never | 0.00 | 0 |
+| 1120211 | 0.50 | 44 | never | 0.00 | 0 |
+| 1234577 | 0.50 | 64 | never | 0.16 | 0 |
+| 1357333 | 0.48 | 98 | never | 0.16 | 0 |
+| 104729 | 0.46 | 81 | never | 0.12 | 0 |
+| 217283 | 1.32 | 116 | 600000 | 0.42 | 0 |
+| 331777 | 1.32 | 108 | 860000 | 0.66 | 0 |
+| 449549 | 1.32 | 103 | 1280000 | 1.04 | 0 |
+| 566773 | 1.26 | 88 | never | 0.94 | 0 |
+| 683729 | 1.34 | **160** | 800000 | 0.84 | 0 |
+| 799979 | 1.34 | **160** | 720000 | 0.48 | 0 |
+| 911003 | 1.38 | **160** | 500000 | 0.28 | 0 |
+
+**11.68 seed-Ms, 0 events. Expected at 0.1003/Ms = 1.17; P(0) = 0.31. NOT significant** -- this arm is
+consistent with the established rate. It is not a second drought.
+
+### WHAT THE RENDERS + THE UNWRAP SHOW
+
+Read `sd911003_s1380000.png` and `sd331777_s1320000.png` and then measured the same states:
+
+| seed | beads in largest comp | wraps? | unwrapped span | max extent |
+|---|---|---|---|---|
+| 911003 | 800/800 (100%) | no | 64.2 x 58.8 | 1.22 L |
+| 799979 | 800/800 (100%) | no | 59.0 x 73.9 | 1.28 L |
+| 683729 | 795/800 (99%) | no | 59.2 x 73.3 | 1.24 L |
+| 331777 | 540/800 (68%) | no | 35.4 x 59.9 | 0.96 L |
+| 566773 | 365/800 (46%) | no | 36.1 x 47.1 | 0.74 L |
+| 217283 | 220/800 (28%) | no | 37.2 x 12.9 | 0.58 L |
+
+The render of sd911003 LOOKS like six separate ribbons. It is **one object** -- the pieces join across
+the periodic edges. It is not percolating: it crosses the boundary without closing around the torus, so
+it stays a finite ribbon with two free ends, 1.22 box-lengths long. **Render and metric agree once the
+boundary is accounted for.**
+
+**Conclusion: at N=160/L=65 the terminal state is a single giant ribbon, not a vesicle.** No seed's
+largest cluster ever shrinks, so **each seed gets one one-way pass** through the size range where
+closure is possible (52-137 lipids observed). Six of twelve have already left it. Vesicles here are a
+transient caught during that pass, which is why picking seeds cannot make them reliable.
+
+### LAUNCHED: cap the material so the terminal cluster IS vesicle-sized
+
+**8 seeds, N=80, L=65, kT=0.45, dispersed, 1.6M steps** (`/tmp/cap80_sd880{1..8}.log`).
+Lipid density 80/65^2 = 0.0189 -- **identical to the long160 arm** (160/92^2 = 0.0189), so this arm and
+that one differ only in total material, not density.
+
+**FALSIFICATION, stated before reading anything:** the one-way-pass model predicts that capping the
+material at 80 lipids parks the terminal cluster inside the observed closure range and raises the
+per-seed formation probability well above the established **P(form per 1.6M seed) = 0.148**.
+- **>= 4 of 8 form** -> confirmed; P(>=4 | Poisson mean 1.2) = 0.034. Capped material is the regime knob.
+- **0-1 of 8 form** -> the one-way-pass model is WRONG; over-coarsening past the window is not what
+  suppresses formation, and this tick's conclusion must be withdrawn.
+- **2-3 of 8** -> indeterminate at n=8; report as such and do not spin it.
+
+**Standing pre-registrations unchanged:** tworing (5 seeds, 410k/600k, read at 600k, still unread);
+long160 half-density arm (38 seeds, 2.4M).
