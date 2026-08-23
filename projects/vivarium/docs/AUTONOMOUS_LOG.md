@@ -18031,3 +18031,66 @@ blocks.
 - **em160D lands between, or spreads widely** -> between-block variance is simply large, which is
   itself the number every downstream error bar needs; it gets measured rather than assumed.
 - Compared at matched step 200k, Mann-Whitney, with the bootstrap null for the achieved n.
+
+## Tick: initial conditions IDENTICAL; within-launch block medians span 42-56; anomaly survives every test
+
+**Running:** 62 processes, load 59.8. em160D (tiebreaker) at 40-60k; em160C 24 seeds; em160T 12;
+eqring40/eqarc40 (3M) at **~87%, not read**. **Killed the 3 reproducibility reruns** (question
+answered) to reduce contention.
+
+### Two more explanations eliminated
+
+**1. Initial conditions are IDENTICAL.** A seed-sensitive builder would explain everything. It does
+not:
+
+| block | n | E/lip at step 0 | sd | largest at step 0 |
+|---|---|---|---|---|
+| std160 | 30 | 5.9103 | 1.0693 | 8.47 |
+| em160 | 6 | 5.2550 | 0.7179 | 8.00 |
+| em160C | 24 | 5.8621 | 1.5427 | 8.08 |
+| em160D | 12 | 5.7817 | 1.2931 | 7.50 |
+
+em160C vs std160: **E/lip p = 0.807, largest p = 0.153.** Blocks start indistinguishable, so the
+divergence is **dynamical**, developing between step 0 and 200k.
+
+**2. Within-launch block variation is larger than I had assumed.** std160 is ONE launch of 30
+consecutive seeds, split by seed order:
+
+| sub-block | n | median | mean |
+|---|---|---|---|
+| 9300-9309 | 10 | **56.0** | 60.6 |
+| 9310-9319 | 10 | **42.0** | 44.6 |
+| 9320-9329 | 10 | 44.0 | 48.6 |
+
+9300-9309 vs 9310-9319: **p = 0.070**. Medians span **42-56 within a single launch**, consistent with
+median-of-10 sampling given the population dispersion -- **not hidden structure, but it means the
+baseline I have been comparing against was itself a draw.** Had I launched only seeds 9300-9309, the
+"historical baseline" would have been **56**, not 44.
+
+em160C at 36.0 still sits **below all three sub-blocks**; vs std160 pooled **z = -3.10, p = 0.00194**.
+
+### Tally of eliminated mechanisms
+
+| candidate | status |
+|---|---|
+| binary changed between epochs | **EXONERATED** -- reruns reproduce checkpoint-for-checkpoint |
+| parameters differed | **EXONERATED** -- header, argv, env all identical |
+| launch epoch / system load | **EXONERATED** -- same seed reproduces regardless of when run |
+| seed-sensitive builder | **EXONERATED** -- step-0 statistics match (p = 0.807, 0.153) |
+| unlucky 12-seed block | **DEAD** -- effect is stronger at n=24 (p = 0.00081) |
+
+**The difference survives every test I can run cheaply. I have run out of testable mechanisms and
+will not invent one.** The third block is the remaining discriminator, and it is at 5%.
+
+### LAUNCHED: nothing; KILLED the reproducibility reruns
+
+Load **59.8 on 32 cores** is halving the throughput of the only two runs that matter -- the
+tiebreaker block and the 3M equilibration runs at 87%. Adding work would delay both. The reruns had
+served their purpose, so their 3 cores were returned.
+
+**Standing pre-registration for em160D (unchanged):** median near 36 -> std160 was the favourable
+outlier and the headline rate is biased high; near 44 -> em160C is the outlier; between or wide ->
+between-block variance is simply large and gets measured rather than assumed. Compared at matched
+200k, Mann-Whitney, with the bootstrap null for the achieved n.
+
+Emergence in flight: 48 dispersed-start seeds across three blocks and two temperatures.
