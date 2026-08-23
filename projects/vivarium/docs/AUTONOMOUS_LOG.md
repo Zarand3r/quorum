@@ -18094,3 +18094,60 @@ between-block variance is simply large and gets measured rather than assumed. Co
 200k, Mann-Whitney, with the bootstrap null for the achieved n.
 
 Emergence in flight: 48 dispersed-start seeds across three blocks and two temperatures.
+
+## Tick: EVERY N=160 formation came from ONE block; N=100 suppression downgraded to PROVISIONAL
+
+**Running:** 62 processes, load 60.1. eqring40/eqarc40 (3M) at **~92%, not read**; em160D at 100k;
+em160C 24 seeds; em160T 12. Nothing completed.
+
+### The block anomaly reaches the headline result
+
+Formation rate by launch block, debounced, at verified chemistry:
+
+| block | seeds | events | exposure | rate/Ms |
+|---|---|---|---|---|
+| **std160 (9300-9329)** | 30 | **8** | 41.96 Ms | **0.1907** |
+| em160 (9600-9605) | 6 | 0 | 9.60 Ms | 0.0000 |
+| ht25_em | 5 | 0 | 8.00 Ms | 0.0000 |
+| win130 | 10 | 1 | 15.72 Ms | 0.0636 |
+| **all non-std160** | -- | **1** | 33.32 Ms | **0.0300** |
+| ctrl100 (9200-9234) | 30 | 0 | 48.00 Ms | 0.0000 |
+
+**std160 is 6.4x hotter than every other block** at the same N, chemistry and box. At its rate the
+others should have shown **6.35** formations; they showed **1**. **P(<=1 | 6.35) = 0.0128.**
+
+**EVERY N=160 formation in this project came from seeds 9300-9329.**
+
+### Propagation into the pre-registered N=100 suppression
+
+| baseline | expected in ctrl100 | observed | P(0) |
+|---|---|---|---|
+| std160 rate | 9.15 | 0 | **0.0001** |
+| all non-std160 blocks | 1.44 | 0 | **0.2368** |
+
+**P = 0.0024 -> P = 0.24 depending purely on which block supplies the baseline.**
+
+**DOWNGRADED TO PROVISIONAL.** Not retracted: std160 may be representative and the others unlucky --
+0 events in 9.6 and 8.0 Ms is individually unsurprising. But the result is **not robust to the choice
+of baseline block, and I never checked that** before reporting it as confirmed.
+
+### Why the correction cannot be made yet
+
+**Between-block rate variance is currently unmeasurable.** Only **one** N=160-class block has any
+events, so Poisson noise cannot be separated from genuine block-to-block variation. Any "corrected"
+error bar would be invented, not measured.
+
+### LAUNCHED: nothing
+
+Load **60.1 on 32 cores**. The runs that resolve this are already in flight: **em160C (24 seeds) and
+em160D (12 seeds)** will add **36 independent N=160 seeds** at ~1.6M each, and the **3M equilibration
+runs are at 92%**. Adding work slows exactly the measurements that answer the question.
+
+**Falsification, stated before em160C/em160D complete:**
+- **They yield ~0.19/Ms (about 7 formations across 36 seeds x 1.6 Ms = 57.6 Ms)** -> std160 was
+  representative, the zeros were unlucky, and the N=100 suppression is restored to confirmed.
+- **They yield ~0.03/Ms (about 1-2 formations)** -> std160 was the outlier, the pooled rate is ~6x
+  lower than reported, and **the N=100 suppression fails (P ~ 0.24) and must be retracted**.
+- **Intermediate** -> between-block rate variance is real and large; it gets measured from the four
+  blocks and folded into every rate error bar in this project.
+- Debounced (k>=2), in-band basis, compared per block rather than pooled.
