@@ -19163,3 +19163,50 @@ measure what is already on disk** -- which is what this tick did.
   is a larger box; dissolve -> 52 lipids below stable size at this dilution.
 - **sparse320**: max nves >= 2 -> dilution is the lever; caps at 1 -> closure too slow, need faster
   closure not more space; clusters never reach 47 -> failed manipulation, reported as such.
+
+## Tick: sparse320 was UNAFFORDABLE by design (4x beads, ~64h) -- replaced with an equivalent test at 1.6x
+
+**Running:** 66 sims, load 72.4. em160C 24 at 1200-1560k (2 formers); scan 24 at 660-740k
+(2 formers); tworing 5 at 130k/600k **not read**; **half160 6 NEW**.
+
+### DIAGNOSIS: the stall was DESIGN, not scheduling
+
+sparse320 produced **zero checkpoints in ~30 minutes across two launches.** I read that twice as CPU
+contention. It is system size:
+
+| config | lipid beads | waters | total beads | vs std160 |
+|---|---|---|---|---|
+| std160 | 800 | 2159 | 2959 | 1.0x |
+| multi320 | 1600 | 4327 | 5927 | 2.0x |
+| **sparse320** | 1600 | **10235** | **11835** | **4.0x** |
+| **half160 (new)** | 800 | 5127 | 5927 | **2.0x** |
+
+em160C advances 20k steps per ~12 min at current share, so sparse320 needs **~48 min per checkpoint
+-> ~64 HOURS for 1.6M steps.** **Not viable, and no amount of waiting for cores fixes it.**
+
+**I misread the same stall twice as a scheduling problem when I had designed something too expensive
+to finish.** Recorded because the failure was in experiment design, not in resource management.
+
+### REPLACEMENT: half160 -- same hypothesis, 2x cost instead of 4x
+
+The dilution hypothesis is about **DENSITY, not lipid count**:
+
+| config | density (lipid/sigma^2) |
+|---|---|
+| std160 | 0.0379 |
+| sparse320 | **0.0189** |
+| **half160 (N=160, L=92)** | **0.0189** |
+
+**Identical density to sparse320 at half the beads.** Launched 6 seeds with proven formers
+(9302, 9314, 9317, 349, 1459, 9805), 6/6 verified `VIVARIUM_CHI_HT=-0.25`, kT=0.45, packing 0.55.
+
+**Material budget checked, not assumed:** observed vesicles used **39 lipids (sd1459), 77 (sd349),
+160 (sd9805)**. Two small vesicles at ~50 each fit inside 160, so the test is not budget-starved.
+
+**Falsification, stated before the run is read:**
+- **max nves >= 2 in any seed** -> dilution is the lever; the race framing holds.
+- **caps at 1 with clusters staying separate** -> closure too slow relative to achievable dilution;
+  the answer is FASTER CLOSURE (temperature/chemistry), not more space.
+- **clusters never reach 47 lipids** -> too dilute; **failed manipulation**, reported as such.
+
+**Tally unchanged:** 12 forming seeds, pooled 0.1129/Ms, persistence 0.62 +- 0.12.
