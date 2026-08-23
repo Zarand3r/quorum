@@ -19210,3 +19210,50 @@ The dilution hypothesis is about **DENSITY, not lipid count**:
 - **clusters never reach 47 lipids** -> too dilute; **failed manipulation**, reported as such.
 
 **Tally unchanged:** 12 forming seeds, pooled 0.1129/Ms, persistence 0.62 +- 0.12.
+
+## Tick: PRE-REGISTERED SCREEN RESOLVES on its middle branch -- rate 0.1098/Ms, std160 was the outlier
+
+**Running:** 49 sims, load 48.8 (down from 74). em160C 24 (**7 DONE**) at 1300-1600k; scan 24
+(**17 DONE**) at 760-800k; tworing 5 at 170k/600k **not read**; half160 **14 seeds** (6 proven +
+8 fresh, NEW this tick).
+
+### THE PRE-REGISTERED SCREEN OUTCOME
+
+Registered several ticks ago, before any of its data existed:
+- **>=3 formers** -> consistent with std160's rate; the drought was a fluctuation
+- **0 formers** -> pooled evidence against std160's rate passes P ~ 1e-4
+- **1-2 formers** -> rate real but below std160; headline **revised down, not retracted**
+
+**OBSERVED: 2 formers in 18.22 seed-Msteps = 0.1098/Ms (17/24 complete). THE THIRD BRANCH FIRES.**
+
+Against std160's 0.1907/Ms: expected 3.47, observed 2, **P(<=2) = 0.3256** -- 1.7x lower but
+statistically consistent.
+
+### Independent estimates now agree
+
+| estimate | rate |
+|---|---|
+| scan block alone (fresh seeds, pre-registered) | **0.1098/Ms** |
+| pooled across 4 blocks | **0.1129/Ms** |
+| std160 alone | 0.1907/Ms |
+
+**The screen reproduces the pooled rate to within 3%, on entirely fresh seeds with a pre-registered
+read. std160 was the outlier; 0.11/Ms (~17% per 1.6M seed) is the number to trust.**
+
+### LAUNCHED CORRECTLY THIS TICK: 8 fresh seeds into half160
+
+**Cores genuinely freed first** (load 48.8, 47 procs, down from 69) -- launched AFTER availability,
+not in anticipation, which was the sparse320 mistake made twice.
+
+**Fresh seeds used deliberately:** half160's original 6 are all **proven formers**, which is fine for
+"can dilution produce two vesicles" but **biased for measuring a rate**. The 8 fresh seeds give an
+unbiased half-density rate to compare against 0.11/Ms. 14/14 verified `VIVARIUM_CHI_HT=-0.25`.
+
+**Falsification for half160 (restated, unchanged):**
+- **max nves >= 2 in any seed** -> dilution is the lever for multiple vesicles.
+- **caps at 1 with clusters staying separate** -> closure too slow for achievable dilution; the answer
+  is faster closure, not more space.
+- **clusters never reach 47 lipids** -> too dilute; **failed manipulation**, reported as such.
+- **Fresh-seed rate vs 0.11/Ms** is the separate, unbiased comparison.
+
+**Tally:** 12 forming seeds, pooled 0.1129/Ms, persistence 0.62 +- 0.12, 8/12 still enclosing.
