@@ -19464,3 +19464,58 @@ seeds at 2.4M).
 
 **Standing:** 12 forming seeds, rate 0.1023/Ms over 101 seeds, persistence 0.62 +- 0.12,
 lumen sizes 158-1642 cells (R = 3.6-11.4 sigma).
+
+## Tick: FINAL RATE 0.1003 +- 0.0290/Ms; std160 was a HIGH DRAW, not an outlier population
+
+**Completed:** em160C 24/24 -- the last standard-density block. **Running:** tworing 5 at
+300-330k/600k **not read**; half-density arm **38 seeds** at 2.4M.
+
+### DEFINITIVE FORMATION RATE
+
+| block | seeds | formers | exposure Ms | rate/Ms |
+|---|---|---|---|---|
+| std160 | 30 | 8 | 41.96 | 0.1907 |
+| em160 | 6 | 0 | 9.60 | 0.0000 |
+| em160C | 24 | 2 | 37.66 | 0.0531 |
+| em160D | 12 | 0 | 4.00 | 0.0000 |
+| scan | 24 | 2 | 18.40 | 0.1087 |
+| ht25_em | 5 | 0 | 8.00 | 0.0000 |
+| **TOTAL** | **101** | **12** | **119.62** | **0.1003** |
+
+**RATE = 0.1003 +- 0.0290 /Ms** (Poisson, 12 events); **95% CI 0.0436-0.1571**;
+**P(form) per 1.6M seed = 0.148.**
+
+### THE std160 QUESTION, SETTLED AGAINST MY OWN EARLIER READING
+
+Two tests disagreed:
+
+| test | result |
+|---|---|
+| **omnibus chi2, all 6 blocks** | **6.43 on 5 dof, p = 0.377 -> HOMOGENEOUS** |
+| std160 vs other five | P(>=8 \| 2.16) = 0.0018 -> outlier |
+
+**The second is POST HOC.** I singled out std160 **because** it was the highest block, then quoted
+the p-value as if chosen in advance -- **the same selection error as the band-choice specification
+curve earlier this session.**
+
+**The omnibus test is unbiased and says the six blocks are consistent with ONE rate.
+std160 was a HIGH DRAW, not a distinct population.**
+
+**RETRACTED:** all prior framing of std160 as "an outlier block", including "every N=160 formation
+came from one block" as evidence of something anomalous. It was exposure time plus Poisson variation.
+Six mechanisms were excluded by measurement along the way -- binary, parameters, launch epoch,
+builder, seed correlation, detector -- and the mundane answer was correct.
+
+### LAUNCHED: half-density arm 26 -> 38 seeds
+
+em160C's completion freed 24 cores; launched **after** availability. 38/38 verified
+`VIVARIUM_CHI_HT=-0.25`, all at 2.4M.
+
+**Power:** 38 seeds x ~1.2 Ms in-band x 0.469 = **~21 expected formations**, giving the two-vesicle
+question real weight.
+
+**Falsification unchanged:**
+- **max nves >= 2 in any seed** -> dilution is the lever for multiple vesicles.
+- **caps at 1 with clusters separate** -> closure too slow; the answer is faster closure.
+- **clusters never reach 47** -> too dilute; failed manipulation, reported as such.
+- **half-density rate vs 0.1003/Ms** -> the separate unbiased density comparison.
