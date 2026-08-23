@@ -17255,3 +17255,65 @@ Emergence in flight: 6 dispersed-start seeds (9600-9605).
 closure gaining ~81 kT. The 81 kT figure follows from that lambda; the length series puts lambda at
 8.16 +- 1.56, which would make the edge gain ~36 kT instead. Not yet a retraction -- the two lambda
 values are 1.4 sigma apart -- but the brief's number is the high end of the range.
+
+## Tick: radius alarm resolved (my error); kappa carries a systematic as large as its error bar
+
+**Running:** 23 processes, load 19.6 on 32 cores. arc120 2/5 at 300k; arc300 ~20%; ring200 ~30%;
+em160 (9600-9605) at 320-480k, largest up to 100.
+
+### The R = 39.73 alarm was partly my error
+
+Last tick I flagged planted ring200 coming up at R = 39.73 against a nominal 31.83 and warned the
+sign of the bending term might flip. **The comparison was wrong.** The logged `R_mid` column is
+`float(np.median(rt))` -- the MEDIAN RADIUS OF ALL LIPID BEADS -- not the mid-surface radius the
+Helfrich term requires. Measuring the mid-surface directly (mean radius of the tail tips, where the
+two leaflets meet):
+
+| structure | nominal | logged median | **measured mid-surface** |
+|---|---|---|---|
+| ring N=70 | 11.14 | 11.34 | **11.52** |
+| arc N=70 | 14.85 | 14.25 | **13.69** |
+| ring N=200 | 31.83 | 32.42 | **32.29** |
+| arc N=200 | 42.44 | 40.18 | **41.40** |
+
+The plant is sound and matches design. **No sign flip. Alarm withdrawn.**
+
+### But the correction moves kappa by more than its error bar
+
+kappa enters as 1/R^2, so small radius differences matter:
+
+| radii used | c = (N/2)(1/Rr^2 - 1/Ra^2) | kappa |
+|---|---|---|
+| nominal | 0.1234 | **222 +- 108 kT** |
+| **measured mid-surface** | 0.0770 (**-38%**) | **355 +- 173 kT** |
+
+**kappa therefore carries a SYSTEMATIC from the radius definition comparable to its statistical
+error, and last tick's 222 +- 108 kT was quoted without it.** The honest range is **~220-360 kT**.
+
+The systematic shrinks with size: -38% at N=70 but only -13% at N=200.
+
+### This range is coherent with every observation
+
+The standing note says closure is favoured whenever kappa < ~150 kT. Measured kappa sits **well
+above** that line, which independently explains: arc70 metastable rather than closing; emergent
+ribbons persisting open; the low formation rate; and the N=100 suppression being about reaching sizes
+where the bending penalty is payable. **The pieces agree instead of fighting.**
+
+### LAUNCHED: ring300, N=300, L=165, kT=0.45, 5 seeds
+
+Pairs with the arc300 already running. Two reasons:
+1. The radius systematic falls with N (-38% at 70, -13% at 200), so a large pair is cleaner.
+2. The lambda-free route differences two ring-arc pairs, and a bigger lever conditions kappa better:
+   **c(70) - c(300) = 0.0482** against **0.0394** for the N=200 pair.
+
+5/5 verified `VIVARIUM_CHI_HT=-0.25`; nves=1 and largest=300 at step 0.
+
+**Falsification, stated before the run is read:**
+- **kappa from the (70,300) difference lands in 220-360 kT** -> three routes concur and kappa is
+  settled at roughly 2x the closure-favourable threshold.
+- **kappa disagrees beyond the combined systematic + statistical band** -> the Helfrich form does not
+  describe these ribbons and every kappa number here goes, including the range above.
+- Analysis must use MEASURED mid-surface radii, not nominal or logged-median. Recorded now so the
+  choice is not made after seeing the answer.
+
+Not read: arc120 (2/5 complete), arc300 (~20%), ring200 (~30%). Emergence in flight (6 seeds).
