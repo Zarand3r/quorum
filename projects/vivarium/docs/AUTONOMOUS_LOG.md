@@ -18909,3 +18909,53 @@ plausibly outrun coalescence. Seeded with five PROVEN formers (9302, 9314, 9317,
   dilution; multiple vesicles need faster closure (chemistry or temperature), not more space.
 - **clusters never reach 47 lipids** -> too dilute, the same manipulation failure the N=100 and
   dil160 arms risk; reported as a failed manipulation, not a rate result.
+
+## Tick: race is MATCHED (1.01), not coalescence-dominated; over-launching corrected
+
+**Running:** 66 sims (was 83), load 78.6. tworing 5 at 30-40k/600k **not read**; multi320 6 at 13%;
+scan 24 at 60%; em160C 24 at 75%. **Killed sparse320 and dil160** (see below).
+
+### CORRECTION to last tick's claim
+
+Last tick I said **"coalescence beats closure."** Measured on std160's 30 seeds:
+
+| quantity | median | range | n |
+|---|---|---|---|
+| coalescence (largest cluster passes 100) | **740k steps** | 160k-1440k | 24/30 |
+| first sustained closure | **750k steps** | 400k-1500k | 8/30 |
+| **ratio (closure/coalescence)** | **1.01** | | |
+
+**The timescales are MATCHED, not separated.** In the 4 seeds where both events occurred,
+**coalescence came first in only 1.**
+
+**My analysis script printed "coalescence is ~2x faster than closure" as hardcoded text contradicting
+its own computed ratio of 1.01.** Recorded -- this is the **third time this session** a hardcoded
+conclusion has disagreed with the numbers beneath it. Pattern noted for future scripts.
+
+### What the corrected result means for multiple vesicles
+
+A matched race is **favourable**, not prohibitive. Two vesicles need two independent closures before
+the clusters merge, and closure is already competitive with merging. At ~27% closure per seed, two
+independent closures is low-percentage but not vanishing. **A modest shift should suffice -- a 2x
+dilution could tip it**, rather than the 2-4x I guessed last tick.
+
+### RESOURCE ERROR, corrected
+
+**I launched sparse320 last tick onto a machine already at load 80. It sat at 0 steps after 30
+minutes.** I have been launching every tick without cutting, and the decisive cheap test -- the
+two-ring stability run -- was starving at 30k/600k.
+
+**Killed:** sparse320 (5 seeds, **0 steps, zero work lost**) and dil160 (8 seeds, secondary yield
+test). 83 -> 66 sims.
+
+**sparse320 relaunches when cores genuinely exist.** Launching onto a saturated machine is not a
+launch; it is a queue entry that slows everything already running.
+
+### LAUNCHED: nothing
+
+Deliberate. The machine is still at load 78 with 66 sims. **The correct action was subtraction.**
+
+**Standing pre-registrations unchanged:**
+- **tworing** (read at 600k): both rings survive -> two vesicles viable, emergence is kinetics;
+  merge -> real drive to coalesce, lever is a larger box; dissolve -> 52 lipids below stable size.
+- **multi320**: max nves >= 2 -> multiple vesicles achievable by supplying material.
