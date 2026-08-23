@@ -16605,3 +16605,75 @@ actually committed to.
 and this tick's four findings all came from re-analysis of data already on disk rather than new runs.
 The emergence-in-flight requirement is met by 30 dispersed-start runs. The next launch should carry
 a per-dilation and gate-2-margin column so flicker is attributable live instead of reconstructed.
+
+## Tick: gate 2 under-scores vesicles with tails; two proposed fixes refuted; concentration arm launched
+
+**Running at tick start:** 30 processes, 30/30 at `VIVARIUM_CHI_HT=-0.25`, load 31.0 on 32 cores.
+N=100 extension at 540-620k of 1.6M (~36%); std160 extension at 700k-1480k.
+**No new formations this tick** -- still 8 at N=160, 2 at N=130, 0 at N=100.
+
+### What the overlay showed
+
+sd9317 was flagged last tick as the single threshold-limited formation (gate-2 ratio 0.104-0.137
+against a 0.10 cut). The overlay resolves it: **a genuine closed vesicle with a ribbon tail attached.**
+Only ~26 of its 92 cluster lipids line the lumen. Gate 2 divides lumen area by the area expected for
+ALL cluster lipids, so a vesicle carrying a tail is under-scored by roughly (n_lining/n_cluster)^2.
+
+Recomputed on lining lipids only, across 12 hit states from 6 seeds: **median ratio 1.30**, versus
+**0.259** on whole-cluster counts. The calibrated true-vesicle band was 0.295-0.882.
+**The bias runs toward false NEGATIVES, the opposite of what I had been chasing.**
+
+### Two fixes proposed, both refuted
+
+**Fix 1, score on lining lipids.** REFUTED. Rescues 54 of 67 enclosing states -- far too many. The
+ratio divides by lining^2, so it explodes exactly on the pathological case: sd9300 has a 67-cell
+"lumen" lined by **6 lipids**, scoring 5.85. Six lipids cannot enclose anything.
+
+**Fix 2, require lining count to match lumen perimeter.** REFUTED as **tautological**. It reads
+0.8-1.3 for every state including the 6-lipid pocket, because the flood fill DEFINES the lumen as the
+region the dilated beads bound -- so the bounding lipids always match its perimeter by construction.
+
+**Conclusion.** Gate 2's crude whole-cluster denominator is doing real work: it asks whether a cluster
+is *vesicle-dominated*, not whether a vesicle is *present*. The honest restatement of the headline
+number is that **the formation rate is a rate of vesicle-dominated clusters**, and vesicle-with-large-
+tail is systematically missed. Nothing I tried separated that from tangle-with-pocket except looking.
+
+### One threshold-free number
+
+**N=100 encloses a region >=40 cells in 2/30 states; N=160 in 68/156. 6.5x, Fisher p = 5.7e-05.**
+No gate-2 ratio enters this comparison, so the N=100 suppression is **not** a threshold artifact.
+Reported as corroboration, not an independent test: the N=100 pool is one snapshot per seed with 15
+seeds only ~35% through, against a mostly-finished N=160 pool, so exposure is unequal and p flatters.
+
+### Mechanism candidate
+
+Largest cluster at a FIXED 400k (a predictor, not an outcome -- max-over-run is the reverse-causation
+error made earlier in this project):
+
+| arm | median | range |
+|---|---|---|
+| N=100 | 26 | 18-45 |
+| N=160 | 75 | 40-105 |
+| N=160 formers | -- | 42, 52, 52, 72, 76, 81, 92, 93 |
+
+N=100's range lies almost entirely below the smallest N=160 former (42). **But within N=160, size at
+400k does not distinguish formers (74) from non-formers (76)**, so a simple size threshold is not the
+story. Size is a candidate mechanism, not a demonstrated one.
+
+### LAUNCHED: concentration-matched N=100, 6 seeds (9400-9405), L=51
+
+This separates lipid COUNT from CONCENTRATION. N=100 at L=51 has areal density 100/51^2 = 0.0384
+against N=160 at L=65 = 0.0379, matched to 1.4%. Same material, same crowding as the arm that forms.
+
+**Falsification, stated before the run:**
+- **>=2 formations in 6 seeds** -> concentration/cluster-size is the mechanism and N was only a proxy;
+  the "N=100 suppresses" framing is wrong and must be restated as a density effect.
+- **0 formations in 6** -> at the pooled hazard 0.147/Ms over 1.6M each this expects 1.41, so
+  P(0) = 0.24. NOT decisive on its own; it would take the arm to ~15 seeds to reach P(0) = 0.03.
+  I state that limit now so a null result is not over-read later.
+- Cluster size at 400k is the intermediate check: if L=51 does not raise it into the 42+ band, the
+  manipulation failed and the arm says nothing about the hypothesis either way.
+
+Load goes to ~37 on 32 cores, a deliberate ~12% slowdown of everything including the decisive N=100
+extension. Justified because three consecutive ticks launched nothing and this is the first
+experiment that can distinguish the two live explanations rather than tighten an error bar.
