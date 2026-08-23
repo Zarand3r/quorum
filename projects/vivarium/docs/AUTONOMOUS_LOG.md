@@ -16746,3 +16746,65 @@ now would oversubscribe to ~44/32 and slow the decisive N=100 L65 extension.
 **Trigger, stated in advance:** when the N=100 L65 arm completes (currently 740-820k of 1.6M, so
 roughly 15 cores free within a few ticks), extend conc100 to 15 seeds. Until then the arm stays at 6
 and **no formation count from it will be reported as decisive**, in either direction.
+
+## Tick: RETRACTION -- the N=100 suppression is an exposure artifact; critical-size test launched
+
+**Running at tick start:** 37 processes, 33 at `VIVARIUM_CHI_HT=-0.25`, load 33.7 on 32 cores.
+N=100 L65 at 880-980k; N=160 L65 now 18 complete; conc100 L51 at 480k with largest 47-100.
+**No new formations** -- still 8 at N=160, 2 at N=130, 0 at either N=100 arm.
+
+### RETRACTED: "N=100 suppresses formation"
+
+Reported over the last several ticks as a debounced wall-clock hazard, most recently
+**0 events / 37.84 Ms, P(0) = 0.0068**. That denominator assumes closure opportunity is uniform in
+time. It is not: closure requires a cluster large enough to close, and N=100 rarely builds one.
+
+Size at the checkpoint BEFORE first closure (a predictor; size at/after closure is an outcome and
+using it is the reverse-causation error made earlier here):
+
+| seed | 9324 | 9315 | 9506 | 9501 | 9308 | 9302 | 9316 | 9317 | 9312 | 9314 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| lipids before closure | 47 | 52 | 53 | 72 | 75 | 85 | 90 | 92 | 94 | 99 |
+
+**Minimum 47, median 80.** Recomputing the hazard on time-above-threshold:
+
+| S | N=100 exposure (Ms) | N>=130 exposure (Ms) | N>=130 hazard | expected at N=100 | P(0) |
+|---|---|---|---|---|---|
+| 47 | 10.50 | 40.14 | 0.199 | 2.09 | **0.123** |
+| 60 | 4.04 | 34.18 | 0.234 | 0.95 | **0.389** |
+| 80 | 0.32 | 22.90 | 0.349 | 0.11 | **0.894** |
+
+**Not significant at any threshold.** At S = 80 the exposure differs 68-fold. The wall-clock
+comparison was measuring how often each arm builds a big cluster, not how readily its clusters close.
+
+**What survives:** N=100 rarely reaches the sizes at which closure is observed (14/30 seeds ever
+touch 47; median max 45). **What does NOT survive:** that N=100 clusters are reluctant to close.
+Two different claims, run together for several ticks.
+
+**Caveats on the retraction itself, so it is not over-trusted either:** S = 47 is the observed
+minimum, so the threshold is fitted to the same data; and "closure only proceeds above S" is a model
+assumption, not a measurement. Neither rescues the original claim -- the exposure gap is far too
+large for the wall-clock comparison to survive under any variant.
+
+This also reframes conc100: it is the right experiment for exactly this reason, since it raises
+cluster size at fixed N. It already has 1.54 Ms above S = 47 and 6/6 seeds have exceeded 47.
+
+### LAUNCHED: the standing critical-size test (arc0.75, two exposed ends)
+
+Overdue, and now directly motivated: if closure has a size threshold, plant the sizes rather than
+waiting for self-assembly to produce them.
+
+- **N=70, L=60, 5 seeds** (the size all three historical closure failures used)
+- **N=200, L=110, 5 seeds**
+- 300k steps, checkpoint every 5000. Plants intact: steric push-off moved minimum non-bonded
+  separation 0.620 -> 0.850, so the run measures physics rather than the plant's destruction.
+
+**Falsification, stated before the runs are read:**
+- **N=70 unrolls, N=200 closes** -> a threshold exists between them; edge saved = 2*lambda is constant
+  while bending paid = pi*kappa/R falls with size, so the crossing bounds kappa without a spectrum.
+- **BOTH unroll** -> the continuum picture behind every interpretation in this project is wrong.
+- **BOTH close** -> the threshold is below 70 and the three historical failures at ~70 lipids had
+  another cause, which then needs its own explanation.
+
+Not reading their early checkpoints: planted structures are read at the end, per standing rule.
+Emergence remains in flight (33 dispersed-start runs) so there is always something emergent to show.
