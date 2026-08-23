@@ -17849,3 +17849,65 @@ reaching 200k.
 reach 3M -> equilibration verdict, which unblocks the span-series redo and the whole geometry route.
 
 Emergence in flight: 24 dispersed-start seeds (12 at kT=0.55, 12 at kT=0.45).
+
+## Tick: pre-registered comparison FIRES at 200k (p=0.0082) but the trajectory recovers -- not called
+
+**Running:** em160C now **24 seeds** at ~260k; em160T (0.55) 12 seeds at ~460k; eqring40/eqarc40 (3M)
+at ~62% -- **not read**. arc300/ring300 **KILLED** (see below). Load 46.6.
+
+### The pre-registered 3-way comparison at 200k
+
+| arm | n | median | mean | range |
+|---|---|---|---|---|
+| historical kT=0.45 | 36 | 44.0 | 51.8 | 32-94 |
+| contemporaneous kT=0.45 | 12 | 36.0 | 39.3 | 29-62 |
+| kT=0.55 | 12 | 38.5 | 40.5 | 25-56 |
+
+| comparison | z | p |
+|---|---|---|
+| contemporaneous 0.45 vs HISTORICAL 0.45 | -2.64 | **0.0082** |
+| contemporaneous 0.45 vs kT=0.55 | -0.64 | 0.5254 |
+| HISTORICAL 0.45 vs kT=0.55 | +2.12 | 0.0341 |
+
+**Same-temperature arms differ while different-temperature arms agree** -- the launch-epoch signature,
+and the pre-registered branch that would **invalidate every earlier cross-arm comparison**.
+
+Historical group is internally consistent: std160 vs em160 **p = 0.8319**. Both differ from em160C
+(p = 0.0193, 0.0394). It is the newest arm that stands apart.
+
+### Why it is NOT being called
+
+| step | hist median | em160C median | ratio | p |
+|---|---|---|---|---|
+| 60k | 27.0 | 26.0 | 0.96 | 0.4182 |
+| 100k | 33.0 | 32.0 | 0.97 | 0.2339 |
+| 140k | 38.0 | 35.5 | 0.93 | 0.1399 |
+| **200k** | **44.0** | **36.0** | **0.82** | **0.0082** |
+| 240k | 48.5 | 44.0 | 0.91 | 0.0822 |
+
+**The gap opens at 200k and closes by 240k** -- a transient excursion, not a persistent offset. Under
+full multiplicity (3 comparisons x 2 pre-registered timepoints) the Bonferroni threshold is **0.0083**
+and the observed p is **0.0082**, exactly on the line.
+
+**Called neither way.** 400k is the remaining pre-registered timepoint and is the tiebreaker.
+
+**Explicitly noted:** this is the reading under which my earlier results survive, which is precisely
+when to distrust my own judgement. Therefore the response is **more data, not more interpretation.**
+
+### LAUNCHED: 12 more contemporaneous control seeds (9812-9823), arm 12 -> 24
+
+24/24 verified `VIVARIUM_CHI_HT=-0.25`. n=12 is what makes every one of these comparisons
+underpowered; doubling it sharpens the 400k tiebreaker.
+
+**Paid for by KILLING arc300 and ring300.** Their 300k energies are unequilibrated by the finding
+three ticks ago, so they cannot feed the geometry route, which is blocked pending the 3M verdict
+regardless. **Ten cores moved from data already established as unusable to the question that gates
+everything else.**
+
+**Falsification for the 400k tiebreaker, stated now:**
+- **contemporaneous 0.45 differs from historical at 400k (p < 0.0083 under continued multiplicity
+  correction) AND matches 0.55** -> launch-epoch artifact confirmed; every cross-arm comparison,
+  including the N=100 suppression, must be redone against contemporaneous baselines.
+- **contemporaneous 0.45 agrees with historical at 400k** -> the 200k excursion was a fluctuation,
+  the historical baseline stands, and the temperature comparison proceeds on its own merits.
+- Reported with the full timepoint trajectory, not a single p-value.
