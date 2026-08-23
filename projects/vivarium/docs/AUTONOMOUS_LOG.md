@@ -15534,3 +15534,60 @@ to 10.** Nothing new -- this arm answers the live question and the only thing it
 
 **Retracted this tick: my attribution of the killed arm's failure to dilution.** The mechanism was box
 size. The decision to kill that arm was still correct; the reason I gave for it was not.
+
+## Tick — my 44-lipid projection was wrong; the wrap-proof arm is failing on a mechanism I can now name
+
+**Running, NOT read.** Wrap-proof N=60 at 620-640k (first 5) and 140-220k (second 5). Matched-N N=100 at
+1.38-1.48M. Standard N=160 at 720-800k. **0 formations in any.** All 20 processes verified at `ht-0.25`.
+
+**THE PROJECTION I MADE LAST TICK IS REFUTED BY THE NEXT DATA POINT.**
+
+| step | N160 L65 | N100 L65 | **N60 L65** |
+|---|---|---|---|
+| 100 000 | 0.223 | 0.156 | 0.183 |
+| 200 000 | 0.300 | 0.220 | 0.250 |
+| 380 000 | 0.280 | 0.256 | **0.283** |
+| **600 000** | **0.484** | **0.380** | **0.300** |
+
+Last tick the N=60 arm sat at 0.283 against N160's 0.280 and I concluded it was tracking, projecting
+**~44 lipids at 1.6M**. At 600k it is at **0.300 while N160 is at 0.484** -- it has fallen well behind,
+and its own trajectory now projects **22 lipids at 1.6M**. **My two projections from the same arm differ
+by a factor of two.**
+
+**THE MECHANISM, which I should have reasoned out rather than curve-fitted.** `largest/N` is self-similar
+**early**, when growth is fed by free monomers, and **not late**, when growth comes from **clusters
+merging**. The number of clusters available to merge scales with N, so a 60-lipid system runs out of
+partners while a 160-lipid one does not. **The 380k agreement was a coincidence of the early regime, and
+I extrapolated it across a change of mechanism.**
+
+**I am NOT abandoning the arm on this projection.** My registered criterion says "largest cluster fails
+to reach 40 **by 1.6M**", and I have now produced two projections from this data that disagree twofold.
+**Projecting a third time and acting on it would repeat exactly the error I am reporting.** The arm runs
+to 1.6M and is read at the end.
+
+**THE PRACTICAL ALTERNATIVE, and why it is better than what I have been building.** Rather than
+engineering wrapping away -- which this geometry resists, as three designs have now shown -- **condition
+on it**. Standard runs produce eligible (unwrapped) runs directly, at a measured rate of ~72%, and the
+conditional formation rate among them is currently **1/6**. That test needs no special geometry, no
+dilution confound, and pools with the entire historical corpus.
+
+**Its weakness, stated plainly:** conditioning on an end-state outcome is a selection, not a
+randomisation. A run that wraps late may have been eligible for most of its length. **The conditional
+rate is therefore an upper-bound-flavoured estimate, not a clean one** -- but it is measurable, and the
+wrap-proof designs are not.
+
+**LAUNCHED, criterion fixed BEFORE the run: 5 more seeds at the standard condition (N=160, L=65,
+`ht-0.25`).** These pool with the historical corpus and grow the eligible-run sample.
+
+* **Pooled eligible-run rate over >= 15 eligible runs lands above the raw corpus rate 0.160 with
+  non-overlapping CIs** -> wrapping is materially depressing the measured rate and every closure
+  statement in this project should be quoted against an eligible denominator.
+* **Eligible and raw rates agree within their CIs** -> wrapping does not materially bias the rate, and
+  the corpus figure stands as measured. **This is the more likely outcome at current sample sizes** and
+  I record that now.
+* **Fewer than 3 of 5 new seeds end eligible** -> the 72% eligibility figure is unstable and needs
+  re-measuring before any conditional rate is quoted.
+
+**Retracted this tick: my projection that the wrap-proof arm reaches ~44 lipids.** It projects 22, and
+the mechanism -- coalescence starvation at small N -- explains why no wrap-proof design in this geometry
+is likely to work.
