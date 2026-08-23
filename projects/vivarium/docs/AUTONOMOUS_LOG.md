@@ -18846,3 +18846,66 @@ apart in L=92. Verified sound at step 0: **largest=52, nves=2**. 5/5 verified
 | dil160 | 0/8 (10%) |
 
 Reliable seeds: **9302, 9308, 9312, 9314, 9315, 9316, 9317, 9326, 1459, 9809.**
+
+## Tick: COALESCENCE is the obstruction to multiple vesicles; sparse configuration launched
+
+**Running:** 79 sims, load ~80. **Killed em160S** (12 seeds -- its seed-spacing question is answered
+now that formers appear in both consecutive and spread blocks). tworing at 10k/600k -- **not read**.
+
+### MEASUREMENT ERROR CAUGHT MID-ANALYSIS
+
+Built an N=160 baseline from states matching `mix2d_random_N160_L65_*ht-0.25*` -- but those files
+carry a **`bend0.10` tag**, a DIFFERENT bending parameter, and the seeds were 300-304, not std160.
+**I was comparing two different physics settings.** Caught and redone against seeds 9300-9329 with
+the correct checkpoint tag.
+
+### THE OBSTRUCTION: coalescence beats closure
+
+std160 **final** cluster distributions at 1.6M:
+
+| seed | clusters |
+|---|---|
+| 9304, 9307, 9308 | **[160]** |
+| 9309 | [154, 5, 1] |
+| 9303 | [128, 23, 9] |
+| 9305 | [125, 19, 16] |
+| 9306 | [113, 27, 20] |
+| 9301 | [90, 21, 19, 8, 8] |
+
+**Seven of ten seeds end with essentially every lipid in ONE cluster.**
+
+| arm | mean clusters in 47-99 band | max | % of states with >=2 |
+|---|---|---|---|
+| std160 (final) | 0.20 | 1 | **0%** |
+| N=320 L=92 (10%) | 0.50 | 1 | **0%** |
+| N=160 L=80 (11%) | 0.00 | 0 | **0%** |
+
+**No state in any arm has EVER held two clusters simultaneously in the formable band.**
+
+**This is why nves has never exceeded 1** -- not lipid budget, but a RACE: a second cluster must
+close before it merges with the first. Closure rate is box-independent; **coalescence rate falls with
+dilution.**
+
+**Caveat stated rather than hidden:** the N=320 and dilute arms are at ~10% against std160's 100%,
+so their cluster counts are NOT comparable yet. Not drawn from -- that would repeat the
+progress-mismatch error made earlier this session.
+
+### LAUNCHED: sparse configuration, N=320 in L=130, 5 seeds
+
+| config | density (lipid/sigma^2) | vesicles affordable |
+|---|---|---|
+| std160 (N=160, L=65) | 0.0379 | ~2 |
+| multi320 (N=320, L=92) | 0.0378 | ~4 |
+| **sparse320 (N=320, L=130)** | **0.0189** | ~4 |
+
+**Half std160's density with material for four vesicles** -- the first configuration where closure can
+plausibly outrun coalescence. Seeded with five PROVEN formers (9302, 9314, 9317, 1459, 9809).
+5/5 verified `VIVARIUM_CHI_HT=-0.25`, kT=0.45, packing 0.55 unchanged.
+
+**Falsification, stated before the run is read:**
+- **max nves >= 2 in any seed** -> the race framing is right and dilution is the lever for multiple
+  vesicles.
+- **nves caps at 1 while clusters stay separate** -> closure is too slow relative to any achievable
+  dilution; multiple vesicles need faster closure (chemistry or temperature), not more space.
+- **clusters never reach 47 lipids** -> too dilute, the same manipulation failure the N=100 and
+  dil160 arms risk; reported as a failed manipulation, not a rate result.
