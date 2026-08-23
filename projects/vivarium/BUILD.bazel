@@ -930,3 +930,11 @@ py_binary(
     imports = ["."],
     deps = [":vivarium"],
 )
+
+py_binary(
+    name = "_lumen_overlay",
+    srcs = ["_lumen_overlay.py"],
+    main = "_lumen_overlay.py",
+    imports = ["."],
+    deps = [":vivarium"],
+)

@@ -16529,3 +16529,79 @@ show it. But there is an arithmetic tension independent of my test: a hazard of 
 The standing N=100 pre-registration is unchanged: **0 in 30** -> P(0 | 0.159) = 0.0055, decisive;
 **>= 2 in 30** -> the suppression was noise; **exactly 1 in 30** -> P(<=1) = 0.046, borderline,
 and I committed in advance not to call it.
+
+## Tick: four new formations, and a four-hypothesis audit of the detector that produced them
+
+**Running:** 30 processes, 30/30 verified `VIVARIUM_CHI_HT=-0.25`. Load 30.2 on 32 cores.
+N=100 extension at 440-500k of 1.6M (~28%); std160 extension similar.
+
+**New this tick: four formations** in the std160 extension -- sd9315 (460k), sd9316 (1040k),
+sd9317 (380k), sd9324 (520k). Total at verified chemistry now 8 at N=160, 2 at N=130, 0 at N=100.
+
+### The detector audit (four hypotheses, all mine, all refuted except one)
+
+Last tick licensed the hazard estimator by showing formation is memoryless. Applying it here gave
+N=100 suppression at P(0) = 0.0039. Before reporting that I tried to break the metric behind it.
+
+**H1 -- nves flickers. CONFIRMED.** sd9317 toggles 0,1,0,1,1,0,0,1 between adjacent checkpoints.
+Requiring >=2 consecutive checkpoints cuts events 11 -> 7. Debounced numbers are stable across
+k = 2, 3, 5, so all figures below use k>=2.
+
+**H2 -- dilation artifact. REFUTED.** The gate dilates beads before testing closure, so a one-lipid
+gap could read as sealed. Sweeping bead radius 1.0 -> 0.5: **105/113 closed at every value, flat.**
+
+**H3 -- periodic wrapping. REFUTED.** A ribbon spanning the box encloses a strip trivially.
+**0 of 105** states wrap; lumen spans are 0.27-0.47 of the box.
+
+**H4 -- the multi-dilation stability gate is marginal. REFUTED.** vesicle_call needs n_enclosed == 1
+at bead 1.0/1.5/2.0/3.0. Recomputed over 115 states the pattern is cleanly bimodal:
+**106 x (1,1,1,1) and 9 x (0,0,0,0), with no intermediate patterns at all.**
+
+### The near-miss retraction
+
+The first lumen overlay showed the detected lumen floating in open water, unbounded on three sides.
+That looked like proof the detector fabricates closure, and I was one step from retracting the whole
+formation corpus. **It was my bug.** `_interior_mask` unwraps the cluster and recentres it on L/2, so
+the mask lives in a different frame from the raw coordinates; I had drawn beads in one frame against a
+mask from the other. Redrawn in the mask's own frame the membrane closes cleanly around the lumen.
+The detector was right and the picture was wrong -- the inverse of this project's usual failure, and
+caught only because the overlay forces both onto one canvas.
+
+`_lumen_overlay.py` is now a bazel target so this check is repeatable rather than ad hoc.
+
+### What the flicker actually is
+
+`lumen_c` is logged at every checkpoint, so the flicker is diagnosable without new compute. It is
+**two different things**, and gate 2 (lumen-size ratio, threshold 0.10) is the discriminator:
+
+| seed | ratio when nves>0 | ratio when nves=0 | reading |
+|---|---|---|---|
+| sd9314 | 0.319 [0.251-0.358] | **0.000** | vesicle genuinely opens and recloses -- physics |
+| sd9302 | 0.240 [0.225-0.254] | no gaps | robust |
+| sd9315 | 0.254 [0.103-0.303] | 0.090 [0.082-0.094] | lumen breathes across the cut |
+| sd9317 | 0.112 [0.104-0.137] | 0.087 [0.000-0.099] | **never leaves the threshold** |
+
+So sd9314 opens and closes for real, while **sd9317's entire formation call is decided by a ratio
+that sits within 10% of the 0.10 cut for its whole life.** 7 of 8 N=160 formations clear the
+threshold with >=2x margin at some point; sd9317 is the single threshold-limited call.
+
+**Consequence: dwell and persistence statistics built on `nves` conflate a breathing lumen with a
+threshold crossing and should not be reported as residence times.** First-passage (formation) is
+much less affected, because first closure is first closure either way.
+
+### Numbers
+
+Debounced hazard (k>=2): **N=100 = 0 events / 30.96 seed-Msteps. N>=130 = 7 / 47.64 = 0.147/Ms.**
+Expected at N=100 = 4.55, **P(0) = 0.011**. Arms are homogeneous (chi2 = 2.32, 2 dof, p = 0.314),
+so pooling is licensed.
+
+**NOT CALLED, deliberately.** The pre-registered test was 0-in-30-*completed*-seeds; those seeds are
+at 28%. Switching to a more powerful estimator the moment it crosses 0.05 is optional stopping and I
+would not accept it from anyone else. Stated in advance: **0 at completion -> P = 0.0002; exactly 1
+-> P = 0.0017.** The conclusion is robust either way, so waiting costs nothing and buys the test I
+actually committed to.
+
+**Launched: nothing, third tick running.** Load is 30.2 on 32 cores with the decisive arm inside it,
+and this tick's four findings all came from re-analysis of data already on disk rather than new runs.
+The emergence-in-flight requirement is met by 30 dispersed-start runs. The next launch should carry
+a per-dilation and gate-2-margin column so flicker is attributable live instead of reconstructed.
