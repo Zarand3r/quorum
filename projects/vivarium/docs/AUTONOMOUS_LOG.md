@@ -16808,3 +16808,63 @@ waiting for self-assembly to produce them.
 
 Not reading their early checkpoints: planted structures are read at the end, per standing rule.
 Emergence remains in flight (33 dispersed-start runs) so there is always something emergent to show.
+
+## Tick: the N=100 verdict is band-dependent -- specification curve, and a pre-registration
+
+**Running:** 45 processes, load 43.3 on 32 cores. N=100 L65 15 complete / 15 at ~1.0M; N=160 L65
+**20 complete, 9 formations** (a 9th appeared this tick); conc100 L51 at 640k; arc test in flight.
+**Arc test NOT read** -- N=70 at 23%, N=200 at 5%, and planted structures are read at the end.
+
+### The size-resolved closure rate, within N>=130 only
+
+| size band | pre-closure time (Ms) | closures | rate /Ms |
+|---|---|---|---|
+| 20-40 | 9.54 | 0 | 0.000 |
+| 40-60 | 10.10 | 3 | 0.297 |
+| 60-80 | 13.02 | 1 | 0.077 |
+| 80-100 | 11.74 | 4 | 0.341 |
+| 100-140 | 9.00 | 0 | 0.000 |
+| 140+ | 6.46 | 0 | 0.000 |
+
+Closures occur only between 40 and 100 lipids. **NOT claimed as a size window.** That pattern is
+exactly what unobserved seed-level heterogeneity (frailty) produces: capable trajectories close early
+while small and leave the risk set; incapable ones keep growing and accumulate large-size time with no
+events. The obvious check -- 0/8 formers exceeded 100 before closing (max pre-closure 52, 62, 76, 85,
+90, 92, 94, 99) -- **cannot discriminate, because both models predict it.** A size-window claim was
+already retracted once in this project for a related reason.
+
+### Specification curve: last tick's retraction was over-confident
+
+| band | N=100 Ms | N>=130 Ms | events | rate | expected | P(0) |
+|---|---|---|---|---|---|---|
+| 40-100 | 15.18 | 31.54 | 8 | 0.254 | 3.85 | **0.0213** |
+| 47-100 | 11.46 | 28.22 | 8 | 0.283 | 3.25 | 0.0388 |
+| 40-120 | 15.34 | 35.44 | 8 | 0.226 | 3.46 | 0.0313 |
+| 47-140 | 11.62 | 35.78 | 8 | 0.224 | 2.60 | 0.0744 |
+| 47-400 | 11.62 | 40.88 | 8 | 0.196 | 2.27 | **0.1029** |
+| 40-400 | 15.34 | 44.20 | 8 | 0.181 | 2.78 | 0.0623 |
+| 60-100 | 4.42 | 22.16 | 5 | 0.226 | 1.00 | **0.3689** |
+| 50-110 | 7.78 | 29.74 | 7 | 0.235 | 1.83 | 0.1602 |
+
+**P(0) spans 0.021 to 0.369 across defensible bands, every one chosen after seeing which sizes
+produced closures.** Last tick I reported the 47-400 cell (0.103) as a retraction of the suppression;
+today the 40-100 cell (0.021) says the opposite. **Both are single points on this curve.**
+
+**Corrected position:** the wall-clock claim (P = 0.0068) is still dead -- it ignored exposure
+entirely. But last tick's replacement conclusion, that the effect is absent, was ALSO over-confident.
+The honest state is **undetermined**, with the verdict controlled by an analysis choice I was making
+after the fact.
+
+### PRE-REGISTERED, before the deciding data exists
+
+- **Band 40-100 lipids**, fixed now from current N>=130 data.
+- **Poisson test**: pooled N=100 (L65 + L51) exposure in band against the N>=130 in-band rate.
+- **Evaluated ONCE**, when both N=100 arms complete. No other band will be reported.
+- **p < 0.05** to call suppression. If the result is ambiguous I will report it as ambiguous rather
+  than search for a band that resolves it.
+
+### Launched: nothing
+
+Load 43.3 on 32 cores with the critical-size arc test mid-flight -- the one experiment that answers
+the kappa question directly. Adding work would delay it. 33 dispersed-start runs remain in flight, so
+the emergence requirement holds.
