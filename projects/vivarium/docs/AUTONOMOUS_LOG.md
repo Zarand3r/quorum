@@ -15989,3 +15989,69 @@ formations across five in-window runs is a thin basis, and the association could
 
 **Retracted this tick: nothing.** The wrapping-threshold and size-window findings are consistent and
 mutually supporting, neither yet significant alone.
+
+## Tick — RETRACTION: the size window was reverse causation. Rate at correct chemistry = 3/20
+
+**Running.** N=130 arm at 160-180k (largest 18-39). Standard N=160 arm: 10 seeds >= 1.4M, 5 at 660-760k
+(**sd9314 formed, 5 hits**). kT=0.45 equilibration 0 of 10 at 1.2M. 40 processes verified at `ht-0.25`.
+
+**THE SIZE WINDOW I REPORTED LAST TICK IS RETRACTED. It was conditioning on a post-treatment variable.**
+
+Two new data points exposed it. **sd9314** formed (largest 99) and **sd9308** formed at largest **66**,
+then grew to **160** -- above the window's upper bound while having formed. Checking size **at the moment
+of formation** rather than max-over-run shows the mechanism:
+
+| seed | largest AT formation | max over run |
+|---|---|---|
+| sd8901 | 87 | 128 |
+| **sd9302** | **84** | **85** -- stopped growing |
+| sd9308 | 66 | **160** -- kept growing |
+| **sd9314** | **99** | **99** -- stopped growing |
+
+**A vesicle that closes stops aggregating; a run that never closes keeps growing to 160.** So
+`max largest over run` is partly an **outcome** of forming, and conditioning on it manufactures the
+association I reported at p = 0.095.
+
+**REDONE WITH A PREDICTOR MEASURED BEFORE ANY FORMATION** -- largest cluster at step 300 000, ahead of
+the earliest formation at 380 000, on 20 runs of >= 1.4M:
+
+| group | largest at 300k | mean |
+|---|---|---|
+| formed (n=3) | 45, 60, 71 | 59 +- 8 |
+| not formed (n=17) | 34 ... 102 | 57 +- 5 |
+
+**Split at the median: 1/10 versus 2/10 formed. Fisher exact p = 1.000. No association at all.**
+
+**The "84-130 window", the "0/8 above 130", and the coincidence with the 127-lipid wrapping threshold
+are all withdrawn as artifacts of the same error.** The wrapping *measurement* stands (19/68 states wrap,
+threshold 127); what is withdrawn is its link to formation.
+
+**This is the second time this session that a tidy pattern came from conditioning on an outcome** -- the
+first was the eligible-run rate, where I noted the selection problem explicitly. **Here I did not notice
+it, and reported p = 0.095 as suggestive.**
+
+### WHAT SURVIVES: the rate, now the best-determined number in the project
+
+| set | rate | 95% Wilson CI |
+|---|---|---|
+| this session, `ht-0.25`, N=160, >= 1.4M | **3/20 = 0.150** | 0.052-0.360 |
+| historical corpus (also `ht-0.25`) | 7/40 = 0.175 | 0.087-0.320 |
+| **pooled** | **10/60 = 0.167** | **0.093-0.280** |
+
+Formers: **sd8901, sd9302, sd9308** (sd9314 not yet at 1.4M and excluded). **The session and historical
+rates agree closely**, which is a real consistency check across a chemistry-regression boundary.
+
+**LAUNCHED, criterion fixed BEFORE the run: nothing new; the N=130 arm CONTINUES with a restated
+purpose.** It was launched to test the window. **The window is gone, so the arm is now an honest N-scan**
+-- does lipid count affect the rate at all? Together with N=100 (0/5) and N=160 (3/20) it gives three
+points.
+
+* **N=130 rate differs from N=160's 0.150 by more than its CI** -> lipid count matters and the rate is
+  tunable by system size.
+* **N=130 consistent with 0.150** -> the rate is insensitive to N over 100-160, and the N=100 0/5 was a
+  small-sample fluctuation rather than a size effect. **P(0 in 5) at 0.15 is 0.44**, so that null was
+  never evidence of a size effect and I should not have leaned on it when building the window.
+
+**Retracted this tick: the 84-130 formation window and every inference from it**, including the claim
+that it coincided with the wrapping threshold. Cause: conditioning on a variable affected by the
+outcome.
