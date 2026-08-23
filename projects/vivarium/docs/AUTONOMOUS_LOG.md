@@ -18339,3 +18339,54 @@ and forming seeds are wanted at the **verified** temperature, not a second one.
   drought this would put the pooled evidence against std160's rate beyond P ~ 1e-4.
 - **1-2 formers** -> intermediate; rate is real but well below std160's, and the headline figure gets
   revised downward rather than retracted.
+
+## Tick: CORRECTED drought figure (P=0.0032, not 0.0005); over-commit trimmed; screen running
+
+**Running:** 70 sims, load 83 on 32 cores. em160C 24 seeds at 540-820k; em160S 12 spread-seed at
+20k; scan 24x800k just started; 3M span series 10. **em160D killed** (see below).
+
+### CORRECTION to a figure reported to the user
+
+Last tick I quoted the drought at **P = 0.0005**. That folded in the **kT = 0.55** arm's 11.94 Ms --
+**a different temperature, which does not test the 0.45 rate.** A later tally also **dropped the
+completed em160 block**. Correct accounting over every block at the verified config:
+
+| block | seeds | formers | exposure Ms |
+|---|---|---|---|
+| **std160** | 30 | **8** | 41.96 |
+| em160 | 6 | 0 | 9.60 |
+| em160C | 24 | 0 | 16.22 |
+| em160D | 12 | 0 | 4.00 |
+| em160S (spread seeds) | 12 | 0 | 0.24 |
+| scan (24 x 800k) | 24 | 0 | 0.00 |
+| **TOTAL** | | **8** | **72.02** |
+
+**Everything except std160: 0 formers in 30.06 Ms; expected 5.73 at std160's rate; P(0) = 0.0032.**
+
+**The drought is real and significant -- but at P = 0.003, not 0.0005.**
+
+**Pooled rate across ALL blocks: 0.1111/Ms**, against **0.1907/Ms** from std160 alone. If the running
+blocks finish dry the honest headline rate keeps falling.
+
+### Resource correction
+
+I over-committed last tick: **86 processes on 32 cores.** Throughput is fixed at 32 cores' worth, so
+oversubscription delays everything uniformly rather than destroying work, but it was poor allocation.
+**Killed em160D** -- its 12 seeds at 320k asked the **same** drought question as em160C's 24 seeds at
+540-820k. De-duplication, not arbitrary triage. Down to 70 sims.
+
+### LAUNCHED: nothing
+
+The 24-seed screen started this tick and has not reached its first checkpoint. Adding work would slow
+the seed search the user explicitly asked for. **60 dispersed-start seeds are hunting formers**
+(scan 24 + em160S 12 + em160C 24).
+
+**Standing pre-registration for the screen (unchanged):**
+- **>= 3 formers in 24 seeds by 800k** -> consistent with std160's rate; the drought was a fluctuation
+  and forming seeds are readily found.
+- **0 formers in 24** -> ~4 expected; combined with the existing drought, pooled evidence against
+  std160's rate passes **P ~ 1e-4**.
+- **1-2 formers** -> rate real but well below std160's; headline figure revised downward, not retracted.
+
+**Known forming seeds (deterministic, reproduce on demand):** 9302, 9308, 9312, 9314, 9315, 9316,
+9317, 9326 sustained past debounce; 9324 and 9329 touched closure once.
