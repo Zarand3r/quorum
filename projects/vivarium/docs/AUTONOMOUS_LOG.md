@@ -18612,3 +18612,59 @@ cover both user goals. **The highest-value action this tick was refusing to coun
 with an overlay each. **If any show blobs rather than rings, the formation corpus shrinks and the
 0.191/Ms rate falls further.** If all eight show rings, the bias affects only clusters below ~55 and
 the corpus stands.
+
+## Tick: PRE-REGISTERED RE-SCORING -- at least 3 of 8 "formations" are BLOBS, not vesicles
+
+**Running:** 78 sims, load 76.6. em160C 24 at 800k-1120k; scan 24 at 260-300k; multi320 6;
+dil160 8; em160S 12. **No new real formations.**
+
+### The pre-registered re-scoring, executed
+
+Last tick's commitment: re-score std160's 8 formers with overlays, because gate 2 has a small-n bias.
+
+| seed | lipids | lumen cells | render verdict |
+|---|---|---|---|
+| **sd9314** | 99-109 | 960-1017 | **RING -- genuine, verified twice** |
+| sd9315 | 52 | 235-261 | **BLOB** -- and still a blob at its LAST hit, 1.06M steps later |
+| sd9316 | 67 | 149 (gate ratio **0.104**, barely over the 0.10 cut) | **BLOB** |
+| sd9317 | 59-92 | 349-354 | **BLOB** |
+| sd9312 | -- | -- | largest cluster encloses nothing at states checked |
+| sd9326 | -- | -- | largest cluster encloses nothing at states checked |
+| sd9302, sd9308 | -- | -- | no hit states on disk |
+
+**At least 3 of 8 are the same failure mode as the sd1459 false positive rejected last tick:
+dense aggregates with interior voids, not bilayer vesicles.**
+
+### My quantitative discriminator FAILED its positive control
+
+Built a ring-vs-blob score from R_lumen / R_cluster (ring = thin membrane round a big lumen).
+**It calls sd9314 a BLOB (ratio 0.45)** -- the one confirmed twice by eye. Cause: the 90th-percentile
+cluster radius includes the **ribbon tail attached to the vesicle**, inflating R_cluster.
+
+**A metric that fails its positive control cannot be used. Not used. No quantitative corpus score
+exists yet.**
+
+### What this does to the standing numbers
+
+- **The reliable-seed list is UNCERTAIN.** Only **sd9314** is confirmed. Three look like blobs. Four
+  unresolved.
+- **The 27% formation rate, 0.191/Ms, and everything derived are inflated by an unknown amount.**
+- **The drought now has a mundane candidate explanation:** std160's rate was high partly because the
+  detector counted artifacts, and later blocks produced fewer of them. That would reconcile the
+  drought with the six mechanisms already excluded.
+
+**NOT retracting the eight outright** -- visual scoring is subjective and this project has erred in
+both directions. But **only sd9314 should be treated as confirmed** until a validated discriminator
+exists.
+
+### LAUNCHED: nothing
+
+Load 76.6 with 78 sims; formers scale with total seed-Msteps and are core-limited. **The highest-value
+action was the re-scoring itself**, which cost no compute and changed the standing conclusions more
+than any run could have.
+
+**Falsification for the next discriminator, stated now, before building it:** it must **accept
+sd9314** (confirmed ring) and **reject sd1459** (confirmed blob) before being applied to anything
+else. Any score that fails either control is discarded, as this tick's was. Candidate: fraction of
+lumen-boundary cells whose nearest lipid is a HEAD **and** whose outward normal reaches bulk water
+within one membrane thickness -- which distinguishes a ring's thin wall from a blob's thick body.
