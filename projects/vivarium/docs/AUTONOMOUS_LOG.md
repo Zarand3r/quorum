@@ -19362,3 +19362,61 @@ configuration -- but the pattern was sloppier than it should have been.
 **Falsification for long160 (unchanged):** max nves >= 2 -> dilution is the lever; caps at 1 with
 clusters separate -> closure too slow, answer is faster closure; clusters never reach 47 -> too
 dilute, failed manipulation reported as such.
+
+## Tick: a spurious 3x size-persistence effect CAUGHT before reporting
+
+**Running:** 54 sims, load 51.3. em160C 24 (12 DONE); tworing 5 at 250-270k/600k **not read**;
+half160 6 at 1.6M; long160 20 at 2.4M (40k). **No new formations.**
+
+### A SPURIOUS EFFECT, CAUGHT
+
+Tested whether vesicle size predicts survival. **First pass:**
+
+| group | mean persistence |
+|---|---|
+| lumen >= 300 cells (n=7) | 0.87 |
+| lumen < 300 cells (n=5) | **0.28** |
+
+**A 3x difference.** But three of those five "small" cases had **lumen = 0 at closure**, which does
+NOT mean a small vesicle -- it means the vesicle sat in a **NON-LARGEST cluster**, and `lumen_c`
+tracks only the largest. **Measurement artifact**, and all three carry persistence 0.00 by
+construction.
+
+**Corrected (excluding 9312, 9316, 9326):**
+
+| group | mean persistence |
+|---|---|
+| lumen >= 300 (n=7) | 0.87 |
+| lumen < 300 (n=2) | 0.69 |
+
+**Pearson r = -0.52, t = -1.61 on 7 dof -> NOT significant, and the sign FLIPS.**
+
+**Decisive counterexample: sd9809 has the LARGEST lumen (1642 cells, R = 11.4 sigma) and the LOWEST
+persistence (0.37).** Size does not protect a vesicle.
+
+**CONCLUSION: no size-persistence relationship is established.** Had the first pass been reported it
+would have been a clean-looking 3x result resting entirely on three artifact zeros.
+
+### What IS real: the size distribution
+
+Lumen at closure spans **158 to 1642 cells (R = 3.6 to 11.4 sigma)** across the 12 formers --
+**this system makes vesicles over roughly a 3x radius range, not at one characteristic size.**
+
+| seed | lumen@close | R | persistence |
+|---|---|---|---|
+| 9809 | 1642 | 11.43 | 0.37 |
+| 9314 | 967 | 8.77 | 0.87 |
+| 9805 | 723 | 7.59 | 1.00 |
+| 9302 | 519 | 6.43 | 1.00 |
+| 349 | 507 | 6.35 | 1.00 |
+| 9317 | 349 | 5.27 | 0.87 |
+| 9315 | 325 | 5.09 | 0.98 |
+| 9308 | 239 | 4.36 | 0.71 |
+| 1459 | 158 | 3.55 | 0.67 |
+
+### LAUNCHED: nothing
+
+Both goal-2 tests are in flight (tworing at 45%, long160 20 seeds at 2.4M just started) and the
+manipulation is verified. **The useful work this tick was refusing to report a spurious effect.**
+
+**Standing:** 12 forming seeds, settled rate 0.1023/Ms over 101 seeds, persistence 0.62 +- 0.12.
