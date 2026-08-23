@@ -19519,3 +19519,52 @@ question real weight.
 - **caps at 1 with clusters separate** -> closure too slow; the answer is faster closure.
 - **clusters never reach 47** -> too dilute; failed manipulation, reported as such.
 - **half-density rate vs 0.1003/Ms** -> the separate unbiased density comparison.
+
+## Tick: CONSOLIDATED LEDGER -- every standing claim re-derived from data; retraction list assembled
+
+**Running:** 54 sims, load 59. tworing 5 at 340-360k/600k **not read**; half-density arm 38 seeds
+at 20-140k of 2.4M. **No new formations.**
+
+### WHAT STANDS -- each re-derived this tick, not copied from the log
+
+| # | claim | value |
+|---|---|---|
+| 1 | **formation rate** | **0.1003 +- 0.0290 /Ms**; 12 events, 101 seeds, 119.62 Ms; P(form/1.6M seed) = 0.148 |
+| 2 | formation times | median **750k**, range 240k-1500k |
+| 3 | forming seeds | **9302 9308 9312 9314 9315 9316 9317 9326 1459 349 9805 9809** |
+| 4 | detector | recall **0.941** on planted rings; **rejects** random-orientation jams (both controls) |
+| 5 | persistence | **0.62 +- 0.12** post-closure lumen fraction; 8/12 still enclosing |
+| 6 | lumen sizes | **158-1642 cells** (R = 3.6-11.4 sigma) |
+| 7 | max simultaneous vesicles | **1** in every run ever -- and the detector CAN count 2 and 3 |
+| 8 | the race | coalescence **740k** vs closure **750k**, ratio **1.01** |
+| 9 | dilution | halving density slows coalescence **2.4x** (ratio 0.40-0.47, p<0.0001) |
+
+### RETRACTED -- do not reuse
+
+- **lambda = 18.31 +- 7.07 eps and the ~81 kT closure gain** -- the fit omitted a 1/N^2 bending term
+  larger than its own signal.
+- **kappa = 222 / 265 / 355 kT** -- all derived from that lambda, on unequilibrated energies.
+- **N=100 suppression P = 0.0024** -- exposure artifact; P spans **0.021-0.369** across defensible bands.
+- **std160 as an outlier block** -- omnibus chi2 p = 0.377; a high draw, not a population.
+- **"3 of 8 formations are blobs"** -- size-biased visual scoring.
+- **size-persistence relationship** -- driven by 3 artifact zeros.
+- **any energy measured on 300k runs** -- 3M is required (final-500k slope 0.04 sigma).
+
+### CONSEQUENCE FOR THE STANDING BRIEF
+
+The brief this work runs against still opens with **lambda = 18.31 +- 7.07** and **"closure has
+~81 kT to gain"**, and describes a standing critical-size plan built on those numbers.
+**That premise is retracted. No measured value for lambda or kappa currently stands.** The energy
+route is viable but needs **3M-length runs**, which is established but not yet executed.
+
+### OPEN
+
+- **Can two vesicles coexist?** tworing at 58%; half-density arm 38 seeds at 2.4M (~21 expected
+  in-band formations).
+- **Does dilution raise the rate above 0.1003/Ms?** pending, unbiased fresh-seed comparison.
+- **lambda and kappa** -- would need a fresh 3M-length span series.
+
+### LAUNCHED: nothing
+
+Both open questions are already in flight with adequate power. **The useful work was auditing the
+claim set**, which cost no compute and corrected what the brief asserts.
