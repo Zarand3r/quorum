@@ -17317,3 +17317,64 @@ Pairs with the arc300 already running. Two reasons:
   choice is not made after seeing the answer.
 
 Not read: arc120 (2/5 complete), arc300 (~20%), ring200 (~30%). Emergence in flight (6 seeds).
+
+## Tick: linearity test PASSES, lambda = 8.15 +- 1.56; and a 3-5x contradiction inside my own data
+
+**Running:** 25 processes, load 21.6 on 32 cores. arc120 **complete**; arc300 ~30%; ring200 ~60%;
+ring300 ~5%; em160 at 500-680k.
+
+### PRE-REGISTERED LINEARITY TEST -- PASSED
+
+Three sizes complete. Scored only while intact (>= 95% of planted lipids); excluded seeds are named.
+
+| N | E/lip | seeds kept |
+|---|---|---|
+| 70 | -7.3718 +- 0.0235 | 5/5 |
+| 120 | -7.4821 +- 0.0185 | 4/5 (sd1 ended 100/120) |
+| 200 | -7.5234 +- 0.0170 | 3/5 (sd1 189/200, sd4 165/200) |
+
+Weighted fit: **e_bulk = -7.6094 +- 0.0280, slope = 16.30 +- 3.12 eps.**
+Residuals +0.0049, -0.0084, +0.0046. **chi2 = 0.32 on 1 dof, p = 0.851.**
+
+**lambda = 8.15 +- 1.56 eps per end.** Against the established **18.31 +- 7.07**: 1.4 sigma, so not a
+contradiction -- but the error bar is **4.5x smaller**, so the series **supersedes** the old value.
+
+**Closure gains 2*lambda = 36.2 +- 6.9 kT, not the ~81 kT in the standing brief.**
+
+### THE REAL RESULT: a 3-5x contradiction between two of my own measurements
+
+With lambda = 8.15, closure is favoured only above a critical radius, R > pi*kappa/(2*lambda):
+
+| kappa | R_crit | equivalent N_crit |
+|---|---|---|
+| 222 kT (nominal radii) | 19.3 sigma | 121 lipids |
+| 355 kT (measured mid-surface) | 30.8 sigma | 193 lipids |
+
+**But emergent vesicles close at R = 5.76 +- 0.66 sigma** (from lumen areas at first closure:
+4.33, 4.56, 5.27, 5.34, 6.30, 8.74 -- seeds 9308, 9315, 9317, 9506, 9302, 9314).
+
+**Every emergent closure is 3-5x below the predicted threshold.** Inverting: making R = 5.8
+favourable requires **kappa < 66 kT**, against the **222-355 kT** the ring-arc route gives.
+
+Three candidate resolutions, none yet preferred: (a) the ring-arc kappa is wrong; (b) emergent
+closures are transient rather than equilibrium states; (c) the Helfrich form fails at R ~ 6 sigma.
+
+### LAUNCHED: ring40, N=40, L=40, kT=0.45, 5 seeds
+
+A planted ring at **R = 40/(2pi) = 6.37 sigma**, matching the emergent closure radius directly.
+5/5 verified `VIVARIUM_CHI_HT=-0.25`.
+
+**Falsification, stated before the run is read:**
+- **The 40-lipid ring stays intact for 300k steps** -> closure IS viable at the emergent radius; the
+  ring-arc kappa is too large or the continuum form does not apply at this curvature. Resolution (a)
+  or (c).
+- **It unrolls or dissolves** -> emergent closures are transient, the continuum picture stands, and
+  **the formation counts describe short-lived states rather than stable vesicles.** Resolution (b).
+- Read at 300,000 steps, not before.
+
+### Caveat recorded BEFORE the next result
+
+Two of the three length-series points dropped seeds to fragmentation (N=120 kept 4/5, N=200 kept
+3/5), so N=200 rests on **three seeds**. A 3-point fit with 1 dof passing chi2 is **weaker evidence
+for linearity than p = 0.851 suggests** -- with one degree of freedom the test has little power to
+detect curvature. arc300 supplies the fourth point.
