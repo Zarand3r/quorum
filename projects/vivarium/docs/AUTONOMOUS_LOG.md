@@ -16108,3 +16108,61 @@ the pre-registered branch says the dwell route is abandoned in favour of equilib
 **Retracted this tick: the 6.5% figure for sd9302's dwell**, superseded by 11.2% after censoring
 correction. The qualitative reading -- an unusual but unremarkable fluctuation, not evidence of
 different physics -- **stands unchanged**.
+
+## Tick — dF_closure = +0.06 +- 0.28 kT from 24+27 dwell spans, after removing an initial-transient bias
+
+**Running, NOT read as trends.** kT=0.45 equilibration at 470-620k of 1.2M (0 of 10 complete). N=130 arm
+at 360-400k (largest 31-64, 0 hits). Standard N=160 last five at 860-960k, with **sd9312 (5 hits) and
+sd9314 (15 hits)** both formed. 30 processes verified at `ht-0.25`.
+
+**THE PRE-REGISTERED DWELL THRESHOLD IS MET AND EXCEEDED.** I registered ">= 12 completed closed dwells"
+as the point at which the distribution is characterised. Across all sources there are now **35 completed
+closed spans and 32 open spans** -- the equilibration arm produced transitions far faster than expected.
+
+**CLOSURE FREE ENERGY FROM DWELL RATIOS**, `dF = -kT ln(tau_closed / tau_open)`, which needs no
+equilibrated populations, only the two mean dwell times:
+
+| span set | tau_closed | tau_open | K_eq | dF_closure |
+|---|---|---|---|---|
+| all spans | 139 429 (35 ev) | **250 000** (32 ev) | 0.558 +- 0.136 | **+0.58 +- 0.24 kT** |
+| **first span per run dropped** | 135 417 (24 ev) | **144 444** (27 ev) | 0.938 +- 0.263 | **+0.06 +- 0.28 kT** |
+
+**THE FIRST PASS WAS BIASED AND THE BIAS IS STRUCTURAL.** In an emergent run the **first open span is
+not an equilibrium dwell** -- it is the initial aggregation period before anything has formed.
+**sd8901's first open span is 1 060 000 steps.** Including such spans inflates `tau_open` by **73%** and
+shifts `dF` by half a kT. The equilibration runs carry the mirror problem: they start **closed**, so
+their first closed span contains the initial relaxation.
+
+**Dropping the first span of every run removes both**, at the cost of 11 closed and 5 open events.
+
+**RESULT: `dF_closure = +0.06 +- 0.28 kT`** -- consistent with zero, and **tighter than the
+`+0.22 +- 0.44 kT`** I have been quoting from the rate route. **The two agree at 0.3 sigma**, which is a
+genuine cross-check: one uses transition counts per unit time, the other uses mean dwell durations, and
+they are computed from overlapping but differently-weighted data.
+
+**This supersedes the rate-based figure as the project's closure free energy at `kT = 0.45`.**
+
+**sd9302's rarity, updated a third time.** With `tau_closed = 135 417` from 24 events, its **>= 420 000**
+step closure is a **4.5%** event.
+
+| estimate | n events | P(dwell >= 420k) |
+|---|---|---|
+| two ticks ago | 3 | 6.5% |
+| last tick | 7 | 11.2% |
+| **now** | **24** | **4.5%** |
+
+**The number has bounced by a factor of 2.5 as the sample grew.** That is what small samples do, and
+**only the current one is worth defending.** The qualitative reading -- unusual but unremarkable, not
+different physics -- has held across all three.
+
+**LAUNCHED, criterion fixed BEFORE the run: nothing new.** 30 processes are running; the kT=0.45
+equilibration is at ~45% and is the arm producing the dwell statistics that just paid off. **Adding load
+would slow the measurement that is currently working.**
+
+**One criterion I am adding now, before those runs finish:** when the equilibration arm completes, the
+`dF_closure` calculation must be **repeated with first spans dropped**, and the two versions reported
+together. **If they differ by more than 0.3 kT again, the transient is not fully removed by dropping one
+span** and the analysis needs a burn-in window instead of a span count.
+
+**Retracted this tick: nothing.** `+0.22 +- 0.44 kT` is **superseded, not withdrawn** -- it was correct
+within its error bar, and the new figure agrees with it at 0.3 sigma.
