@@ -18151,3 +18151,65 @@ runs are at 92%**. Adding work slows exactly the measurements that answer the qu
 - **Intermediate** -> between-block rate variance is real and large; it gets measured from the four
   blocks and folded into every rate error bar in this project.
 - Debounced (k>=2), in-band basis, compared per block rather than pooled.
+
+## Tick: TWO pre-registered reads resolve -- 3M EQUILIBRATES; em160C is the outlier block
+
+**Completed:** eqring40 + eqarc40 at 3,000,000 steps. **Running:** em160C 24 seeds (~420-720k),
+em160D 12 (~220-240k), em160T 12 (~900-980k), plus the new 3M span series. Load 54.
+
+### PRE-REGISTERED READ 1: EQUILIBRATION -- PLATEAUED
+
+Judged by the final-500k slope, as fixed in advance:
+
+| arm | n | slope 0.5-1.5M | slope 1.5-2.5M | **final-500k slope** |
+|---|---|---|---|---|
+| eqring40 | 5 | -- | -- | **-0.0033 +- 0.0082 (0.40 sigma)** |
+| eqarc40 | 4 | -- | -- | **+0.0034 +- 0.0142 (0.24 sigma)** |
+| **pooled** | 9 | | | **-0.0003 +- 0.0073 = 0.04 sigma** |
+
+Against the 300k era, where the same arms drifted **-0.009 to -0.066** per 100k with **all six slopes
+negative**. **VERDICT: 300k was too short; 3M equilibrates.** Per the pre-registration the energy
+route to lambda/kappa **RESUMES -- but only on runs of this length.**
+
+**Equilibrated dE/lip (ring - arc) at N=40: -0.0281 +- 0.0620 (0.45 sigma)**, consistent with zero.
+Unequilibrated 300k values were -0.1367 +- 0.1045 (n=5) and +0.0095 +- 0.0515 (n=15).
+
+**Correction:** my first pass printed "STILL DRIFTING" because eqarc40 sd1 fragmented below the
+intactness cut and its NaN propagated into the pooled comparison. Excluding that seed properly gives
+the verdict above. Recorded rather than silently fixed.
+
+### PRE-REGISTERED READ 2: BLOCK TIEBREAKER -- em160C is the outlier
+
+| block | n | median | mean | range |
+|---|---|---|---|---|
+| std160 (9300-9329) | 30 | 44.0 | 51.3 | 32-94 |
+| em160 (9600-9605) | 6 | 50.5 | 54.2 | 37-78 |
+| **em160D (9900-9911)** | 12 | **46.0** | 46.7 | 26-87 |
+| em160C (9800-9823) | 24 | 36.0 | 39.6 | 24-79 |
+
+em160D vs historical **p = 0.3914**; vs em160C p = 0.2270; vs std160 p = 0.4522.
+Bootstrap null for a block of 12: 5-95 pct **40-60**; em160D at **58th percentile**.
+
+**Three blocks cluster at 44-50.5; em160C alone sits at 36. The pre-registered branch that fires is
+"em160C is the outlier; the historical baseline stands."**
+
+### What this does NOT settle
+
+**Cluster size is settled. RATE is not.** Last tick's harder finding -- **all 8 N=160 formations came
+from std160, every other block zero** -- is a separate question needing em160C and em160D at 1.6M.
+**The N=100 suppression remains PROVISIONAL.**
+
+### LAUNCHED: span series at EQUILIBRATED length
+
+arcs at **span 0.50 and 0.90, N=40, 3,000,000 steps, 5 seeds each**, 10/10 verified
+`VIVARIUM_CHI_HT=-0.25`. With completed eqarc40 (span 0.75) and eqring40 (span 1.00) this gives
+**four spans at a length now demonstrated to equilibrate**. The 300k version was unusable; this is
+the same design paid for properly. The finished 3M runs freed exactly the ten cores needed.
+
+**Falsification, stated before the run is read:**
+- **Fit gives lambda > 0 with acceptable chi2** -> lambda and kappa are separately measurable at last,
+  and the retracted values get replaced by sound ones.
+- **lambda <= 0 again, or chi2 fails** -> the continuum description is wrong for these membranes even
+  at equilibrium, and the standing plan's framing must be replaced rather than re-measured.
+- E(s) = const + 2*lambda*[s<1] + (2*pi^2*kappa/N)*s^2; intact-only scoring; measured mid-surface
+  radii; read at 3,000,000 steps.
