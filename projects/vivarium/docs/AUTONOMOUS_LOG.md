@@ -19308,3 +19308,57 @@ do**; whether clusters stay separate long enough to close twice is the open ques
 - **fresh-seed rate vs 0.1023/Ms** -> the separate unbiased density comparison.
 
 **Tally:** 12 forming seeds, settled rate 0.1023/Ms, persistence 0.62 +- 0.12.
+
+## Tick: dilution manipulation CONFIRMED (ratio 0.43, p<0.0001); runs extended to 2.4M for in-band time
+
+**Running:** 50 sims, load 54.6. em160C 24 (**12 DONE**); tworing 5 at 210-230k/600k **not read**;
+half160 6 seeds at 1.6M (proven formers); **long160 20 seeds at 2.4M (fresh)**.
+
+### PRE-REGISTERED MANIPULATION CHECK -- PASSES
+
+Does dilution actually slow coalescence? Largest cluster at matched steps:
+
+| step | std160 median | half160 median | ratio | p |
+|---|---|---|---|---|
+| 20k | 18.5 | 8.0 | **0.43** | <0.0001 |
+| 40k | 22.5 | 9.0 | **0.40** | <0.0001 |
+| 60k | 29.0 | 13.5 | 0.47 | 0.0001 |
+| 80k | 32.0 | 13.5 | 0.42 | 0.0001 |
+
+**Dilution slows coalescence ~2.4x. The manipulation works.**
+
+### But success creates a timing problem -- FLAGGED NOW, not at the end
+
+Projecting the 0.43 ratio against std160's growth curve:
+
+| step | std160 median | half160 projected |
+|---|---|---|
+| 400k | 75 | 32 |
+| 800k | 94 | 40 |
+| **1200k** | 121 | **52 <- enters the 47-99 band** |
+| 1600k | 124 | 53 |
+
+**half160 reaches the formable band only around 1.2M, leaving ~400k of in-band residency in a 1.6M
+run.** At the measured **0.469 closures per Ms-in-band**: 26 seeds x 0.4 Ms = 10.4 Ms -> **~4.9
+expected formations, P(zero) = 0.008.** Workable, but the useful exposure arrives only in the final
+quarter of each run.
+
+### DECISION: extend rather than add
+
+**Tripling in-band residency costs 1.5x per seed via a longer run; buying the same exposure with new
+seeds costs far more.** In-band time, not wall-clock or seed count, is the quantity that matters.
+
+- **20 fresh seeds relaunched at 2,400,000 steps** (long160)
+- **6 proven-former seeds stay at 1.6M** (half160) for the two-vesicle question specifically
+
+20/20 and 6/6 verified `VIVARIUM_CHI_HT=-0.25`.
+
+### ERROR REPORTED
+
+**My kill pattern `71[0-2][0-9]` was broader than intended and also removed seeds 7101-7108**, which
+I meant to keep. They were at 40-100k so little was lost, and relaunching them at 2.4M is the better
+configuration -- but the pattern was sloppier than it should have been.
+
+**Falsification for long160 (unchanged):** max nves >= 2 -> dilution is the lever; caps at 1 with
+clusters separate -> closure too slow, answer is faster closure; clusters never reach 47 -> too
+dilute, failed manipulation reported as such.
