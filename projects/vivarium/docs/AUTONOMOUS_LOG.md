@@ -15777,3 +15777,53 @@ with 5 seeds only 39-43% through, **not pooled into a rate.**
 
 **Retracted this tick: nothing yet.** `dF_closure = +0.22 +- 0.44 kT` is **formally at risk** and the run
 that can withdraw it is launched.
+
+## Tick — sd9302 ends the run still closed: 400 000 steps, 21 checkpoints, no reopening
+
+**Read at the end where complete.** sd9302 reached 1.6M. **Final: 21/81 checkpoints closed, first 1 200
+000, last 1 600 000 -- a 400 000-step unbroken span, 25% of the run, ending closed.** 84 lipids
+throughout, `nenc = 1` at every one, lumen water 0.729-1.098. Rendered:
+`docs/images/VESICLE_sd9302_FINAL_1600000.png`.
+
+**Standard arm:** sd9302 and sd9304 at 1.6M, sd9300/9301/9303 at 1.50-1.58M; five more at 720-840k.
+**Not pooled into a rate** -- three of the first five are within 100k of the end but not there.
+
+**ONE OF MY THREE EXPLANATIONS IS ALREADY WEAKENED BY EXISTING DATA.** Last tick I offered a size
+threshold as a candidate: 84 lipids past a boundary the earlier vesicles were below.
+
+| vesicle | lipids | persistence |
+|---|---|---|
+| sd8901 | 41 | 1 checkpoint |
+| **sd8105** | **80** | **flickering, intermittent** |
+| sd9308 | 66-83 | 6 checkpoints, 100 000 steps |
+| **sd9302** | **84** | **21 checkpoints, 400 000 steps, never reopened** |
+
+**sd8105 at 80 lipids flickered; sd9302 at 84 held for 400 000 steps.** Nearly identical size, opposite
+behaviour. **Size alone does not explain the difference**, which leaves the two harder candidates:
+`dF_closure` is more negative than measured, or sd9302 sits in a deep kinetic trap.
+
+**Calibration status: at 80-130k of 400 000, planted, NOT read.** I will record that the early
+checkpoints do not resemble the sd8105 calibration, because noticing and concealing it would be worse
+than noticing and labelling it -- but **no verdict is drawn and the pre-registered criteria are
+unchanged.**
+
+**LAUNCHED, criterion fixed BEFORE the run: 5 more seeds at the standard condition (N=160, L=65,
+`ht-0.25`), taking the standard arm to 15.** The formation rate is the number every other result here is
+compared against, and the persistence finding makes it more important, not less: **if vesicles at this
+chemistry are stable rather than marginal, the rate is a rate of durable objects, and its value changes
+what the project claims.**
+
+* **Pooled standard arm >= 3 formations in 15** -> rate >= 0.20, above the historical 0.160, and the
+  corrected chemistry produces vesicles more often than the mixed-chemistry corpus suggested.
+* **1-2 formations in 15** -> rate 0.067-0.133, consistent with the corpus; the chemistry correction
+  changed persistence but not frequency, which would itself be worth stating.
+* **0 formations in 15** -> impossible now; sd9302 and sd9308 have already formed. Recorded so the
+  branch set is honest rather than decorative.
+
+**A measurement I am adding to the standing analysis:** every future formation is to be scored by
+**persistence** (consecutive closed checkpoints), not merely by occurrence. **The distinction between
+sd8901's single checkpoint and sd9302's 21 is larger than the distinction between forming and not
+forming**, and a rate that counts them equally hides it.
+
+**Retracted this tick: nothing.** The size-threshold explanation is **weakened, not eliminated** -- 41
+versus 84 may still matter even though 80 versus 84 clearly does not.
