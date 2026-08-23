@@ -16381,3 +16381,55 @@ time:** at the pooled rate 0.18 and n=25 completed runs, the Wilson CI half-widt
 **Retracted this tick: my "halves within 0.08" equilibration criterion**, as unresolvable by the
 measurement it governed. **No measurement is retracted** -- the population estimate stands as a
 consistent but imprecise confirmation.
+
+## Tick — the N-scan reads out: rate insensitive over 130-160, and N=100 is now 0/15
+
+**Read at the end.** N=130 arm: **8 of 10 at >= 1.4M, 2 formations** (sd9501, sd9506 with 11 hits).
+Standard N=160: **5/25 at >= 1.4M**. N=100 arm: **15 complete, 0 formations**. 25 processes verified at
+`ht-0.25`.
+
+**THE N-SCAN, all at `ht-0.25`, L=65, runs >= 1.4M:**
+
+| N | rate | 95% Wilson CI |
+|---|---|---|
+| **100** | **0/15 = 0.000** | 0 - 0.204 |
+| 130 | 2/8 = 0.250 | 0.071 - 0.591 |
+| 160 | 5/25 = 0.200 | 0.089 - 0.391 |
+
+| comparison | Fisher exact p |
+|---|---|
+| N=130 vs N=160 | **1.000** |
+| N=100 vs N=130 | 0.111 |
+| N=100 vs N=160 | 0.137 |
+
+**THE N=130 ARM ANSWERS ITS PRE-REGISTERED QUESTION: the rate is insensitive to lipid count between 130
+and 160** (p = 1.000). That arm is done as a test.
+
+**N=100 IS NOW THE ONLY HINT OF A SIZE EFFECT IN THE DATA, and it deserves care because I previously
+used it in the opposite direction.** It stands at **0/15**, not the 0/5 I dismissed. Against the pooled
+rate 0.159, **P(0 in 15) = 0.075**.
+
+**When I retracted the size window I wrote that N=100's 0/5 "was never evidence of a size effect", citing
+P(0 in 5) = 0.44.** That was correct at n=5. **At n=15 it is no longer correct**, and the same arm now
+points the other way. **I am recording that reversal explicitly rather than quietly re-reading the same
+arm as evidence.**
+
+**GRAND POOLED RATE:** across all N plus the historical corpus, **14/88 = 0.159 (CI 0.097-0.250)** --
+CI factor **2.6**, the tightest the project has produced.
+
+**LAUNCHED, criteria fixed BEFORE the run, with the resolution stated as the procedural fix from last
+tick requires: 15 more seeds at `N=100, L=65, ht-0.25`, taking that arm to 30.**
+
+* **0 formations in 30** -> `P(0 | rate 0.159) = 0.0055`. **Decisive**: lipid count matters, N=100
+  suppresses formation, and the rate is not size-independent below 130.
+* **>= 2 formations in 30** -> rate >= 0.067, consistent with the pooled 0.159 at this sample size; the
+  apparent suppression was noise and **N does nothing over 100-160**.
+* **exactly 1 in 30** -> rate 0.033, `P(<=1 | 0.159) = 0.046`. **Borderline and I will not call it**;
+  report as unresolved rather than claiming significance at the edge.
+
+**Expected resolution, stated in advance:** at n=30 the Wilson upper bound for 0 successes is **0.113**,
+which excludes the pooled 0.159 but not values below 0.11. **So this arm can establish that N=100 is
+lower than the pooled rate, but cannot measure how much lower.**
+
+**Retracted this tick: nothing.** My earlier dismissal of N=100's null is **superseded by a larger
+sample**, not withdrawn -- it was sound at n=5.
