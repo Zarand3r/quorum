@@ -15827,3 +15827,61 @@ forming**, and a rate that counts them equally hides it.
 
 **Retracted this tick: nothing.** The size-threshold explanation is **weakened, not eliminated** -- 41
 versus 84 may still matter even though 80 versus 84 clearly does not.
+
+## Tick — the sd9302 tension RESOLVES: the vesicle is not stable, it was a long dwell
+
+**Read at the end.** Stable-vesicle calibration complete or near-complete on all 8 runs (330-400k of
+400k). Standard N=160 arm: **first 5 seeds final at 1/5** (sd9302); 5 at 960k-1.08M with sd9308 at 6
+hits; 5 fresh at 220-280k. 26 processes verified at `ht-0.25`.
+
+**THE EQUILIBRATION CHECK IS THE WHOLE RESULT.**
+
+| kT | P_closed | first half -> second half | drift | status |
+|---|---|---|---|---|
+| 0.45 | 0.543 +- 0.018 | **0.725 -> 0.371** | **-0.354** | still relaxing |
+| **0.55** | **0.196 +- 0.054** | 0.203 -> 0.194 | -0.009 | **EQUILIBRATED** |
+| 0.65 | 0.069 +- 0.045 | 0.113 -> 0.028 | -0.085 | still relaxing |
+| 0.75 | 0.071 +- 0.014 | 0.147 -> 0.000 | -0.147 | still relaxing |
+
+**sd9302's vesicle OPENS when restarted.** At its own production temperature it falls from 0.725 to
+0.371 and is still falling. **It is not exceptionally stable.**
+
+**RESOLUTION: the 400 000-step persistence was a long dwell, not different thermodynamics.** A marginal
+two-state system with slow transitions produces exactly such runs. **A single trajectory cannot
+distinguish a long dwell from stability; a restart can, and did.**
+
+**MY ERROR WAS THE INFERENCE, NOT THE NUMBER.** Two ticks ago I wrote that 400 000 steps of closure "is
+not what marginal predicts" and put `dF_closure = +0.22 +- 0.44 kT` formally at risk. **That was wrong
+reasoning about a correct number.** The failure mode is one this project has hit before under a
+different name: **treating a single trajectory's behaviour as an equilibrium statement.**
+
+**THE ONE EQUILIBRATED MEASUREMENT:**
+
+**`dF_closure(kT=0.55) = +0.776 +- 0.188 eps = +1.41 +- 0.34 kT`** -- closure is **unfavourable**.
+
+And at production temperature the second-half value of 0.371, **still falling**, already implies
+**`dF_closure(0.45) >= +0.53 kT`**.
+
+**`+0.22 +- 0.44 kT` SURVIVES and is NOT withdrawn.** The kT=0.45 lower bound sits inside it, and the
+kT=0.55 value is a different state point. **The pre-registered "withdraw" branch does not fire.**
+
+**LAUNCHED, criterion fixed BEFORE the run: extend the `kT = 0.45` calibration to equilibrium.** It is
+the production temperature and the only one that matters for interpreting emergent runs, and it is the
+one temperature that has not equilibrated. **6 seeds, 1.2M steps (3x the previous 400k), restarted from
+the same frozen sd9302 vesicle**, with the first-half/second-half check applied again.
+
+* **Halves agree within 0.08 and `P_closed` settles** -> that is the equilibrium closure free energy at
+  production temperature, replacing both the rate-based `+0.22 +- 0.44 kT` and the current lower bound
+  with a direct measurement.
+* **Still drifting at 1.2M** -> closure relaxation at `kT = 0.45` is slower than 1.2M steps, and the
+  production-temperature free energy is **not measurable by this route**; the `kT = 0.55` value stands
+  as the only equilibrated figure and I stop extending.
+* **`P_closed` falls below 0.05** -> the vesicle simply dissolves on restart at production temperature,
+  which would contradict the emergent runs where they persist, and would mean the restart protocol
+  itself perturbs the structure. **That would invalidate every restart-based number in this project**,
+  including the 1M forward/reverse arms.
+
+**Emergence in flight:** standard arm at 15 seeds, 5 complete (1/5), 5 at ~60%, 5 at ~15%.
+
+**Retracted this tick: my claim that sd9302's persistence contradicted the marginal picture.** It did
+not. The number stands; my reading of a single trajectory did not.
