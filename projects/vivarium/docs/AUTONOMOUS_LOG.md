@@ -17498,3 +17498,72 @@ achievable precision. **Not quoting its central value as a measurement.**
 - Chosen at N=40 deliberately: smallest system in the series, so precision is cheapest to buy there.
 
 Emergence in flight: 6 dispersed-start seeds at 880k-1.1M.
+
+## Tick: RETRACT lambda AND kappa -- the two-parameter continuum model does not fit self-consistently
+
+**Completed:** ring40 and arc40 at **n=15**. **Running:** ring200/ring300/arc300, em160 at ~1.1M,
+plus the new span series. Load ~30.
+
+### The n=15 result, and three audits that all failed
+
+| | n=5 | **n=15** |
+|---|---|---|
+| ring40 E/lip | -7.3773 +- 0.0360 | **-7.3027 +- 0.0229** (15/15 intact) |
+| arc40 E/lip | -7.2406 +- 0.0981 | **-7.3122 +- 0.0461** (13/15 intact) |
+| dE_total | -5.47 +- 4.18 eps | **+0.38 +- 2.06 eps** |
+| kappa | 196 +- 95 kT | 265 +- 66 kT |
+
+**dE FLIPPED SIGN and is now consistent with zero.**
+
+**AUDIT 1 -- kappa is not an independent measurement.** kappa = (dE + 2*lambda)/c, and
+`c*kappa = 0.38 + 16.30`. The **measured data supplies 2%** of the central value; **lambda supplies
+98%**. I was quoting lambda propagated through geometry as a kappa measurement.
+
+**AUDIT 2 -- the lambda fit omitted a term larger than its own signal.** Every arc in the length
+series is a 3/4 ring, so R is proportional to N and bending per lipid is `11.1*kappa/N^2`:
+
+| N | omitted bending term (eps/lipid) |
+|---|---|
+| 70 | 0.270 |
+| 120 | 0.092 |
+| 200 | 0.033 |
+
+**Variation from bending alone: 0.237 eps/lipid, against 0.152 eps/lipid of TOTAL variation the fit
+attributed to the edge term.** The omitted piece is bigger than the signal.
+
+**AUDIT 3 -- correcting it gives unphysical lambda.** Subtracting the bending term and refitting:
+**lambda = -4.59 +- 1.56 eps per end.** Negative line tension means edges are favourable and ribbons
+shred. They do not: **15/15 rings and 13/15 arcs intact after 300,000 steps.**
+
+### RETRACTED
+
+- **lambda = 8.15 +- 1.56 eps/end** (contaminated by the omitted 1/N^2 bending term)
+- **kappa = 222-355 kT** and **kappa = 196 +- 95 kT** and **kappa = 265 +- 66 kT** (all 98% derived
+  from that lambda)
+- The chi2 = 0.32 linearity "pass" two ticks ago: a 1/N^2 term hides inside a 1/N fit over three
+  points. I flagged the weak power of a 1-dof test at the time without realising it was already biting.
+
+**The 3-5x contradiction with emergent closures is therefore NOT a property of emergent vesicles.
+It is that the two-parameter (lambda, kappa) continuum model cannot fit this data self-consistently.**
+
+### LAUNCHED: span series at fixed N=70 -- arc0.50 and arc0.90, 5 seeds each
+
+10/10 verified `VIVARIUM_CHI_HT=-0.25`; plants sound at step 0 (span 0.50 R=16.52, span 0.90 R=12.61).
+
+At fixed N an arc of span s has R = N/(2*pi*s), so
+
+    E_total(s) = const + 2*lambda*[s<1] + (2*pi^2*kappa/N) * s^2
+
+**lambda is a STEP at s=1** (the ring has no ends); **kappa is the s^2 COEFFICIENT.** These are
+functionally orthogonal, unlike 1/N and 1/N^2 which the length series confounded. With span 0.75 and
+1.00 already in hand this gives **4 points, 3 parameters, 1 dof**.
+
+**Falsification, stated before the run is read:**
+- **Fit returns lambda > 0 with acceptable chi2** -> lambda and kappa are separately measurable after
+  all, and the retracted numbers get replaced by sound ones.
+- **Fit returns lambda <= 0 again, or fails chi2** -> **the continuum description is wrong for these
+  membranes**, and the standing plan's whole framing (edge saved = 2*lambda vs bending paid =
+  pi*kappa/R, hence a critical size) must be REPLACED, not re-measured.
+- Read at 300,000 steps, intact-only scoring, measured mid-surface radii.
+
+Emergence in flight: 6 dispersed-start seeds at ~1.1M.
