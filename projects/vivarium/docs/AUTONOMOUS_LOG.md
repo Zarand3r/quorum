@@ -16219,3 +16219,52 @@ historical corpus, unlike the N=130 arm.
 
 **Retracted this tick: my burn-in criterion as written**, replaced by the drop-1-vs-drop-2 form. **No
 measurement is retracted** -- `+0.22 +- 0.44 kT` is superseded by a tighter figure it agrees with.
+
+## Tick — the formation rate SETTLES at 11/61 = 0.180; RESULTS.md brought up to the verified chemistry
+
+**Read at the end.** Standard N=160 arm: **11 seeds at >= 1.4M** (ten at 1.6M), sd9312 crossed the
+threshold this tick. kT=0.45 equilibration **1 of 10** complete. N=130 arm at 780-880k, sd9501 holding
+its single hit. 29 processes verified at `ht-0.25`.
+
+**THE PRE-REGISTERED RATE BRANCH FIRES.**
+
+| set | rate | 95% Wilson CI | CI factor |
+|---|---|---|---|
+| this session, `ht-0.25`, >= 1.4M | **4/21 = 0.190** | 0.077-0.400 | 5.2x |
+| historical corpus (same chemistry) | 7/40 = 0.175 | 0.087-0.320 | 3.7x |
+| **POOLED** | **11/61 = 0.180** | **0.104-0.295** | **2.8x** |
+
+**0.180 is inside the 0.10-0.25 band** I registered as meaning the rate is settled, and the CI has
+tightened from a factor of **7 to 2.8**. **Session and historical rates agree across the
+chemistry-regression boundary**, which is a consistency check between disjoint run sets rather than a
+re-analysis.
+
+**THREE INDEPENDENT QUANTITIES NOW AGREE.** The four formations have closed spans of
+**20 000 / 120 000 / 160 000 / 420 000** steps, **mean 180 000**, against the separately measured
+closed-state dwell time of **141 000** and a closure free energy of **+0.04 +- 0.24 kT**. **A marginal
+two-state system with a ~141k dwell predicts exactly this rate and this persistence distribution.**
+
+**A cutoff applied against my own interest:** **sd9314 has 31 hits** -- the most persistent formation
+yet -- but sits at **1.30M**, below the 1.4M threshold, so it is **excluded**. It will become a fifth
+formation when it crosses. **Letting a favourable seed in early is precisely the error the threshold
+exists to prevent**, and it would have moved the session rate from 0.190 to 0.227.
+
+**`RESULTS.md` UPDATED.** It still carried pre-regression figures. It now has a section headed by the
+statement that every number in it was measured with `VIVARIUM_CHI_HT=-0.25` asserted on every file and
+every running process, covering: the rate and its persistence distribution, `dF_closure`, `lambda`,
+`kappa`'s three failed routes and the ~103 kT bound, and `dF_bind` with its chemistry dependence.
+
+**It also carries an explicit "What is NOT established" list** -- `kappa` by any route; whether wrapping
+suppresses formation (**link retracted as reverse causation, Fisher p = 1.000 with a pre-formation
+predictor**, though the wrapping measurement itself stands); and whether lipid count matters.
+
+**LAUNCHED, criterion fixed BEFORE the run: nothing new.** 29 processes are running. **The N=130 arm is
+the only open scientific question with an arm assigned to it** and is at ~50%; the equilibration arm is
+1/10 complete and still producing the dwell spans that gave `dF_closure` its precision. **Adding load
+would slow both.**
+
+**The standing N=130 criteria are unchanged**: a rate differing from 0.180 beyond its CI means lipid
+count matters; agreement means the rate is insensitive to N over 100-160 and the N=100 0/5 was a
+small-sample fluctuation (**P(0 in 5) at 0.18 is 0.37**).
+
+**Retracted this tick: nothing.**

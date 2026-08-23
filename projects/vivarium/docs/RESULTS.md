@@ -471,3 +471,79 @@ Score any saved state with `vesicle_call()` in `_lumen_field.py`. The frozen can
 `docs/states/vesicle_candidate_frozen.npz`.
 
 Full chronology, including every retraction, is in [AUTONOMOUS_LOG.md](AUTONOMOUS_LOG.md).
+
+---
+
+## Settled numbers at the verified amphiphile chemistry (`chi_HT = -0.25`)
+
+**Everything in this section was measured with `VIVARIUM_CHI_HT=-0.25` asserted on every file and every
+running process.** A ten-tick regression ran at the `+0.20` default, at which `chi_HT == chi_HH` and an
+ordered bilayer is not a local minimum (`field.py:91`); those results are marked degraded in
+`AUTONOMOUS_LOG.md` and are not repeated here.
+
+### Emergent vesicle formation
+
+| quantity | value |
+|---|---|
+| formation rate, this session, runs >= 1.4M | **4/21 = 0.190** (CI 0.077-0.400) |
+| historical corpus (same chemistry) | 7/40 = 0.175 (CI 0.087-0.320) |
+| **pooled** | **11/61 = 0.180** (CI 0.104-0.295) |
+
+Session and historical rates agree across a chemistry-regression boundary, which is a genuine
+consistency check rather than a re-analysis of the same runs.
+
+**Formations are transient, not stable.** Persistence, in consecutive closed checkpoints:
+
+| seed | closed span |
+|---|---|
+| sd8901 | 20 000 steps |
+| sd9312 | 120 000 |
+| sd9308 | 160 000 |
+| sd9302 | **420 000** (ended the run still closed) |
+
+Mean 180 000 steps, consistent with the independently measured closed-state dwell time of 141 000.
+
+### Closure thermodynamics
+
+| route | value |
+|---|---|
+| transition rates | +0.22 +- 0.44 kT |
+| **dwell ratios, one leading span dropped** | **+0.04 +- 0.24 kT** |
+
+**`dF_closure = +0.04 +- 0.24 kT` at `kT = 0.45`**, from 36 closed and 36 open spans -- consistent with
+zero. Two estimators with different weightings agree at 0.3 sigma.
+
+**Closure is neither favoured nor forbidden.** A vesicle here is a marginal object with a mean closed
+lifetime of ~141 000 steps, which is why the rate is ~18% and why sd9302's 420 000-step closure is an
+ordinary 4.5% fluctuation rather than evidence of stability.
+
+### Line tension and bending rigidity
+
+| quantity | value |
+|---|---|
+| `lambda`, 14 paired seeds, time-averaged | **-1.46 +- 1.24 eps** (1.18 sigma from zero) |
+| `kappa` | **not measurable** by any of three routes |
+
+The three failed `kappa` routes -- undulation spectrum, critical size, and direct energy versus
+curvature -- share a physical cause rather than a technical one: a membrane with `lambda ~ 0` and
+`dF_closure ~ 0` is soft enough that its bending term sits below the energy fluctuations of a 70-lipid
+aggregate. The best bound from the direct route is `|kappa| < ~103 kT`, which is weaker than the
+brief's ~150 kT threshold and therefore does not constrain it.
+
+### Binding
+
+**`dF_bind = -5.70 +- 0.37 kT`** per lipid at production temperature, measured directly rather than
+extrapolated. Binding is **chemistry-dependent**: the degraded chemistry gave -8.26 +- 0.42 kT, a
+4.57 sigma difference.
+
+**The asymmetry that defines this model:** binding a lipid is worth **-5.70 kT**; closing a ribbon is
+worth **+0.04 kT**. Aggregation is driven; closure is not.
+
+### What is NOT established
+
+* `kappa`, by any route attempted.
+* Whether wrapping suppresses formation. The wrapping *measurement* stands (19/68 states wrap, threshold
+  127 lipids), but its link to formation was **retracted** as reverse causation -- a formed vesicle stops
+  growing, so max-cluster-size is an outcome, not a predictor. With a pre-formation predictor the
+  association is **Fisher p = 1.000**.
+* Whether formation rate depends on lipid count. The N=130 arm is running.
