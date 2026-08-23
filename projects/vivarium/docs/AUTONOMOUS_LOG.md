@@ -17378,3 +17378,62 @@ Two of the three length-series points dropped seeds to fragmentation (N=120 kept
 3/5), so N=200 rests on **three seeds**. A 3-point fit with 1 dof passing chi2 is **weaker evidence
 for linearity than p = 0.851 suggests** -- with one degree of freedom the test has little power to
 detect curvature. arc300 supplies the fourth point.
+
+## Tick: emergent vesicles are NOT transient (6/9 survive to run end) -- resolution (b) eliminated
+
+**Running:** 30 processes, load 27.3 on 32 cores. ring40 ~70% (all 5 intact at 40/40); ring200 ~70%;
+ring300 ~10%; arc300 ~35%; em160 at 640-820k. **No planted arm read as a result this tick.**
+
+### Resolution (b) tested and ELIMINATED, from data already on disk
+
+The contradiction from last tick: emergent vesicles close at R = 5.76 +- 0.66 sigma, while the
+continuum requires R > 19.3-30.8 sigma. Candidate (b) was that emergent closures are transient states
+the theory need not explain. Persistence after first closure:
+
+| seed | closed at | steps after | ckpts with lumen | frac | lumen at END |
+|---|---|---|---|---|---|
+| 9302 | 1200000 | 400000 | 21/21 | 1.00 | 505 |
+| 9308 | 380000 | 1220000 | 44/62 | 0.71 | 327 |
+| 9314 | 580000 | 1020000 | 45/52 | 0.87 | 1017 |
+| 9315 | 460000 | 1140000 | 57/58 | 0.98 | 227 |
+| 9317 | 380000 | 1220000 | 54/62 | 0.87 | 263 |
+| 9506 | 1300000 | 300000 | 16/16 | 1.00 | 369 |
+| 9312 | 880000 | 720000 | 0/37 | 0.00 | 0 |
+| 9316 | 1480000 | 120000 | 0/7 | 0.00 | 0 |
+| 9326 | 1240000 | 360000 | 0/19 | 0.00 | 0 |
+
+**Mean post-closure lumen fraction 0.60 +- 0.15; 6 of 9 still enclose a lumen at the END of the
+1.6M run**, several persisting >1M steps after closing.
+
+**Emergent vesicles are durable, not flickers. Resolution (b) is eliminated.** The contradiction must
+lie in **(a)** the ring-arc kappa or **(c)** the Helfrich form at R ~ 6 sigma.
+
+Recorded as a qualifier: the split is **bimodal, not uniform** -- three seeds closed and never
+re-enclosed. sd9316 had only 120k steps left so it barely had a chance, but **sd9312 had 720k steps
+and genuinely dissolved.** So "durable" describes 6 of 9, not all.
+
+### LAUNCHED: arc40, N=40, L=40, arc0.75, 5 seeds
+
+Pairs with the running ring40 to give kappa at **R ~ 6.4 sigma -- the radius where emergent vesicles
+actually live.** The N=40 pair has the strongest lever in the series:
+
+| N | R_ring | R_arc | bending coefficient c |
+|---|---|---|---|
+| **40** | 6.37 | 8.49 | **0.2159** |
+| 70 | 11.14 | 14.85 | 0.1234 |
+| 200 | 31.83 | 42.44 | 0.0432 |
+| 300 | 47.75 | 63.66 | 0.0288 |
+
+5/5 verified `VIVARIUM_CHI_HT=-0.25`.
+
+**Falsification, stated before the run is read.** kappa is a MATERIAL CONSTANT under Helfrich, so:
+- **kappa(N=40) agrees with kappa(N=70,200) at 222-355 kT** -> Helfrich holds, the contradiction
+  stands, and the ring-arc route itself needs auditing (resolution (a)).
+- **kappa(N=40) comes out near the ~66 kT the emergent closures imply** -> **kappa is
+  curvature-dependent and Helfrich FAILS at these radii** (resolution (c)). That would explain the
+  whole discrepancy and would mean the standing brief's "closure favoured below ~150 kT" criterion
+  **cannot be applied at small R at all.**
+- Analysis uses MEASURED mid-surface radii, per the rule fixed two ticks ago.
+- Read at 300,000 steps, not before.
+
+Emergence in flight: 6 dispersed-start seeds at 640-820k.
