@@ -16055,3 +16055,56 @@ points.
 **Retracted this tick: the 84-130 formation window and every inference from it**, including the claim
 that it coincided with the wrapping threshold. Cause: conditioning on a variable affected by the
 outcome.
+
+## Tick — dwell time confirmed by two independent routes; my naive mean was 3.8x too low
+
+**Running, NOT read.** kT=0.45 equilibration at 380-540k of 1.2M (0 of 10 complete). N=130 arm at
+280-300k (largest 23-50). Standard N=160: 10 seeds >= 1.4M, 5 at 780-880k with **sd9312 (1 hit) and
+sd9314 (11 hits) both now formed**. 37 processes verified at `ht-0.25`.
+
+**CLOSED-STATE DWELL TIME, MEASURED TWO INDEPENDENT WAYS.**
+
+| source | completed events | time at risk | MLE mean dwell |
+|---|---|---|---|
+| emergent runs (20k checkpoints) | 4 | 840 000 | **210 000 +- 105 000** |
+| restart experiments (10k checkpoints) | 3 | 440 000 | **146 667 +- 84 678** |
+| **combined** | **7** | **1 280 000** | **182 857 +- 69 114** |
+
+**The two routes differ by 0.47 sigma.** They share no protocol -- one restarts a frozen vesicle with
+fresh thermal seeds, the other observes vesicles that formed spontaneously -- and they agree.
+
+**A CORRECTION TO MY OWN METHOD, and it is larger than the agreement.** The naive mean of *completed*
+emergent dwells is **55 000 steps**. The proper estimator, total closed time divided by completed
+events, gives **210 000 -- 3.8x larger.**
+
+**The bias is structural, not accidental: the longest dwells are exactly the ones still running at the
+last checkpoint.** Three of the seven dwells are right-censored, including sd9302's 420 000. **Dropping
+censored observations from a dwell-time mean removes the long tail by construction.**
+
+| seed | completed dwells | censored (still closed at last checkpoint) |
+|---|---|---|
+| sd8901 | 20 000 | -- |
+| sd9302 | -- | **420 000** |
+| sd9308 | 120 000, 40 000 | -- |
+| sd9312 | -- | 20 000 |
+| sd9314 | 40 000 | **180 000** |
+
+**THIS UPDATES A NUMBER I REPORTED.** Two ticks ago I said sd9302's >= 400 000-step closure was a
+**6.5%** event, using the restart-only mean of 146 667. With the combined, censoring-corrected mean of
+182 857 it is **11.2%**. **Still unremarkable and the conclusion is unchanged** -- but the figure was
+optimistic because I had not applied censoring to the very quantity I was testing, in a tick where I did
+note that two *open* dwells were censored and checked they did not affect the closed mean. **I checked
+the censoring in one direction and not the other.**
+
+**LAUNCHED, criterion fixed BEFORE the run: nothing new.** 37 processes are running across three arms;
+the kT=0.45 equilibration is the long pole at 32-45% and is the measurement that would replace
+`dF_closure` with a direct number. **Adding load would delay it.**
+
+**The standing criteria are unchanged.** One is now closer to firing than it was: the equilibration arm
+needs **>= 12 completed closed dwells** for the dwell distribution to be characterised, and across all
+sources there are now **7**. **The arm at 1.2M x 10 seeds should supply the rest**, and if it does not,
+the pre-registered branch says the dwell route is abandoned in favour of equilibrium `P_closed` alone.
+
+**Retracted this tick: the 6.5% figure for sd9302's dwell**, superseded by 11.2% after censoring
+correction. The qualitative reading -- an unusual but unremarkable fluctuation, not evidence of
+different physics -- **stands unchanged**.
