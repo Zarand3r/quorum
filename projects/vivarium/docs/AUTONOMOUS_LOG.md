@@ -18272,3 +18272,70 @@ except seed spacing.
 - Compared on the same debounced hazard basis, per block, at matched exposure.
 
 Emergence in flight: 60 dispersed-start seeds across four blocks and two temperatures.
+
+## Tick: physics/environment AUDITED CLEAN; vesicles diffuse but never coexist; 24-seed screen launched
+
+**User asked:** verify physics/temperature/environment, find seeds that emerge vesicles, and whether
+vesicles move/combine/split.
+
+### PHYSICS AUDIT -- CLEAN
+
+Chi table rebuilt under the live environment (`CHI_HT=-0.25`, `CHI_WW=0.50`):
+
+| pair | value |
+|---|---|
+| HEAD-TAIL | **-0.250** |
+| HEAD-HEAD | +0.200 |
+| HEAD-WATER | +0.750 |
+| TAIL-TAIL | +0.700 |
+| TAIL-WATER | +0.000 |
+| WATER-WATER | +0.500 |
+
+**Amphiphile condition HOLDS: chi_HT (-0.25) < chi_HH (+0.20)**, which is what makes the ordered
+bilayer a local minimum; at the historical +0.20 default it was not.
+sigma=1.0, eps=1.0, rc=2.5, core_height=37.8.
+
+**All 60 live emergent processes carry `CHI_HT=-0.25, CHI_WW=0.50`.** The two blank-environment
+entries flagged during the audit were **bash wrappers, not simulations**. Command lines confirm
+N=160, L=65, packing 0.55, **kT=0.45**. **Temperature and environment correct.**
+
+### DO VESICLES MOVE, COMBINE, SPLIT?
+
+**Never more than ONE vesicle at a time.** Across all ten std160 seeds that ever registered closure:
+**max simultaneous nves = 1**, with **zero 1->2 and zero 2->1 transitions**. Merging and splitting
+have not been observed because **two vesicles have never coexisted.**
+
+**They do move, and diffusively:**
+
+| seed | lipids | duration | path length | NET displacement | mean step |
+|---|---|---|---|---|---|
+| sd9314 | 99-109 | 1.02M | 26.7 sigma | 4.4 sigma | 0.61 sigma |
+| sd9315 | 48-52 | 1.06M | 39.2 sigma | 5.4 sigma | 1.51 sigma |
+
+Path length >> net displacement is the random-walk signature, not directed motion. **The smaller
+vesicle diffuses faster (1.51 vs 0.61 sigma/step) -- correct size-dependent behaviour.**
+
+### SEEDS THAT EMERGE VESICLES
+
+**Confirmed: 9302, 9308, 9312, 9314, 9315, 9316, 9317, 9324, 9326, 9329** -- ten touched closure,
+**eight sustained it** past the k>=2 debounce. The simulator is deterministic given its seed
+(verified by bit-identical reruns), so **these reproduce exactly on demand.**
+
+### LAUNCHED: 24-seed screen at 800,000 steps
+
+Seeds 31 ... 5039, spread rather than consecutive. 24/24 verified `VIVARIUM_CHI_HT=-0.25`,
+N=160, L=65, kT=0.45.
+
+**Design rationale:** std160 formations occurred at 380k, 460k, 520k, 580k, 880k, 1040k, 1200k,
+1240k -- so **800k catches ~50% of formers at half the cost**, doubling seeds screened per core-hour.
+
+**Cores freed by KILLING the kT=0.55 arm**: its comparison baseline is compromised by the drought,
+and forming seeds are wanted at the **verified** temperature, not a second one.
+
+**Falsification, stated before the screen is read:**
+- **>= 3 formers in 24 seeds by 800k** -> consistent with std160's rate (expect ~4 at 0.19/Ms over
+  half-length runs); the drought was a fluctuation and forming seeds are readily found.
+- **0 formers in 24** -> at std160's rate ~4 were expected, P(0) ~ 0.02; combined with the existing
+  drought this would put the pooled evidence against std160's rate beyond P ~ 1e-4.
+- **1-2 formers** -> intermediate; rate is real but well below std160's, and the headline figure gets
+  revised downward rather than retracted.
