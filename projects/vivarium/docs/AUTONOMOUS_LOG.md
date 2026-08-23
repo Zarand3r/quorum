@@ -19257,3 +19257,54 @@ unbiased half-density rate to compare against 0.11/Ms. 14/14 verified `VIVARIUM_
 - **Fresh-seed rate vs 0.11/Ms** is the separate, unbiased comparison.
 
 **Tally:** 12 forming seeds, pooled 0.1129/Ms, persistence 0.62 +- 0.12, 8/12 still enclosing.
+
+## Tick: SCREEN COMPLETE (2/24, 0.1087/Ms); pooled rate SETTLES at 0.1023/Ms over 101 seeds
+
+**Running:** 52 sims, load 55. em160C 24 (**10 DONE**); scan **24/24 DONE**; tworing 5 at
+200-210k/600k **not read**; half160 **26 seeds** (14 -> 26 this tick).
+
+### PRE-REGISTERED SCREEN -- FINAL
+
+| | |
+|---|---|
+| formers | **2 / 24 seeds** |
+| exposure | 18.40 seed-Msteps |
+| rate | **0.1087/Ms** |
+| P(form) per 800k seed | 0.083 |
+
+### POOLED TALLY -- six blocks, 101 seeds, 117 seed-Msteps
+
+| block | seeds | formers | exposure Ms |
+|---|---|---|---|
+| std160 | 30 | 8 | 41.96 |
+| em160 | 6 | 0 | 9.60 |
+| em160C | 24 | 2 | 35.36 |
+| em160D | 12 | 0 | 4.00 |
+| scan | 24 | 2 | 18.40 |
+| ht25_em | 5 | 0 | 8.00 |
+| **TOTAL** | **101** | **12** | **117.32** |
+
+**SETTLED RATE: 0.1023/Ms = 15% per 1.6M-step seed.**
+
+The screen's **independent** 0.1087/Ms sits within **6%** of the pooled value, on fresh seeds with a
+read fixed before the data existed. **This replaces std160's 0.1907/Ms, which was an outlier.**
+
+### LAUNCHED: half160 doubled 14 -> 26 seeds
+
+**Cores freed first** (scan's 24 completed), then launched -- the correct order, after getting it
+wrong twice with sparse320. 26/26 verified `VIVARIUM_CHI_HT=-0.25`.
+
+Most direct investment in the multiple-vesicle goal: more seeds means more chances at two
+simultaneous closures, plus a tighter half-density rate against the settled 0.1023/Ms.
+
+**Manipulation check, visible at 2.5%:** the half-density box shows ~30 well-separated small clusters
+where std160 at equivalent age has fewer, larger ones. **The dilution is doing what it was meant to
+do**; whether clusters stay separate long enough to close twice is the open question.
+
+**Falsification for half160 (unchanged):**
+- **max nves >= 2 in any seed** -> dilution is the lever for multiple vesicles.
+- **caps at 1 with clusters staying separate** -> closure too slow; the answer is faster closure.
+- **clusters never reach 47 lipids** -> too dilute; **failed manipulation**, reported as such.
+- **fresh-seed rate vs 0.1023/Ms** -> the separate unbiased density comparison.
+
+**Tally:** 12 forming seeds, settled rate 0.1023/Ms, persistence 0.62 +- 0.12.
