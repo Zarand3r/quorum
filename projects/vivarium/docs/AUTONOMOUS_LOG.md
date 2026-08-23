@@ -18959,3 +18959,56 @@ Deliberate. The machine is still at load 78 with 66 sims. **The correct action w
 - **tworing** (read at 600k): both rings survive -> two vesicles viable, emergence is kinetics;
   merge -> real drive to coalesce, lever is a larger box; dissolve -> 52 lipids below stable size.
 - **multi320**: max nves >= 2 -> multiple vesicles achievable by supplying material.
+
+## Tick: THIRD formation outside std160 (sd9805, unambiguous); the drought was largely EXPOSURE TIME
+
+**Running:** 70 sims, load 74.6. em160C 24 at 1040k-1380k (**2 formers**); scan 24 at 500-580k
+(1 former); multi320 6 at 180-200k; tworing 5 at 50-60k/600k **not read**.
+
+### NEW FORMATION: em160C sd9805 -- unambiguous
+
+| step | largest | lumen_c | nenc | nves | lumH2O |
+|---|---|---|---|---|---|
+| 1220000 | 160 | **879** | 1 | 1 | **1.398** |
+| 1340000 | 137 | 687 | 1 | 1 | 1.312 |
+| 1360000 | 131 | 706 | 1 | 1 | 1.237 |
+| 1380000 | 131 | 723 | 1 | 1 | 1.341 |
+
+Overlay shows a **closed ring with heads lining an 879-cell lumen (R ~ 8.4 sigma)**, water density
+1.398, with unrelated ribbons elsewhere. **No small-lumen judgement call, no marginal gate ratio** --
+the clearest emergent vesicle since sd9314.
+
+### CONFIRMED FORMING SEEDS: eleven
+
+| block | seeds |
+|---|---|
+| std160 | 9302, 9308, 9312, 9314, 9315, 9316, 9317, 9326 |
+| em160C | **9805, 9809** |
+| scan | **1459** |
+
+### THE DROUGHT WAS LARGELY EXPOSURE TIME
+
+Formations now appear in every block that has run long enough. em160C at 1.04-1.38M has produced
+two. std160's formation times were 400k-1500k, **median 750k** -- and for most of the drought period
+**std160 was the only COMPLETED block.**
+
+**I spent a dozen ticks hunting exotic explanations** -- binary drift, parameter drift, launch epoch,
+seed-sensitive builder, seed correlation, detector regression -- and excluded six by measurement.
+**The mundane answer was that the later blocks were young.**
+
+The exclusions were not wasted: they ruled out real failure modes and the detector work found a
+genuine small-n gate bias. But **I over-weighted a signal that was largely "these runs have not run
+long enough,"** and that is the lesson to carry.
+
+### LAUNCHED: nothing, with a TRIGGER
+
+Load 74.6 with 70 sims. Last tick demonstrated that launching onto a saturated machine yields a
+queue entry, not an experiment (sparse320 sat at 0 steps for 30 minutes).
+
+**Trigger: when em160C's 24 seeds complete (currently 65-86%), relaunch sparse320 (N=320, L=130).**
+That is the configuration the matched-race finding calls for -- half std160's density, material for
+~4 vesicles, so closure can outrun coalescence.
+
+**Standing pre-registration for tworing (read at 600k) unchanged:** both rings survive -> two
+vesicles viable and emergence is kinetics; merge -> real drive to coalesce, lever is a larger box;
+dissolve -> 52 lipids is below the stable size at this dilution.
