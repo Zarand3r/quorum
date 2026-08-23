@@ -19702,3 +19702,70 @@ per-seed formation probability well above the established **P(form per 1.6M seed
 
 **Standing pre-registrations unchanged:** tworing (5 seeds, 410k/600k, read at 600k, still unread);
 long160 half-density arm (38 seeds, 2.4M).
+
+## Tick: RETRACTED the one-way-pass model -- giant ribbons FISSION (160 -> 69 lipids in one 20k window)
+
+### RETRACTED: "no seed's largest cluster ever shrinks, so each seed gets one one-way pass"
+
+Committed last tick (00a94ce6). **Wrong, and refuted by the same seeds 40k steps later.**
+
+| seed | max | final | drops | biggest drop | band(52-137) entries |
+|---|---|---|---|---|---|
+| 217283 | 116 | 90 | 9 | 53 | 2 |
+| 331777 | 108 | 93 | 10 | 37 | 3 |
+| 449549 | 103 | 103 | 8 | 34 | 2 |
+| 566773 | 88 | 87 | 8 | 9 | 1 |
+| 683729 | 160 | 83 | 9 | **76** | **6** |
+| 799979 | 160 | 160 | 3 | 68 | 2 |
+| 911003 | 160 | 98 | 5 | **91** | 4 |
+
+sd911003: `1380000:160  1400000:69  1420000:98`. sd683729: `1340000:159  1360000:83`.
+
+**Checked it is not cutoff flicker.** Largest cluster in lipids vs connectivity cutoff:
+
+| seed | 1.2 | 1.4 | 1.5 | 1.6 | 1.8 | 2.0 |
+|---|---|---|---|---|---|---|
+| 911003 | 98 | 98 | 98 | 98 | 98 | 98 |
+| 683729 | 83 | 83 | 83 | 83 | 83 | 83 |
+| 799979 | 160 | 160 | 160 | 160 | 160 | 160 |
+| 217283 | 90 | 90 | 90 | 101 | 101 | 101 |
+| 331777 | 93 | 93 | 93 | 93 | 93 | 93 |
+| 449549 | 103 | 103 | 103 | 103 | 103 | 103 |
+| 566773 | 87 | 87 | 87 | 87 | 87 | 87 |
+
+Flat from 1.2 to 2.0 on six of seven. **The break is real fission, not a marginal contact.** The render
+at s1420000 shows the new gaps; render and metric agree.
+
+**Corrected conclusion:** the system is in a **fission-fusion steady state**, not a frozen terminal
+state. Clusters re-enter the closure range 1-6 times per seed. This RESTORES the memoryless
+constant-hazard model behind the 0.1003 +- 0.0290 /Ms rate, which the one-way-pass model would have
+invalidated. Nothing else built on the retracted claim.
+
+### LAUNCHED: packing-parameter scan -- the direct test of what selects micelle vs bilayer
+
+The build makes `short` = 1 head + 2 tails (3 beads) and `long` = 1 head + 4 tails (5 beads). At fixed
+head area that is a **2x change in tail volume**, i.e. the Israelachvili packing parameter
+p = v / (a0 * l_c). Every run in this project so far used `frac_short = 0.0` -- all 4-tail, p near 1,
+the bilayer-forming end. **The parameter that geometric theory says controls morphology has never been
+varied here.**
+
+- **6 seeds `frac_short = 1.0`** (all 2-tail), N=160, L=65, kT=0.45, dispersed, 600k -- `/tmp/fs100_sd510{1..6}.log`
+- **6 seeds `frac_short = 0.5`**, same otherwise -- `/tmp/fs050_sd520{1..6}.log`
+
+600k, not 1.6M: morphology class is set by ~200k, so this is a cheap read.
+
+**Baseline measured first, from the 7 long fs=0.0 seeds at step 600000: largest cluster
+83.1 +- 28.4 lipids** (110, 96, 76, 50, 68, 56, 126).
+
+**FALSIFICATION, stated before any fs>0 checkpoint is read:**
+- **fs=1.0 mean largest < 30 with many separate aggregates** -> micellar. Packing parameter controls
+  morphology in this model, as geometric theory says.
+- **fs=1.0 mean largest within 1 sd of baseline (55-111)** -> **the packing parameter does NOT control
+  morphology here**, and the geometric explanation for why this model makes ribbons is wrong.
+- **30-55** -> intermediate; report as intermediate and do not spin it.
+
+### STILL RUNNING
+
+**tworing** 5 seeds at 390-430k of 600k -- **still unread**, per the read-at-the-end rule.
+**cap80** 8 seeds (N=80, L=65, 1.6M) at first checkpoint; pre-registration from last tick stands.
+**long160 / long160p** 38 seeds at 80-180k of 2.4M. **em160S** 7 of 12 still live, 5 finished at ~0.5M.
