@@ -17037,3 +17037,66 @@ is small beside a claimed 0.52 eps/lipid but is not zero -- so a near-zero offse
 refutation of lambda than a partial one would be.
 
 Emergence stays in flight (31 dispersed-start runs).
+
+## Tick: detector recall on GROUND TRUTH = 0.857; an invalid ROC reported as invalid; save-all added
+
+**Running:** 41 processes, load 40.1 on 32 cores. N=160 L65 20 complete / 10 formations;
+conc100 L51 at ~1.5M (94%); ring70 (lambda test) at ~60%; arc200 at ~65%.
+
+### Complete: arc70T at kT=0.70 -- all 5 seeds fragmented
+
+largest = 32, 33, 28, 31, 29 of 70; E/lip -4.87 to -5.61. Its control (ring70T) is at 87% with
+largest 27-61 and nves=0 in all five, heading the same way. **Verdict withheld until 300k** per the
+standing pre-registration -- but the indication is that kT=0.70 is above membrane stability and the
+whole temperature ladder is void.
+
+### FIRST GROUND-TRUTH CALIBRATION OF THE DETECTOR
+
+The ring70 control at kT=0.45 holds 70/70 lipids, so every intact checkpoint is a KNOWN vesicle.
+
+| seed | intact ckpts | nves>0 | recall |
+|---|---|---|---|
+| sd1 | 39 | 33 | 0.846 |
+| sd2 | 33 | 21 | 0.636 |
+| sd3 | 37 | 31 | 0.838 |
+| sd4 | 36 | 34 | 0.944 |
+| sd5 | 37 | 37 | 1.000 |
+
+**POOLED RECALL = 156/182 = 0.857 (95% CI 0.806-0.908).** One checkpoint in seven is missed on a
+perfect vesicle.
+
+**Cause identified.** Of the 27 misses, **26 have `nenc = 0` and `lumen_c = 0`** -- no enclosed region
+found at all. **Gate 2 is exonerated:** the size ratio on the intact ring is median 0.543
+(10-90 pct 0.472-0.654) and **0.000 of intact checkpoints fall below its 0.10 cut.** The failure is
+thermal: a fluctuation opens a transient gap wider than the 2*bead the dilation bridges and the flood
+fill leaks through the membrane. **This is the mechanism behind the nves flicker documented earlier**,
+now with a cause and a measured rate.
+
+### An ROC I built and am reporting as INVALID
+
+I swept bead 1.0-3.0 over saved states. Result read 26/26 recall at every bead -- **meaningless**,
+because hit states are written ONLY when the detector fires, so the positive class was selected on the
+detector's own output and the 27 misses were never on disk. **Reported as invalid, not as a result.**
+
+The negative half IS valid (arc states are saved unconditionally): **0/33 false positives on genuine
+open arcs at every bead from 1.0 to 3.0.** That contradicts the `_interior_mask` calibration note
+warning that bead 3.5 "seals a real opening into a false lumen" -- that note was measured on STATIC
+synthetic rings with a 4-sigma gap, not on thermally fluctuating membranes.
+
+### LAUNCHED: instrumentation fix + unbiased recall run
+
+Added **`VIVARIUM_SAVE_ALL`** to `_mixture.py`: preserves a tagged state at every checkpoint regardless
+of the gate, into `docs/allstates/`. The comment records why -- measuring a miss rate requires the
+misses to be on disk. Launched **5 ring70 seeds, 80k steps, checkpoint every 2000, save-all on**
+(states confirmed landing).
+
+**Falsification, stated before the run is read:**
+- **A larger bead recovers the missed checkpoints while false positives stay 0** -> the detector's
+  operating point is mis-set, and every formation count in this project is biased LOW by a knowable
+  factor that can then be applied.
+- **The misses persist at every bead** -> the ring genuinely opens; **0.857 is the physical ceiling at
+  kT=0.45**, not a tuning error, and formation counts should be corrected by 1/0.857 = 1.17x with that
+  interpretation instead.
+- Recall is measured only on checkpoints with largest >= 69, so a fragmenting ring cannot be scored.
+
+**Not read this tick:** ring70's energies (the lambda test, ~60%) and arc200 (~65%).

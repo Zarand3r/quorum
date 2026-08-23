@@ -963,6 +963,17 @@ if __name__ == "__main__":
             # finish -- which has cost several ticks. Overwriting keeps one file per run rather than
             # hundreds, and the render series already records the history.
             _save_state(X, species, chains, mols, L, d, phi, kT, frac_short, plant, n_lip, seed, steps)
+            # VIVARIUM_SAVE_ALL preserves a tagged state at EVERY checkpoint, regardless of the gate.
+            # Needed because hits are saved only when the detector FIRES, so any positive set built
+            # from them is selected on the detector's own output -- which invalidated a detector ROC
+            # attempted from hit files. Measuring a miss rate requires the misses to be on disk.
+            if os.environ.get("VIVARIUM_SAVE_ALL"):
+                _ad = pathlib.Path(os.environ.get("BUILD_WORKSPACE_DIRECTORY", ".")) / "projects" / "vivarium" / "docs" / "allstates"
+                _ad.mkdir(parents=True, exist_ok=True)
+                _atag = "random" if plant.startswith("state:") else plant
+                np.savez_compressed(_ad / f"all_{_atag}_N{n_lip}_L{L:g}{_env_tag()}_sd{seed}_s{t:07d}.npz",
+                                    X=X, species=species, mols=np.array(mols, dtype=object),
+                                    L=L, nves=_nves, largest=_largest_now if "_largest_now" in dir() else -1)
             if _nves > 0:
                 # PRESERVE the state at every gate hit, tagged by step. The rolling checkpoint file is
                 # overwritten, and hits are transient -- sd8003 hit at 360k-420k and by 480k its
