@@ -18390,3 +18390,58 @@ the seed search the user explicitly asked for. **60 dispersed-start seeds are hu
 
 **Known forming seeds (deterministic, reproduce on demand):** 9302, 9308, 9312, 9314, 9315, 9316,
 9317, 9326 sustained past debounce; 9324 and 9329 touched closure once.
+
+## Tick: NO early predictor of formation; allocation settled by arithmetic; N=200 yield test launched
+
+**Running:** 82 sims, load 74. em160C 24 at 600-900k; em160S 12 at 80-120k; scan 24 at 60-80k;
+3M span series 10 at ~500k/3M; **n200 8 NEW**. Drought now **0 formers / 34.68 Ms, P(0) = 0.0013**;
+pooled rate **0.1044/Ms**.
+
+### NO EARLY PREDICTOR EXISTS
+
+std160's 8 formers vs 22 non-formers, at 200k -- strictly pre-formation (all formations >= 380k):
+
+| observable @200k | formers (8) | non-formers (22) | z | p |
+|---|---|---|---|---|
+| E/lip | -6.611 | -6.668 | +0.66 | 0.5115 |
+| largest | 48.000 | 52.455 | +0.28 | 0.7784 |
+| R_mid | 11.059 | 11.011 | +0.14 | 0.8881 |
+| mix | -- | -- | +1.59 | 0.1108 |
+| seg | -- | -- | +2.11 | **0.0348** |
+| burial | 3.591 | 3.478 | +0.47 | 0.6391 |
+| core | 1.425 | 1.424 | +0.56 | 0.5736 |
+
+Bonferroni over 7 observables: threshold **0.0071**. Best is `seg` at 0.0348 -> **NOT significant.**
+**`largest` is flat (p=0.778) with formers marginally SMALLER** -- the intuitive predictor fails.
+
+**Formation cannot be screened early. Seeds must be run long.**
+
+### ALLOCATION SETTLED BY ARITHMETIC, NOT INSTINCT
+
+Formation hazard is **constant** (chi2=2.60, 3 dof, p=0.457). Under a constant hazard,
+**expected formers = rate x TOTAL seed-Msteps**, independent of how the total splits across run
+lengths or seed counts. **800k and 1.6M runs are equally efficient per core-hour.**
+
+Machine is at **load 74 on 32 cores = 2.3x oversubscribed**. Adding processes cannot raise
+throughput -- it divides the same 32 cores more ways. **Launching more seeds is provably useless.**
+
+**Span series kept:** at 17% (500k/3M) and only 10 of 82 processes. Killing it would speed the
+search ~14% while discarding a multi-tick pre-registered experiment at the correct length.
+Judged not worth it, and recorded as a judgement rather than an omission.
+
+### LAUNCHED: N=200 yield test, 8 seeds
+
+The only remaining lever is a configuration with a **higher intrinsic rate**. The N-scan points that
+way: **0/15 at N=100, 2/10 at N=130, 5/25 at N=160.**
+
+N=200 in the SAME L=65 box (1959 waters vs 2159, so denser lipid at identical packing 0.55).
+8/8 verified `VIVARIUM_CHI_HT=-0.25`, kT=0.45. **Physics, temperature and box unchanged; only lipid
+count moves.**
+
+**Falsification, stated before the run is read:**
+- **N=200 rate above N=160's 0.1907/Ms** -> better configuration for yield; future search cores go there.
+- **N=200 rate at or below N=160** -> N=160 stays the working point and the drought is about seeds,
+  not composition.
+- **POWER, stated in advance:** 8 seeds x 1.6M = 12.8 Ms gives ~2.4 expected formations at the N=160
+  rate. That can detect a **doubling**, not a 30% difference. **I will not report a smaller
+  difference as real.**
