@@ -16319,3 +16319,65 @@ and still supplying dwell spans. **Adding load would slow the two measurements t
 CI means lipid count matters; agreement means the rate is insensitive to N over 100-160.
 
 **Retracted this tick: nothing.**
+
+## Tick — kT=0.45 equilibration COMPLETE: the population route cannot resolve dF, and my criterion was below the noise floor
+
+**Read at the end.** **eq45 complete, 10 of 10 at 1.2M.** N=130 arm at 1.16-1.32M with **2 formations**
+(sd9501, sd9506), none complete. Standard N=160 arm **4/15 at >= 1.4M**. 15 processes at `ht-0.25`.
+
+**THE COMPLETED EQUILIBRATION ARM.**
+
+| quantity | value |
+|---|---|
+| `P_closed` | **0.6174 +- 0.1035** |
+| per-seed values | 0.686, 0.959, 0.264, 0.967, 0.942, 0.512, 0.331, **0.107**, 0.950, 0.455 |
+| first half / second half | 0.6683 / 0.5672 |
+| drift | **-0.101 +- 0.128** |
+| `dF_closure` from populations | **-0.478 +- 0.438 kT** |
+
+**BRANCH 2 FIRES: still drifting by my stated threshold. But the way it fires is the finding.**
+
+**The per-seed `P_closed` spans 0.107 to 0.967 -- nearly the whole possible range.** With
+`tau_closed ~ 141 000` and `tau_open ~ 148 000`, a 1.2M run holds only about **8 dwells**, so each seed's
+time-average is dominated by which state it happened to occupy. **The population route is intrinsically
+noisy at this temperature**, and `+-0.44 kT` is no better than the rate route it was built to improve.
+
+**MY CRITERION WAS BELOW THE NOISE FLOOR, AND I SHOULD HAVE CHECKED THAT FIRST.** I registered "halves
+agree within 0.08" as the equilibration test. The drift is **0.101 +- 0.128** -- above the threshold, so
+the branch fires, **but only 0.79 sigma from zero.** **A threshold of 0.08 on a quantity with a 0.128
+error bar cannot be informative in either direction.**
+
+**This is the second mis-specified criterion in three ticks**, after the burn-in one that fired on
+success. **Both share a cause: I wrote a numeric threshold without first asking what the measurement's
+resolution would be.** The fix is procedural -- **a pre-registered threshold must be stated together
+with the expected error bar it will be compared against**, or it is decoration.
+
+**WHAT SURVIVES, and it is a genuine cross-check:**
+
+| route | `dF_closure` at `kT = 0.45` | transitions used |
+|---|---|---|
+| equilibrium populations | -0.478 +- 0.438 kT | time-average over ~8 dwells/seed |
+| **dwell ratios (drop 1)** | **+0.04 +- 0.24 kT** | **72 spans** |
+| agreement | **1.04 sigma** | |
+
+**The dwell-ratio estimate remains the project's best closure free energy.** It uses every transition
+rather than a time-average that eight dwells cannot pin down, and the population route -- despite being
+the one I expected to be definitive -- confirms it without improving on it.
+
+**Branch 3 did NOT fire** (`P_closed = 0.617`, far above the 0.05 that would have meant the restart
+protocol perturbs the structure). **Every restart-based number in this project stands.**
+
+**LAUNCHED, criterion fixed BEFORE the run: 10 more seeds at the standard condition (N=160, L=65,
+`ht-0.25`), taking the standard arm to 30.** The equilibration arm freed ten slots, and the formation
+rate is the number every other result is quoted against. **Stated with its expected resolution this
+time:** at the pooled rate 0.18 and n=25 completed runs, the Wilson CI half-width will be about
+**+-0.09**, so this arm can distinguish 0.18 from 0.30 but **not** from 0.24.
+
+* **Pooled rate stays within 0.12-0.24** -> settled; the CI factor drops below 2.5 and no further seeds
+  are warranted.
+* **Pooled rate moves outside 0.12-0.24** -> the earlier estimate was unrepresentative; re-establish
+  before quoting anything against it.
+
+**Retracted this tick: my "halves within 0.08" equilibration criterion**, as unresolvable by the
+measurement it governed. **No measurement is retracted** -- the population estimate stands as a
+consistent but imprecise confirmation.
