@@ -16478,3 +16478,54 @@ below 0.11. **The arm can establish that N=100 is lower; it cannot measure how m
 follow-up powered to do so would need far more seeds than the effect is worth.
 
 **Retracted this tick: nothing.**
+
+## Tick: constant-hazard test — the "bursty formation" claim does not reproduce
+
+**Running:** 30 processes, all verified `VIVARIUM_CHI_HT=-0.25` (30/30). Load 33.3 on 32 cores.
+N=100 extension (sd9220-9234) at 280-300k of 1.6M (~18%); std160 extension (sd9315-9329) similar.
+**Nothing completed this tick.** No new formations, no arm finished.
+
+**Measured (no new compute — reanalysis of the 50 completed runs at verified chemistry).**
+
+Seven first-formation times: sd9308 380k, sd9314 580k, sd9501 660k, sd9312 880k,
+sd9506 1060k, sd8901 1060k, sd9302 1200k.
+
+Falsification criterion, stated before the test: the project's history carries a claim that the
+formation hazard is **bursty** -- 0.446 per seed-Msteps early, dropping ~8x to 0.054 late. If true,
+the quarter-by-quarter event counts should be front-loaded and a constant-hazard fit should be
+rejected at p < 0.05. If the counts are consistent with constant hazard, the burst claim is not
+reproduced at this chemistry.
+
+| window | observed | expected (constant hazard) | at-risk (Msteps) |
+|---|---|---|---|
+| 0-400k | 1 | 1.87 | 19.98 |
+| 400-800k | 2 | 1.80 | 19.24 |
+| 800-1200k | 4 | 1.71 | 18.20 |
+| 1200-1600k | 0 | 1.61 | 17.20 |
+
+**chi2 = 5.12 on 3 dof -> p = 0.163. Consistent with a constant hazard of 0.0938 per seed-Msteps.**
+
+Internal check: 0.0938/Ms x 1.6 Ms = **0.150 formations per run** against **0.140 observed**
+across the same 50 runs, and against the 0.156 grand-pooled rate over 90 runs. Consistent.
+
+**Concluded.** Formation behaves as a constant-hazard (memoryless) process over 0-1.6M steps.
+There is no measurable induction period and no exhaustion of the formable population. The
+practical consequence: **run length and seed count are interchangeable** for accumulating
+formation statistics, which is what licenses pooling seeds of different lengths -- something I
+have been doing without having checked it.
+
+**Not concluded, deliberately.** The counts *rise* through the run (1, 2, 4) before the final
+quarter's zero. That is the opposite shape from the burst claim, but at 7 events it is well
+inside Poisson noise, which is exactly what p = 0.163 says. I am not claiming a rising hazard.
+
+**On the burst claim.** I cannot inspect its derivation, so I report only that my data do not
+show it. But there is an arithmetic tension independent of my test: a hazard of 0.446/Ms implies
+0.71 formations per 1.6M run, i.e. a **71% formation rate**, against the 14-16% measured across
+90 runs. Those cannot both describe the same quantity. Its at-risk accounting must have differed
+-- most likely counting only seeds still at risk, or a window shorter than the run.
+**Status: not retracted (not mine to retract), but not usable as stated.**
+
+**Launched: nothing.** Load is at capacity with the decisive arm among the running processes.
+The standing N=100 pre-registration is unchanged: **0 in 30** -> P(0 | 0.159) = 0.0055, decisive;
+**>= 2 in 30** -> the suppression was noise; **exactly 1 in 30** -> P(<=1) = 0.046, borderline,
+and I committed in advance not to call it.
