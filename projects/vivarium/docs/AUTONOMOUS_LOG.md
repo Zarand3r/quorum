@@ -19112,3 +19112,54 @@ coalescence catches up. Suggestive, NOT established.** Stated rather than leaned
   a rate result (the same null the N=100 and dil160 arms hit).
 
 **Tally unchanged:** 12 forming seeds, pooled rate 0.1129/Ms across 4 blocks.
+
+## Tick: vesicle persistence measured (0.62 +- 0.12, 8/12 still enclosing); sparse320 stalled AGAIN
+
+**Running:** 69 sims, load 74.3. em160C 24 at 1180-1520k (2 formers); scan 24 at 640-720k
+(2 formers); tworing 5 at 110-120k/600k **not read**; sparse320 5 at **0 steps**.
+
+### VESICLE PERSISTENCE across all 12 confirmed formers
+
+| seed | closed at | steps after | ckpts with lumen | frac | lumen at last |
+|---|---|---|---|---|---|
+| 9302 | 1200000 | 400000 | 21/21 | **1.00** | 505 |
+| 9805 | 1340000 | 180000 | 10/10 | **1.00** | 797 |
+| 349 | 540000 | 140000 | 8/8 | **1.00** | 421 |
+| 9315 | 460000 | 1140000 | 57/58 | 0.98 | 227 |
+| 9314 | 580000 | 1020000 | 45/52 | 0.87 | **1017** |
+| 9317 | 380000 | 1220000 | 54/62 | 0.87 | 263 |
+| 9308 | 380000 | 1220000 | 44/62 | 0.71 | 327 |
+| 1459 | 220000 | 440000 | 13/23 | 0.57 | 187 |
+| 9809 | 1080000 | 400000 | 10/21 | 0.48 | 0 |
+| 9312 | 880000 | 720000 | 0/37 | 0.00 | 0 |
+| 9316 | 1480000 | 120000 | 0/7 | 0.00 | 0 |
+| 9326 | 1240000 | 360000 | 0/19 | 0.00 | 0 |
+
+**Mean post-closure lumen fraction 0.62 +- 0.12 (n=12); 8/12 still hold a lumen at their last
+checkpoint.** Three closed and never re-enclosed.
+
+**Vesicles here are DURABLE, not transient** -- most persist hundreds of thousands of steps, and
+sd9314 has held one for **over a million**.
+
+**Caveat stated:** several runs are UNFINISHED, so "steps after" understates their true lifetime.
+**This is a lower bound on lifetime, not a measured lifetime.**
+
+### RESOURCE MISTAKE REPEATED
+
+**sparse320 is at 0 steps -- the same outcome as its first launch, for the same reason.** The machine
+is at load 74 with 69 sims, so a new process receives ~40% of a core.
+
+**I have now made this error twice.** Left queued rather than churned (em160C at 74-95% and scan at
+80-90% will free 48 cores shortly, and it will accelerate then), but the lesson is explicit:
+**"launch when cores free" must mean AFTER they free, not in anticipation.**
+
+### LAUNCHED: nothing
+
+Deliberate, and consistent with the above. **The correct action while the machine is saturated is to
+measure what is already on disk** -- which is what this tick did.
+
+**Standing pre-registrations unchanged:**
+- **tworing** (read at 600k): both survive -> two vesicles viable; merge -> drive to coalesce, lever
+  is a larger box; dissolve -> 52 lipids below stable size at this dilution.
+- **sparse320**: max nves >= 2 -> dilution is the lever; caps at 1 -> closure too slow, need faster
+  closure not more space; clusters never reach 47 -> failed manipulation, reported as such.
