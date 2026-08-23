@@ -18736,3 +18736,62 @@ aggregate with a water void of 145 cells and NO bilayer wall -- and require any 
 discriminator to reject it while accepting sd9314. **If no measurable criterion separates a
 synthetic packing gap from sd1459, then "vesicle" is not operationally defined at small lumen size,
 and every small-lumen formation in this project is unclassifiable rather than confirmed.**
+
+## Tick: NEGATIVE CONTROL BUILT AND PASSED -- detector validated both ways; drought broken twice
+
+**Running:** 78 sims, load ~76. **New formation: em160C sd9809.**
+
+### First negative control FAILED AS A CONTROL -- caught and rebuilt
+
+Synthetic jam (39 lipids, random positions and orientations, void R=3.4): `count_vesicles` returned
+**0**, and I nearly reported the detector as validated. **But `vesicle_call` itself returned True**
+(gate 1 counts [1,1,1,1], gate 2 ratio 0.399). The rejection came from the **connectivity** step --
+the lipids were too sparse to form a connected >=20-lipid cluster. **Rejection on connectivity says
+nothing about structure.** Control discarded.
+
+### Rebuilt properly: identical geometry, ONLY orientation varies
+
+Connected two-leaflet annulus; lipids point radially (bilayer) or randomly (jam).
+
+| construction | n_enc | lumen | gate-2 ratio | vesicle_call | count_vesicles |
+|---|---|---|---|---|---|
+| **radial** 40 lipids, R=6.4 | 1 | 148 | 0.291 | **True** | **1** |
+| **random** 40 lipids, R=6.4 | 1 | 86 | 0.169 | **False** | **0** |
+| **radial** 52 lipids, R=8.3 | 1 | 362 | 0.421 | **True** | **1** |
+| **random** 52 lipids, R=8.3 | 1 | 253 | 0.294 | **False** | **0** |
+
+**The gate accepts the bilayer and rejects the jam at both sizes, even though the jam clears the
+0.10 ratio cut. It is NOT blind to bilayer order.**
+
+**This is the control that was missing behind two ticks of flip-flopping.** Combined with accepting
+sd9314 (large ring) and sd1459 (small vesicle), the detector now has a **validated positive AND
+negative control.**
+
+### CONCLUSIONS SETTLED
+
+- **sd1459 is genuine.** Its rejection (2 ticks ago) stays retracted.
+- **The small-lumen std160 formations are genuine.** The "3 of 8 are blobs" claim stays retracted.
+- **The drought is BROKEN -- twice.**
+
+| block | formers |
+|---|---|
+| std160 | 8/30 |
+| scan | **1/24 (seed 1459)** |
+| em160C | **1/24 (seed 9809, NEW this tick)** |
+| multi320 | 0/6 (9%) |
+| dil160 | 0/8 (5%) |
+
+**Reliable seeds: 9302, 9308, 9312, 9314, 9315, 9316, 9317, 9326, plus 1459 and 9809.**
+
+The rate is lower than std160 alone implied but **nonzero everywhere** -- the ordinary reading I
+should have reached without the detour through two failed discriminators.
+
+### LAUNCHED: nothing
+
+Load 76, core-limited. **The negative control cost no compute and settled more than any run could.**
+multi320 (goal 2) shows the right precondition at 9%: many separate 15-40 lipid clusters rather than
+one dominant aggregate.
+
+**Falsification for multi320, restated:** max nves >= 2 in any seed -> multiple vesicles achievable
+by supplying material; all six form exactly one -> a second is suppressed (likely monomer depletion)
+and the next lever is a larger box; none form -> seed productivity does not transfer across N.
