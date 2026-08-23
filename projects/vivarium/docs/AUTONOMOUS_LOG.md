@@ -15720,3 +15720,60 @@ which would confound the wrapping interpretation exactly as I flagged last tick.
 
 **Retracted this tick: nothing.** The hit-filename defect is a fix, not a retraction -- no reported
 number depended on it.
+
+## Tick — sd9302 holds closed for 320 000 steps; this contradicts "marginal" and reopens the closure line
+
+**Read where complete.** N=100 wrap-free arm: first 5 **final at 0/5**; 10 more at 380-620k, largest
+19-40. Standard N=160 arm at 620k-1.54M. 20 processes verified at `ht-0.25`.
+
+**sd9302 HAS NOT OPENED.** Its `nves` series from 1.15M:
+
+`1160k:0  1180k:0  1200k:1  1220k:1  1240k:1  ...  1500k:1  1520k:1`
+
+**17 consecutive checkpoints, 1 200 000 -> 1 520 000, 320 000 steps of unbroken closure with no gap.**
+84 lipids throughout, still the largest cluster, lumen water 1.098 -> 0.725. **sd9308** likewise held
+**6 consecutive checkpoints, 100 000 steps**, 66 -> 76 lipids.
+
+**THIS CONTRADICTS A CONCLUSION I REPORTED, AND I AM FLAGGING IT RATHER THAN SMOOTHING IT.** I measured
+**`dF_closure = +0.22 +- 0.44 kT`** and concluded closure is thermodynamically neutral, so vesicles here
+are marginal objects that form and re-open. **That was consistent with all the evidence then available**
+-- sd8105 flickered, sd8901 lasted one checkpoint. **A vesicle holding 320 000 steps is not what
+marginal predicts.**
+
+**Three explanations, none tested:**
+
+1. **`dF_closure` is more negative than measured.** That number **already carries a permanent caveat**:
+   its forward and reverse arms never converged, ending **3.21 sigma apart** after 1M steps.
+2. **This vesicle is kinetically trapped** rather than thermodynamically stable. 320 000 steps of
+   stability does not distinguish a deep trap from a favourable free energy.
+3. **84 lipids is past a size threshold** the earlier vesicles were below -- sd8901 was 41, and the
+   flickering sd8105 was 80.
+
+**WHY THIS JUSTIFIES REOPENING A LINE I CLOSED.** Two ticks ago the closure calibration fired its
+null branch and I committed to stopping. **That calibration seeded every run from sd8105 -- a vesicle
+now known to be the flickering, marginal kind.** Calibrating from a demonstrably stable vesicle is a
+different experiment on a different object, not a retry of the same one. **The stopping commitment was
+about not re-running a failed design; this is new evidence about the seed.**
+
+**LAUNCHED, criteria fixed BEFORE the run: temperature calibration from the STABLE vesicle.** Frozen to
+`docs/controls/stable_vesicle_sd9302.npz` (84 lipids, `nves=1`, lumen water 0.725). **2 seeds at each of
+`kT = 0.45, 0.55, 0.65, 0.75`, 400 000 steps, `ht-0.25`** -- identical protocol to the sd8105
+calibration so the two are directly comparable.
+
+* **`P_closed` at some temperature falls between 0.2 and 0.8 with the cluster intact** -> the stable
+  vesicle gives a usable state point where sd8105 did not, and the closure free energy becomes
+  measurable after all.
+* **`P_closed` stays above 0.8 at every temperature until the aggregate dissolves** -> this vesicle is
+  **far more stable than sd8105**, which itself is the result: it would mean the +0.22 kT figure was
+  measured on an unrepresentative object and **must be withdrawn rather than merely caveated**.
+* **`P_closed` stays below 0.2 as sd8105 did** -> the seed was not the problem, the closure line stays
+  closed, and the persistence of sd9302 needs a kinetic explanation instead.
+
+**I am recording branch 2 as the one I now consider most likely**, given 320 000 steps of unbroken
+closure at `kT = 0.45` where sd8105 flickered within 60 000.
+
+**Emergence in flight:** both arms continue; the standard arm stands at **2 formations in 10 seeds**
+with 5 seeds only 39-43% through, **not pooled into a rate.**
+
+**Retracted this tick: nothing yet.** `dF_closure = +0.22 +- 0.44 kT` is **formally at risk** and the run
+that can withdraw it is launched.
