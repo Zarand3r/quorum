@@ -17911,3 +17911,54 @@ everything else.**
 - **contemporaneous 0.45 agrees with historical at 400k** -> the 200k excursion was a fluctuation,
   the historical baseline stands, and the temperature comparison proceeds on its own merits.
 - Reported with the full timepoint trajectory, not a single p-value.
+
+## Tick: analysis bug found and fixed; bootstrap makes the epoch concern WORSE; binary-reproducibility test launched
+
+**Running:** 53 processes, load 49.2. em160C 24 seeds (first 12 at ~320k, new 12 at ~80k);
+em160T at ~520k; eqring40/eqarc40 (3M) at **~68%, not read**; 3 reproducibility reruns started.
+
+### BUG IN MY OWN ANALYSIS
+
+My timepoint extractor took the last checkpoint **at or below** T. The 12 seeds launched last tick
+are only at ~20-40k, so they contributed **early** values and dragged the control median to 29.5.
+**Fixed by requiring the seed to have actually reached T.** Corrected: n=12, median 36.0, p = 0.0082
+-- matching last tick.
+
+### BOOTSTRAP CALIBRATION -- and it cuts AGAINST my last-tick reading
+
+Random 12-seed blocks drawn from the 36 historical seeds, tested against the remaining 24:
+
+| threshold | P(random 12-block reaches it) |
+|---|---|
+| p < 0.05 | 0.0460 |
+| p < 0.0167 | 0.0155 |
+| p < 0.0082 | **0.0065** |
+
+median-of-12 null: mean **45.8**, sd **4.9**, 5-95 pct **40-56**.
+**Observed em160C median 36.0 -> 0.0th percentile.**
+
+**This is a genuine outlier against within-pool variability, not ordinary block scatter.** Last tick
+I leaned on "the trajectory recovers by 240k" to avoid calling an epoch artifact; the bootstrap is
+evidence I did not have then and it **strengthens the concern**. Recorded explicitly because it
+argues against the conclusion I was drawn to.
+
+**Both facts stand:** real outlier at 200k, gap closed by 240k. Compatible only if the new seeds
+**lag in coalescence and catch up** -- a transient kinetic difference, not a fixed bias.
+
+### LAUNCHED: binary-reproducibility test (seeds 9300, 9301, 9302 rerun with the CURRENT binary)
+
+`git log` shows `_mixture.py` was edited in **commit 34155170**, which lands **after** std160 and
+em160 launched and **before** em160C. **The binary changed between epochs and is the prime suspect.**
+
+**Falsification, stated before the reruns are read:**
+- **Rerun trajectories reproduce the original logs** -> the binary is exonerated; the em160C block is
+  seed-block sampling, and the historical baseline stands.
+- **Rerun trajectories diverge** -> the binary altered the physics, and **EVERY cross-epoch comparison
+  in this project is invalid**, including the pre-registered N=100 suppression (P = 0.0024) and the
+  temperature arm.
+- Reference recorded now, before the reruns produce output: **seed 9300 original = 20000->15,
+  40000->15, 60000->30, 80000->35**; seed 9301 = 20000->20, 40000->20, 60000->26, 80000->27;
+  seed 9302 = 20000->24, 40000->24, 60000->24, 80000->24.
+- No verdict this tick: the reruns have not reached their first checkpoint under load 49.
+
+Emergence in flight: 24 contemporaneous 0.45 seeds + 12 at 0.55.
