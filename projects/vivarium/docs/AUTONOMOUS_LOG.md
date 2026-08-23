@@ -17796,3 +17796,56 @@ divergence must be settled first, and every cross-arm comparison so far has lean
   timepoints tested.
 
 Emergence in flight: 24 dispersed-start seeds (12 at 0.55, 12 at 0.45).
+
+## Tick: contemporaneous control not yet callable; a structural measurement FAILED its positive control
+
+**Running:** 48 processes, load 45.3 on 32 cores. em160C (contemporaneous 0.45) at 160k; em160T
+(0.55) at 360k; eqring40/eqarc40 (3M) at ~52% -- **not read**; arc300 ~85%; ring300 ~63%.
+Nothing completed.
+
+### The decisive comparison at the first pre-registered timepoint -- NOT CALLABLE
+
+| arm | n | median | mean | range |
+|---|---|---|---|---|
+| historical kT=0.45 | 36 | 33.0 | 35.2 | 19-69 |
+| **contemporaneous kT=0.45** | 12 | 32.0 | 31.2 | 20-39 |
+| kT=0.55 | 12 | 34.5 | 34.0 | 22-45 |
+
+control vs historical **p = 0.234**; control vs warm **p = 0.299**; historical vs warm **p = 0.924**.
+Bonferroni threshold over 3 comparisons is **0.0167**.
+
+**The control sits between the candidates and is separable from neither at n=12 vs 36. Nothing
+called.** The 200k point decides; the control is at 160k.
+
+### A structural measurement that FAILED ITS POSITIVE CONTROL
+
+**Question:** are emergent vesicles genuine bilayers? Head enrichment at the lumen (2.4-3.2x,
+measured earlier) only shows heads face water -- a monolayer or disordered aggregate does that too.
+A bilayer has **two** head shells with a tail core between.
+
+**Method:** radial head/tail density profile about the lumen, with the **planted ring as ground
+truth**.
+
+**Result: the planted ring -- a KNOWN bilayer -- returned 4 head shells where exactly 2 exist.**
+Emergent states returned 8. Both are binning noise: ~350 beads over 28 radial bins, centred on the
+lumen centroid rather than a fitted ring centre.
+
+**Reported as a FAILED MEASUREMENT.** A method that cannot resolve a bilayer it is handed says
+nothing about the emergent case. **No structural conclusion is drawn.** Fix would be: more states
+averaged, wider radial range, centring on a fitted centre.
+
+**Second error in the same measurement:** the first attempt globbed saved ring states at **N=40**
+when the calibration runs were **N=70**, so the positive control returned nothing at all and the run
+printed only the emergent profile. Both errors recorded.
+
+### LAUNCHED: nothing, with the specific reason and trigger
+
+Load **45.3 on 32 cores**. The contemporaneous control is **the single measurement that determines
+whether ANY cross-arm comparison in this project is valid** -- including the pre-registered N=100
+suppression, which compared arms launched at different epochs. Adding compute would directly delay it
+reaching 200k.
+
+**Triggers:** (a) em160C reaches 200k -> run the pre-registered 3-way comparison; (b) eqring40/eqarc40
+reach 3M -> equilibration verdict, which unblocks the span-series redo and the whole geometry route.
+
+Emergence in flight: 24 dispersed-start seeds (12 at kT=0.55, 12 at kT=0.45).
