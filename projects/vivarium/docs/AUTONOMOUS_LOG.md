@@ -18213,3 +18213,62 @@ the same design paid for properly. The finished 3M runs freed exactly the ten co
   at equilibrium, and the standing plan's framing must be replaced rather than re-measured.
 - E(s) = const + 2*lambda*[s<1] + (2*pi^2*kappa/N)*s^2; intact-only scoring; measured mid-surface
   radii; read at 3,000,000 steps.
+
+## Tick: detector EXONERATED (18/18); nothing in physics or environment changed; seed-independence test launched
+
+**Running:** 74 processes, load 65. em160C 24 seeds, em160D 12, em160T 12, 3M span series 10,
+**em160S 12 NEW (widely-separated seeds)**. Nothing completed.
+
+### SIXTH MECHANISM EXCLUDED: the detector
+
+The earlier reproducibility test compared `largest`, **not `nves`**, and the short reruns never
+reached a formation -- so detector regression had never actually been tested. Running the **current**
+`count_vesicles` on saved hit states from std160's known formations:
+
+**18/18 still called vesicles.** Seeds 9312, 9314, 9315, 9317 across steps 400k-1520k, all nves=1.
+**The drought is NOT instrumental.**
+
+### Full exclusion table -- answering "what changed in physics or environment?"
+
+| candidate | status | evidence |
+|---|---|---|
+| binary changed | **EXCLUDED** | reruns reproduce checkpoint-for-checkpoint |
+| parameters | **EXCLUDED** | header, argv, env identical |
+| launch epoch / load | **EXCLUDED** | same seed reproduces under load 49 |
+| initial conditions | **EXCLUDED** | step-0 p = 0.807 (E/lip), 0.153 (largest) |
+| small-block luck | **EXCLUDED** | effect strengthens with n (p = 0.0008 at n=24) |
+| detector regression | **EXCLUDED** | 18/18 known formations still called |
+
+**ANSWER: nothing meaningful changed.** The run is deterministic given its seed, verified directly.
+The only difference between std160 and every later block is **the seed values themselves.**
+
+### A weak hint, labelled as weak
+
+std160 formations sit in seeds **9302, 9308, 9312, 9314, 9315, 9316, 9317, 9326** -- five of eight
+inside **six consecutive seeds**. Against formations scattered at random among 30 seeds:
+max-in-6-window = 5, null mean 3.35, **P(>=5) = 0.0365**.
+
+**CAVEAT: the 6-seed window was chosen AFTER seeing 9312-9317 cluster.** That is post-hoc and would
+not survive multiplicity correction over the window sizes available. **A hint, not a result.**
+
+But it is testable, and consequential: **every block in this project used CONSECUTIVE seeds.** If
+nearby seed values give correlated trajectories, a block of 30 is not 30 independent samples, and
+both std160's productivity and the drought follow from an effective n far below the nominal one.
+
+### LAUNCHED: em160S -- 12 seeds with WIDELY SEPARATED values
+
+104729, 217283, 331777, 449549, 566773, 683729, 799979, 911003, 1013471, 1120211, 1234577, 1357333.
+Spread over six orders of magnitude instead of adjacent integers. 12/12 verified
+`VIVARIUM_CHI_HT=-0.25`, N=160, L=65, kT=0.45, 1.6M steps -- identical to every other emergent block
+except seed spacing.
+
+**Falsification, stated before the run is read:**
+- **em160S forms at std160-like rates (~0.19/Ms, i.e. ~3-4 formations in 19.2 Ms) while
+  consecutive-seed blocks stay dry** -> **seed proximity induces correlation**, the sampling in this
+  entire project has been correlated, and **every error bar quoted per-seed is overstated.**
+- **em160S is also dry** -> seed spacing is irrelevant; std160 remains an unexplained outlier and the
+  drought stands at P = 0.005 with no mechanism identified.
+- **em160S is intermediate** -> no discrimination; report as such.
+- Compared on the same debounced hazard basis, per block, at matched exposure.
+
+Emergence in flight: 60 dispersed-start seeds across four blocks and two temperatures.
