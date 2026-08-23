@@ -17100,3 +17100,84 @@ misses to be on disk. Launched **5 ring70 seeds, 80k steps, checkpoint every 200
 - Recall is measured only on checkpoints with largest >= 69, so a fragmenting ring cannot be scored.
 
 **Not read this tick:** ring70's energies (the lambda test, ~60%) and arc200 (~65%).
+
+## Tick: lambda REFUTED at 6.4 sigma; kT ladder VOID; pre-registered N=100 test CONFIRMS suppression
+
+**Completed this tick:** all three emergence arms (N=100 L65 30 seeds/0 formations; N=160 L65 30
+seeds/10 formations; conc100 L51 6 seeds/0 formations), ring70, ring70T, ringcal. Load fell 45 -> 5.7.
+
+### 1. LAMBDA REFUTED -- direct energy comparison, N=70, kT=0.45
+
+Identical size, box, temperature and chemistry; the only difference is topology. Protocol fixed in
+advance: mean E/lip over the last 100k steps per seed, SEM across seeds, scored only while intact
+(largest >= 69).
+
+| | E/lip |
+|---|---|
+| ARC (open, 2 ends) | **-7.3718 +- 0.0235** |
+| RING (closed) | **-7.4291 +- 0.0693** |
+| **offset (ring - arc)** | **-0.0573 +- 0.0732 eps/lipid (0.78 sigma)** |
+
+| prediction | offset |
+|---|---|
+| lambda = +18.31 eps/end | -0.5229 |
+| dF_closure = +0.04 kT | -0.0006 |
+
+**The lambda prediction is excluded at 6.4 sigma.** Implied **lambda = 2.00 +- 2.56 eps per end**
+against the established **18.31 +- 7.07** (2.17 sigma apart). In energy terms closure gains
+**8.9 +- 11.4 kT, not ~81 kT.**
+
+**Consequences.** (a) The standing critical-size plan's premise -- "closure has ~81 kT to gain" -- is
+not supported. (b) arc70's metastability needs no kinetic barrier: there is little drive to close.
+(c) The pre-registered caveat cuts the same way -- this is POTENTIAL energy, and the omitted
+end-entropy favours the OPEN arc, so the true free-energy difference is if anything even less
+favourable to closure.
+
+### 2. kT = 0.70 LADDER IS VOID -- as pre-registered
+
+ring70T at 300k: **all 5 seeds fragmented**, largest 23, 26, 23, 33, 36 of 70, nves=0 throughout,
+E/lip -4.57 to -5.19. The CLOSED state does not survive kT=0.70, so the arc runs there cannot separate
+"the arc will not close" from "no membrane exists to close." **Reported as void, not salvaged into a
+claim about lambda** -- the outcome committed to in advance.
+
+### 3. PRE-REGISTERED N=100 TEST -- fired once, on complete data
+
+Fixed two ticks ago: band 40-100, Poisson test of pooled N=100 (L65 + L51) against the N>=130 in-band
+rate, evaluated once at completion, p < 0.05, no other band reported.
+
+| arm | closures | in-band time | rate |
+|---|---|---|---|
+| N>=130 | 8 | 32.76 Ms | 0.2442/Ms |
+| N=100 pooled | **0** | 24.78 Ms | expected **6.05** |
+
+**P(0) = 0.0024 -> SUPPRESSION CONFIRMED.** After two ticks in which this verdict swung from 0.021 to
+0.369 with the band choice, the specification fixed in advance and evaluated once says the effect is
+real. **No other band reported.**
+
+### 4. Detector: unbiased recall measured, but NO change recommended
+
+With `VIVARIUM_SAVE_ALL` the positives are no longer selected on the detector's output.
+
+| bead | recall (planted ring, n=203) | false pos (planted arc, n=61) |
+|---|---|---|
+| 1.0 | 0.941 | 0.000 |
+| 1.5-2.5 | 0.956 | 0.000 |
+| 3.0 | **0.990** | **0.000** |
+
+Raising bead to 3.0 recovers nearly every miss at zero cost on TRUE negatives. **Not recommended
+anyway.** Against emergent tangles the rate runs 0.328 -> 0.180, and that is **not** a false-positive
+rate: those states have no ground-truth label, and earlier ticks showed emergent clusters can be
+genuine vesicle-plus-tail. Calling them negatives would assume the question. **Changing the operating
+point requires labelled tangle data**, which means visual adjudication with the overlay tool.
+
+### LAUNCHED
+
+- **arc120 (L=80) and arc300 (L=165), 5 seeds each, 300k steps.** With arc70 and arc200 this makes a
+  70/120/200/300 series. **E/lip = e_bulk + 2*lambda/N**, so E/lip against 1/N is linear with slope
+  **2*lambda** -- a direct measurement rather than an inference.
+  **Falsification:** slope ~= 36.6 eps -> the established lambda is right after all and the ring-arc
+  comparison has an unidentified flaw; slope ~= 4 eps -> confirms lambda ~= 2 from an independent
+  route; non-linear in 1/N -> the ribbon energy model itself is wrong and BOTH lambda estimates are
+  meaningless. Plants intact (push-off to 0.850 min separation for both).
+- **6 fresh N=160 emergence seeds (9600-9605)**, because every emergence arm had completed and nothing
+  dispersed-start was left in flight.
