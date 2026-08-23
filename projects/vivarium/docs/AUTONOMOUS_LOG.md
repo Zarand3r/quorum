@@ -17181,3 +17181,77 @@ point requires labelled tangle data**, which means visual adjudication with the 
   meaningless. Plants intact (push-off to 0.850 min separation for both).
 - **6 fresh N=160 emergence seeds (9600-9605)**, because every emergence arm had completed and nothing
   dispersed-start was left in flight.
+
+## Tick: WITHDRAWN -- last tick's "lambda refuted" had a curvature confound; first spectrum-free kappa
+
+**Running:** 21 processes, load 17.4 on 32 cores. arc200 complete (4/5 at 300k); arc120 at ~25%;
+arc300 at ~5%; em160 (9600-9605) at 60-100k.
+
+### WITHDRAWN: "lambda refuted at 6.4 sigma"
+
+Last tick I compared a closed ring and an open arc at N=70 and read the offset as -2*lambda,
+concluding lambda was excluded at 6.4 sigma. **The two structures do not differ only in topology.**
+
+| | radius |
+|---|---|
+| ring, 70 lipids closed | R = N/2pi = **11.14** (measured 11.65) |
+| arc, 70 lipids on 3/4 | R = N/(0.75*2pi) = **14.85** (measured 14.04) |
+
+The ring is MORE CURVED, so it pays extra bending. The correct relation is
+
+**dE(ring - arc) = -2*lambda + 0.1234*kappa**
+
+not -2*lambda. **The 6.4 sigma refutation does not follow and is withdrawn.** lambda = 18.31 +- 7.07
+stands as far as that experiment goes.
+
+### What replaces it: lambda from the ribbon-length series
+
+E/lip = e_bulk + 2*lambda/N, so E/lip against 1/N has slope 2*lambda. Scored only while intact.
+
+| N | E/lip | seeds |
+|---|---|---|
+| 70 | -7.3718 +- 0.0235 | 5 |
+| 200 | -7.5234 +- 0.0170 | 3 (intact >= 190/200) |
+
+slope = **16.33 +- 3.12 eps** -> **lambda = 8.16 +- 1.56 eps per end**.
+Against the established **18.31 +- 7.07**: **1.4 sigma, consistent.**
+
+### First kappa estimate in this project without an undulation spectrum
+
+Feeding lambda back through the corrected ring-arc relation:
+
+    0.1234*kappa = dE_total + 2*lambda = -4.01 + 16.32 = 12.31 +- 6.00
+    **kappa = 99.8 +- 48.6 eps = 222 +- 108 kT**
+
+The standing note says closure is favoured whenever kappa < ~150 kT. This lands **above** that line,
+**within its error bar**. This was the entire point of the standing plan -- kappa without a spectrum.
+
+**PROVISIONAL, for two stated reasons:** (a) lambda rests on a **2-point fit with zero degrees of
+freedom**, which cannot detect non-linearity in E/lip(1/N); arc120 and arc300 are running to supply
+that test. (b) The bending term assumes continuum Helfrich elasticity holds for a 70-lipid ribbon.
+
+### LAUNCHED: ring200, N=200, L=110, kT=0.45, 5 seeds
+
+A second ring-arc pair at a different N makes lambda **cancel algebraically**:
+
+    dE(70) - dE(200) = (0.1234 - 0.0432) * kappa = **0.0802 * kappa**
+
+giving kappa with no dependence on the length series, after which lambda follows from either pair.
+5/5 verified `VIVARIUM_CHI_HT=-0.25`; nves=1 and largest=200 at step 0.
+
+**Falsification, stated before the run is read:**
+- **kappa from this route agrees with 99.8 +- 48.6 eps** -> two independent routes concur and the
+  continuum picture holds at these sizes.
+- **kappa disagrees beyond error** -> the Helfrich form does not describe a ribbon of this size, and
+  BOTH kappa estimates go.
+- **PROBLEM FOUND BEFORE MATURITY, recorded now:** planted ring200 comes up at **R = 39.73, not the
+  nominal 31.83** (25% off, vs 4.6% at N=70), and that is **larger** than arc200's planted 36.65 --
+  which would **flip the sign** of the bending term. The final analysis must use MEASURED radii, not
+  nominal, and no kappa from this pair is trustworthy until that is resolved.
+
+Emergence in flight: 6 dispersed-start seeds (9600-9605).
+
+**Note on the standing brief:** its "Established" block still lists lambda = 18.31 +- 7.07 with
+closure gaining ~81 kT. The 81 kT figure follows from that lambda; the length series puts lambda at
+8.16 +- 1.56, which would make the edge gain ~36 kT instead. Not yet a retraction -- the two lambda
+values are 1.4 sigma apart -- but the brief's number is the high end of the range.
