@@ -19915,3 +19915,67 @@ budget ends near 1.5M, which is why "still coarsening" is currently un-resolvabl
   reinstates the part of the two-ticks-ago picture that was not about one-way passage.
 - **It keeps oscillating between 60 and 160 with no trend** -> the process is stationary after all and
   the 80.4 -> 115.8 drift measured here was a transient.
+
+## Tick: arc n=70 gives 0/5 closure AND does not unroll -- a third outcome the pre-registration missed
+
+### READ AT THE END: arc70b, n=70, R_mid 14.85, 300k steps
+
+| seed | last step | largest | min largest | rows with nenc>0 | rows with nves>0 |
+|---|---|---|---|---|---|
+| 9001 | 260000 | 70 | 70 | 0 | 0 |
+| 9002 | 280000 | 70 | 69 | 0 | 0 |
+| 9003 | 240000 | 70 | 69 | 0 | 0 |
+| 9004 | 240000 | 70 | 55 | 0 | 0 |
+| 9005 | **300000** | 70 | 68 | 0 | 0 |
+
+**0/5 closure.** Satisfies the pre-registered "n=70 closes <= 1/5" arm.
+
+**It is not a failed manipulation.** `largest` held at 70/70 for the whole run (one dip to 55), so the
+plant survived and the run measured closure, not plant destruction.
+
+**The arc also did not unroll.** sd9001's radius across 14 checkpoints: 13.45, 14.71, 13.55, 13.99,
+12.91, 12.53, 13.22, 13.26, 13.96, 13.74, 13.99, 14.38, 13.93, 14.78 -- **it holds the planted 14.85
+within +-2 for 300k steps.** A flattening ribbon would show a large monotone rise.
+
+**This is a third outcome my pre-registration did not name.** It stated closure or unrolling. The arc
+does neither: **it is metastable with both ends open, retaining its curvature.** Recorded as such rather
+than forced into one of the two prepared boxes. The standing falsification ("if arcs of 70/120/200/300
+ALL unroll, the continuum picture is wrong") **cannot be evaluated on this arm at all**, because its
+premise -- that a sub-critical arc unrolls -- is false at n=70.
+
+### INTERIM, NOT THE PRE-REGISTERED READ: the packing-parameter scan in the correct solvent
+
+Largest cluster at a matched step of 100000, all three arms with `chi_HT=-0.25, chi_WW=0.50`:
+
+| arm | n seeds at 100k | mean | sd |
+|---|---|---|---|
+| frac_short = 1.0 | 2 | 10.5 | 0.7 |
+| frac_short = 0.5 | 4 | 22.0 | 8.4 |
+| frac_short = 0.0 | 12 | 27.1 | 6.2 |
+
+Monotone in the packing parameter, and the render at 80k shows **compact micelles in a now-uniform
+solvent** -- the water voids that betrayed the contaminated version are gone.
+
+**NOT reported as a result.** n=2 is below this project's own >= 5-seed rule, and **the pre-registered
+read for this arm is 600000 steps.** Logged now so the numbers exist before there is a stake in them.
+
+### LAUNCHED: arc120, to bracket the critical size
+
+`/tmp/arc120_sd920{1..5}.log` -- **5 seeds, n=120, L=66, R_mid 25.5, arc0.75, 300k.** Plant intact at
+step 0 (largest 120/120). Chosen over more n=200 seeds because L=66 costs **2.5x less per step** than
+n=200's L=98 (bead count scales with L^2), and it fills the gap between a finished n=70 and a running
+n=200 that is only at 20-40k.
+
+**FALSIFICATION, stated before any arc120 checkpoint is read:**
+- **>= 3/5 close** (`nenc >= 1`, `lumen_c > 0`, two consecutive checkpoints, `largest` still ~120)
+  -> the critical size lies between 70 and 120 and `kappa` is bracketed without a spectrum.
+- **0/5 close AND the arcs stay curved and intact, as at n=70** -> metastability is not a size effect
+  at all, and the edge-vs-bend account does not explain what these arcs do.
+- **0/5 close AND `largest` collapses** -> failed manipulation at this box size; rerun larger, do not
+  report as a negative.
+
+### STILL UNREAD
+
+**arc200b** 20-40k of 300k. **fs100b/fs050b** 80-100k of 600k. **cap80b** 80-100k of 1.6M.
+**em3M** 60k of 3M. **long160** 260-280k of 2.4M. **tworing** 460-500k of 600k -- still short of its
+read point, with `nves > 0` on 2 of 5 seeds and one carrying `lumen_c = 331, nenc = 1`.
