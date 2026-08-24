@@ -23012,3 +23012,71 @@ explains their 0/5 directly, and they would only have confirmed it at 300k.
 **emerge2** 8 at 80-100k, **emerge3** 6 at 60k of 1.6M -- **0 checkpoints with `nves >= 2`.**
 **rest22** 22 at 720-780k, **0 formations**, biggest 154. **deno** 18 at 460-600k.
 **n120** 10 at 880-980k. **fineform** 3 at 358-388k of 600k.
+
+## Tick: a FRESH SEED FORMED (sd45007, debounced) -- and the seed's two roles are now separable
+
+### THE DROUGHT IS OVER: an unselected seed formed a vesicle
+
+`deno` **sd45007**, dispersed start, N=160, L=65, kT=0.45:
+
+| step | E/lip | largest | lumen | nenc | nves |
+|---|---|---|---|---|---|
+| 560000 | -6.82 | 66 | 0 | 0 | 0 |
+| 580000 | -6.98 | 66 | 0 | 0 | 0 |
+| **600000** | -6.99 | 66 | **435** | 1 | **1** |
+| **620000** | -7.29 | 66 | **412** | 1 | **1** |
+| **640000** | -7.10 | 66 | **418** | 1 | **1** |
+
+**Three consecutive checkpoints -- passes the >= 2 debounce standard.** The render shows a closed
+66-lipid ring with a visible interior. **Render and metric agree.**
+
+**Drought status: 8/30 historical vs 1/18 fresh, Fisher p = 0.125. No longer an anomaly.**
+(`rest22` sd9324 shows `nves > 0` at ONE checkpoint, step 520000 -- **fails debounce, not counted**, so
+the historical 8/30 stands.)
+
+### WHY DO THE SEEDS MATTER? -- the question is now askable
+
+**One argv seed has always done TWO jobs:** `build(..., seed=seed)` fixes **where every lipid starts**,
+and `Inertial(..., seed=1+seed)` fixes **the entire thermal-noise realisation**. One knob, two roles, so
+**no experiment could tell which decides formation.** That is exactly why 12 seeds reproduce their
+formation step to the checkpoint while **nothing measurable about a seed predicts membership** -- the two
+were never separated.
+
+**CODE CHANGE: `VIVARIUM_NOISE_SEED` overrides ONLY the noise.**
+
+**Backward compatibility verified**: for build seed 777, `NOISE_SEED = 778` (= 1 + 777) reproduces the
+default **exactly** -- E/lip **-5.90**, largest **18**. Different noise on the same placement gives
+**999 -> -5.60/19** and **1234 -> -5.77/21**.
+
+### LAUNCHED: placement fixed, noise varied
+
+`/tmp/noise_ns200{01..10}.log` -- **build seed 9308 (a known former, forms at 380000) held FIXED;
+`VIVARIUM_NOISE_SEED` varied over 10 values**; N=160, L=65, kT=0.45, 600k.
+**Base rate for any std160 seed forming by 600000: 4/30 = 0.133.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 7 of 10 form by 600k** -> **the INITIAL PLACEMENT decides.** "Seed" means "where the lipids
+  happened to start", and the noise is incidental. P(>=7 | 10 x 0.133 = 1.33) is negligible.
+- **<= 2 of 10 form** -> **the NOISE TRAJECTORY decides**; placement is incidental, and a "forming seed"
+  is just a lucky thermal history. This would also explain why no static property of a seed predicts
+  formation.
+- **3-6 of 10** -> **both contribute**; report the split rather than pick a story.
+
+### PRECISION NOTE ON EVERY "step 0" IN THIS LOG
+
+`_mixture.py:962-964` runs `X = ig.step(X)` **before** the checkpoint test, so **the row labelled step 0
+is actually one step in.** Visible directly in the new arm: **identical placements give E/lip spanning
+6.68 to 6.83** purely from one step of noise. **No plant-integrity claim is affected** -- one step barely
+moves anything -- but the label is off by one and that is now on the record.
+
+### CULLED
+
+**`emerge2`** (8 seeds, N=104/L=92) -- **3x more dilute than anything that has ever formed here**, and
+the user asked to focus on conditions 1 and 2. `emerge3` (N=208/L=92, twice the density) continues.
+**79 -> 71, then +10 = 81.**
+
+### STILL UNREAD
+
+**lam30** 10 at 76-88k of 300k -- the third point of the lambda(chi_TW) curve.
+**deno** 18 at 500-640k of 1.6M, **1/18 formed**. **rest22** 22 at 740-820k, 0/22 debounced.
+**n120** 10 at 920k-1.04M. **emerge3** 6 at 80k. **fineform** 3 at 392-426k of 600k.

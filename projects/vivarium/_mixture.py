@@ -924,7 +924,14 @@ if __name__ == "__main__":
 
         ig = _TransformerEngine(_tf, X, kT, dt, 1 + seed)
     else:
-        ig = Inertial(f, kT, dt, seed=1 + seed)
+        # WHY THE SEED MATTERS -- separable at last. One argv seed has always fixed BOTH the initial
+        # placement (`build(..., seed=seed)`) and the entire thermal-noise realisation (here), so no
+        # experiment could tell which one decides whether a run forms a vesicle. Twelve seeds reproduce
+        # their formation step exactly and nothing measurable at the eligibility crossing predicts the
+        # lag, which leaves exactly this question open. VIVARIUM_NOISE_SEED overrides only the noise, so
+        # placement and noise can be varied one at a time. Unset, behaviour is bit-identical to before.
+        _noise = int(os.environ.get("VIVARIUM_NOISE_SEED", 1 + seed))
+        ig = Inertial(f, kT, dt, seed=_noise)
 
     print(f"MIXTURE {d}-D: {n_short} short (2 tails) + {n_long} long (4 tails) + {n_water} water, "
           f"L={L}, packing fraction {phi}, kT={kT}, start={plant}", flush=True)
