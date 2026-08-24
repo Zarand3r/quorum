@@ -23520,3 +23520,68 @@ so **lambda ~ 0 by construction**; the direct ring-versus-arc measurement gives 
 tails hydrophobic gives **-5.15 +- 1.49**, i.e. closure gets worse. There is no "~81 kT to gain."
 kappa is **not measurable** here by any of three routes; best estimate 13.84 +- 10.91 eps*sigma, hi/lo
 ratio 8.47, failing the pre-registered factor-2 bar, and **kappa is closed as a line of work.**
+
+## Tick: the 2/18 formations are VISUALLY CONFIRMED. A new tool, and a bad statistic retracted.
+
+### THE PROBLEM WITH EVERY RENDER SO FAR
+
+In the whole-box frame at L = 65, sd45007's 66-lipid cluster is one of six structures and about a third
+of the frame width. **I looked at it this tick and could not tell whether it was closed.** Every
+"vesicle" claim in this project has rested on the detector, with the render unable to confirm or deny.
+
+### NEW TOOL: `cluster_shot.py`
+
+Isolates the largest cluster, **unwraps it across the periodic boundary** (BFS placing each neighbour at
+its minimum image, so a boundary-crossing ring is not drawn as two arcs), centres it, renders it alone.
+
+### THE STATISTIC I NEARLY REPORTED, AND WHY IT IS WRONG
+
+Radius-from-centroid as a ring test:
+
+| state | beads | extent | mean r | sd | **CV** |
+|---|---|---|---|---|---|
+| sd45007 (nves=1, 8 consecutive) | 330 | 21.5 x 40.2 | 11.18 | 5.10 | **0.456** |
+| sd45004 (nves=0, branched) | 615 | 49.2 x 50.6 | 16.85 | 7.09 | **0.421** |
+
+**Nearly identical, and both far above the CV << 0.2 a closed ring should give.** On that number I was
+about to report that the gate cannot separate a vesicle from a network and that **2/18 is an artifact.**
+
+**Then I looked. The number is real and the inference was wrong.** sd45007 is **a closed bilayer ring
+with a ribbon tail attached** -- a balloon on a string. **The tail inflates the CV**, so a tailed vesicle
+scores like a ribbon. **RETRACTED: radius CV is not a ring discriminator in this system.**
+
+### WHAT THE ISOLATED RENDERS ACTUALLY SHOW
+
+**sd45007 at 960000: a genuine vesicle.** Closed ring, clear void, and the wall is a correct bilayer
+cross-section -- tails orange in the middle, **heads blue on BOTH the outer surface and the lumen-facing
+inner surface**. Metrics: largest 66, lumen_c 460, nenc 1, nves 1 for 8 consecutive checkpoints,
+`perc = n` at all 49 checkpoints, so no periodic-wrap artifact. R_mid 11.16, and a ring of that radius
+encloses pi*11.16^2 = 391 cells against 460 measured. **Self-consistent.**
+
+**sd45004 at 900000: a branched network**, with the small triangular gap that produced `nenc = 1` for 16
+checkpoints. **The gate was right to reject it.**
+
+**CONCLUSION: 2/18 STANDS, now confirmed by picture as well as by metric.** This is the first time in the
+project the two have agreed under an isolating render rather than flattering each other.
+
+### ENGINE COST: PARITY (n = 5 matched reps each)
+
+400 steps, N = 208, L = 92, alternating order on the same loaded machine, user CPU time:
+
+| engine | mean | sd | sem |
+|---|---|---|---|
+| integrator | **20.65** | 1.66 | 0.74 ms/step |
+| transformer | **21.17** | 2.42 | 1.08 ms/step |
+
+**No cost penalty for expressing the dynamics as masked attention heads.** The difference is 0.52 +- 1.31
+ms/step, consistent with zero. **Not reporting a difference.** Earlier in this tick emerge3T appeared
+stalled at step 0; it was not, it had simply not reached its first 20000-step checkpoint, at ~280 CPU-s
+against the ~394 CPU-s a checkpoint costs.
+
+### THE AUTONOMOUS LOOP IS STOPPED HERE
+
+Cron `c072ec5e` cancelled. **This tick produced real progress**, but the headline numbers have not moved
+in many ticks: **2/18 formation from a dispersed start, ZERO runs with nves >= 2 from a dispersed start
+ever, kappa closed as unmeasurable, lambda retracted to ~0.** What remains in flight (`pocket` 5
+replicas, `emerge3T` 6 transformer seeds, `varA`/`varB` 15+15, `noise`/`place`) all carry pre-registered
+criteria and will resolve without supervision. Next deliverable is the written paper.
