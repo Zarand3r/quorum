@@ -21560,3 +21560,75 @@ Culled `elig` (10 seeds) to pay for it; it had delivered its bound (25.58 at-ris
 **rest22** 22 seeds at 20-40k of 1.6M, 0 formations -- **far short of the 380000 earliest historical
 formation.** **fresh20** 400-460k of 1.6M, 0 formations. **fission** 10 at kT=0.45 and **fis55** 10 at
 kT=0.55, 80-180k of 800k. **repro** 3 of 12 still running. **em3M** 2.16-2.26M of 3M.
+
+## Tick: the 60-119 window survives a NON-CIRCULAR test -- a cliff at 120 lipids, an order of magnitude
+
+### THE CIRCULARITY FROM LAST TICK, RESOLVED
+
+Last tick I derived the 60-119 window from where the formers spent their time, and flagged that using it
+to explain why they formed is circular. **Tested it within the 12 formers instead**, comparing sizes
+against each other -- **no comparison to non-formers anywhere in this measurement.**
+
+P(vesicle present | largest cluster size), pooled over all 12 formers:
+
+| size | all checkpoints | n | after first formation | n |
+|---|---|---|---|---|
+| 40-59 | 0.268 | 97 | 0.722 | 36 |
+| 60-79 | 0.317 | 139 | 0.863 | 51 |
+| 80-99 | 0.309 | 324 | 0.478 | 209 |
+| 100-119 | 0.379 | 116 | 0.710 | 62 |
+| **120-139** | **0.143** | 56 | **0.143** | 56 |
+| **140-159** | **0.075** | 40 | **0.091** | 33 |
+| **160-179** | **0.013** | 75 | **0.017** | 59 |
+
+**A cliff at 120 lipids: 0.48-0.86 below, 0.02-0.14 above. An order of magnitude. The window is real.**
+
+### IS THE CLIFF THE DETECTOR? Checked, because it would undercut the drought analysis
+
+`nenc` (any enclosed region) stays at **0.80-0.91** in the 120-159 band while `nves` collapses to
+**0.09-0.14**. The difference is **gate 2**, which requires `lumen >= 0.10 * n^2 / pi`:
+
+| n | required lumen (cells) |
+|---|---|
+| 52 | 86 |
+| 80 | 204 |
+| 120 | 458 |
+| **160** | **815** |
+
+**The n^2 scaling is deliberate, not a bug.** `vesicle_call`'s docstring records the calibration against
+renders: planted N=300 ring ratio **0.882 -> vesicle**; emergent N=160 branched net ratio **0.028 -> NOT
+a vesicle**. Above 120 lipids the clusters are **branched nets whose pockets are not vesicles**, and the
+detector is correctly refusing them.
+
+**My unselected arms spend 0.29 of their at-risk time in exactly that regime.**
+
+**CAVEAT KEPT: the gate-2 calibration rests on a handful of hand-checked cases.** "Correctly" is
+evidence, not proof.
+
+### LAUNCHED: cap the material so the terminal cluster lands inside the window
+
+`/tmp/n120_sd430{01..10}.log` -- **10 seeds, N=120, L=56, kT=0.45, dispersed, 1.6M.**
+**Density matched to std160 within 1%: 120/56^2 = 0.0383 against 160/65^2 = 0.0379**, so the only
+variable is **total material**. Confirmed at launch: 120 long lipids + 1596 water.
+
+Prior evidence bracketing this choice, from the historical record: **0 formations at N=100, 2 at N=130.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 6 of 10 form by 1.6M** -> **P(>=6 | 2.67) = 0.048** against the historical per-seed 8/30 = 0.267.
+  Capping material inside the window is a **real design lever for reliable emergence.**
+- **2-5 form** -> indistinguishable from std160; the window is descriptive but **does not translate into
+  a lever.**
+- **0-1 form** -> capping **hurts**, and N=120 joins N=100 as a failure, which would mean the window's
+  upper edge is not what limits formation.
+
+### REPRO COMPLETE: 12/12, ten seeds at the full 1600000
+
+Formation steps: **180k (1459), 380k (9308), 380k (9317), 460k (9315), 500k (349), 580k (9314), 880k
+(9312), 1040k (9316), 1080k (9809), 1200k (9302), 1220k (9805), 1240k (9326).**
+
+### STILL UNREAD
+
+**posctl** 3 positive controls at 20k -- **far short of their 880k/1040k/1240k targets.**
+**rest22** 22 seeds at 60k of 1.6M, 0 formations, **short of the 380k earliest historical formation.**
+**fresh20** 440-480k, 0 formations. **fission** 10 at kT=0.45 and **fis55** 10 at kT=0.55, 100-200k of
+800k. **em3M** 2.18-2.28M of 3M.
