@@ -22365,3 +22365,65 @@ the historical record already scores N=100 at **0 formations**.
 **rest22** 22 at 440-480k of 1.6M, **0 formations**, biggest **145**. **deno** 18 at 200-280k.
 **n120** 10 at 500-560k. **finecmp** 5 at 176-188k, still zero enclosures.
 **fineform** 3 at 84-86k of 600k. **ultra** sd55001 at 148000; its event sits at 240000.
+
+## Tick: chi_HH lever DEAD at 13 seeds -- last tick's "16x" was an n=5 artifact of the baseline's unsampled tail
+
+### RETRACTED: "chi_HH = 0.60 holds two vesicles 16x longer"
+
+At **5 seeds per arm** the 0.60 arm reached 24500 against a baseline whose longest was 1500. **At 13
+seeds per arm:**
+
+| arm | held past 5000 | last-seen steps |
+|---|---|---|
+| chi_HH = 0.60 | **4/13** | 38500, 10500, 10500, 5500, 1500, 500, 500, 500, 0, 0, 0, 0, 0 |
+| chi_HH = 0.20 | **2/13** | **36000**, 6500, 2500, 1000, 500, 500, 500, 0, 0, 0, 0, 0, 0 |
+
+**Fisher p = 0.6447. Head-head repulsion is NOT the lever.**
+
+**The baseline itself reaches 36000 steps** once 13 seeds are drawn instead of 5. **The "16x the longest
+baseline survival" was an artifact of n=5 -- the baseline's tail was simply not sampled.** This fires the
+third clause I pre-registered: *"baseline also produces long holds -> the effect is not in the chi
+change."*
+
+### THE REAL QUANTITY: a heavy-tailed survival distribution
+
+Pooled over all 26 seeds, survival of `nves = 2` from the verified state:
+
+```
+0 x11,  500 x6,  1000,  1500,  2500,  5500,  6500,  10500,  10500,  36000,  38500
+```
+
+**median 500 | mean 4442 | max 38500.** Eleven seeds lose the second vesicle before the first
+checkpoint. For reference the **original, non-restarted trajectory held it 1000 steps** (77500-78000) --
+an unremarkable draw from this distribution.
+
+**Any future lever must beat this, and n = 5 cannot see it.** Recorded so the next lever is not tested
+under-powered again.
+
+### LAUNCHED: vesicles BORN APART instead of born by pinching
+
+Every two-vesicle state measured so far was **born by pinching** -- the lobes start in contact, which is
+why they re-fuse. The untested alternative is **independent nucleation.**
+
+`/tmp/apart_sd610{01..05}.log` -- **5 seeds from the two-ring state** (`mix2d_tworing_N104_L92_...sd0`,
+two independent 52-lipid vesicles in an L=92 box, **separated from the start**), kT = 0.55,
+`CHECKPOINT_EVERY = 500`, 200k. **All five confirmed at step 0: `largest = 52, lumen = 362, nenc = 1,
+nves = 2`.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **`nves = 2` sustained past 20000 steps in >= 3 of 5** -> **being born apart is what matters**;
+  multiplicity requires **independent nucleation, not fission**, and the pinch route is a dead end.
+- **All 5 lose it within 1500 steps, as the pinch products did** -> proximity of birth is **not** the
+  issue; something else drives merger.
+- **The 52-rings OPEN rather than merge** (`nenc` to 0 with two clusters still present) -> this
+  reproduces the known 52-ring instability and **says nothing about multiplicity**; FAILED MANIPULATION.
+
+### CULLED: 21 processes
+
+**`chihh`** (13) and **`twoves`** (8) -- both answered above. **82 -> 61, then +5 = 66.**
+
+### STILL UNREAD
+
+**rest22** 22 at 460-500k of 1.6M, **0 formations**, biggest **151**. **deno** 18 at 220-300k.
+**n120** 10 at 520-580k. **finecmp** 5 at 192-206k, still zero enclosures.
+**fineform** 3 at 102-104k of 600k. **ultra** sd55001 at 165000; its event sits at 240000.
