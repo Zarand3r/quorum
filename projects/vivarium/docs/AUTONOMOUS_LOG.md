@@ -22581,3 +22581,78 @@ long lipids + 5407 water; the new banner reports effective HH -0.800, HT -0.500,
 **rest22** 22 at 520-580k of 1.6M, **0 formations**, biggest **154**. **deno** 18 at 280-380k.
 **n120** 10 at 620-700k. **finecmp** 5 at 266-288k, still zero enclosures.
 **fineform** 3 at 172-182k of 600k. **ultra** sd55001 at 234000; its event sits at 240000.
+
+## Tick: sd55001's event is 5500 steps, not one checkpoint -- and "born apart" is CONFOUNDED with box size
+
+### REVISED: the pinch-born event is longer and more frequent than reported
+
+`ultra` sd55001 reached its event at 500-step resolution. **Seven distinct `nves >= 2` episodes:**
+
+| start | end | ckpts | steps |
+|---|---|---|---|
+| 121000 | 121500 | 2 | 1000 |
+| 122500 | 122500 | 1 | 500 |
+| 147500 | 147500 | 1 | 500 |
+| 197000 | 197000 | 1 | 500 |
+| **238500** | **243500** | **11** | **5500** |
+| 244500 | 244500 | 1 | 500 |
+| 248500 | 248500 | 1 | 500 |
+
+**The coarse 20000-step run recorded ONE checkpoint** (240000, with 220000 and 260000 both merged).
+Through the long episode the cluster sits at **57 lipids with a 273-323 cell lumen**.
+
+**My earlier claim that pinch-born states last 1000-1500 steps was based on sd55002 alone. sd55001's
+longest is 5500 -- 4x that** -- and the pinch route produces **repeated brief separations**, not one
+rare event.
+
+### CONFOUND I HAVE BEEN IGNORING, NOW NAMED
+
+I attributed last tick's result to **being born apart**. But:
+
+| arm | N | L | density |
+|---|---|---|---|
+| born apart | 104 | **92** | 0.0123 |
+| born by pinching | 160 | **65** | 0.0379 |
+
+**Box size and density differ too.** Longest continuous episode, all at 500-step resolution:
+
+| origin | longest episodes (steps) |
+|---|---|
+| **born apart, L=92** | **40500, 29000, 19500, 16500, 12500** |
+| born by pinching, L=65 | 5500 (sd55001), 1500 (sd55002) |
+
+**3x to 27x longer -- but separation-at-birth and box size are not separated.**
+
+### LAUNCHED: the one-variable test
+
+`/tmp/apartsm_sd640{01..05}.log` -- **the SAME two rings, same N=104, same kT=0.55, transplanted into
+L=65** (density 0.0123 -> 0.0246), `CHECKPOINT_EVERY = 500`, 100k.
+
+**Plant integrity verified: all five identical at step 0 -- `largest 52, lumen 362, nenc 1, nves 2`,
+exactly matching the L=92 source.** Unlike the earlier L=65 -> L=92 transplant, which broke the plant
+(160 -> 119 lipids, `nenc` 2 -> 1), **this one is undamaged.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **Longest episodes stay in the 12000-40000 range** -> **being born apart is what matters**; the box is
+  incidental, and multiplicity needs independent nucleation.
+- **Longest episodes collapse to the 1500-5500 range of the pinch products** -> **the BOX was doing the
+  work**, not separation at birth; **last tick's "born apart" reading is withdrawn** and dilution
+  becomes the lever.
+- **The rings OPEN rather than merge** (`nenc` to 0 with two clusters still present) -> reproduces the
+  known 52-ring instability; the run says nothing either way.
+
+### BORN-APART ARM, current episode structure
+
+| seed | episodes | longest | to step |
+|---|---|---|---|
+| 61001 | 2 | **40500** | 50500 |
+| 61002 | 3 | 29000 | 43500 |
+| 61003 | 1 | 19500 | 43500 |
+| 61004 | 1 | 16500 | 47000 |
+| 61005 | 8 | 12500 | 46000 |
+
+### STILL UNREAD
+
+**emerge2** 8 at step 0 of 1.6M -- the emergent-multiplicity attempt at N=104/L=92.
+**rest22** 22 at 540-600k, **0 formations**, biggest **154**. **deno** 18 at 300-400k, biggest 137.
+**n120** 10 at 640-720k. **finecmp** 5 at 284-316k, still zero enclosures. **fineform** 3 at 196-206k.
