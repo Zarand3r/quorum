@@ -22815,3 +22815,72 @@ Step 0 verified: `largest = 80, R_mid = 17.34, nenc = 0`.
 **emerge2** 8 at 40k, **emerge3** 6 at 20k of 1.6M -- **0 checkpoints with `nves >= 2`** across both,
 and across every dispersed run in project history. **rest22** 22 at 620-680k, 0 formations, biggest 154.
 **deno** 18 at 380-500k. **n120** 10 at 740-840k. **finecmp** 5 at 372-400k. **fineform** 3 at 266-288k.
+
+## Tick: lambda RETRACTED again -- consistent with ZERO at n=9 paired; chi_TW = 0 is why, and the code said so
+
+### RETRACTED: last tick's lambda = 5.41 +- 1.40 eps
+
+Six of the ten new `arc0.95` seeds produced **both** states. Paired `delta E/lip` (open minus closed):
+
+```
+  -0.0679   -0.1087   +0.1842   -0.0009   -0.1389   +0.0885
+```
+
+**Four of six are NEGATIVE** -- the closed state **higher** in energy than the open one.
+
+| set | n | delta E/lip | t | lambda |
+|---|---|---|---|---|
+| first 3 seeds (last tick) | 3 | **+0.1353 +- 0.0349** | +3.87 | +5.41 +- 1.40 eps |
+| **6 NEW seeds** | 6 | **-0.0073 +- 0.0507** | **-0.14** | **-0.29 +- 2.03 eps** |
+| **ALL 9 paired** | 9 | **+0.0403 +- 0.0417** | **+0.97** | **+1.61 +- 1.67 eps** |
+
+**The pre-registered clause fires: *"the paired delta is consistent with zero at n >= 5 -> there is no
+measurable line tension at n=80."*** Last tick's +5.41 was a **three-seed artifact**, flagged at
+p ~ 0.06 at the time for exactly this reason.
+
+### THE CODE ALREADY KNEW, AND SAYS SO
+
+`field.py:98-105`: *"TAIL-WATER IS THE TERM THAT PRICES A BILAYER EDGE. At 0.00 a tail is INDIFFERENT
+to water... the direct ring-versus-arc comparison at N = 300, time-averaged over the plateau, gives
+lambda = +2.8 +- 2.8 eps, consistent with zero, against the +18.31 +- 7.07 the intercept route claimed.
+With no cost to an exposed edge there is no drive to close one, which is why every arc in this project
+has unrolled."*
+
+**My +1.61 +- 1.67 independently reproduces that +2.8 +- 2.8**, at a different size (n=80 vs 300) and
+**with matched radius** (17.34 vs 17.47), which the earlier one did not have.
+
+**THE STANDING PLAN'S PREMISE WAS NEVER SATISFIABLE: lambda ~ 0 BY CONSTRUCTION, because
+`chi_TW = 0.00`.** There is no edge energy to save. That is why no threshold ribbon length exists
+(0/320 checkpoints, n=70-200) and why the **gap** -- not length, not energy -- controls closure.
+
+### LAUNCHED: the lever the code itself names
+
+Same comment: *"making tails hydrophobic means driving this below zero."* **Never swept in this
+session.**
+
+`/tmp/tw60_sd670{01..05}.log` (**chi_TW = -0.60**) and `/tmp/tw30_sd680{01..05}.log` (**chi_TW = -0.30**)
+-- **`arc0.75`, n=80, L=44, kT=0.45, 300k, 5 seeds each.** Banner confirms the raw table in every log.
+
+**`arc0.75` at n=80 is the WIDE gap (26.7 sigma) that closes 0/5 and 0/80 checkpoints at chi_TW = 0.00**
+-- the cleanest possible negative baseline.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 3 of 5 close at chi_TW = -0.60** -> **line tension DOES drive closure once it exists**; the
+  standing plan's framing was right and only the parameter was zero. The edge-vs-bend picture is
+  reinstated for a model with a real edge cost.
+- **0 of 5 at both -0.30 and -0.60** -> **the gap remains the control variable even with an edge cost**;
+  closure here is geometric/kinetic, not energetic, and the continuum framing does not apply to this
+  model at all.
+- **The bilayer fails to hold** (`largest` collapsing below 60, or the arc dissolving) -> **FAILED
+  MANIPULATION**: chi_TW < 0 also strengthens the hydrophobic drive, so the membrane itself may
+  restructure; report as that, not as a null.
+
+### CULLED
+
+**`lam`** (10) and **`apartsm`** (4) -- both answered. **88 -> 74, then +10 = 84.**
+
+### STILL UNREAD
+
+**emerge2** 8 at 40-60k, **emerge3** 6 at 20-40k of 1.6M -- **0 checkpoints with `nves >= 2`**, biggest
+clusters 11 and 14. **rest22** 22 at 640-720k, 0 formations, biggest 154. **deno** 18 at 400-520k.
+**n120** 10 at 780-880k. **finecmp** 5 at 400-428k. **fineform** 3 at 292-316k.
