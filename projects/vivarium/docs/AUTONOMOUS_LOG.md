@@ -20598,3 +20598,69 @@ predicts 5/5.**
 comparison against n=80's 0.350 is pre-registered at 300k. **ring52L92** 80k of 300k, 5/5 still closed.
 **arc200b** 220-240k of 300k. **fs025** 60k of 600k. **em3M** 500-540k of 3M. **kT035** 280k,
 **kT055** 320-340k of 600k, both carrying the solvent confound.
+
+## Tick: gap-matched arcs confirm it -- gap controls closure, length and RADIUS do not
+
+### READ AT THE END: gap pinned at 4.2 sigma, ribbon length varied
+
+| arm | n | span | radius | seeds closed at 300k | checkpoints closed |
+|---|---|---|---|---|---|
+| gap52 | 52 | 0.925 | 8.95 | **3/5** | 41/80 = **0.512** |
+| arc80 | 80 | 0.95 | 13.40 | 2/5 | 28/80 = **0.350** |
+| gap120 | 120 | 0.966 | 19.77 | 2/5 | 18/45 = 0.400 -- **at 160k, NOT READ** |
+
+Pre-registered criterion: *"both arms land within ~2x of 0.350 -> the end gap is the control variable
+and lipid count is irrelevant from 52 to 120."* **n=52 gives 0.512, a factor of 1.46. It passes.**
+
+Against the large-gap arms -- **0.000 across n=70, 80, 120 in 234 checkpoints at 26.7 sigma** -- a **6x
+change in gap moves closure from 0 to ~0.4**, while a **2.3x change in length at fixed gap moves it
+1.46x.**
+
+**The confound from the span scan is also settled.** Radius varies **2.2x** across these three arms at
+fixed gap. Bending cost goes as `pi*kappa/R`, so the critical-size picture predicts the **smallest**
+radius (n=52, R=8.95) should close **least**. It closes **most**, 0.512 vs 0.350. **The trend runs
+opposite to the prediction.** At 1.46x on five seeds this is reported as **"radius is not the control
+variable"**, not as a reversal.
+
+### NEGATIVE RESULT AGAINST MY OWN HYPOTHESIS
+
+If closure needs ends within ~4 sigma, **smaller aggregates should help** -- a short ribbon curls
+tighter. Final read of the mixed-tail arms at 600000:
+
+| arm | n | largest cluster | vesicle checkpoints |
+|---|---|---|---|
+| fs = 1.0 | 6 | 13.8 +- 4.4 | **0** |
+| fs = 0.5 | 5 | 38.0 +- 8.8 | **0** |
+
+**38-lipid aggregates over 600k steps in 6 seeds produced zero closures.** Making emergent aggregates
+smaller does **not** produce closure. Recorded because it cuts against the gap story, not for it.
+
+(The 600000 values 13.8 / 38.0 are consistent with the 580000 pre-registered read of 11.5 / 39.8.)
+
+### LAUNCHED: the missing point of the dose-response curve
+
+`/tmp/arc80s090_sd830{1..5}.log` -- **n=80, L=44, `arc0.90`, 300k, 5 seeds.** Gap =
+`n*lat*(1-span)/(2*span)` = **8.9 sigma**, between the 0.85 arm's 14.1 and the 0.95 arm's 4.2.
+Plant intact and open at step 0 (`largest=80, lumen_c=0, nenc=0`).
+
+Existing curve at n=80: **0.75 -> 0.000, 0.85 -> 0.027, 0.95 -> 0.350.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **0.90 lands between 0.027 and 0.350** -> the gap is a **graded** control variable across four spans,
+  and the dose-response is monotone.
+- **0.90 comes out at ~0.350, or at ~0.027** -> the transition is **sharp, not graded**, and sits
+  between 0.85-0.90 or 0.90-0.95 respectively; the log will say which.
+- **0.90 exceeds 0.350 or falls below 0.027** -> non-monotone, and **the gap ordering is not the
+  explanation** -- this tick's conclusion would then need withdrawing.
+
+### STALE-LOG TRAP, THIRD OCCURRENCE
+
+`/tmp/repro_sd9300.log` and `repro_sd9301.log` appear finished. **They are not mine** -- my
+reproducibility seeds are 9302, 9308, 9314, 9315, 9317, all alive at 40-60k of 1.6M. Caught by the
+live-`/proc/<pid>/fd/1` check, same as `arc120_sd0..5` and `arc200b_sd0..4` before it.
+
+### STILL UNREAD
+
+**gap120** 160k, **arc200b** 240-260k, **ring52L92** 100k (4/5 closed), **arc80s090** 0k -- all of 300k.
+**repro** 40-60k of 1.6M -- the 5/5 prediction stands untested. **fs025** 120-140k of 600k (largest
+22-42). **em3M** 560-600k of 3M. **kT035** 320-340k, **kT055** 380-400k of 600k.
