@@ -20245,3 +20245,89 @@ the pre-registered read is 600k.
 **ring52** 220-260k, **ring120** 180-200k, **arc120** 160-180k, **arc200b** 100-120k of 300k.
 **tworing** 540-590k of 600k. **fs100b/fs050b** 260-320k of 600k. **cap80b** 280-300k of 1.6M
 (largest 14-19). **em3M** 260k of 3M (largest 31, 33, 43, 50, 72). **kT035/kT055** 20-40k of 600k.
+
+## Tick: an 80-lipid arc with a 5% gap CLOSES -- the barrier is the END GAP, not the lipid count
+
+### FIRST CLOSURE FROM A PLANTED OPEN STATE THIS SESSION
+
+`arc0.95`, n=80, L=44, matched to ring80 in every respect:
+
+| seed | 20000 | 40000 | 60000 |
+|---|---|---|---|
+| 9601 | **lumen 1383, nenc 1** | 1340, 1 | 1352, 1 |
+| 9602 | 0 | **1307, 1** | 1260, 1 |
+| 9603 | 0 | 0 | -- |
+| 9604 | 0 | 0 (largest fell to 49) | -- |
+| 9605 | 0 | 0 | -- |
+
+**2/5 closed, both within 40k, and both stayed closed.** The render of sd9601 at 60000 shows a complete
+two-leaflet ring with no gap. **Render and metric agree.**
+
+### THE PRE-REGISTERED CLAUSE FIRES, WITH A NUANCE THAT MATTERS
+
+Last tick I wrote: "the arc closes -> the bistability claim is wrong and must be withdrawn." **It fires.**
+But the arc that closes is **not the arc that established bistability**:
+
+| plant | n | planted R | end gap | closed by 300k |
+|---|---|---|---|---|
+| `arc0.75` | 70 | 14.85 | ~23 sigma | **0/5** |
+| `arc0.95` | 80 | 13.40 | **~4.2 sigma** | **2/5 by 40k** |
+| `ring` | 80 | 12.73 | 0 | 5/5 stay closed |
+
+**Withdrawn: the generality.** It is NOT true that open arcs never close. **Retained: bistability at
+fixed geometry** -- a 23-sigma gap does not close in 300k while a closed ring stays closed.
+
+**Corrected claim: the kinetic barrier is set by the END-TO-END GAP, not by the lipid count.** Both
+geometries have ~80 lipids; they differ 6x in gap and completely in outcome.
+
+### LAUNCHED: the span scan that turns this into a curve
+
+`/tmp/arc80s075_sd980{1..5}.log` and `/tmp/arc80s085_sd970{1..5}.log` -- **n=80, L=44, 300k, 5 seeds
+each**, joining the running `arc0.95`. Identical lipid count, box, water, chi and kT.
+
+Gap arc-length = `R*(1-span)*2pi` with `R = n*lat/(4*pi*span)`: **span 0.75 -> 26.7 sigma,
+0.85 -> 14.1, 0.95 -> 4.2.** **Confound named up front:** planted radius covaries, 16.98 / 14.98 /
+13.40, but only 1.27x against the gap's 6.4x.
+
+**FALSIFICATION, stated before any 0.75 or 0.85 checkpoint is read:**
+- **Closure fraction at 300k rises monotonically with span** -> the end gap is the control variable for
+  closure in this model, and lipid count is not.
+- **Closure fraction is flat across span** -> the gap is not the control variable and the `arc0.95`
+  closures are something else, most likely relaxation of a nearly-closed plant.
+- **`arc0.75` at n=80 closes as often as `arc0.95`** -> contradicts `arc70b`'s 0/5 at the same span, and
+  the difference would have to be the lipid count after all.
+
+### PRE-REGISTERED SOLVENT CHECK ON THE kT SCAN: it fires, but graded
+
+Water density CV on a 4-sigma grid, and the fraction of empty cells:
+
+| arm | n | CV | empty |
+|---|---|---|---|
+| kT = 0.35 | 5 | **0.694 +- 0.011** | 0.123 |
+| kT = 0.45 (baseline) | 6 | 0.586 +- 0.017 | 0.073 |
+| kT = 0.55 | 5 | 0.490 +- 0.009 | 0.044 |
+
+Monotone; **kT=0.35 vs baseline is t = 12.7.** But this is an **18% degradation, not the catastrophic
+two-phase solvent that `chi_WW = 1.00` produced**, and the baseline itself is not uniform.
+
+**Conclusion, stronger than "failed manipulation": temperature cannot be varied independently of solvent
+quality in this model.** The solvent's structure is itself temperature-dependent, so **every kT result
+here is confounded by a measurably different solvent.** Recorded as a limitation of the model, not of
+this run. The kT arms keep running; their lipid numbers will be reported with this confound attached.
+
+### tworing REACHED 600000 (2 of 5 seeds)
+
+sd4: `largest 52, lumen_c 0, nenc 0` -- open. sd5: `largest 52, lumen_c 337, nenc 1, nves 1` -- closed.
+Three seeds still short. Final verdict held until all five land.
+
+### CULLED: cap80b, 8 seeds at 300k of 1.6M
+
+Largest cluster stuck at **14-19 lipids** after 300k; it needed **10.4M more steps** to reach the size
+where closure happens. **The capped-material question is abandoned** -- stated as a trade, not dropped.
+
+### STALE-LOG TRAP CAUGHT AGAIN
+
+`/tmp/arc120_sd0..5.log` and `/tmp/arc200b_sd0..4.log` show "finished at 300000" but **no live process
+writes them** -- another session's files sharing my glob. My arc120 seeds are 9201-9205, alive at
+180-220k. `status.sh` plus the live/finished split caught it; **the raw glob would have reported a
+finished n=120 arc series that is not mine.**
