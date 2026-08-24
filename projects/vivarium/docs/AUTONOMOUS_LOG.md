@@ -20718,3 +20718,70 @@ prediction rather than a hopeful one.
 **arc200b** 260-280k, **gap120** 180-200k, **ring52L92** 120k (4/5 closed), **arc80s090** 60k -- all of
 300k. **fs025** 160k of 600k (largest 22-42). **em3M** 580-640k of 3M (largest 56, 57, 72, 77, 137).
 **kT035** 340-360k, **kT055** 420-440k of 600k.
+
+## Tick: the standing plan's test COMPLETES at n=200 -- no threshold ribbon length exists
+
+### READ AT THE END: arc200b, n=200, span 0.75, gap 66.7 sigma
+
+| seed | R_mid start -> end | ratio | largest | closed checkpoints |
+|---|---|---|---|---|
+| 9101 | 32.62 -> 33.45 | 1.03 | 200 | 0/16 |
+| 9102 | 32.62 -> 31.18 | 0.96 | 200 | 0/16 |
+| 9103 | 32.62 -> 31.79 | 0.97 | 200 | 0/16 |
+| 9104 | 32.61 -> 33.30 | 1.02 | 200 | 0/16 |
+| 9105 | 32.61 -> 27.82 | 0.85 | 175 | 0/16 |
+
+**0/5 closed, and the arcs did NOT unroll** -- radius held within 4% on four of five, plant intact at
+200/200 on four of five.
+
+### THE COMPLETE SPAN-0.75 SERIES, ALL READ AT 300000
+
+| n | seeds closed | checkpoints closed |
+|---|---|---|
+| 70 | 0/5 | 0/80 |
+| 80 | 0/5 | 0/80 |
+| 120 | 0/5 | 0/80 |
+| 200 | 0/5 | 0/80 |
+
+**320 checkpoints, zero closures, across a 2.9x range of ribbon length.**
+
+**The standing falsification cannot fire as written.** Its condition is *"if arcs of 70/120/200/300
+lipids ALL unroll at kT=0.45"* -- **none of them unroll.** The substantive question behind it is
+answered anyway.
+
+### THE CENTRAL RESULT OF THIS SESSION, NOW SYMMETRIC
+
+| gap | n=52 | n=70 | n=80 | n=120 | n=200 |
+|---|---|---|---|---|---|
+| **wide (26.7-66.7 sigma)** | -- | 0.000 | 0.000 | 0.000 | 0.000 |
+| **narrow (4.2 sigma)** | **0.512** | -- | **0.350** | 0.400* | -- |
+
+`*` gap120 at 260-280k, not yet read.
+
+**A wide gap gives zero at every length tested; a narrow gap gives ~0.4 at every length tested.**
+**The threshold ribbon length the standing plan was built to find does not exist up to 200 lipids.
+Length is not the operative variable. The end-to-end gap is.**
+
+### LAUNCHED: the last point that could still break the gap story
+
+Curve so far at n=80: **26.7 sigma -> 0.000, 14.1 -> 0.027, 4.2 -> 0.350.** It climbs steeply but
+**never passes half.**
+
+`/tmp/arc80s098_sd840{1..5}.log` -- **n=80, L=44, `arc0.98`, 300k, 5 seeds. Gap = 1.63 sigma**, ends
+nearly touching. Plant intact and open at step 0 (`largest=80, lumen_c=0, nenc=0`).
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **Closure fraction > 0.7** -> the curve **saturates toward certainty** as the gap closes, and the gap
+  is the whole story.
+- **Closure fraction 0.3-0.5, no better than span 0.95** -> closure **saturates below 1**, and something
+  other than the gap caps it. The leading candidate is the measured reversibility: arcs close and reopen
+  (sd9601 `0111000000010111`), so a ceiling on the closed *fraction* is expected even at zero gap.
+- **Closure fraction < 0.35** -> **non-monotone at the small-gap end; the graded-control reading is
+  withdrawn.**
+
+### STILL UNREAD
+
+**arc80s090** 240-260k, **gap120** 260-280k, **ring52L92** 160k (4/5 closed) -- of 300k.
+**repro** all **12 formers alive**, 60-180k of 1.6M -- the 12/12 prediction stands untested.
+**fs025** 240-260k of 600k, **mean largest 36.6 +- 12.3 (n=8), zero vesicle checkpoints.**
+**em3M** 660-720k of 3M. **kT035** 420-440k, **kT055** 520k of 600k.
