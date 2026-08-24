@@ -21296,3 +21296,75 @@ baseline -- **more** uniform, not less. The kT=0.35 direction was the dangerous 
 **fission** (kT=0.45) 5 seeds at step 0 of 800k. **elig + elig2** 20 seeds, **1.84 of 16 seed-Msteps
 at-risk, 0 formations.** **fresh20** 260-300k of 1.6M -- **11/20 now eligible** (up from 6), largest
 seen 99, 0 formations. **repro** 12/12, 1.32-1.58M. **em3M** 2.02-2.10M of 3M.
+
+## Tick: emergent vesicles are closed 0.458 of the time -- same axis as the planted arc dose-response
+
+### MEASURED: the emergent closed fraction, comparable to the arcs
+
+For each of the 12 reproduced formers, every checkpoint after first closure:
+
+| seed | first form | ckpts after | frac nves>0 | frac nenc>0 |
+|---|---|---|---|---|
+| 9302 | 1200000 | 21 | **1.000** | 1.000 |
+| 9308 | 380000 | 62 | 0.129 | 0.710 |
+| 9312 | 880000 | 28 | 0.214 | 0.000 |
+| 9314 | 580000 | 52 | 0.865 | 0.865 |
+| 9315 | 460000 | 58 | 0.466 | 0.983 |
+| 9316 | 1040000 | 26 | 0.154 | 0.692 |
+| 9317 | 380000 | 62 | 0.323 | 0.871 |
+| 9326 | 1240000 | 16 | **1.000** | 0.000 |
+| 1459 | 180000 | 68 | **0.074** | 0.838 |
+| 349 | 500000 | 53 | 0.887 | 0.925 |
+| 9805 | 1220000 | 14 | 0.643 | 0.786 |
+| 9809 | 1080000 | 16 | 0.625 | 0.625 |
+
+**POOLED: 218/476 = 0.458.**
+
+### THE UNIFICATION
+
+| object | closed fraction |
+|---|---|
+| planted arc, gap 26.7 sigma | 0.000 |
+| planted arc, gap 14.1 | 0.038 |
+| planted arc, gap 8.9 | 0.000 |
+| planted arc, gap 4.2 | 0.350 |
+| **EMERGENT vesicle** | **0.458** |
+| planted arc, gap 1.63 | 0.812 |
+
+**An emergent vesicle sits between the 4.2-sigma and 1.63-sigma planted arcs.** Once a membrane closes
+from a dispersed start it behaves like a small-gap arc: **flickering between closed and open, holding
+its lumen about half the time. The same two-state physics, reached without planting anything.**
+
+**Per-seed spread is 0.074 to 1.000**, so this is a **pooled** statement, not a property of any seed.
+
+**CAVEAT ON MY OWN TABLE:** sd9312 and sd9326 show nonzero `nves` with `nenc = 0.000`. Not a
+contradiction -- **the log's `nenc` covers only the LARGEST cluster while `nves` counts vesicles in any
+cluster**, so those seeds' vesicles are in a non-largest cluster. The columns measure different things;
+**0.458 (`nves`) is the figure comparable to the single-cluster arcs.**
+
+### LAUNCHED: both fission arms doubled, symmetrically
+
+`/tmp/fission_sd540{06..10}.log` (kT=0.45) and `/tmp/fis55_sd550{06..10}.log` (kT=0.55) -- **5 more each
+from the identical `twocomp_sd9317.npz`**, verified at step 0 with `largest=160, lumen=297, nenc=2`.
+**Now 10 seeds per temperature.**
+
+**PROCEDURAL NOTE, ON THE RECORD:** there is an **early hint** that the hotter arm is breaking clusters
+up (kT=0.55 sd55001 at `largest=92`, sd55005 at `largest=111`, versus 123-160 across all five at
+kT=0.45, at ~60-80k of 800k). **I added to BOTH arms equally and did not touch the pre-registered
+criterion.** Enlarging only the arm that looks interesting would have been exactly the wrong move, and
+these are early checkpoints of planted-derived restarts, which the standing rule says not to read as a
+trend. **The read remains 800000.**
+
+**The pre-registration stands unchanged**, now at n=10 per arm:
+- **>= 1 of 10 reaches `nves = 2` at kT=0.55 while 0/10 do at kT=0.45** -> fission is thermally
+  activated within +0.10 kT.
+- **0/10 at both** -> fission is not thermally accessible at +0.10 kT.
+- **`nenc` collapses to 1 markedly faster at kT=0.55** -> higher temperature **destabilises compartments
+  rather than splitting them.**
+
+### STILL UNREAD
+
+**elig + elig2** 20 seeds, **3.18 of 16 seed-Msteps at-risk, 0 formations.**
+**fresh20** 320-360k of 1.6M -- **14/20 eligible** (up from 11), largest seen 114. **The arm has just
+entered the window where the historical formers began closing (earliest std160 formation 380000).**
+**repro** 5 of 12 finished at 1.6M, 7 still running. **em3M** 2.06-2.16M of 3M.
