@@ -23377,3 +23377,54 @@ species chi table to **exactly 0.0**. Also green: one forward pass equals one in
 computes the model it claims to. The physics-side gap remains the one already recorded: **chi_TW = 0.00
 means the tails are not hydrophobic, so lambda ~ 0 by construction**, and closure here is geometric and
 kinetic with no energetic drive.
+
+## THE TRANSFORMER ARM WAS NEVER RUNNING THE TRANSFORMER
+
+**Commit c0c68f53 (Aug 22) says "transformer engine wired into the production driver; 6-seed emergence
+arm launched." The wiring is real. The launch was not.**
+
+`/tmp/launch_emerge3.sh` reads
+
+    setsid env VIVARIUM_CHI_HT=-0.25 VIVARIUM_CHI_WW=0.50 VIVARIUM_CHECKPOINT_EVERY=20000 ./..._mixture ...
+
+**`VIVARIUM_ENGINE=transformer` is absent.** `_mixture.py` defaults `_engine` to `"integrator"`, so all
+six seeds have been running `Inertial` -> `field.forces` for two days. Verified directly, not inferred:
+`/proc/<pid>/environ` for **all 108 live sims shows VIVARIUM_ENGINE unset**, and pid 2994711's parent is
+`/bin/bash /tmp/launch_emerge3.sh`.
+
+**Consequence, stated plainly: NOT ONE result in this project has been produced by the transformer path.**
+Every vesicle, every formation count, every lambda and kappa number came from the integrator calling
+`field.forces` directly. The transformer formulation is verified *equivalent* by unit test and by a
+200-step driver comparison, and it has never produced a science result.
+
+**RE-VERIFIED before relaunching** (200 steps, seed 65001, N=40, identical settings):
+
+| step | integrator E/lip, largest, core | transformer E/lip, largest, core |
+|---|---|---|
+| 0 | 1.56  4  1.289 | 1.56  4  1.289 |
+| 100 | -2.89  4  1.379 | -2.89  4  1.379 |
+| 200 | -3.29  4  1.412 | -3.29  4  1.412 |
+
+**LAUNCHED `emerge3T`**: the same 6 seeds (65001-65006), same 1.6M steps, N=208, L=92, phi 0.55,
+**with the flag**, verified after launch -- `6 VIVARIUM_ENGINE=transformer` in the live environs.
+**`emerge3` is kept running as a matched integrator control** at identical seeds and settings, so the
+pair is a real experiment rather than a repair: does the transformer path emerge vesicles at the same
+rate as the integrator it reproduces?
+
+**FALSIFICATION, before any checkpoint:** the two arms share seeds and the step is bit-identical for the
+first step, but chaos amplifies the summation-order difference (measured previously: 0 after 1 step,
+1.8e-15 after 20, 4.9e-08 after 400), so **trajectories will diverge and only the STATISTICS are
+comparable.** If emerge3T forms at a rate consistent with emerge3 and the integrator arms
+(~10/48 to date), the transformer formulation is doing the physics. **If emerge3T forms at a visibly
+different rate, something in the head decomposition differs beyond round-off and the equivalence claim
+is limited to short horizons.**
+
+### WHAT "TRANSFORMER-ONLY" DOES AND DOES NOT COVER
+
+**Holds:** every force is a masked attention head; one forward pass is one integrator step bit-for-bit;
+the token channel reproduces chi exactly (0.0, not a tolerance).
+**Caveats that must travel with the claim:** the attention is **unnormalised**, no softmax; `a(r)` and
+`b(r)` are **analytic** radial functions inside the score, filling the ALiBi role rather than being
+learned; and **`W1 = W2 = 0` in every run ever executed**, so the MLP contributes nothing to any result.
+`test_mlp_is_live_not_decorative` proves the block is wired, not that it is used. **There is no training
+anywhere.** This is a hand-specified force field written in attention form.
