@@ -21435,3 +21435,63 @@ would have silently deflated the hazard denominator.** Both killed; **8 clean se
 **fission** 10 seeds kT=0.45, **fis55** 10 seeds kT=0.55, both 20-120k of 800k. **fresh20** 340-400k of
 1.6M, **15/20 eligible**, 0 formations. **repro** 7 of 12 still running at 1.42-1.58M. **em3M**
 2.10-2.20M of 3M.
+
+## Tick: all 30 std160 runs were 1.6M -- the drought is now P ~ 0.004; relaunching the 22 non-formers
+
+### SETTLED: the historical run duration, read out of the state files
+
+Every one of the **30 std160 states (seeds 9300-9329) records a run target of 1600000 steps.** The
+assumption flagged last tick is resolved.
+
+**Historical std160: 30 seeds x 1.6M = 48 seed-Msteps, 8 formers.**
+**Per-seed 8/30 = 0.267. Rate on total time = 0.167 /Ms.**
+
+### THE DROUGHT IS NOW A STATISTICAL RESULT
+
+Pooled unselected at-risk exposure: **25.580 seed-Msteps, 0 formations. 95% upper bound 0.117 /Ms.**
+
+**At-risk time is a SUBSET of total time**, so a hazard measured on at-risk time should exceed the
+same-events-over-total-time rate. The bound is therefore **more restrictive than the raw comparison
+suggests.** Against the historical 0.167/Ms the pooled zero gives **P ~ 0.004.**
+
+### THE AWKWARD PART: the physics cannot have changed
+
+**8 of 8 std160 formers reproduce their formation step EXACTLY** (380k, 380k, 460k, 580k, 880k, 1040k,
+1200k, 1240k). Same code, same trajectories, bit-for-bit.
+
+So either **the historical 8/30 is not measured the way I measure formation**, or **some of the other 22
+seeds also formed and were never counted.**
+
+Only 4 of the 8 known formers show `nves = 1` in their *final* state (9302, 9312, 9314, 9326); the other
+four read 0 -- consistent with the measured flickering. **A final-state check cannot detect a seed that
+formed and reopened**, which is exactly how 22 "non-formers" could be mislabelled.
+
+### REVERSING A CALL I GOT WRONG
+
+Two ticks ago I culled the non-former control at 120k, calling it *"the lowest value per unit compute on
+the machine"* because it needed 380k to say anything. **It is now the sharpest measurement available:
+the exact historical seed set, run under my criterion.** Reversed.
+
+Culled `elig2` (10 seeds) and `elig3` (8) -- they had delivered their bound and were adding more of the
+same. **79 -> 61 processes**, then +22.
+
+### LAUNCHED: all 22 std160 non-formers, 1.6M, states backed up first
+
+`/tmp/rest22_sd{9300,9301,9303,9304,9305,9306,9307,9309,9310,9311,9313,9318,9319,9320,9321,9322,9323,
+9324,9325,9327,9328,9329}.log`. States copied to `docs/states_protected/` (now 29 files) **before**
+launch, so this cannot repeat the overwrite of four ticks ago.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 5 of 22 form by 1.6M** -> **8/30 badly understates the historical rate** (true >= 13/30), the
+  historical criterion was looser than mine, and **my other arms are the anomaly** rather than the
+  historical one.
+- **0-1 of 22 form** -> **8/30 is correct under my criterion**, and the gap between arms with identical
+  parameters and deterministic code is **genuine and unexplained**. That would be the strongest open
+  problem in the project.
+- **2-4 form** -> the historical rate is somewhat understated; the tension shrinks but does not close.
+
+### STILL UNREAD
+
+**fission** 10 at kT=0.45, **fis55** 10 at kT=0.55, 40-140k of 800k. **fresh20** 360-420k of 1.6M,
+**15/20 eligible**, leaders at 104/109/114 lipids, 0 formations. **elig** 10 seeds still accumulating
+at-risk time. **repro** 4 of 12 still running. **em3M** 2.12-2.22M of 3M.
