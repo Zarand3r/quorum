@@ -20176,3 +20176,72 @@ crossing, so its rate should be strongly temperature-dependent.
 
 **ring52** 140-160k, **ring80** 200-240k, **ring120** 120-160k, **arc120** 120-140k, **arc200b**
 80-100k. **tworing** 520-570k of 600k. **cap80b** 240-260k of 1.6M. **em3M** 220k of 3M.
+
+## Tick: ring80 5/5 CLOSED at 300k -- closure is bistable and KINETIC, not a size threshold
+
+### READ AT THE END: ring80, n=80, all five seeds at 300000 steps
+
+| seed | last step | largest | lumen_c | nenc | closed in last 5 | nenc=0 rows |
+|---|---|---|---|---|---|---|
+| 9301 | 300000 | 80 | 1089 | 1 | 5/5 | 1/15 |
+| 9302 | 300000 | 80 | 1090 | 1 | 4/5 | 2/15 |
+| 9303 | 300000 | 80 | 1028 | 1 | 5/5 | 3/15 |
+| 9304 | 300000 | 80 | 1084 | 1 | 5/5 | 0/15 |
+| 9305 | 300000 | 80 | 1015 | 1 | 5/5 | 0/15 |
+
+**5/5 closed.** The 6 `nenc=0` rows out of 75 (0.080) are consistent with the measured flicker rate of
+0.057. The render of sd9305 at 300000 shows a **genuine two-leaflet vesicle** -- heads on both faces,
+tails in the core, water-filled lumen. **Render and metric agree.**
+
+**This kills the branch I expected.** The pre-registration was "n=120 holds while n=80 mostly opens ->
+threshold between 80 and 120." n=80 holds 5/5. Rings at **52 (8/10 closed at 220-260k), 80 (5/5 at
+300k) and 120 (4/5 at 180-200k)** are all holding -- so **the tworing openings were not a size effect**,
+and something specific to that two-ring restart caused them.
+
+### CONCLUDED: bistability, so the obstruction is kinetic
+
+| plant | n | outcome at 300k |
+|---|---|---|
+| **ring (closed)** | 80 | **5/5 stay closed** |
+| **arc (open)** | 70 | **0/5 close**, and it does not flatten either |
+
+**Both states persist at essentially the same size, and neither converts into the other.** That is a
+barrier, not a threshold.
+
+**The standing plan's framing does not describe this system.** "Edge saved = 2*lambda, bending paid =
+pi*kappa/R, so a threshold ribbon length exists" predicts that at a given size **one** state wins.
+Instead both are stable. **Energetics cannot explain a barrier**, so measuring lambda and kappa -- even
+perfectly -- would not predict whether closure happens. The standing falsification ("if arcs of
+70/120/200/300 ALL unroll") also cannot fire: **the arcs do not unroll, they simply sit.**
+
+### LAUNCHED: the clean lambda measurement this finally makes possible
+
+`/tmp/arc80_sd960{1..5}.log` -- **n=80, L=44, `arc0.95`, 300k, 5 seeds.**
+
+Matched to ring80 in **every** respect: same lipid count, same box, same water, same chi, same kT --
+and **step-0 radius 17.34 against the ring's 17.47.** The two differ only in having two open ends.
+
+This removes the confound that forced the withdrawal of the **18.31 eps** figure, where ring R=11.14 was
+compared against arc R=14.85 so the difference was **-2*lambda + 0.1234*kappa**, not -2*lambda. At
+matched radius the difference is 2*lambda alone. **Five seeds per side, so both get an error bar** --
+the n=1 failure that made the n=52 comparison unusable (27.8 +- 22 eps, 1.3 sigma).
+
+**FALSIFICATION, stated before any arc80 checkpoint is read:**
+- **E/lip(ring80) - E/lip(arc80) resolves at >= 3 sigma** -> lambda measured cleanly at last;
+  2*lambda = 80 * the difference. Compare against the withdrawn 18.31 eps and the brief's 36.5 eps.
+- **The difference is under 1 sigma** -> the edge energy is below this estimator's noise floor at n=80,
+  as it already is at n=52, and **lambda is not measurable by energy differencing in this model.**
+- **The arc closes or the ring opens during the run** -> the bistability claim above is wrong and must
+  be withdrawn; that outcome takes precedence over any energy number.
+
+### SOLVENT SANITY CHECK ON THE kT ARMS (pre-registered to run first)
+
+kT=0.35 sd7001: step 0 E/lip 9.02 -> 20000 E/lip -6.71, largest 14. kT=0.55 sd7501: 4.70 -> -5.87,
+largest 21. Both relaxing normally, no sign of the `chi_WW=1.00` pathology. **Too early to read;**
+the pre-registered read is 600k.
+
+### STILL UNREAD
+
+**ring52** 220-260k, **ring120** 180-200k, **arc120** 160-180k, **arc200b** 100-120k of 300k.
+**tworing** 540-590k of 600k. **fs100b/fs050b** 260-320k of 600k. **cap80b** 280-300k of 1.6M
+(largest 14-19). **em3M** 260k of 3M (largest 31, 33, 43, 50, 72). **kT035/kT055** 20-40k of 600k.
