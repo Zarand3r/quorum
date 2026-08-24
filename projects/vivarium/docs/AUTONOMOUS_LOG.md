@@ -21368,3 +21368,70 @@ trend. **The read remains 800000.**
 **fresh20** 320-360k of 1.6M -- **14/20 eligible** (up from 11), largest seen 114. **The arm has just
 entered the window where the historical formers began closing (earliest std160 formation 380000).**
 **repro** 5 of 12 finished at 1.6M, 7 still running. **em3M** 2.06-2.16M of 3M.
+
+## Tick: the DEAD-ZONE explanation is refuted -- at-risk hazard bounded at 0.121/Ms, 0 events in 24.72 seed-Ms
+
+### REFUTED: my own "the rate was diluted by dead-zone exposure" claim
+
+Three ticks ago I argued the historical rate looked high because seeds spend their first ~400000 steps
+unable to form, so **the true post-eligibility hazard must be much higher.** I computed the real at-risk
+exposure -- checkpoints with largest cluster **>= 52 lipids** -- across four **unselected** arms:
+
+| arm | seeds | at-risk checkpoints | at-risk seed-Ms |
+|---|---|---|---|
+| fresh20 | 20 | 121 | 2.420 |
+| elig + elig2 | 20 | 215 | 4.300 |
+| em3M | 5 | 440 | 8.800 |
+| em160S | 12 | 460 | 9.200 |
+| **TOTAL** | **57** | **1236** | **24.720** |
+
+**ZERO formations in 24.720 at-risk seed-Msteps.**
+
+- **95% upper bound on the post-eligibility hazard: 0.121 /Ms**
+- **90% upper bound: 0.093 /Ms**
+- **P(0) against the naive 0.1003/Ms: 0.084**
+
+**The at-risk hazard is NOT higher than the naive total-time rate -- it is bounded at or below it.** The
+dead-zone finding remains true as a description of **when** formations happen, but **it does not rescue
+the rate.**
+
+**This kills the `elig` pre-registration branch that was set up to detect a hazard >= 0.375/Ms.** The
+other branch -- *"0 formations -> hazard < 0.144/Ms at 90% confidence"* -- **fires, at 0.093/Ms.**
+
+### THE HISTORICAL DENOMINATOR, RECOVERED
+
+`docs/states/` holds **30 std160 states in seeds 9300-9329**, of which **8 are known formers**
+(9302, 9308, 9312, 9314, 9315, 9316, 9317, 9326).
+
+**Per-seed formation probability 8/30 = 0.267.** If each ran 1.6M, that is **0.167 /Ms** --
+**above my 95% upper bound of 0.121 /Ms.**
+
+**Assumption stated: I do not know that all 30 ran the full 1.6M.** Shorter runs would raise the
+historical rate further; longer would lower it. Either those seeds ran longer than assumed, **or fresh
+seeds genuinely form less often than the historical set did.**
+
+### ERROR THIS TICK, AND THE FIX
+
+I extended the eligible-restart arm by ten and **failed to screen the sources** as I did for `elig2`.
+**Two started with a vesicle already present** -- `sd56001` (lumen 2294, `nves=1`) and `sd56008`
+(lumen 714, `nves=1`). **A seed that starts already formed cannot contribute a first-formation event and
+would have silently deflated the hazard denominator.** Both killed; **8 clean seeds remain** in `elig3`.
+
+### LAUNCHED: elig3, 8 clean eligible restarts
+
+`/tmp/elig3_sd560{02,03,04,05,06,07,09,10}.log` -- 800k steps, largest at step 0 **72-160**, all with
+`nves = 0`. Adds **~6.4 at-risk seed-Msteps.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **Pooled at-risk exposure reaches ~30 seed-Ms with still 0 formations** -> **P(0) = 0.049 against
+  0.1003/Ms. Significant.** The unselected fresh-seed hazard is then **below the historical rate**, and
+  the historical numerator was **enriched by selection** -- the 12 formers were found by search across
+  many arms and are not a random sample.
+- **>= 1 formation in elig3** -> the hazard is consistent with ~0.1/Ms and the drought is Poisson after
+  all; the bound above is then just a small-sample fluctuation.
+
+### STILL UNREAD
+
+**fission** 10 seeds kT=0.45, **fis55** 10 seeds kT=0.55, both 20-120k of 800k. **fresh20** 340-400k of
+1.6M, **15/20 eligible**, 0 formations. **repro** 7 of 12 still running at 1.42-1.58M. **em3M**
+2.10-2.20M of 3M.
