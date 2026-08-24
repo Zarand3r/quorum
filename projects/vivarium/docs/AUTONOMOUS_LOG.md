@@ -20044,3 +20044,72 @@ plainly as a research trade, not quietly dropped.
 
 **arc120** 20-40k, **arc200b** 40k of 300k. **fs100b/fs050b** 120-140k of 600k (read at 600k).
 **cap80b** 120-160k of 1.6M, largest 9-19. **em3M** 100-120k of 3M. **tworing** 480-530k of 600k.
+
+## Tick: ring openings are ALL early (30-80k of 540k) -- last tick's claim SOFTENED to a plant artifact
+
+### SOFTENED: "planted 52-lipid rings OPEN at kT=0.45"
+
+Committed last tick as `50c5d649`. The openings are real, but **their timing forbids the conclusion**:
+
+| seed | first nenc=0 | later rows with nenc>0 | last step |
+|---|---|---|---|
+| sd1 | 50000 | 0 | 510000 |
+| sd2 | 30000 | 0 | 520000 |
+| sd3 | 80000 | **13** | 490000 |
+| sd4 | 40000 | 0 | 530000 |
+| sd5 | **never** | -- | 540000 |
+
+**All four openings fall in the first 80k of a 540k run -- 4 of 5 in the first 15%, none in the last
+85%.** That concentration is exactly where plant-relaxation artifacts live. The survivor then held its
+lumen at 317-385 cells for 540k steps, and sd3 recovered its lumen 13 times after opening.
+
+**Withdrawn: "52-lipid rings are unstable at kT=0.45."** What is supported is only that four planted
+rings opened early and one did not.
+
+### MEASURED: E/lip cannot resolve the closure energy, and here is the noise floor
+
+| state | E/lip | per 52-lipid ring |
+|---|---|---|
+| closed (sd5, 54 checkpoints) | **-2.808 +- 0.140** | **-146.0 +- 7.3 eps** |
+| open (sd1, sd2, sd3, sd4) | -2.052, -2.656, -1.767, -2.616 | mean -2.273, **seed sd 0.42 eps/lipid = 22 eps** |
+
+Closed is lower by **27.8 eps with an uncertainty of ~22 eps, about 1.3 sigma. Not significant.** With
+one closed seed there is no error bar on that side at all.
+
+For scale, the brief's "closure has ~81 kT to gain" is **36.5 eps at kT=0.45**. This measurement is
+consistent with that figure and equally consistent with half of it. **E/lip is not a usable probe of
+closure energetics at n=52** -- the same failure mode as the undulation-spectrum kappa: the estimator's
+spread swamps the quantity.
+
+### MEASURED: the headline formation rate SURVIVES this session's null result
+
+Same-system emergent exposure (N=160, L=65, kT=0.45, fs=0.0, correct chi), 17 seeds:
+**14.220 seed-Msteps, 0 events.**
+
+- Expected at the established 0.1003/Ms: **1.43**. P(0) = **0.240**.
+- At the CI upper end 0.1571/Ms: mean 2.23, P(0) = **0.107**.
+- At the CI lower end 0.0436/Ms: mean 0.62, P(0) = 0.538.
+
+**The rate is not refuted.** Note this is the em160S data extended, **not an independent replication** --
+the same seeds tested earlier at 11.68 seed-Ms are inside this 14.22.
+
+### LAUNCHED: 10 single 52-lipid rings, to separate plant artifact from real instability
+
+`/tmp/ring52_sd95{01..10}.log` -- n=52, L=44, `R_mid` 8.97, 300k. **Positive control passes at step 0:
+`largest=52, lumen_c=404, nenc=1, nves=1`.** Ten seeds, not five, so the surviving-fraction has a usable
+error bar and the closed-state energy finally gets one.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 7/10 still closed at 300k** -> the tworing openings were a plant or two-ring-interaction artifact;
+  **last tick's claim is withdrawn outright.**
+- **<= 3/10 still closed** -> 52-lipid rings really are unstable and 30-80k is the barrier-crossing time,
+  not a relaxation transient.
+- **4-6/10** -> intermediate; report as intermediate and do not spin it either way.
+- Secondary, only if >= 5 rings stay closed: closed-state E/lip with a real error bar, for the
+  closed-vs-open comparison that n=1 could not support.
+
+### STILL UNREAD (planted; read at the end)
+
+**ring80** 40-60k, **ring120** 20-40k, **arc120** 60k, **arc200b** 60k -- all of 300k.
+**tworing** 490-540k of 600k. **fs100b/fs050b** 160-180k of 600k. **cap80b** 160-180k of 1.6M
+(largest 9-19). **em3M** 140-160k of 3M (largest 22, 32, 33, 50, 83).
