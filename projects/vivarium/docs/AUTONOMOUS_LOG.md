@@ -19979,3 +19979,68 @@ n=200 that is only at 20-40k.
 **arc200b** 20-40k of 300k. **fs100b/fs050b** 80-100k of 600k. **cap80b** 80-100k of 1.6M.
 **em3M** 60k of 3M. **long160** 260-280k of 2.4M. **tworing** 460-500k of 600k -- still short of its
 read point, with `nves > 0` on 2 of 5 seeds and one carrying `lumen_c = 331, nenc = 1`.
+
+## Tick: planted 52-lipid rings OPEN (9/10 have nenc=0, lumen=0) -- same attractor as the n=70 arc
+
+### MEASURED: the tworing rings did not merge, did not dissolve, and lost their lumens
+
+Detector re-run directly on the five current states (a **detector check on the present state**, not an
+early read of a trend -- the 600k verdict still stands unclaimed):
+
+| seed | cluster sizes | ring A | ring B | count_vesicles |
+|---|---|---|---|---|
+| 1 | 52, 52 | nenc=0 lumen=0 | nenc=0 lumen=0 | 0 |
+| 2 | 52, 52 | nenc=0 lumen=0 | nenc=0 lumen=0 | 0 |
+| 3 | 52, 52 | nenc=0 lumen=0 | nenc=0 lumen=0 | 0 |
+| 4 | 52, 52 | nenc=0 lumen=0 | nenc=0 lumen=0 | 0 |
+| 5 | 52, 52 | **nenc=1 lumen=337 gate2=0.392 PASS** | nenc=0 lumen=0 | 1 |
+
+**9 of 10 planted rings have no enclosed region left.** This is not a detector miss: `n_enclosed`
+returns 0 cells, so there is nothing to detect. The render of sd2 at 490000 shows **two curved C-shaped
+ribbons with open ends** where two closed rings were planted. **Render and metric agree.**
+
+Both rings survive as connected 52-lipid clusters in all five seeds, and **no seed merged them** at
+~500k. So of the three pre-registered tworing outcomes -- both survive / merge / dissolve -- the
+observed behaviour is a fourth: **they persist as separate clusters but open.**
+
+### CONVERGENCE: two planted geometries, one attractor
+
+| plant | n | outcome over 300-500k |
+|---|---|---|
+| **closed ring** | 52 | **opens** into a curved ribbon (9/10) |
+| **open arc** | 70 | stays a curved ribbon; 0/5 close, radius holds 14.85 +- 2 |
+
+**At these sizes the attractor is a curved OPEN ribbon, reached from both directions.** Consistent with
+52 and 70 both lying below a closure threshold -- **and equally consistent with no threshold existing.**
+The two cannot be separated by these two points, which is precisely why the next run is needed.
+
+### LAUNCHED: ring stability from above -- does any ring size hold its lumen?
+
+- **5 seeds, n=80, L=44** (`R_mid` 17.47) -- `/tmp/ring80_sd930{1..5}.log`
+- **5 seeds, n=120, L=56** (`R_mid` 20.32) -- `/tmp/ring120_sd940{1..5}.log`
+- 300k steps. **Positive control passes at step 0**: both plants intact and *detected*,
+  n=80 `lumen_c=1296 nenc=1 nves=1`, n=120 `lumen_c=3439 nenc=1 nves=1`.
+
+Sizes chosen to straddle the two independent estimates of the relevant scale: the fission/fusion
+crossing at ~90 lipids and the median closure size of 88.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **n=120 keeps `nenc=1` in >= 4/5 at 300k while n=80 mostly opens** -> a closure threshold exists
+  between 80 and 120, bracketing from above what the arc series brackets from below. Two independent
+  geometries agreeing on one number would be the first solid scale in this project.
+- **Both sizes open in >= 4/5** -> no ring is stable up to 120 lipids; the closed state is not an
+  attractor at any size we have tested, and **the edge-vs-bend account is wrong as applied here**, not
+  merely unmeasured.
+- **Both hold in >= 4/5** -> 52 is the outlier and the threshold sits between 52 and 80.
+- **`largest` collapses below n** -> failed manipulation at that box size; rerun larger, do not report.
+
+### CULLED: the half-density arm (long160), 12 seeds at 300k of 2.4M
+
+It needed **~29M more steps for an expected 2.9 events** at the established 0.1003/Ms. The critical-size
+program is producing numbers now. **This abandons the half-density formation-rate comparison** -- stated
+plainly as a research trade, not quietly dropped.
+
+### STILL UNREAD
+
+**arc120** 20-40k, **arc200b** 40k of 300k. **fs100b/fs050b** 120-140k of 600k (read at 600k).
+**cap80b** 120-160k of 1.6M, largest 9-19. **em3M** 100-120k of 3M. **tworing** 480-530k of 600k.
