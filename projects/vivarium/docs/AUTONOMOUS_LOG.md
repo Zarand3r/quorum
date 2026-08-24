@@ -21815,3 +21815,63 @@ steps instead of 880000; running it to completion buys nothing.
 **n120** 10 at 160-180k, biggest **54** -- now crossing into the window. **n100** 10 at 160-180k,
 biggest **49**. **fission**/**fis55** 10+10 at 220-340k of 800k, **still no nves=2.**
 **em3M** 2.30-2.40M of 3M.
+
+## Tick: FIRST nves=2 in the project -- and it fails this project's own debounce, so it is NOT claimed
+
+### THE EVENT
+
+`fis55` seed **sd55001**, kT=0.55, restarted from `twocomp_sd9317.npz`. Trajectory around the event
+(step / E per lipid / largest / lumen_c / nenc / nves):
+
+```
+  220000   -6.02    97   345   2   0
+  240000   -5.98    57   273   1   2      <-- nves = 2
+  260000   -6.23    98   317   1   0
+```
+
+**The largest cluster collapses 97 -> 57 and returns to 98** -- the signature of a transient split
+followed by re-fusion.
+
+### WHY IT IS NOT CLAIMED
+
+- **One checkpoint out of eighteen.** This project's formation criterion is **debounced: >= 2
+  consecutive checkpoints.** A single frame does not meet the standard applied everywhere else.
+- **No false-positive rate has ever been measured for `nves = 2` specifically** -- only for `nves >= 1`,
+  where it was **0 in 74 checkpoints** on genuinely open arcs.
+- **The state is gone**, overwritten by the still-running job, so it cannot be inspected.
+
+**The pre-registered fission clause is NOT satisfied.** What exists is a **single-checkpoint candidate.**
+
+### THE CONTRAST IS STILL WORTH RECORDING
+
+| arm | seeds | MAX nves | MAX nenc |
+|---|---|---|---|
+| kT = 0.45 | 10 | **1** (sd54008) | **3** (sd54001, sd54008) |
+| kT = 0.55 | 10 | **2** (sd55001, one checkpoint) | 2 |
+
+**Multi-compartment states are common in both arms; separate vesicles are not.**
+
+### LAUNCHED: the same seeds at 10x finer checkpointing
+
+`/tmp/fine_sd550{01..05}.log` -- **same 5 kT=0.55 seeds, same start state, `VIVARIUM_CHECKPOINT_EVERY`
+= 2000 instead of 20000**, out to 400k. **The runs are deterministic, so the identical trajectory
+replays**; the finer sampling resolves the event's true duration. `_env_tag()` puts the checkpoint
+interval in the filename, so these cannot collide with the coarse runs' states or frames.
+
+**FALSIFICATION, stated before any fine checkpoint is read:**
+- **`nves = 2` sustained across >= 3 consecutive fine checkpoints (>= 6000 steps)** -> a **real
+  two-vesicle state**; the fission clause fires and this is the first genuine two-vesicle observation in
+  the project.
+- **1-2 isolated fine checkpoints** -> **a flicker**; the clause stays unsatisfied and the coarse
+  observation is recorded as an artifact of sampling a transient.
+- **The fine run does not reproduce the coarse run's step-240000 configuration** -> **determinism is
+  broken**, and that finding **takes priority over everything else in flight**.
+
+### STILL UNREAD
+
+**rest22** 22 at 180-220k of 1.6M, **0 formations**, biggest cluster 102.
+**deno** 12 at step 0 of 1.6M -- the doubled comparison group.
+**n120** 10 at 180-200k, biggest **54**. **n100** 10 at 180-200k, biggest **49**.
+**fission**/**fis55** 10+10 at 240-360k of 800k. **em3M** 2.32-2.42M of 3M.
+
+**Machine: 86 processes on 32 cores, load 99.** Next tick must cull before launching.
