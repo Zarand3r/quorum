@@ -22138,3 +22138,57 @@ kT=0.45, 0.490 at 0.55).
 **rest22** 22 at 320-360k of 1.6M, 0 formations, biggest 102. **deno** 18 at 80-160k.
 **n120** 10 at 360-400k, **n100** 10 at 400-460k, biggest 72.
 **allstates/ 372 files under SAVE_ALL; disk 87%.**
+
+## Tick: the closed-state LIFETIME distribution -- median 6000 steps, 69% shorter than one sampling interval
+
+### MEASURED: 26 enclosed-state episodes at 2000-step resolution
+
+**mean 25462 steps | median 6000 | min 2000 | max 120000**
+
+```
+2000 x9,  4000 x3,  6000 x2,  10000, 12000 x2, 16000,
+22000, 32000, 46000, 58000, 86000, 98000, 108000, 120000
+```
+
+**18 of 26 (0.69) are SHORTER than one standard 20000-step sampling interval.** The distribution is
+badly skewed -- **median 6000, mean 25462**, long tail to 120000.
+
+**This is the mechanism behind last tick's 3.8x undercount**, and it identifies exactly which seeds are
+at risk: a seed with **any** long-tail episode is caught by coarse sampling every time; a seed whose
+enclosures are **all short** can be missed entirely and recorded as a non-former.
+
+### THE UNTESTED ASSUMPTION UNDER THE WHOLE DROUGHT COMPARISON
+
+The comparison assumes **the 8 historical formers were caught because they had long-lived enclosures,
+not because coarse sampling got lucky.** If formers' episodes are also mostly under 20000 steps, **the
+8/30 is itself a lottery** and I am comparing two undersampled counts.
+
+### LAUNCHED: replay three known formers at 10x sampling
+
+`/tmp/fineform_sd{9308,9315,9317}.log` -- **`VIVARIUM_CHECKPOINT_EVERY = 2000`, 600k steps**, which
+covers all three historical formation events (**9308 at 380000, 9317 at 380000, 9315 at 460000**).
+Deterministic, so the same trajectories replay at 10x resolution.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **Formers' enclosed episodes sit in the LONG TAIL, well beyond 20000 steps** -> coarse sampling catches
+  them reliably, **the drought comparison is sound**, and the 8/30 is a real count rather than a lottery.
+- **Formers' episodes are ALSO mostly under 20000 steps** -> **the historical 8/30 is luck-dependent**,
+  the comparison is between two undersampled counts, and **every drought claim in this log weakens
+  accordingly** -- including the pre-registered `deno` verdict, which would have to be re-scoped.
+
+### rest22 HAS PASSED THE FIRST HISTORICAL FORMATION STEP
+
+**22 seeds at 360-400k, 0 formations.** Two of the eight historical formers (9308, 9317) closed at
+**380000**. The remaining six closed at 460k, 580k, 880k, 1040k, 1200k, 1240k. **0/22 at this point is
+what the historical labelling predicts** -- not yet decisive, since 6 of 8 formed later.
+
+### kT = 0.65 ARM: membrane intact, too early to read
+
+5 seeds at **26000-32000 of 400000**; largest **107-156**, `nenc > 0` in most checkpoints, `max nves`
+still 1. **The "too hot -- failed manipulation" clause has NOT fired.**
+
+### STILL UNREAD
+
+**ultra** sd55002 at **71000**; its event sits at **78000** -- one tick away.
+**fine** 5 at 166-176k of 400k, 1 `nves = 2` checkpoint total. **finecmp** 5 at 92-100k of 1.6M, still
+zero enclosures of any kind. **deno** 18 at 120-200k. **n120** 10 at 400-440k. **n100** 10 at 460-500k.
