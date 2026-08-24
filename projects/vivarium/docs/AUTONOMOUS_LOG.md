@@ -23355,3 +23355,25 @@ at 180-200k and `place` at 80-100k. **No formation verdict is possible yet in ei
 **k65b / k90b** 10+10 at 40-80k of 600k -- the kappa endpoint reinforcement.
 **noise** 10 at 180-200k, **place** 10 at 80-100k of 600k. **deno** 18 at 700-860k.
 **n120** 10 at 1.20-1.32M. **emerge3** 6 at 180-200k. **fineform** 1 left at 586k of 600k.
+
+### TEST SUITE: PASSES. Retracting my own "not verified" caveat.
+
+`bazel test //projects/vivarium:test_suite` -> **PASSED in 157.6s**, 1 of 1.
+
+**I have been reporting for several ticks that the suite had not passed since the `_mixture.py` edits**
+(effective-chi banner, `VIVARIUM_NOISE_SEED`, the `_save_state` hazard comment) because it timed out
+under ~80 concurrent sims, and that I had only checked the two load-bearing assertions by hand. **It
+was the load, not the code.** A 400 s budget was still not enough (killed, code 143); the untimed run
+finished in 157.6 s.
+
+**This is the gate for user condition 1 ("verified we are simulating it correctly"), and it is now
+green on the production topology, not a toy chain:** `test_heads_reproduce_forces_on_the_real_lipid_
+system` builds via `_mixture.build` with branched lipids and explicit water and asserts the attention
+heads reproduce `field.forces` to < 1e-13 relative, and the token-channel `q_i . k_j` matches the
+species chi table to **exactly 0.0**. Also green: one forward pass equals one integrator step
+**bit-for-bit** (`np.abs(Xa - Xb).max() == 0.0`), and the MLP is live rather than decorative.
+
+**What this does NOT verify** is that the chi table is the right *physics* -- only that the code
+computes the model it claims to. The physics-side gap remains the one already recorded: **chi_TW = 0.00
+means the tails are not hydrophobic, so lambda ~ 0 by construction**, and closure here is geometric and
+kinetic with no energetic drive.
