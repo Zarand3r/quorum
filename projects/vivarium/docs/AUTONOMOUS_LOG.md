@@ -21632,3 +21632,51 @@ Formation steps: **180k (1459), 380k (9308), 380k (9317), 460k (9315), 500k (349
 **rest22** 22 seeds at 60k of 1.6M, 0 formations, **short of the 380k earliest historical formation.**
 **fresh20** 440-480k, 0 formations. **fission** 10 at kT=0.45 and **fis55** 10 at kT=0.55, 100-200k of
 800k. **em3M** 2.18-2.28M of 3M.
+
+## Tick: culled 20 seeds to unblock the gating arms; launched N=100 to attack my own window finding
+
+### FISSION: no `nves = 2` yet (monotone, so reportable without breaking read-at-the-end)
+
+| arm | seeds | MAX nves ever | seeds reaching nves>=2 |
+|---|---|---|---|
+| kT = 0.45 | 10 | **0** | 0/10 |
+| kT = 0.55 | 10 | **1** | 0/10 |
+
+At **140000-220000 of 800000**. Nothing concluded; the pre-registered read stands at 800k.
+
+### CULLED: `fresh20`, 20 seeds, 0 formations over 9.84 seed-Msteps
+
+Its question -- *do arbitrary fresh seeds form* -- is answered more sharply by **`rest22`**, which has a
+**known denominator (22 of the historical 30) and deterministic trajectories.** **Its exposure stops
+growing at 9.84 seed-Ms**, recorded rather than quietly dropped; the pooled at-risk bound from earlier
+ticks is unaffected because it already included this arm's contribution to that point.
+
+**The machine was the binding constraint: 84 processes on 32 cores, load 90.** The two arms that gate
+everything else -- **`posctl` at 40k of 880k** and **`rest22` at 80k of the 380k** where the earliest
+historical formation sits -- were running at roughly a third speed. **84 -> 64 processes.** That cull is
+worth more than any measurement I could have run this tick.
+
+### LAUNCHED: N=100, aimed at falsifying my own window
+
+Last tick's cliff says formation should work **anywhere below 120 lipids.** The historical record has
+**0 formations at N=100** -- inside the window, and contradicting it.
+
+`/tmp/n100_sd440{01..10}.log` -- **10 seeds, N=100, L=51, kT=0.45, dispersed, 1.6M.**
+**Density 100/51^2 = 0.0384**, matched to std160's 0.0379 and to the running N=120 arm's 0.0383, so
+across all three arms **only total material changes.** Confirmed at launch: 100 long lipids + 1321 water.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 6 of 10 form** -> the window **holds at its lower edge**; the historical "0 at N=100" was small-n
+  or a different configuration. P(>=6 | 2.67) = 0.048 against the historical per-seed 0.267.
+- **0-1 form** -> **the lower half of my window is WRONG.** The 120-lipid cliff would then be an
+  **upper-edge effect only**, and last tick's framing overstated it.
+- **2-5 form** -> indistinguishable from std160; neither confirms nor refutes.
+
+**The two capped arms now disagree with the historical record in opposite directions:** N=120 tests
+whether the window is a **lever**; N=100 tests whether the window is **real at the bottom.**
+
+### STILL UNREAD
+
+**posctl** 3 seeds at 40k -- targets 880k/1040k/1240k. **rest22** 22 at 80k of 1.6M, 0 formations.
+**n120** 10 at 20k, largest 13-22. **n100** 10 at launch. **fission**/**fis55** 10+10 at 120-220k of
+800k. **em3M** 2.20-2.32M of 3M (largest 86, 97, 106, 153, 160). **repro** last 2 finishing.
