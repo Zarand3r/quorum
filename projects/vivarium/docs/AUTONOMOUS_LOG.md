@@ -21751,3 +21751,67 @@ debris**, in a box 2.0x larger in area.
 earliest historical formation. **n120** 10 at 100-120k, biggest **47**. **n100** 10 at 100-120k, biggest
 **35**. **fission**/**fis55** 10+10 at 200-300k of 800k, **max nves 1, no nves=2.**
 **em3M** 2.28-2.38M of 3M. **posctl** 3 at 100-120k, gate already cleared by the comparison above.
+
+## Tick: DROUGHT NUMBERS CORRECTED DOWNWARD -- the assumption-free test gives p = 0.080, not 0.002
+
+### RETRACTED: the P ~ 0.002-0.02 drought figures
+
+Those came from **hazard models** -- at-risk denominators, censoring at first formation, estimates of
+when the 22 non-formers became eligible, and a size-window correction. **Every one of those is an
+assumption I introduced.**
+
+**The assumption-free version is a plain 2x2 on per-seed outcomes, matched duration, identical
+composition:**
+
+| | formed | not |
+|---|---|---|
+| historical std160 (30 seeds, all 1.6M) | **8** | 22 |
+| my arms (12 seeds at >= 1.5M) | **0** | 12 |
+
+**Fisher exact p = 0.0804. NOT significant.**
+
+The 12 comparison seeds: **217283, 331777, 449549, 566773, 683729, 799979, 911003** (em160S, all
+1600000) and **6001-6005** (em3M, 2300000-2400000). All at **2959 beads / 2159 water / 160 heads / 640
+tails**, verified identical to std160 last tick.
+
+**The drought is SUGGESTIVE, NOT ESTABLISHED.** My earlier P values leaned on modelling choices this
+test does not need.
+
+### THE FIX IS DENOMINATOR, AND THE ARITHMETIC IS CLEAN
+
+| new formers of 12 | my arms | Fisher p |
+|---|---|---|
+| **0** | 0/24 | **0.0063** |
+| 1 | 1/24 | 0.0335 |
+| 2 | 2/24 | 0.157 |
+| 3 | 3/24 | 0.310 |
+
+### LAUNCHED: 12 seeds to double the comparison group
+
+`/tmp/deno_sd450{01..12}.log` -- **12 seeds, N=160, L=65, kT=0.45, dispersed, 1.6M**, confirmed at launch
+with 160 long lipids + 2159 water. **Exactly the std160 configuration.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **0 of 12 form** -> **0/24 vs 8/30, p = 0.0063. The drought is ESTABLISHED** as a real per-seed
+  difference between the historical std160 seed block and fresh seeds in an identical configuration with
+  deterministic code -- a genuine unexplained phenomenon.
+- **1 of 12 forms** -> p = 0.0335. **Borderline; report as borderline**, not as established.
+- **>= 2 form** -> p >= 0.157. **The drought dissolves into chance** and every drought claim in this log
+  is withdrawn.
+
+### CULLED to pay for it
+
+**`fisdil`** (5 seeds) -- its pre-registration was **voided last tick** when re-solvation broke the
+plant, and at **L=92 with 5127 water beads** it was the most expensive arm on the machine. It had not
+reached its first checkpoint in ~20 minutes.
+**`posctl`** (3 seeds) -- **redundant.** Last tick's determinism comparison cleared its gate at 120000
+steps instead of 880000; running it to completion buys nothing.
+
+**77 -> 69 processes, then +12 = 81.**
+
+### STILL UNREAD
+
+**rest22** 22 seeds at 180-200k of 1.6M, 0 formations, biggest cluster **102**.
+**n120** 10 at 160-180k, biggest **54** -- now crossing into the window. **n100** 10 at 160-180k,
+biggest **49**. **fission**/**fis55** 10+10 at 220-340k of 800k, **still no nves=2.**
+**em3M** 2.30-2.40M of 3M.
