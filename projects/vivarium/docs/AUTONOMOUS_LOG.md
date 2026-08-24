@@ -23428,3 +23428,95 @@ the token channel reproduces chi exactly (0.0, not a tolerance).
 learned; and **`W1 = W2 = 0` in every run ever executed**, so the MLP contributes nothing to any result.
 `test_mlp_is_live_not_decorative` proves the block is wired, not that it is used. **There is no training
 anywhere.** This is a hand-specified force field written in attention form.
+
+## Tick: an nenc-vs-nves rescan nearly turned 2/18 into 5/18. The gate was right.
+
+### THE NEAR-MISS
+
+A systematic rescan of all 18 fresh dispersed-start seeds, counting checkpoints with **any enclosed
+region** (`nenc > 0`), debounced at >= 2 consecutive:
+
+| seed | last step | nenc ckpts | first | longest run |
+|---|---|---|---|---|
+| sd45004 | 900000 | **16** | 440000 | 10 |
+| sd45007 | 920000 | 14 | 600000 | 9 |
+| sd45009 | 820000 | **11** | 520000 | 7 |
+| sd45015 | 820000 | 9 | 500000 | 8 |
+| sd45002 | 880000 | **8** | 740000 | 8 |
+
+**That is 5/18, and it would have been a headline.** Rescanning the same logs by **`nves`, the actual
+`vesicle_call` gate**, gives:
+
+| seed | nves ckpts | first | longest run | debounced |
+|---|---|---|---|---|
+| sd45007 | 14 | 600000 | 9 | YES |
+| sd45015 | 5 | 600000 | 2 | YES |
+| sd45016 | 2 | 700000 | **1** | no |
+| all others | 0 | -- | 0 | no |
+
+**2/18 STANDS. The three extra seeds are not vesicles.** `nenc` counts topology; `nves` additionally
+demands the lumen be big enough for the cluster, and that is the discriminating clause.
+
+### THE RENDER AGREES WITH THE STRICT METRIC, FOR ONCE
+
+Looked at sd45004 at 900000. **Branched ribbons with Y-junctions and free ends**, heads out and tails
+in everywhere -- the bilayer cross-section is correct, the topology is not a vesicle. The enclosed
+region is **a pocket in a network**.
+
+The gate arithmetic, on the last five checkpoints:
+
+| step | largest | lumen | required (0.10 n^2/pi) | ratio |
+|---|---|---|---|---|
+| 820000 | 149 | 98 | 707 | 0.139 |
+| 840000 | 123 | 80 | 482 | 0.166 |
+| 860000 | 63 | 73 | 126 | 0.578 |
+| 880000 | 123 | 119 | 482 | 0.247 |
+| 900000 | 123 | 122 | 482 | **0.253** |
+
+**A factor of four short.** This is a case where render and metric agree instead of flattering each
+other, which is worth recording because the failure mode in this project has been the opposite.
+
+### IS THE POCKET A PROTO-VESICLE OR AN ARRESTED STATE? THE FITS DO NOT AGREE
+
+Least-squares slope of `lumen_c` against step, per seed, with standard errors:
+
+| seed | n | slope per 100k steps | t |
+|---|---|---|---|
+| sd45004 | 16 | **+16.7 +- 3.7** | +4.54 |
+| sd45009 | 12 | -6.8 +- 4.3 | -1.59 |
+| sd45002 | 8 | -8.3 +- 13.5 | -0.62 |
+
+**One of three grows; two do not.** Three seeds is not a class, and this has the same shape as two
+earlier signals that reversed. **NOT CONCLUDED.**
+
+### LAUNCHED: the decisive version, `pocket` (5 replicas, noise-only)
+
+sd45004's 900000-step state copied to `docs/states_protected/pocket_sd45004_s0900000.npz` first -- the
+save path carries no step and the live deno run keeps overwriting it. Then **5 replicas from that
+identical state, varying ONLY `VIVARIUM_NOISE_SEED` (81001-81005), 200000 steps each.** Same
+configuration, same lipids, same pocket; only the thermal history differs.
+
+**FALSIFICATION, STATED BEFORE ANY CHECKPOINT IS READ:**
+- **>= 3/5 reach a debounced `nves > 0`** -> the branched-network-with-pocket is a **way station** to
+  closure, and 2/18 understates what longer runs would yield.
+- **0/5 reach it AND `nenc > 0` persists through >= half the checkpoints** -> it is an **arrested
+  trap**; closure is not reachable from here on this timescale.
+- **`nenc` falls to 0 for the last five checkpoints in >= 3/5** -> the pocket was a **fluctuation**,
+  not a structure, and the nenc-based count above is noise.
+- Any split (1-2 of 5) -> **under-powered, extend to 10 replicas before reporting anything.**
+
+### STATUS OF EVERYTHING ELSE IN FLIGHT
+
+`emerge3T` 6 seeds at step 0, **flag verified set this time**; `emerge3` 6 at 220000 as the matched
+integrator control. `deno` 18 at 760000-920000. `varA` 15 and `varB` 15 at 40000-60000 of 100000.
+`noise` 10 at 220000-260000, `place` 11 at 140000-160000 -- **both still short of sd9308's 380000
+formation step, so still no formation verdict.** `k65b` 10 at 220000, `k90b` 10 at 200000. `n120` 10 at
+1.30M.
+
+### THE STANDING "ESTABLISHED" BLOCK IS STILL WRONG
+
+lambda = +18.31 +- 7.07 eps was **retracted** long ago. `chi_TW = 0.00` makes the tails non-hydrophobic,
+so **lambda ~ 0 by construction**; the direct ring-versus-arc measurement gives +2.8 +- 2.8, and making
+tails hydrophobic gives **-5.15 +- 1.49**, i.e. closure gets worse. There is no "~81 kT to gain."
+kappa is **not measurable** here by any of three routes; best estimate 13.84 +- 10.91 eps*sigma, hi/lo
+ratio 8.47, failing the pre-registered factor-2 bar, and **kappa is closed as a line of work.**
