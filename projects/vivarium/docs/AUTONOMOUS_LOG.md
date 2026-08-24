@@ -23080,3 +23080,68 @@ the user asked to focus on conditions 1 and 2. `emerge3` (N=208/L=92, twice the 
 **lam30** 10 at 76-88k of 300k -- the third point of the lambda(chi_TW) curve.
 **deno** 18 at 500-640k of 1.6M, **1/18 formed**. **rest22** 22 at 740-820k, 0/22 debounced.
 **n120** 10 at 920k-1.04M. **emerge3** 6 at 80k. **fineform** 3 at 392-426k of 600k.
+
+## Tick: kappa WITHOUT a spectrum -- extracted, but a 4x swing on one point; lever arm extended
+
+### THE METHOD: vary curvature, hold everything else fixed
+
+Arcs at different spans have **the same 80 lipids and the same TWO ends**, so the edge term cancels and
+**only the radius changes**. Bending energy per lipid goes as `kappa/R^2` (with `lat = 2`, so
+`E/n = (kappa/2)(1/R^2)(L_arc/n) = kappa/R^2`), making **E/lip vs 1/R^2 a straight line of slope kappa**.
+
+| span | R_plant | 1/R^2 | E/lip (open checkpoints only) | n ckpts |
+|---|---|---|---|---|
+| 0.75 | 16.98 | 0.00347 | **-7.3812 +- 0.0269** | 75 |
+| 0.85 | 14.98 | 0.00446 | -7.3683 +- 0.0218 | 72 |
+| 0.90 | 14.15 | 0.00500 | -7.3592 +- 0.0202 | 75 |
+| 0.95 | 13.40 | 0.00557 | **-7.2683 +- 0.0220** | 47 |
+
+**Energy rises with curvature -- the right sign.** But the fit is unstable:
+
+| fit | kappa | chi2/dof |
+|---|---|---|
+| **all four spans** | **50.14 +- 15.85 eps*sigma** (111.4 kT*sigma) | **2.76** |
+| **three non-closing spans (0.75-0.90)** | **14.37 +- 21.99 eps*sigma** (31.9 kT*sigma) | 0.00 |
+
+**A 4x swing on one point** -- and that point is the suspicious one: **span 0.95 CLOSES half the time**,
+so its "open" checkpoints are **near-closed configurations, structurally unlike a wide arc.** The
+three-point fit is clean (chi2/dof = 0.00) but **its error bar swallows the value.**
+
+**NO kappa IS QUOTED YET.** Both fits are on the record; neither is claimed.
+
+### LAUNCHED: extend the lever arm using only arcs that never close
+
+`/tmp/k65_sd710{01..05}.log` (**span 0.65, R 19.59, 1/R^2 = 0.00261**) and
+`/tmp/k70_sd720{01..05}.log` (**span 0.70, R 18.19, 0.00302**) -- n=80, L=44, kT=0.45, 300k, 5 seeds each.
+
+**Extends the range from 0.00347-0.00557 down to 0.00261**, nearly doubling it, **using only spans that
+have never closed** (0.75 closes 0/5 and 0/80 checkpoints; wider spans are further from closing still).
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **The 5-point fit over non-closing spans (0.65-0.90) is linear with a slope determined to better than
+  a factor of 2** -> **kappa measured without a spectrum**, for the first time in this project, and
+  condition 1's largest remaining gap closes.
+- **The fit is non-linear, or the slope's error bar spans more than a factor of 2** -> **kappa is not
+  extractable by this route either.** After the undulation spectrum and the critical-size test, that
+  would be the **third independent failure**, and worth stating as a property of the model rather than
+  of the estimator.
+- **Wide-span arcs fragment** (`largest` falling below 60) -> failed manipulation at that span; drop the
+  point and refit on what survives.
+
+### sd45007 CONTINUES, AND FLICKERS LIKE THE PLANTED ONES
+
+The fresh-seed vesicle now has lumens at **600k / 620k / 640k / 680k = 435, 412, 418, 447 cells**, with a
+**gap at 660k**. That is the same flicker as planted rings, at roughly the measured **0.057**
+per-checkpoint false-negative rate. **The formation stands; the flicker is the detector, not a loss.**
+
+### CULLED: rest22, 22 seeds at 780-860k
+
+Its job was to check whether any of the 22 historical non-formers were **mislabelled**. It found **one
+single-checkpoint near-miss (sd9324 at 520000) that fails debounce**, so **the historical 8/30 stands**
+and further running would only confirm it. **81 -> 59, then +10 = 69.**
+
+### STILL UNREAD
+
+**noise** 10 at step 0 of 600k -- placement fixed, noise varied; **the decisive test of why seeds
+matter.** **lam30** 10 at 152-182k of 300k. **deno** 18 at 540-680k, **1/18 formed**.
+**n120** 10 at 980k-1.08M. **emerge3** 6 at 100k. **fineform** 3 at 422-462k of 600k.
