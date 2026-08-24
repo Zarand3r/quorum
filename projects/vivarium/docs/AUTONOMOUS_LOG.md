@@ -20480,3 +20480,62 @@ Gap = `n*lat*(1-span)/(2*span)`, so gap can be pinned at **4.2 sigma** while `n`
 **arc200b** 180k of 300k. **fs100b/fs050b** 460-480k of 600k -- pre-registered read at 600k, close now.
 **em3M** 400-440k of 3M (largest 46, 51, 64, 72, 109). **kT035** 160-180k, **kT055** 200-220k of 600k,
 both carrying the solvent confound. **ring52L92** 20k of 300k.
+
+## Tick: TWO end-gap estimators failed their positive control -- the drought explanation stays untested
+
+### THE PLAN, AND WHY IT MATTERED
+
+Last tick established that closure is controlled by the **end-to-end gap** (0.000 / 0.027 / 0.350 across
+gaps of 26.7 / 14.1 / 4.2 sigma) and not by ribbon length (0 closures in 234 checkpoints across
+n=70/80/120). If emergent ribbons never bring their ends within ~4 sigma, **that alone explains the
+zero-formation drought.** Testing it needs an end-gap estimator for emergent clusters.
+
+### BOTH ESTIMATORS FAILED CALIBRATION ON PLANTED ARCS OF KNOWN GAP
+
+| known gap | 26.7 | 14.1 | 4.2 | ring (0) |
+|---|---|---|---|---|
+| **est. 1** -- coordination-based ends, single-linkage grouped | **4.23 +- 0.17** | **4.10 +- 0.11** | **4.05 +- 0.05** | -- |
+| **est. 2** -- Euclidean distance between graph-farthest lipids | 5.13 +- 3.59 | 7.63 +- 7.36 | 5.99 +- 1.77 | 6.84 +- 6.05 |
+
+**Estimator 1 returns the same 4.1 for a 6x range of true gap** -- its single-linkage threshold was 4.0,
+so it reported its own parameter. It also found **7 to 28 "end groups"** on ribbons that have two ends.
+
+**Estimator 2 fails differently:** the graph diameter across an 80-lipid ribbon is **3-5 hops**, so at a
+3-sigma connection radius a two-leaflet ribbon is a blob, not a path, and there are no graph endpoints.
+
+**Both are the undulation-spectrum failure mode again: an estimator measuring itself.**
+
+**CONCLUSION: the end gap of an emergent ribbon is not currently measurable here, and the gap
+explanation for the drought is UNTESTED.** No claim is made from either estimator.
+
+**What the positive control bought.** Estimator 1 would otherwise have reported *"emergent ribbons sit
+at ~4.1 sigma end gap, right in the closing regime"* -- across **all 160 emergent states**, uniformly,
+with tight scatter. It is quotable, it fits the story, and it is **spurious**; it also contradicts the
+observed zero formation rate. Running the calibration first is the only reason it is not in this log as
+a finding.
+
+### LAUNCHED: spontaneous curvature, which tests the same idea without measuring gaps
+
+The packing-parameter result (13.0 / 29.2 / 43.6 lipids at fs = 1.0 / 0.5 / 0.0, t = 7.7) established
+that tail length sets aggregate shape. **Mixing tail lengths raises spontaneous curvature, the textbook
+lever for vesiculation** -- and higher curvature brings a ribbon's ends toward each other without my
+having to measure how far apart they are.
+
+`/tmp/fs025_sd610{1..8}.log` -- **8 seeds, frac_short = 0.25** (40 two-tail + 120 four-tail), N=160,
+L=65, kT=0.45, dispersed, 600k, correct chi. **4.8 seed-Msteps**; expected formations at the established
+0.1003/Ms = **0.48**.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 3 formations** -> P(>=3 | 0.48) = **0.0117**; spontaneous curvature is a lever on the drought.
+- **2 formations** -> P(>=2 | 0.48) = 0.077; **suggestive only, reported as such.**
+- **0 formations AND largest cluster at 600k within 1 sd of the fs=0.0 baseline** -> fs=0.25 does not
+  change the emergent outcome.
+- **Largest cluster below 25 at 600k**, as fs=1.0 gives -> the manipulation **overshot into the micellar
+  regime** and cannot speak to closure; report as a failed manipulation, not a negative result.
+
+### NOTHING REACHED A READ POINT THIS TICK
+
+**gap52** 80-100k, **gap120** 20-40k of 300k -- 3/5 and 2/5 currently showing `nves>0`, **not read**;
+the gap-matched comparison against n=80's 0.350 is the pre-registered endpoint at 300k.
+**ring52L92** 40k of 300k, 5/5 still closed. **arc200b** 200k of 300k. **fs100b/fs050b** 500-540k of
+600k. **em3M** 420-480k of 3M (largest 46, 51, 64, 72, 109). **kT035/kT055** 200-260k of 600k.
