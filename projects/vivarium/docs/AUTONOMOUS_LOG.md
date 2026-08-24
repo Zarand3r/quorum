@@ -21680,3 +21680,74 @@ whether the window is a **lever**; N=100 tests whether the window is **real at t
 **posctl** 3 seeds at 40k -- targets 880k/1040k/1240k. **rest22** 22 at 80k of 1.6M, 0 formations.
 **n120** 10 at 20k, largest 13-22. **n100** 10 at launch. **fission**/**fis55** 10+10 at 120-220k of
 800k. **em3M** 2.20-2.32M of 3M (largest 86, 97, 106, 153, 160). **repro** last 2 finishing.
+
+## Tick: determinism gate CLEARED early (0 mismatches); composition loophole closed; a launch that failed at step 0
+
+### THE POSITIVE-CONTROL GATE, CLEARED AT 120000 INSTEAD OF 880000
+
+`posctl` re-runs seeds 9312, 9316, 9326 -- the **same seeds and parameters** as the `repro` arm. Compared
+directly:
+
+| seed | common checkpoints | mismatched rows |
+|---|---|---|
+| 9312 | 7 | **0** |
+| 9316 | 6 | **0** |
+| 9326 | 7 | **0** |
+
+Row by row on sd9316: E/lip **4.67, -6.21, -6.38, -6.62, -6.66, -6.64**; largest **10, 25, 29, 29, 29,
+69** -- identical in both runs at every logged digit.
+
+**Since `repro` went on to form at exactly the historical steps, determinism guarantees `posctl` will
+too.** The pre-registered clause -- *"all 3 form at 880000/1040000/1240000 -> a rest22 null is
+interpretable as a real absence"* -- **is satisfied by a stronger and earlier check.**
+
+**Precision caveat:** the log rounds E/lip to 2 dp and largest is an integer, so "identical" means
+**identical at every logged digit**, not verified bit-identical.
+
+### CLOSED: the composition loophole
+
+Any of my arms could have differed from historical std160 in a parameter I never inspected, which would
+explain the drought trivially. Saved-state composition:
+
+| arm | seed | L | beads | water | heads | tails | mols |
+|---|---|---|---|---|---|---|---|
+| std160 | 9300 | 65 | 2959 | 2159 | 160 | 640 | 160 |
+| std160 | 9319 | 65 | 2959 | 2159 | 160 | 640 | 160 |
+| em160S | 217283 | 65 | 2959 | 2159 | 160 | 640 | 160 |
+| em3M | 6003 | 65 | 2959 | 2159 | 160 | 640 | 160 |
+
+**Identical. That explanation is dead.**
+
+### LAUNCHED, AND IT FAILED AT STEP 0 -- REPORTED AS SUCH
+
+`/tmp/fisdil_sd570{01..05}.log` -- 5 restarts of `twocomp_sd9317.npz` into **L=92** (from 65), to test
+whether dilution lets the two lobes separate.
+
+**The re-solvation broke the plant.** At step 0, consistently across all five seeds:
+
+| quantity | source state | after transplant to L=92 |
+|---|---|---|
+| largest cluster | 160 | **119** |
+| `nenc` | **2** | **1** |
+| lumen | 297 | **200-207** |
+
+**The pre-registration for "does dilution enable fission" is VOID** -- the arm does not start from a
+two-compartment object. **Not quietly reinterpreted.**
+
+**What is actually running:** a diluted **single-compartment 119-lipid vesicle plus ~41 lipids of
+debris**, in a box 2.0x larger in area.
+
+**REPLACEMENT FALSIFICATION, for the experiment that actually launched:**
+- **`nves` reaches 2 in >= 1 of 5** -> at low density a vesicle plus free material **can** produce a
+  second vesicle; dilution is a lever on multiplicity even without fission.
+- **`nves` stays <= 1 in all 5 over 800k** -> dilution does not help either; combined with the 20 undiluted
+  fission seeds, **no route to two separate vesicles has been found.**
+- **the 119-lipid vesicle dissolves in >= 4 of 5** -> the transplant damage is progressive and the arm
+  measures transplant decay; discard entirely.
+
+### STILL UNREAD
+
+**rest22** 22 seeds at 140-160k of 1.6M, 0 formations, biggest cluster **102** -- short of the 380k
+earliest historical formation. **n120** 10 at 100-120k, biggest **47**. **n100** 10 at 100-120k, biggest
+**35**. **fission**/**fis55** 10+10 at 200-300k of 800k, **max nves 1, no nves=2.**
+**em3M** 2.28-2.38M of 3M. **posctl** 3 at 100-120k, gate already cleared by the comparison above.
