@@ -21168,3 +21168,62 @@ closing. **This biases the arm toward a HIGHER hazard.**
 **elig** batch 1 at 60-80k of 800k, 0 formations. **fresh20** 200-240k of 1.6M -- **6/20 now eligible**
 (up from 2), largest seen 94, 0 formations, expectation still ~0.
 **repro** 12/12 formed, 1.26-1.52M. **em3M** 1.96-2.02M of 3M.
+
+## Tick: TWO COMPARTMENTS in one membrane -- 6 seeds, 4 arms; the obstruction is FISSION, not a 2nd lumen
+
+### A CONFLATION I HAVE BEEN MAKING ALL SESSION
+
+I have repeatedly written *"max nves has never exceeded 1"* as **the** obstruction to multiple vesicles.
+**`nves` counts separate vesicle-qualifying CLUSTERS. `nenc` counts enclosed regions WITHIN the largest
+cluster.** Different questions. **I had never checked the second.**
+
+| arm | seeds | max nenc | max nves | seeds reaching nenc>=2 | checkpoints with nenc>=2 |
+|---|---|---|---|---|---|
+| repro | 15 | **2** | 1 | 2 | 32 |
+| em3M | 5 | **2** | 0 | 1 | 9 |
+| elig | 10 | **2** | 0 | 1 | 7 |
+| second | 6 | **2** | 1 | 2 | 2 |
+| fresh20 | 20 | 1 | 0 | 0 | 0 |
+| elig2 | 10 | 1 | 0 | 0 | 0 |
+| em160S | 12 | 1 | 0 | 0 | 0 |
+
+**Six seeds across four arms have produced two compartments inside ONE membrane, on 50 checkpoints.**
+sd1459 held it for **21 consecutive checkpoints spanning 400000 steps** (680000 -> 1080000+).
+
+### MEASURED THE COMPARTMENT SIZES, because the log reports only the largest lumen
+
+| seed | cluster | region sizes (cells) | reading |
+|---|---|---|---|
+| sd1459 | 133 lipids | **1429 and 100** | one real vesicle **plus a small pocket** |
+| sd9317 | 160 lipids | **297 and 200** | **two comparable compartments** |
+
+**Two-compartment structures are usually lopsided.** sd9317 is the exception and is genuinely two rooms
+of similar size in a single connected membrane -- **the closest this project has come to the
+multiple-vesicle goal.**
+
+The sd9317 render at 1480000 shows both compartments plus a third partial pocket that does not close.
+**Render and metric agree.**
+
+**REFRAMED OBSTRUCTION: making a second lumen is not the hard part. Making two SEPARATE vesicles is.**
+That requires the two-compartment membrane to **fission**, which has never been observed.
+
+### LAUNCHED: the fission test, straight at the reframed obstruction
+
+`/tmp/fission_sd540{01..05}.log` -- **5 restarts from sd9317's two-compartment state**
+(`docs/states_vesicle/twocomp_sd9317.npz`), fresh noise seeds, 800k steps. **All five confirmed at
+step 0: `largest=160, lumen_c=297, nenc=2`.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **`nves = 2` in >= 1 of 5** -> the route to multiple vesicles runs **through the two-compartment
+  intermediate**, and fission is achievable. This would be the first `nves = 2` in the project.
+- **0/5 reach `nves = 2` while `nenc = 2` persists** -> the obstruction is **specifically the fission
+  step**: the membrane holds two rooms indefinitely but will not separate them.
+- **`nenc` collapses to 1 in >= 4/5** -> the two-compartment state is **transient**, the run measures its
+  decay rather than fission, and it is reported as a **failed manipulation**, not as evidence about
+  fission.
+
+### STILL UNREAD
+
+**elig + elig2** 20 seeds, **1.30 seed-Msteps at-risk, 0 formations** -- far short of the 16 seed-Ms
+target. **second** 80-100k of 800k. **fresh20** 240-280k of 1.6M, 6/20 eligible, 0 formations.
+**repro** 12/12, 1.30-1.56M. **em3M** 1.98-2.08M of 3M.
