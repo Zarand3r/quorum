@@ -22069,3 +22069,72 @@ at **40x the original resolution with a saved configuration at each one.**
 **fine** 5 at 88-92k of 400k. **fission**/**fis55** 5+5 at 340-380k of 800k.
 
 **Disk 87% (116G free); `allstates/` now 209 files and growing under SAVE_ALL.**
+
+## Tick: the aliasing undercount MEASURED at 3.8x -- and bounded to what it actually affects
+
+### MEASURED: distinct enclosed-state episodes, fine vs coarse, same trajectories, 0-140000
+
+| seed | fine (2000-step) episodes | coarse (20000-step) episodes |
+|---|---|---|
+| 55001 | **4** | 1 |
+| 55002 | **4** | 1 |
+| 55003 | **3** | 1 |
+| 55004 | **5** | 1 |
+| 55005 | **3** | 1 |
+| **mean** | **3.8** | **1.0** |
+
+**Coarse sampling merges ~3.8 distinct episodes into one. That is the event-count undercount factor,
+measured rather than assumed.**
+
+### BOUNDING WHAT IT AFFECTS -- the number does less work than it looks like it should
+
+**The 3.8x applies to EPISODE COUNTS WITHIN A RUN. It does NOT apply to the binary "did this seed ever
+form"** that the drought comparison uses. A seed counts as a former if **any one** of its episodes is
+sampled, and with ~4 episodes per 140000 steps over a 1.6M run, **the chance of catching at least one is
+high.**
+
+**So the 8/30 vs 0/N comparison is much less affected than the raw factor suggests.** Stated explicitly
+so the number is not over-applied later.
+
+**Scope caveat:** measured on **5 planted-restart seeds at kT=0.55**, which are the volatile ones. The
+factor may differ for dispersed emergent runs at kT=0.45.
+
+### DROUGHT REPLAY: still uninformative
+
+`finecmp` 5 seeds at **62000-70000 of 1600000**, largest cluster max **19-40**, and **zero `nenc > 0`
+checkpoints of any kind.** They have not coarsened into the window. Nothing readable.
+
+### LAUNCHED: kT = 0.65 on the two-compartment state
+
+Both `nves = 2` events occurred at **kT = 0.55**; none at 0.45. The products **re-fuse within 4000
+steps**. The question is whether more thermal energy separates them fast enough to survive.
+
+`/tmp/kt65_sd580{01..05}.log` -- **5 seeds from `twocomp_sd9317.npz` at kT = 0.65**,
+`VIVARIUM_CHECKPOINT_EVERY = 2000` so events are not aliased, 400k steps. All five confirmed at step 0:
+`largest = 160, lumen = 297, nenc = 2`.
+
+**Solvent confound runs the safe way:** uniformity **improves** with temperature (water CV 0.586 at
+kT=0.45, 0.490 at 0.55).
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **`nves = 2` spanning >= 2 consecutive 2000-step checkpoints in >= 1 of 5** -> **temperature is the
+  lever on multiplicity**; the products stay apart long enough to count, and the first sustained
+  two-vesicle state in the project.
+- **0 of 5 reach `nves = 2`** -> **kT = 0.65 does not help either**, and temperature over the range
+  0.45-0.65 is not the lever.
+- **The membrane itself comes apart** -- `nenc` to 0 with `largest` staying below 60 -> **too hot; a
+  FAILED MANIPULATION**, not a null result.
+
+### CULLED: the 10 coarse fission seeds
+
+`fission` (5, kT=0.45) and `fis55` (5, kT=0.55) at 380-420k of 800k -- **superseded** by the `fine`
+(2000-step) and `ultra` (500-step) replays, which cover the same deterministic trajectories at 10x and
+40x the resolution. **84 -> 74 processes, then +5 = 79.**
+
+### STILL UNREAD
+
+**ultra** 2 seeds at 41000-41500; the sd55002 event sits at **78000**, sd55001's at **240000**.
+**fine** 5 at 136-144k of 400k, **1 nves=2 checkpoint total** (sd55002 at 78000).
+**rest22** 22 at 320-360k of 1.6M, 0 formations, biggest 102. **deno** 18 at 80-160k.
+**n120** 10 at 360-400k, **n100** 10 at 400-460k, biggest 72.
+**allstates/ 372 files under SAVE_ALL; disk 87%.**
