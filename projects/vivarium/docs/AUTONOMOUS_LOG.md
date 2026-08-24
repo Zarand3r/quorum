@@ -20785,3 +20785,80 @@ nearly touching. Plant intact and open at step 0 (`largest=80, lumen_c=0, nenc=0
 **repro** all **12 formers alive**, 60-180k of 1.6M -- the 12/12 prediction stands untested.
 **fs025** 240-260k of 600k, **mean largest 36.6 +- 12.3 (n=8), zero vesicle checkpoints.**
 **em3M** 660-720k of 3M. **kT035** 420-440k, **kT055** 520k of 600k.
+
+## Tick: 9/12 formers RE-FORM (pathway intact); gap curve completes at 0.812; graded reading withdrawn
+
+### THE DROUGHT: 9 of 12 historical formers have re-formed
+
+| seed | first nves>0 | | seed | first nves>0 |
+|---|---|---|---|---|
+| 1459 | 180000 | | 9312 | 880000 |
+| 9308 | 380000 | | 9316 | 1040000 |
+| 9317 | 380000 | | 9302 | 1200000 |
+| 9315 | 460000 | | 9326 | **not yet** (at 1160000) |
+| 349 | 500000 | | 9805 | **not yet** (at 1120000) |
+| 9314 | 580000 | | 9809 | **not yet** (at 1040000) |
+
+**The formation pathway works in the current code.** The pre-registered read is 1.6M and the final count
+is not in, but the conclusion that matters is safe: **this session's 0 formations on fresh seeds was
+Poisson variation, not a broken model.** The three outstanding seeds are the three least far along.
+
+`sd9316` render at 1180000 shows a **closed loop attached to a longer ribbon** -- a vesicle with a tail,
+matching the earlier finding that emergent closures enclose **0.23** of a clean ring of their lipid
+count. Metric agrees: `largest 85, lumen_c 107, nenc 1`, held since step 1040000.
+
+### THE GAP DOSE-RESPONSE, COMPLETE at n=80, all read at 300000
+
+| gap (sigma) | span | seeds closed | checkpoints closed |
+|---|---|---|---|
+| 26.7 | 0.75 | 0/5 | 0/80 = **0.000** |
+| 14.1 | 0.85 | 1/5 | 3/80 = **0.038** |
+| 8.9 | 0.90 | 0/5 | 0/80 = **0.000** |
+| 4.2 | 0.95 | 2/5 | 28/80 = **0.350** |
+| **1.63** | 0.98 | **5/5** | 65/80 = **0.812** |
+
+**The span-0.98 clause fires:** *">0.7 -> the curve saturates toward certainty as the gap closes, and
+the gap is the whole story."* **0.812.**
+
+### A CLAUSE APPLIED AGAINST MYSELF: the graded reading is WITHDRAWN
+
+I wrote: *"0.90 below 0.027 -> non-monotone, the gap ordering is not the explanation, and this tick's
+conclusion needs withdrawing."* **0.90 came in at 0.000, below 0.038.**
+
+The inversion is **3/80 vs 0/80, Fisher p = 0.245 -- not distinguishable.** The real steps are:
+**0.95 over 0.90, p < 1e-8; 0.98 over 0.95, p < 1e-8.**
+
+**Withdrawn: "the gap is a graded control variable."** **Adopted instead, from the other branch I
+pre-registered:** *"the transition is sharp, not graded."* **Closure is flat at ~0 for gaps >= 8.9 sigma
+and rises steeply below 4.2 sigma; the transition sits between 8.9 and 4.2 sigma.**
+
+### FIRES: ring52L92, 5/5 closed at 300000
+
+`lumen_c` 355, 282, 286, 364, 324. Pre-registered: *">= 4/5 hold -> box size is exonerated; the tworing
+instability is attributable to the pair or to the restart plant."* **Box size is exonerated.**
+
+### CORRECTED: gap-matched series, my seeds only
+
+`gap120_sd*.log` matched **5 stale files from another session** -- **stale-log trap, fourth occurrence.**
+Restricted to sd8201-8205:
+
+| n | radius | seeds | checkpoints closed |
+|---|---|---|---|
+| 52 | 8.95 | 3/5 | 41/80 = 0.512 |
+| 80 | 13.40 | 2/5 | 28/80 = 0.350 |
+| 120 | 19.77 | 2/5 | 33/80 = **0.412** |
+
+All three within **1.46x** at a 2.2x radius range. **Length and radius still do not control closure.**
+
+### LAUNCHED: 20 fresh seeds, now that the machine has drained to 17 processes
+
+`/tmp/fresh20_sd410{01..20}.log` -- N=160, L=65, kT=0.45, dispersed, **1.6M steps, 32 seed-Msteps.**
+Expected at 0.1003/Ms: **3.21 formations.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 1 formation** -> the drought was Poisson; combined with the repro arm, **0.1003/Ms stands.**
+- **0 formations in 32 seed-Ms** -> **P(0) = 0.040, significant.** The 12 historical formers would then
+  be **unrepresentative of fresh seeds** -- a selection effect in how the rate was originally measured,
+  not a broken pathway, since the repro arm shows the pathway works.
+- **>= 8 formations** -> P(>=8 | 3.21) = 0.011; the true rate is **higher** than 0.1003/Ms and the
+  historical estimate was low.
