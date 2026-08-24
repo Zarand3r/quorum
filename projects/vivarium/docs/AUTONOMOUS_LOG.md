@@ -22244,3 +22244,59 @@ vesicles intact (lumens 233, 233, 236, 233, 233).
 **finecmp** 5 at 112-124k of 1.6M, still zero enclosures. **rest22** 22 at 380-420k, **0 formations**,
 biggest 127. **deno** 18 at 140-220k. **n120** 10 at 420-460k. **n100** 10 at 480-540k.
 **allstates/ 558 files; disk 87%.**
+
+## Tick: two vesicles re-fuse within 1500 steps in 5/5 -- the obstruction is HOLDING them, not making them
+
+### READ: two-vesicle survival from the verified state, 5 fresh noise seeds, 500-step sampling
+
+| seed | `nves = 2` last seen | re-fused by | ckpts with nves>=2 |
+|---|---|---|---|
+| 59001 | step 0 only | **500** | 1/70 |
+| 59002 | 1000 | **1500** | 3/68 |
+| 59003 | 500 | **1000** | 2/71 |
+| 59004 | 500 | **1000** | 2/71 |
+| 59005 | step 0 only | **500** | 1/67 |
+
+**ALL FIVE re-fused within 1500 steps**, against a pre-registered threshold of 5000.
+
+**THE CLAUSE FIRES: *"holding two vesicles requires SEPARATING the lobes, not merely creating them."***
+The dumbbell neck reforms within ~1000 steps **regardless of noise realisation** -- 5/5, no seed
+dependence.
+
+**Creating two vesicles is not the problem. Keeping them apart is.**
+
+### LAUNCHED: raise the head-head repulsion that the two exteriors press against
+
+The two vesicles touch along their **outer surfaces, which are lipid heads.** Re-fusion must overcome
+head-head contact, and that is a tunable parameter: **`VIVARIUM_CHI_HH`, currently 0.20.**
+
+`/tmp/chihh_sd600{01..05}.log` -- **5 seeds from `twoves_sd55002_s78000.npz` with `chi_HH = 0.60`**,
+everything else identical (kT=0.55, L=65, chi_HT=-0.25, chi_WW=0.50), `CHECKPOINT_EVERY = 500`, 100k.
+
+**The amphiphile condition `chi_HT < chi_HH` is not just preserved but STRENGTHENED** (-0.25 < 0.60).
+
+**First checkpoints -- encouraging, not readable.** At step 500, **4 of 5 still show `nves = 2`** with the
+58-lipid vesicle intact and lumens **191-229**, where the chi_HH = 0.20 baseline had **already lost 2 of
+5.** The membrane survived the parameter change, so the failure clause has not fired.
+
+**FALSIFICATION, stated before the read at 5000 steps:**
+- **>= 3 of 5 hold `nves = 2` past 5000 steps** -> **head-head repulsion is the lever on re-fusion**, and
+  multiplicity is achievable by tuning the exterior interaction.
+- **All 5 re-fuse within 1500 steps, as at baseline** -> head-head repulsion is **not** the lever.
+- **The vesicles restructure -- `largest` shifting more than 20% in the first 2000 steps** -> the
+  manipulation changed the membrane rather than only its exterior; **FAILED MANIPULATION**, not a result.
+
+### CULLED: 10 processes
+
+**`fine`** (5 seeds at 224-236k of 400k) -- its job, finding aliased events, is done; the 500-step
+`ultra` replay superseded it. **`twoves`** (5) -- answered above.
+**86 -> 76 processes, then +5 = 81.**
+
+### STILL UNREAD
+
+**kt65** 5 at 82-98k of 400k, `max nves` still 1 -- the temperature comparator for the chi_HH test.
+**ultra** sd55001 at 124500 of 260000; its event sits at **240000**.
+**fineform** 3 formers at 56-58k of 600k -- the long-tail-episode test.
+**finecmp** 5 at 148-164k of 1.6M, still zero enclosures.
+**rest22** 22 at 420-440k, **0 formations**, biggest **145**. **deno** 18 at 180-240k.
+**n120** 10 at 460-520k, biggest 110. **n100** 10 at 540-600k.
