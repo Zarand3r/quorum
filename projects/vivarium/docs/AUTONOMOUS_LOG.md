@@ -21495,3 +21495,68 @@ launch, so this cannot repeat the overwrite of four ticks ago.
 **fission** 10 at kT=0.45, **fis55** 10 at kT=0.55, 40-140k of 800k. **fresh20** 360-420k of 1.6M,
 **15/20 eligible**, leaders at 104/109/114 lipids, 0 formations. **elig** 10 seeds still accumulating
 at-risk time. **repro** 4 of 12 still running. **em3M** 2.12-2.22M of 3M.
+
+## Tick: my at-risk time sits at the WRONG cluster sizes -- a partial, honestly-bounded explanation
+
+### MEASURED: where the at-risk exposure actually is
+
+Distribution of largest-cluster size over checkpoints above the 52-lipid threshold:
+
+| size | my unselected arms | the 12 formers, before forming |
+|---|---|---|
+| 40-59 | 0.152 | 0.057 |
+| 60-79 | 0.214 | **0.296** |
+| 80-99 | 0.225 | **0.387** |
+| 100-119 | 0.118 | **0.182** |
+| 120-139 | 0.088 | **0.000** |
+| 140-159 | 0.104 | 0.024 |
+| 160+ | 0.098 | 0.054 |
+| **n** | **1242** | **297** |
+
+**Formers spent 0.865 of their pre-formation time in 60-119 lipids. My arms spend 0.557 there**, and
+**0.29 above 120 against the formers' 0.078.** My exposure sits at sizes where the formers essentially
+never were.
+
+**Correcting for it takes the drought from P ~ 0.002 to P ~ 0.020.** Weaker, **still significant.**
+
+**POST-HOC WARNING, STATED: the 60-119 window is derived from the formers' own distribution.** Using it
+to explain why they formed is circular if pushed. **Quoted as a sensitivity bound, not a result.**
+Observed closure sizes span **39 to 160**, which does not independently justify a 60-119 window.
+
+### THE TENSION IS ROBUST TO THE HISTORICAL DENOMINATOR
+
+Censoring at first formation; the 8 formers contribute **4.14 seed-Ms** of at-risk time before their
+events; varying when the 22 non-formers became eligible:
+
+| assumption | non-former at-risk | total | hazard | expected over my 25.58 | P(0) |
+|---|---|---|---|---|---|
+| eligible at 100k | 33.0 | 37.1 | 0.215/Ms | 5.51 | **0.0040** |
+| eligible at 260k (former median) | 29.5 | 33.6 | 0.238/Ms | 6.09 | **0.0023** |
+| eligible at 460k | 25.1 | 29.2 | 0.274/Ms | 7.00 | **0.0009** |
+
+**Significant under every assumption.**
+
+### LAUNCHED: three concurrent positive controls, closing a hole in the rest22 design
+
+`/tmp/posctl_sd93{12,16,26}.log` -- **3 known formers, 1.6M, running alongside `rest22` on the same
+machine in the same wall-clock window.**
+
+**Why:** if `rest22` returns 0/22, that null is **uninterpretable without evidence the detector and
+pipeline were working at the time.** These three also serve as a **second determinism check** --
+historical formation steps **880000, 1040000, 1240000.**
+
+Culled `elig` (10 seeds) to pay for it; it had delivered its bound (25.58 at-risk seed-Ms, hazard
+<= 0.117/Ms) and was adding more of the same. **82 -> 72, then +3 = 75.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **All 3 form at 880000 / 1040000 / 1240000 exactly** -> detector and pipeline verified in this window;
+  a `rest22` null would then be **interpretable as a real absence.**
+- **Any of the 3 fails to form, or forms at a different step** -> **the pipeline is NOT reproducing in
+  this window**, every result from this session's arms is suspect, and `rest22` cannot be read at all
+  until it is explained. **This outcome takes priority over everything else in flight.**
+
+### STILL UNREAD
+
+**rest22** 22 seeds at 20-40k of 1.6M, 0 formations -- **far short of the 380000 earliest historical
+formation.** **fresh20** 400-460k of 1.6M, 0 formations. **fission** 10 at kT=0.45 and **fis55** 10 at
+kT=0.55, 80-180k of 800k. **repro** 3 of 12 still running. **em3M** 2.16-2.26M of 3M.
