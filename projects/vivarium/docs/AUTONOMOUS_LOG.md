@@ -19836,3 +19836,82 @@ picture is wrong" -- if n=200 also unrolls, the intermediate sizes are moot.
   every energetic interpretation in this project is refuted at the sizes we can afford.
 - **`largest` collapses well below n** -> the run measured plant destruction, not closure; report as a
   failed manipulation, not as a negative result.
+
+## Tick: fission/fusion rates cross at ~90 lipids; "steady state" RETRACTED (still coarsening)
+
+### RETRACTED: "a dynamic fission-fusion STEADY state"
+
+Committed last tick. The fission and fusion are real; **the steady state is not.** Mean largest-cluster
+size over the late window: **80.4 for 400-900k (n=195), 115.8 for 900k+ (n=189).** The distribution is
+still drifting upward at 1.4M, so this is a slowly coarsening process with size-dependent rates, not an
+equilibrium. Corrected wording used from here on.
+
+### MEASURED: fission and fusion probabilities cross near 90 lipids
+
+383 transitions between adjacent 20k checkpoints, 12 emergence seeds, late window (step > 400000),
+change of >= 10 lipids, **excluding the p=160 system-size ceiling** (at 160 there is nothing left to
+fuse with, so P(fusion) = 0 is forced, not measured):
+
+| size bin | n | P(fission) | P(fusion) |
+|---|---|---|---|
+| 40-59 | 65 | 0.015 | 0.231 |
+| 60-79 | 61 | 0.066 | 0.213 |
+| **80-99** | 90 | **0.089** | **0.100** |
+| 100-119 | 83 | 0.108 | 0.036 |
+| 120-139 | 28 | 0.036 | 0.107 |
+| 140-159 | 12 | 0.167 | 0.167 |
+
+**Fusion falls monotonically with size, fission rises, and they cross in the 80-99 bin.** Robust to the
+threshold: at +-5 the crossing is still in 80-99 (0.111 vs 0.122) with fission dominant above 100
+(0.120 vs 0.072). At +-20 the counts are too sparse to read and neither rate is interpretable.
+
+**The 8 confirmed vesicles closed at a median of 88 lipids** (52, 66, 77, 84, 92, 99, 118, 137). The
+crossing sits on top of the closure-size median. **Reported as a coincidence worth pursuing, not a
+cause** -- with the distribution still drifting, both numbers could be set by a common scale without
+either driving the other, and n = 8 closures cannot separate them.
+
+### MEASURED: branching, against a junction-free control
+
+Head-bead neighbour count within r = 3.0, largest cluster only, calibrated on a **planted arc0.75 that
+has exactly two ends and zero junctions**:
+
+| system | n_lip | mean | max | frac above the arc's mu+2sd (3.05) |
+|---|---|---|---|---|
+| planted arc n=70 | 70 | 1.80 | 3 | 0.000 |
+| sd799979 | 160 | 1.77 | 6 | 0.037 |
+| sd911003 | 160 | 1.77 | 4 | 0.013 |
+| sd683729 | 159 | 1.77 | 4 | 0.006 |
+| sd449549 | 103 | 1.81 | 4 | 0.010 |
+| sd331777 | 94 | 1.85 | 3 | 0.000 |
+
+**Mean coordination matches the planted bilayer to 0.05**, so the emergent object's local packing is a
+bilayer. But every 160-lipid cluster carries lipids more highly coordinated than anything in a
+junction-free arc. **This is a proxy consistent with branch points, not a junction count.** sd331777
+scores 0.000 although its render shows a Y -- that Y is in a cluster other than the largest, which the
+restriction excludes. Stated so the metric is not over-read.
+
+### ADDED: `projects/vivarium/status.sh`
+
+Reads `/proc/<pid>/fd/1` for live processes only, and prints each run's `VIVARIUM_CHI*`. Globbing
+`/tmp/*.log` cannot distinguish a running experiment from a corpse -- it produced one retraction
+(`half160_*` leftovers) and this tick `arc200b_sd0..4.log` from another session sat in the same glob as
+my `arc200b_sd910*`. Missing chi overrides print as a loud warning, the fault that voided 30 runs.
+
+### NOT READ
+
+**arc70b / arc200b at 20k of 300k** -- planted; read at the end, per the standing rule.
+**fs100b / fs050b / cap80b at step 0** -- relaunched last tick; the fs read is pre-registered at 600k.
+**tworing at 420-460k of 600k** -- still unread.
+
+### LAUNCHED: 5 emergence seeds at 3M, to settle whether the coarsening asymptotes
+
+`/tmp/em3M_sd600{1..5}.log`, N=160, L=65, kT=0.45, dispersed, **3,000,000 steps** (the existing arm's
+budget ends near 1.5M, which is why "still coarsening" is currently un-resolvable).
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **Mean largest cluster over the last 500k of the 3M run is not above 115.8** -> the coarsening has
+  asymptoted and "still coarsening" is wrong.
+- **It reaches 160 and stays there for the last 500k** -> the terminal state IS the single ribbon, which
+  reinstates the part of the two-ticks-ago picture that was not about one-way passage.
+- **It keeps oscillating between 60 and 160 with no trend** -> the process is stationary after all and
+  the 80.4 -> 115.8 drift measured here was a transient.
