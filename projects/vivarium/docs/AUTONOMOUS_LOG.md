@@ -22738,3 +22738,80 @@ reach vesicle size at all; running both hedges that.**
 **emerge2** 8 at 0-20k of 1.6M, largest 6-8. **rest22** 22 at 560-640k, **0 formations**, biggest 154.
 **deno** 18 at 320-420k. **n120** 10 at 680-760k. **finecmp** 5 at 316-344k, still zero enclosures.
 **fineform** 3 at 218-240k of 600k.
+
+## Tick: box confound SETTLED (separation at birth); "no fusion barrier" WITHDRAWN; lambda re-measured at matched radius
+
+### THE BOX CONFOUND IS SETTLED -- AGAINST THE BOX
+
+Same two rings, N=104, kT=0.55, only the box differs. **Longest continuous `nves = 2` episode:**
+
+| box | longest episodes (steps) | merge events |
+|---|---|---|
+| **L=65** (density 0.0246) | **45500, 36500, 30000, 29000, 15500** | **0/5** |
+| L=92 (density 0.0123) | 40500, 29000, 19500, 16500, 12500 | **0/5** |
+| pinch-born, L=65 | 5500, 1500 | merges |
+
+**The small box is if anything BETTER.** The pre-registered clause -- *"longest episodes stay in the
+12000-40000 range -> being born apart is what matters; the box is incidental"* -- **fires.**
+
+**Two vesicles born apart coexist at both densities and NEVER merge (0 merge events in 10 seeds).**
+Only pinch-born pairs merge.
+
+### RETRACTED: "the model lacks a fusion barrier"
+
+I flagged this as a physics gap in the condition-1 assessment, reasoning from how fast pinch products
+re-merged, and said I would fix it in code.
+
+**Across 10 born-apart seeds at two densities there are ZERO fusion events.** What re-merges in the
+pinch case is **a neck within ONE membrane**, not two bilayers fusing. **The model's resistance to
+genuine vesicle-vesicle fusion is effectively total**, consistent with the literature's stalk barrier
+being large.
+
+**NO CODE CHANGE IS WARRANTED.** Adding a hydration term would have been fixing a problem that does not
+exist -- a speculative abstraction, which this repo's rules forbid.
+
+### lambda RE-MEASURED AT MATCHED RADIUS
+
+The `arc0.95` arm gives **the same 80-lipid object in both open and closed states**, at
+**R = 17.34 (open) vs 17.47 (closed) -- a 0.7% difference.** That is exactly the confound that killed
+the old figure, which compared **ring R=11.14 against arc R=14.85**.
+
+**Paired within seed**, on the three seeds that produced both states:
+
+| seed | open E/lip | closed E/lip | delta |
+|---|---|---|---|
+| 9601 | -7.2763 | -7.3471 | 0.0708 |
+| 9602 | -7.2700 | -7.4608 | 0.1908 |
+| 9603 | -7.2700 | -7.4144 | 0.1444 |
+
+**delta E/lip = 0.1353 +- 0.0349  ->  lambda = 5.41 +- 1.40 eps per end = 12.0 +- 3.1 kT**
+**closure gain 2*lambda = 10.8 eps = 24.1 kT**
+
+**Three times smaller than the withdrawn 18.31 eps.** The brief's *"closure has ~81 kT to gain"*
+becomes **~24 kT**.
+
+**TWO CAVEATS KEPT ATTACHED:** only **3 paired seeds**, so **p ~ 0.06**; and consecutive checkpoints
+within a closed episode are **autocorrelated**, so the naive pooled figure (0.1492 +- 0.0408, t = 3.66,
+n = 28 vs 47 checkpoints) **overstates the evidence.** The paired number is the one to quote.
+
+### LAUNCHED: get the paired comparison to n >= 5 seeds
+
+`/tmp/lam_sd660{01..10}.log` -- **10 seeds, `arc0.95`, n=80, L=44, kT=0.45, 300k,
+`CHECKPOINT_EVERY = 2000`** (10x finer than the original five, so episode boundaries are resolved).
+Step 0 verified: `largest = 80, R_mid = 17.34, nenc = 0`.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 5 seeds produce BOTH states and the paired delta is significant at p < 0.05** -> **the first
+  defensible line tension in this project**, at matched radius, and the number the whole edge-vs-bend
+  framing rests on.
+- **The paired delta is consistent with zero at n >= 5** -> **there is no measurable line tension at
+  n=80**, and the closure gain is not what drives closure -- consistent with the gap, not length or
+  energy, being the control variable.
+- **Fewer than 5 seeds produce both states** -> underpowered again; report the count and do not quote a
+  lambda.
+
+### STILL UNREAD
+
+**emerge2** 8 at 40k, **emerge3** 6 at 20k of 1.6M -- **0 checkpoints with `nves >= 2`** across both,
+and across every dispersed run in project history. **rest22** 22 at 620-680k, 0 formations, biggest 154.
+**deno** 18 at 380-500k. **n120** 10 at 740-840k. **finecmp** 5 at 372-400k. **fineform** 3 at 266-288k.
