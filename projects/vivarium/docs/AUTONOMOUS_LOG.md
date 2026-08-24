@@ -20331,3 +20331,70 @@ where closure happens. **The capped-material question is abandoned** -- stated a
 writes them** -- another session's files sharing my glob. My arc120 seeds are 9201-9205, alive at
 180-220k. `status.sh` plus the live/finished split caught it; **the raw glob would have reported a
 finished n=120 arc series that is not mine.**
+
+## Tick: the ring size series is FLAT (8/10, 5/5, 3/5) -- no threshold exists in this range
+
+### READ AT THE END: ring52 (10 seeds), ring80 (5), ring120 (5), all at 300000
+
+| n | closed (nenc=1 at final checkpoint) | fraction |
+|---|---|---|
+| 52 | 8/10 | 0.80 |
+| 80 | 5/5 | **1.00** |
+| 120 | 3/5 | 0.60 |
+
+**Non-monotone, and no pair separates: Fisher 52 vs 120 p = 0.560; 80 vs 120 p = 0.444.**
+Pooled, **16 of 20 rings are stable.**
+
+**This breaks the standing plan's premise.** The critical-size argument requires stability to RISE with
+n, because bending cost `pi*kappa/R` falls while the edge saving `2*lambda` is fixed. Across a **2.3x
+range** the measurement shows **no detectable size dependence in either direction**. Rings at 52, 80 and
+120 lipids are all mostly stable, so **there is no threshold to find in this range** -- the quantity the
+standing plan was built to measure does not vary here.
+
+Note `ring52 sd9505` (`nenc=1, lumen_c=112`) and `ring120 sd9403` (`nenc=1, lumen_c=2789`) both read
+`nves=0`: `count_vesicles` is stricter than the single-radius `nenc`, since it requires
+`n_enclosed == 1` at bead radii 1.0/1.5/2.0/3.0. Counted as closed on `nenc`, and flagged.
+
+### FIRES: the ring52 pre-registration, withdrawing the "rings open" claim outright
+
+Pre-registered two ticks ago: "**>= 7/10 still closed at 300k -> the tworing openings were a plant or
+two-ring-interaction artifact; last tick's claim is withdrawn outright.**" Observed **8/10.**
+**"52-lipid rings are unstable at kT=0.45" is withdrawn without qualification.**
+
+### MEASURED, NOT CLAIMED: single ring vs ring pair
+
+| system | n per ring | closed at 300000 |
+|---|---|---|
+| single `ring52` | 52 | **8/10** |
+| `tworing` pair | 52 | **1/5** |
+
+**Checked at matched exposure** -- tworing at step 300000 is also 1/5 (sd1, sd2, sd3, sd4 all
+`nenc=0`; sd5 `lumen_c=332`), so the pair's longer run is not the explanation. **Fisher exact
+p = 0.0889 -- suggestive, not significant.**
+
+**Deliberately NOT claiming "two rings destabilise each other."** That comparison carries **three**
+simultaneous differences: pair vs single, **box L=92 vs L=44**, and a **restart-from-state plant vs a
+fresh plant**.
+
+### LAUNCHED: the one-variable control that could kill the pair hypothesis before it is asserted
+
+`/tmp/ring52L92_sd990{1..5}.log` -- **single n=52 ring, L=92, 300k, 5 seeds.** Changes **only the box**
+relative to `ring52`. Positive control passes at step 0: `largest=52, R_mid=8.97, lumen_c=407, nenc=1,
+nves=1`.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 4/5 hold** -> box size is exonerated; the tworing instability is attributable to the pair or to
+  the restart plant, and the pair hypothesis survives to be tested with a fresh two-ring plant.
+- **<= 2/5 hold** -> **box size (or the dilution that comes with it) is the cause, and the "pair
+  destabilises" reading dies before it is ever asserted.**
+- **3/5** -> indeterminate at n=5; report as indeterminate.
+
+### STILL RUNNING
+
+**arc80** span 0.95 at 200-220k, **3/5 now showing `nves>0`** -- read at 300k.
+**arc80s085 / arc80s075** at 140-160k, **0/5 each** -- the 0.95 closures happened by 40k, so absence
+here is already informative, but the read is 300k.
+**arc120** 4 alive at 260-280k; `sd9201` finished at 300000 with `lumen_c=0, nenc=0` -- **did not close.**
+**arc200b** 140-160k of 300k. **fs100b/fs050b** 400-420k of 600k -- pre-registered read at 600k.
+**em3M** 340-380k of 3M (largest 31, 40, 46, 50, 72). **kT035/kT055** 120-160k, confound recorded.
+**tworing** sd3 at 590k; the other four are done and give **1/5**.
