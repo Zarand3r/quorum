@@ -20539,3 +20539,62 @@ L=65, kT=0.45, dispersed, 600k, correct chi. **4.8 seed-Msteps**; expected forma
 the gap-matched comparison against n=80's 0.350 is the pre-registered endpoint at 300k.
 **ring52L92** 40k of 300k, 5/5 still closed. **arc200b** 200k of 300k. **fs100b/fs050b** 500-540k of
 600k. **em3M** 420-480k of 3M (largest 46, 51, 64, 72, 109). **kT035/kT055** 200-260k of 600k.
+
+## Tick: the packing-parameter pre-registration FIRES at its declared read point (11.5 vs a declared 30)
+
+### PRE-REGISTERED READ, AT THE DECLARED POINT
+
+Largest cluster at a **matched step of 580000**, all arms identical except tail length:
+
+| arm | n | mean | sd | sem |
+|---|---|---|---|---|
+| frac_short = 1.0 (2 tails) | 6 | **11.5** | 2.1 | 0.85 |
+| frac_short = 0.5 | 4 | **39.8** | 5.6 | 2.81 |
+| frac_short = 0.0 (4 tails) | 7 | **78.0** | 23.8 | 8.98 |
+
+The clause, written before launch: *"fs=1.0 mean largest < 30 with many separate aggregates -> micellar.
+Packing parameter controls morphology in this model, as geometric theory says."*
+**11.5 against a declared threshold of 30. CONFIRMED.**
+
+Separations: **fs1.0 vs fs0.0 t = 7.4; fs1.0 vs fs0.5 t = 9.6; fs0.5 vs fs0.0 t = 4.1.**
+**Zero vesicle checkpoints in either mixed arm** over their whole runs.
+
+Two ticks ago this was reported early at 240k with the deviation flagged (13.0 / 29.2 / 43.6). **The
+declared read agrees with the early look**, so the deviation did not change the answer -- worth
+recording, since the early look could just as easily have been wrong.
+
+**This is the first fully pre-registered positive result of the session: declared in advance, read at
+the declared point, and it held.**
+
+`fs050b` is n=4 at 580000; two seeds are behind at 520-540k. Stated rather than silently pooled.
+
+### LAUNCHED: a reproducibility control on the twelve historical formers
+
+**The drought is now the session's largest problem.** Emergent runs have produced **0 vesicles in ~15
+seed-Msteps** against a historical **0.1003/Ms** predicting ~1.5. No single test has been significant
+(P(0) = 0.24 at the last count), **but it has only ever gone one way.**
+
+The historical rate was measured on **12 seeds that formed**. Seeds are deterministic here -- the same
+seed fixes both the initial placement (`rng = default_rng(seed)` in `build`) and every thermal kick
+(`Inertial(..., seed=1+seed)`). So the pathway can be tested directly.
+
+`/tmp/repro_sd93{02,08,14,15,17}.log` -- **5 known formers, 1.6M steps, current binary, correct chi.**
+
+**This is sharp precisely because these seeds were SELECTED for having formed. Exact reproduction
+predicts 5/5.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **5/5 or 4/5 form** -> the formation pathway is intact and this session's zero is Poisson variation.
+  The rate stands.
+- **0/5 form** -> **the pathway is broken relative to the era the rate was measured in. 0.1003/Ms is
+  void, and every rate-based statement in this log must be withdrawn** -- including the P(0) tests that
+  have been used to argue the drought is unremarkable.
+- **1-3/5** -> the trajectories are not reproducing exactly; that alone would mean the deterministic-seed
+  assumption is wrong, which is a separate and worse problem than a wrong rate.
+
+### STILL UNREAD
+
+**gap52** 220-280k, **gap120** 100k of 300k -- 3/5 and 2/5 currently showing `nves>0`; the gap-matched
+comparison against n=80's 0.350 is pre-registered at 300k. **ring52L92** 80k of 300k, 5/5 still closed.
+**arc200b** 220-240k of 300k. **fs025** 60k of 600k. **em3M** 500-540k of 3M. **kT035** 280k,
+**kT055** 320-340k of 600k, both carrying the solvent confound.
