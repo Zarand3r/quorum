@@ -63,6 +63,13 @@ def _save_state(X, species, chains, mols, L, d, phi, kT, frac_short, plant, n_li
     root = os.environ.get("BUILD_WORKSPACE_DIRECTORY", ".")
     out = pathlib.Path(root) / "projects" / "vivarium" / "docs" / "states"
     out.mkdir(parents=True, exist_ok=True)
+    # HAZARD, learned the expensive way on 2026-08-23: this name carries no STEP and no RUN identity,
+    # so re-running the same parameters overwrites the previous run's state in place. Relaunching five
+    # known vesicle-forming seeds as a reproducibility control destroyed the five historical states
+    # those seeds' closure sizes had been measured from. `_env_tag` fixed the missing-swept-variable
+    # half of this; the missing-run half is still open. Copy anything you need to keep into
+    # docs/states_protected/ BEFORE relaunching a seed, or set VIVARIUM_SAVE_ALL, which writes
+    # step-tagged files that never collide.
     tag = (f"mix{d}d_{plant}_N{n_lip}_L{L:g}_{'sac' if phi == 0.0 else 'exp'}"
            f"_kT{kT}_fs{frac_short}{_env_tag()}_sd{seed}.npz")
     np.savez_compressed(out / tag, X=X, species=species, chains=chains, L=L, d=d, phi=phi, steps=steps,

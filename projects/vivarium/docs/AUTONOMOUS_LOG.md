@@ -20664,3 +20664,57 @@ live-`/proc/<pid>/fd/1` check, same as `arc120_sd0..5` and `arc200b_sd0..4` befo
 **gap120** 160k, **arc200b** 240-260k, **ring52L92** 100k (4/5 closed), **arc80s090** 0k -- all of 300k.
 **repro** 40-60k of 1.6M -- the 5/5 prediction stands untested. **fs025** 120-140k of 600k (largest
 22-42). **em3M** 560-600k of 3M. **kT035** 320-340k, **kT055** 380-400k of 600k.
+
+## Tick: my own reproducibility control DESTROYED the historical states of the seeds it was testing
+
+### DATA LOSS, SELF-INFLICTED, RECORDED IN FULL
+
+`_save_state` (`_mixture.py:66`) builds its filename from **plant, N, L, kT, frac_short, env tag, seed**
+-- with **no step number and no run identity.** Last tick's reproducibility control relaunched five known
+formers with exactly those parameters, so at their first checkpoint they **overwrote the historical
+final states of the very seeds under test.**
+
+| seed | state file mtime | my launch |
+|---|---|---|
+| 9302 | 21:06:00 | ~20:40 |
+| 9308 | 21:05:37 | ~20:40 |
+| 9314 | 21:06:22 | ~20:40 |
+| 9315 | 21:06:50 | ~20:40 |
+| 9317 | 21:06:31 | ~20:40 |
+
+The `steps` field in those files reads **1600000** -- the run's *target*, not its progress -- so **the
+file cannot even report that it is a young run.**
+
+**LOST:** five N=160/L=65 configurations. The results derived from them survive in this log (closure
+sizes 52-137; the lumen-vs-cluster fit), but **the configurations cannot be re-examined.**
+**NOT LOST:** the other seven formers -- **9312, 9316, 9326, 1459, 349, 9805, 9809 -- copied to
+`docs/states_protected/` before anything else could touch them.**
+
+**Written into `_save_state` as a comment, not worked around silently.** `_env_tag()` exists because a
+swept variable went missing from a filename **seven** times; this is the same failure with the *run
+identity* missing instead of a variable, and it now sits next to the code that causes it.
+`VIVARIUM_SAVE_ALL` already writes step-tagged files that never collide.
+
+### LAUNCHED: the control extended from 5 formers to all 12
+
+With the surviving states backed up, relaunching them is safe.
+`/tmp/repro_sd{9302,9308,9312,9314,9315,9316,9317,9326,1459,349,9805,9809}.log` --
+**12 known formers, 1.6M steps, current binary, correct chi.** 12 alive.
+
+**FALSIFICATION, restated for the larger arm before any checkpoint is read:**
+- **12/12 form** -> the integrator is deterministic in the seed as assumed, the pathway is intact, and
+  this session's **0 formations in ~15 seed-Ms is Poisson variation.** The 0.1003/Ms rate stands.
+- **0/12 form** -> **the formation pathway is broken relative to the era the rate was measured in.
+  0.1003/Ms is void and every rate-based statement in this log goes with it**, including the P(0) tests
+  used to argue the drought is unremarkable.
+- **1-11/12** -> the trajectories are **not** reproducing exactly. That falsifies the deterministic-seed
+  assumption itself, which is a worse problem than a wrong rate, and k/12 measures its size.
+
+These seeds were **selected because they formed**, which is exactly what makes 12/12 the sharp
+prediction rather than a hopeful one.
+
+### NOTHING REACHED A READ POINT
+
+**arc200b** 260-280k, **gap120** 180-200k, **ring52L92** 120k (4/5 closed), **arc80s090** 60k -- all of
+300k. **fs025** 160k of 600k (largest 22-42). **em3M** 580-640k of 3M (largest 56, 57, 72, 77, 137).
+**kT035** 340-360k, **kT055** 420-440k of 600k.
