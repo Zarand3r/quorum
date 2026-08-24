@@ -23212,3 +23212,72 @@ form under their own noise** (0/22 debounced in `rest22` by 1.6M). N=160, L=65, 
 **noise** 10 at 80-100k of 600k. **place** 10 at step 0. **k65 / k70** 5+5 at 160-180k of 300k.
 **deno** 18 at 620-760k, **2/18 formed**. **n120** 10 at 1.08-1.20M. **emerge3** 6 at 140-160k.
 **fineform** 3 at 502-540k of 600k.
+
+## Tick: kappa = 13.84 +- 10.91 eps*sigma -- linear fit, right sign, but FAILS my own factor-2 criterion
+
+### THE CURVATURE SERIES, READ AT THE END
+
+Five **non-closing** spans, n=80 fixed (so the two ends and the edge term cancel; only R changes):
+
+| span | R | 1/R^2 | E/lip | n ckpts |
+|---|---|---|---|---|
+| 0.65 | 19.59 | 0.00261 | **-7.3951 +- 0.0227** | 67 |
+| 0.70 | 18.19 | 0.00302 | -7.3831 +- 0.0240 | 67 |
+| 0.75 | 16.98 | 0.00347 | -7.3812 +- 0.0269 | 75 |
+| 0.85 | 14.98 | 0.00446 | -7.3683 +- 0.0218 | 72 |
+| 0.90 | 14.15 | 0.00500 | **-7.3592 +- 0.0202** | 75 |
+
+| fit | kappa | chi2/dof | hi/lo ratio |
+|---|---|---|---|
+| **5 non-closing spans** | **13.84 +- 10.91 eps*sigma** (30.7 +- 24.3 kT*sigma) | **0.01** | **8.47** |
+| drop 0.90 | 13.42 +- 16.16 | 0.02 | -- |
+| drop 0.65 | 12.36 +- 14.40 | 0.01 | -- |
+| + the CLOSING span 0.95 | 32.08 +- 8.58 | **1.84** | 1.73 |
+
+**Monotone, right sign, and beautifully linear (chi2/dof = 0.01).** But the pre-registered criterion was
+*"slope determined to better than a factor of 2"* -- **the ratio is 8.47 and the slope is 1.27 sigma
+from zero. CRITERION NOT MET.**
+
+### TWO HONEST NOTES
+
+**This is a POWER problem, not a broken estimator.** Dropping either endpoint leaves kappa at **12-13**,
+so the value is stable and only the precision fails. That distinguishes it from the undulation spectrum,
+which **measured its own noise** (per-mode spread 16.7x and 1712x, flat in q).
+
+**Adding back span 0.95 would give kappa = 32.08 +- 8.58, ratio 1.73 -- PASSING my criterion.** I
+excluded that span for a stated reason (it closes half the time, so its "open" checkpoints are
+near-closed configurations), and **chi2/dof rises from 0.01 to 1.84 when it is included**, i.e. it sits
+off the line. **Including it to meet my own bar would be exactly the post-hoc selection this log has
+been guarding against.** Not done.
+
+**Failure clause, partial:** k70 sd72004 dipped to **largest = 58**, below the 60 threshold, before
+recovering to 80. k65 sd71004 dipped to 63. Transients, not collapse.
+
+### LAUNCHED: endpoint reinforcement, WITH A STOPPING RULE
+
+`/tmp/k65b_sd730{01..10}.log` (span 0.65) and `/tmp/k90b_sd740{01..10}.log` (span 0.90) -- **10 seeds
+each at the two spans that set the slope, run to 600000 instead of 300000.** Doubling both the seed count
+and the run length should roughly halve the endpoint errors.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **Reinforced fit gives hi/lo < 2** -> **kappa MEASURED without a spectrum**, condition 1's largest
+  remaining gap closes.
+- **Still > 2** -> **kappa is not measurable to factor-2 precision by energy differencing at this system
+  size.** **PRE-COMMITTED STOPPING RULE: report kappa ~ 14 with its honest error bar and STOP pursuing
+  it.** No further iteration on this measurement.
+
+### DENO: the fresh-seed formations are holding
+
+| seed | formed at | ckpts with a lumen | debounced |
+|---|---|---|---|
+| **sd45007** | 600000 | **10** | YES |
+| **sd45015** | 600000 | 4 | YES |
+| sd45016 | 700000 | 1 | no |
+
+sd45007's lumen over the last three checkpoints: **429, 438, 437 cells.** Stable, not flickering out.
+
+### STILL UNREAD
+
+**noise** 10 at 140-160k, **place** 10 at 40-60k of 600k -- **both 0/10, and sd9308 forms at 380000, so
+neither is readable yet.** **deno** 18 at 660-820k, **2/18 debounced**. **n120** 10 at 1.16-1.28M.
+**emerge3** 6 at 160-180k. **fineform** 3 at 556-594k of 600k.
