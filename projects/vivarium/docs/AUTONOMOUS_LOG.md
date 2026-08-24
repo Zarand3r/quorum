@@ -20862,3 +20862,67 @@ Expected at 0.1003/Ms: **3.21 formations.**
   not a broken pathway, since the repro arm shows the pathway works.
 - **>= 8 formations** -> P(>=8 | 3.21) = 0.011; the true rate is **higher** than 0.1003/Ms and the
   historical estimate was low.
+
+## Tick: 7/7 first-formation times reproduce EXACTLY -- determinism confirmed; repro now 10/12
+
+### THE DETERMINISM TEST, AGAINST THE HISTORICAL RECORD
+
+Historical first-formation times recovered from this log (lines 16490, 16538, 17392-17399) and compared
+against the relaunched runs:
+
+| seed | historical | this run | match |
+|---|---|---|---|
+| 9308 | 380k | 380000 | **exact** |
+| 9317 | 380k | 380000 | **exact** |
+| 9315 | 460k | 460000 | **exact** |
+| 9314 | 580k | 580000 | **exact** |
+| 9312 | 880k | 880000 | **exact** |
+| 9316 | 1040k | 1040000 | **exact** |
+| 9302 | 1200k | 1200000 | **exact** |
+
+**7 of 7, identical to the checkpoint.** Not "similar" -- the same step.
+
+**This closes the "1-11/12" branch of the pre-registration:** the integrator is deterministic in the
+seed and the trajectories reproduce bit-for-bit. **Repro is now 10/12** (sd9809 formed at 1080000 this
+tick); only **9326** and **9805** are outstanding, both the least far along.
+
+**Caveat attached to my own framing:** the twelve "known formers" were **not collected from one arm** --
+9805 and 9809 came from `em160C`, not `std160`. Relaunching them at N=160/L=65/1.6M is therefore **not
+necessarily an exact replay of the run in which they formed**, so a miss from those two is uninformative
+rather than a failure. The 7 matched seeds above are all `std160`, which is why they are the evidence.
+
+### DECOMPOSED: the 0.812 ceiling at the smallest gap is REVERSAL, not slow closure
+
+`arc80s098`, gap 1.63 sigma, `nenc` per 20k checkpoint (step 0 first):
+
+```
+sd8401  0111111111111111        sd8404  0111111100000001
+sd8402  0111111111111111        sd8405  0111000111111111
+sd8403  0111111111111111
+```
+
+**Every seed closed within the first 20000 steps** -- the leading zero is the planted open state at
+step 0. **All 15 open checkpoints after that are reversals, confined to 2 of 5 seeds** (7 in sd8404,
+3 in sd8405).
+
+**Conclusion: the gap sets HOW FAST closure happens; reversibility sets the CEILING on how much of the
+time it stays closed.** The two are separate quantities and this arm separates them.
+
+### LAUNCHED: 20 more fresh seeds, doubling the rate measurement
+
+`/tmp/fresh20b_sd420{01..20}.log` -- N=160, L=65, kT=0.45, dispersed, 1.6M, joining `fresh20`.
+**Total 40 fresh seeds, 64 seed-Msteps. Expected at 0.1003/Ms: 6.42.**
+
+**FALSIFICATION, stated before any fresh-seed checkpoint is read:**
+- **>= 1 formation** -> the drought was Poisson; with determinism confirmed, **0.1003/Ms stands.**
+- **0 formations in 64 seed-Ms** -> **P(0) = 0.0017.** Decisive. The pathway works (7/7 exact
+  reproduction proves it), so the only remaining explanation would be that **the 12 historical formers
+  are a selected minority and the true fresh-seed rate is far below 0.1003/Ms** -- i.e. the original
+  rate was computed on a numerator enriched by selection.
+- **>= 13 formations** -> P(>=13 | 6.42) = 0.011; the true rate is **higher** than the historical
+  estimate.
+
+### STILL RUNNING
+
+**repro** 10/12 formed, 1.08-1.34M of 1.6M. **fresh20** 20k, **fresh20b** 0k of 1.6M.
+**em3M** 1.78-1.84M of 3M (largest 62, 86, 97, 146, 154).
