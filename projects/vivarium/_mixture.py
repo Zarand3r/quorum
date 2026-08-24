@@ -928,6 +928,21 @@ if __name__ == "__main__":
 
     print(f"MIXTURE {d}-D: {n_short} short (2 tails) + {n_long} long (4 tails) + {n_water} water, "
           f"L={L}, packing fraction {phi}, kT={kT}, start={plant}", flush=True)
+    # THE EFFECTIVE INTERACTION, NOT THE ONE YOU TYPED. chi scales an attractive well, so chi > 0 is
+    # attraction and chi < 0 is repulsion -- but with explicit water the pair actually feels the
+    # EXCHANGE energy chi_ij + chi_WW - chi_iW - chi_jW, because contact also creates a water-water
+    # pair and destroys two solute-water pairs. The two can point OPPOSITE WAYS as a parameter is
+    # swept: raising chi_HH from 0.20 to 0.60 at chi_WW = 0.50 moves effective head-head from -0.800
+    # to -0.400, i.e. it HALVES the repulsion while looking like it raises it. Two ticks of a
+    # multiplicity experiment were run backwards on exactly that misreading, so the effective matrix
+    # is now printed next to the raw one at every launch.
+    if phi > 0.0:
+        _eff = solvent_averaged_chi(f.chi)
+        print(f"  chi RAW      HH {f.chi[0,0]:+.2f}  HT {f.chi[0,1]:+.2f}  TT {f.chi[1,1]:+.2f}  "
+              f"HW {f.chi[0,2]:+.2f}  TW {f.chi[1,2]:+.2f}  WW {f.chi[2,2]:+.2f}", flush=True)
+        print(f"  chi EFFECTIVE (solvent-averaged, this is what the beads feel): "
+              f"HH {_eff[0,0]:+.3f}  HT {_eff[0,1]:+.3f}  TT {_eff[1,1]:+.3f}   "
+              f"[negative = repulsive]", flush=True)
     print("enrichment = (short fraction of OUTER leaflet) - (short fraction of INNER leaflet); "
           "0 = no partitioning", flush=True)
     print(f"{'step':>8}{'E/lip':>9}{'largest':>9}{'R_mid':>7}{'shellCV':>9}{'hollow':>8}{'mix':>7}{'seg':>7}{'burial':>8}{'core':>7}{'lumen_c':>9}{'nenc':>6}{'perc':>6}"

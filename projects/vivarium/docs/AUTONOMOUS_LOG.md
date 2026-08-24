@@ -22427,3 +22427,77 @@ nves = 2`.**
 **rest22** 22 at 460-500k of 1.6M, **0 formations**, biggest **151**. **deno** 18 at 220-300k.
 **n120** 10 at 520-580k. **finecmp** 5 at 192-206k, still zero enclosures.
 **fineform** 3 at 102-104k of 600k. **ultra** sd55001 at 165000; its event sits at 240000.
+
+## Tick: literature check validates 2 of 3 theory layers -- and exposed that I ran the chi_HH lever BACKWARDS
+
+### VALIDATED AGAINST THE LITERATURE
+
+**Layer 1, packing / model provenance.** This model's `short` lipid -- 1 head + 2 tails, fluid phase
+stabilised by broad tail-tail attraction -- **is the Cooke-Deserno solvent-free model**, whose line
+tension and elastic moduli are reported semi-quantitatively consistent with experiment. Our `long`
+lipid (1 head + 4 tails) is an extension, not a standard parameterisation.
+
+**Layer 3, branching.** The surfactant-network literature gives endcap energy `eps_e` and junction
+energy `eps_J`, with the criterion: *"high values of both eps_J and eps_e favor disconnected wormlike
+micelles... when eps_J approaches zero, the formation of branches is favored, and for eps_J << 0,
+fully branched living networks form spontaneously."* **That is exactly the end-cap-vs-junction criterion
+used here**, and it is what the branched networks in these renders are doing.
+
+**Layer 2, edge vs bend.** Fromherz's disc-to-vesicle critical size is real and is driven by the
+competition between edge and bending energy. **Our measurement that it does NOT govern closure here
+(0/320 checkpoints across n=70-200) is a genuine departure from the continuum expectation, not a
+misreading of it.**
+
+### THE GAP THE LITERATURE EXPOSED
+
+Real membrane fusion proceeds through a **stalk intermediate with a substantial free-energy barrier**.
+**Our two vesicles re-fuse in 500-1500 steps** -- far too fast for a barrier-crossing process. That sent
+me to the code.
+
+### RETRACTED: I RAN THE chi_HH LEVER BACKWARDS FOR TWO TICKS
+
+`chi` scales an **attractive** well (`_well` is -1 at contact), so **chi > 0 is attraction**. But with
+explicit water the pair feels the **exchange energy** `chi_ij + chi_WW - chi_iW - chi_jW`
+(`field.py:125`). **The two point OPPOSITE WAYS:**
+
+| raw chi_HH | effective head-head | |
+|---|---|---|
+| **+0.20** (baseline) | **-0.800** | repulsive |
+| **+0.60** (my "raise repulsion") | **-0.400** | **HALVED the repulsion** |
+| **-0.20** | **-1.200** | actually raises it |
+
+**I described chi_HH = 0.60 as raising head-head repulsion. It halved it.** The null result at 4/13 vs
+2/13 was **a test of the wrong direction**, not of the hypothesis.
+
+### CODE FIX: the effective matrix is now printed at every launch
+
+`_mixture.py` startup banner now prints **both** matrices with the sign convention spelled out:
+
+```
+  chi RAW      HH +0.20  HT -0.25  TT +0.70  HW +0.75  TW +0.00  WW +0.50
+  chi EFFECTIVE (solvent-averaged, this is what the beads feel): HH -0.800  HT -0.500  TT +1.200
+```
+
+**The absence of this line is what let the misreading survive two ticks.** Verified across chi_HH =
+0.20 / 0.60 / -0.20. **Change is confined to the CLI banner inside `__main__` (line 943; `__main__`
+starts at 800), so module-level behaviour is untouched** -- confirmed directly: heads reproduce
+`field.forces` on the production topology at **1.82e-16** relative error and the token-channel chi
+matches the species table at **0.000e+00**. (The full bazel suite timed out under a load of ~80 sims;
+these are its two load-bearing assertions, run directly.)
+
+### RELAUNCHED IN THE CORRECT DIRECTION
+
+`/tmp/hhneg_sd620{01..13}.log` -- **13 seeds at `chi_HH = -0.20`, effective head-head -1.200**, i.e.
+**50% MORE repulsive than baseline**, from the verified two-vesicle state, `CHECKPOINT_EVERY = 500`,
+100k. All 13 confirmed at step 0: `largest = 58, lumen 232-233, nves = 2`. Banner confirms the effective
+value in every log.
+
+**Comparator is the ALREADY-MEASURED baseline: chi_HH = +0.20 held past 5000 in 2/13.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 5 of 13 hold `nves = 2` past 5000 steps** -> **p <= 0.039; head-head repulsion IS the lever**, and
+  the previous null was purely a sign error.
+- **<= 2 of 13** -> matching baseline; **head-head repulsion is not the lever in either direction.**
+- **The membrane destabilises** -- `largest` falling below 40 or `nenc` to 0 in the first 2000 steps ->
+  **FAILED MANIPULATION**: at chi_HT = -0.25 vs chi_HH = -0.20 the amphiphile condition
+  `chi_HT < chi_HH` is only **barely** satisfied.
