@@ -22300,3 +22300,68 @@ everything else identical (kT=0.55, L=65, chi_HT=-0.25, chi_WW=0.50), `CHECKPOIN
 **finecmp** 5 at 148-164k of 1.6M, still zero enclosures.
 **rest22** 22 at 420-440k, **0 formations**, biggest **145**. **deno** 18 at 180-240k.
 **n120** 10 at 460-520k, biggest 110. **n100** 10 at 540-600k.
+
+## Tick: chi_HH = 0.60 holds two vesicles 16x longer in 2/5 -- real but UNDER-POWERED, and my clause had a hole
+
+### READ AT THE DECLARED 5000-STEP POINT
+
+Step at which `nves = 2` was last seen, from the identical verified two-vesicle state:
+
+| arm | seeds |
+|---|---|
+| **chi_HH = 0.60** | **24500**, 500, **10500**, 500, 500 |
+| chi_HH = 0.20 (baseline) | 0, 1000, 500, 500, 0 |
+
+**2 of 5 held past 5000 steps, one to 24500 -- 16x the longest baseline survival (1500).**
+**0 of 5 at baseline.**
+
+### MY PRE-REGISTRATION HAD NO MIDDLE BRANCH -- OWNED, NOT INTERPRETED AWAY
+
+I wrote a **binary**: *">= 3 of 5 confirms"* / *"all 5 re-fusing within 1500 refutes."*
+**2 of 5 is neither.** That is a **design flaw**, not a result I get to read freely.
+
+**Fisher exact, 2/5 vs 0/5: p = 0.4444. NOT SIGNIFICANT.**
+
+### AND THE THIRD CLAUSE WAS BADLY WORDED
+
+I wrote that *"largest shifting more than 20% in the first 2000 steps"* would mean a failed manipulation.
+**But re-fusion ITSELF moves `largest` from 58 to 105** -- the clause fires on the phenomenon under
+study rather than the failure mode I meant. The individual vesicle sizes (58, 47) and their lumens were
+preserved, so **the membrane was not restructured.** **Recorded as ambiguous; not used either way.**
+
+### LAUNCHED: both arms extended to 13 seeds, symmetrically
+
+| pooled outcome | Fisher p |
+|---|---|
+| 4/13 vs 0/13 | 0.0957 |
+| **5/13 vs 0/13** | **0.0391** |
+| 6/13 vs 0/13 | 0.0149 |
+| 7/13 vs 0/13 | 0.0052 |
+
+`/tmp/chihh_sd600{06..13}.log` (chi_HH = 0.60) and `/tmp/twoves_sd590{06..13}.log` (chi_HH = 0.20) --
+**8 seeds added to EACH arm**, same verified start state, `CHECKPOINT_EVERY = 500`, 100k.
+Environments verified per process: the 0.60 arm carries `VIVARIUM_CHI_HH=0.60`, the baseline does not.
+
+**PROCEDURAL NOTE, ON THE RECORD:** I extended **both** arms equally and **the criterion is the POOLED
+13-vs-13 comparison, not the existing 5.** Enlarging only the arm that looks good would have been the
+wrong move -- the same note I made when doubling the fission arms.
+
+**FALSIFICATION, stated before any new seed is read:**
+- **>= 5 of 13 at chi_HH=0.60 hold past 5000 while <= 0 of 13 at baseline do** -> **p <= 0.039;
+  head-head repulsion is the lever on re-fusion**, and multiplicity is reachable by tuning the exterior.
+- **Both arms within 1 seed of each other** -> **not the lever**; the 2/5 was noise.
+- **Baseline also produces long holds** -> the effect is in the restart protocol, not the chi change;
+  report as a protocol artifact.
+
+### CULLED: 15 processes
+
+**`n100`** (10 seeds at 580-640k of 1.6M) -- its companion `n120` still covers the window question, and
+the historical record already scores N=100 at **0 formations**.
+**`kt65`** (5 at 106-128k of 400k, `max nves` 1) -- superseded by the sharper head-head lever.
+**81 -> 66 processes, then +16 = 82.**
+
+### STILL UNREAD
+
+**rest22** 22 at 440-480k of 1.6M, **0 formations**, biggest **145**. **deno** 18 at 200-280k.
+**n120** 10 at 500-560k. **finecmp** 5 at 176-188k, still zero enclosures.
+**fineform** 3 at 84-86k of 600k. **ultra** sd55001 at 148000; its event sits at 240000.
