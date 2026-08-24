@@ -22656,3 +22656,85 @@ exactly matching the L=92 source.** Unlike the earlier L=65 -> L=92 transplant, 
 **emerge2** 8 at step 0 of 1.6M -- the emergent-multiplicity attempt at N=104/L=92.
 **rest22** 22 at 540-600k, **0 formations**, biggest **154**. **deno** 18 at 300-400k, biggest 137.
 **n120** 10 at 640-720k. **finecmp** 5 at 284-316k, still zero enclosures. **fineform** 3 at 196-206k.
+
+## Tick: born-apart pairs NEVER MERGE -- "re-fusion" applies only to the pinch route; box confound resolving
+
+### CORRECTED: the born-apart pairs do not fuse at all
+
+Every loss of `nves = 2` in the born-apart arm, with the cluster sizes across the transition:
+
+| seed | loss at | largest | nenc | nves | reading |
+|---|---|---|---|---|---|
+| 61001 | 40500 | **52 -> 52** | 1 -> 0 | 2 -> 1 | one ring stops qualifying |
+| 61002 | 29000 | **52 -> 52** | 1 -> 1 | 2 -> 1 | " |
+| 61002 | 38500 | **52 -> 52** | 1 -> 0 | 2 -> 1 | " |
+| 61003 | 19500 | **52 -> 52** | 1 -> 1 | 2 -> 1 | " |
+| 61003 | 47500 | **52 -> 52** | 1 -> 1 | 2 -> 1 | " |
+| 61004 | 16500 | **52 -> 52** | 1 -> 1 | 2 -> 1 | " |
+| 61005 | 3500 | **52 -> 52** | 1 -> 1 | 2 -> 1 | " |
+| 61005 | 5500 | **52 -> 52** | 1 -> 0 | 2 -> 1 | " |
+
+**8 of 8 losses have `largest` unchanged at 52.** The two objects stay separate 52-lipid clusters
+throughout; **what drops is the vesicle call on ONE of them**, at roughly the **0.057 per-checkpoint**
+false-negative rate already measured on planted rings.
+
+**"The two vesicles re-fuse" is WRONG for the born-apart case -- there is no fusion.** Re-fusion is
+specific to the **pinch** route, where `largest` genuinely went **58 -> 105**.
+
+### THE BOX CONFOUND IS RESOLVING AGAINST THE BOX
+
+Same two rings, same N=104 and kT, transplanted into **L=65** (density 0.0123 -> 0.0246). Longest
+episode so far, **a monotone lower bound at only ~20000 of a 100000-step run, all five currently at
+`nves = 2`:**
+
+| seed | longest so far |
+|---|---|
+| 64001 | **22000** |
+| 64004 | **20000** |
+| 64005 | 11500 |
+| 64002 | 8500 |
+| 64003 | 7500 |
+
+Against **L=92: 40500, 29000, 19500, 16500, 12500** and **pinch L=65: 5500, 1500.**
+
+**Already overlapping the L=92 range and 4x the pinch maximum.** Verdict holds at 100k, but the
+direction is clear: **separation at birth, not density.**
+
+### WHAT REMAINS FOR EMERGENT MULTIPLICITY
+
+**Across every dispersed-start run in this project's history: 0 checkpoints with `nves >= 2`.**
+Multiplicity now rests entirely on **independent nucleation from a dispersed start.**
+
+### LAUNCHED: a second, denser emergent-multiplicity composition
+
+`/tmp/emerge3_sd650{01..06}.log` -- **6 seeds, N=208, L=92, kT=0.45, dispersed, 1.6M.**
+**Same box and per-step cost as the N=104 arm** (4887 vs 5407 water) but **twice the density**:
+
+| arm | N | L | density |
+|---|---|---|---|
+| std160 (all 12 formers) | 160 | 65 | 0.0379 |
+| **emerge2** | 104 | 92 | **0.0123** |
+| **emerge3 (new)** | 208 | 92 | **0.0246** |
+
+Material for **two ~104-lipid vesicles**, straddling the observed closure sizes (39-160, median 86).
+**The N=104 arm is 3x more dilute than anything that has ever formed here and may coarsen too slowly to
+reach vesicle size at all; running both hedges that.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 1 of 6 reaches `nves = 2` for >= 2 consecutive checkpoints by 1.6M** -> **EMERGENT MULTIPLICITY**;
+  condition 3 met, and independent nucleation is the route.
+- **0 of 6, but single vesicles form** -> the material **does not split**; multiplicity needs a
+  nucleation lever, not a persistence lever.
+- **0 of 6 form any vesicle** -> composition failure at this density; **report as failed manipulation**,
+  since neither N=208/L=92 nor N=104/L=92 has ever been run dispersed.
+
+### CULLED
+
+**`apart`** (5 seeds at 53-63k of 200k) -- answered: 8/8 losses are detector flicker, not merging.
+**78 -> 73, then +6 = 79.**
+
+### STILL UNREAD
+
+**emerge2** 8 at 0-20k of 1.6M, largest 6-8. **rest22** 22 at 560-640k, **0 formations**, biggest 154.
+**deno** 18 at 320-420k. **n120** 10 at 680-760k. **finecmp** 5 at 316-344k, still zero enclosures.
+**fineform** 3 at 218-240k of 600k.
