@@ -20926,3 +20926,61 @@ time it stays closed.** The two are separate quantities and this arm separates t
 
 **repro** 10/12 formed, 1.08-1.34M of 1.6M. **fresh20** 20k, **fresh20b** 0k of 1.6M.
 **em3M** 1.78-1.84M of 3M (largest 62, 86, 97, 146, 154).
+
+## Tick: repro COMPLETE at 12/12; determinism splits exactly along arm-of-origin (8/8 std160 exact)
+
+### THE PRE-REGISTERED CLAUSE FIRES: 12 of 12 formers re-formed
+
+sd9326 at **1240000** and sd9805 at **1220000** closed the set this tick.
+
+Clause: *"12/12 form -> the integrator is deterministic in the seed as assumed, the pathway is intact,
+and this session's 0 formations in ~15 seed-Ms is Poisson variation. The 0.1003/Ms rate stands."*
+**It fires.** (The criterion is monotone -- once formed, always formed -- so satisfying it before the
+1.6M read point is legitimate.)
+
+### THE DETERMINISM CHECK SPLITS ALONG ARM OF ORIGIN
+
+| arm of origin | seed | historical | this run | match |
+|---|---|---|---|---|
+| **std160** | 9308 | 380k | 380000 | **exact** |
+| **std160** | 9317 | 380k | 380000 | **exact** |
+| **std160** | 9315 | 460k | 460000 | **exact** |
+| **std160** | 9314 | 580k | 580000 | **exact** |
+| **std160** | 9312 | 880k | 880000 | **exact** |
+| **std160** | 9316 | 1040k | 1040000 | **exact** |
+| **std160** | 9302 | 1200k | 1200000 | **exact** |
+| **std160** | 9326 | 1240k | 1240000 | **exact** |
+| scan | 1459 | 220k | 180000 | differ |
+| scan | 349 | 540k | 500000 | differ |
+| em160C | 9805 | 1340k | 1220000 | differ |
+
+**8 of 8 std160 seeds match exactly. All 3 seeds from other arms differ.**
+
+**The split is the result.** Seeds that *should* reproduce exactly do, to the checkpoint; seeds run under
+parameters different from their arm of origin do not. **This converts last tick's caveat into a positive
+control** -- determinism predicts precisely this pattern.
+
+**It also means the historical 0.1003/Ms pooled formers from arms that were not the same experiment.**
+The `fresh20`+`fresh20b` arm, 40 seeds in one configuration, is the clean single-arm replacement.
+
+### LAUNCHED: the other half of determinism -- does NON-formation reproduce?
+
+`/tmp/nonform_sd93{00,01,03,04,05,06,07,09}.log` -- **8 std160 seeds whose saved final states contain no
+vesicle** (`count_vesicles = 0` on all eight), 1.6M steps. States backed up to `docs/states_protected/`
+first (now 15 files), so this relaunch cannot repeat last tick's overwrite.
+
+**IDENTIFICATION IS WEAK AND THE PRE-REGISTRATION IS ASYMMETRIC BECAUSE OF IT.** A final state with no
+lumen **cannot rule out a seed that formed and reopened** earlier in its run.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **0/8 form by 1.6M** -> non-formation reproduces as well as formation does; the former/non-former split
+  is a **genuine deterministic partition of seed space**, and the pathway is fully characterised.
+- **>= 1 forms** -> **UNRESOLVED, not a determinism failure.** I cannot separate "determinism violated"
+  from "seed mislabelled as a non-former" without the original per-seed logs. It will be reported as
+  unresolved, and the original logs sought before any claim.
+
+### STILL RUNNING
+
+**fresh20 + fresh20b** 40 seeds, 40-100k of 1.6M -- **2.62 of 64 seed-Msteps, 0 formations, expected
+0.26 so far. Nothing to read.**
+**em3M** 1.84-1.90M of 3M. **repro** 12/12 formed, still running to 1.6M.
