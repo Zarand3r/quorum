@@ -19769,3 +19769,70 @@ varied here.**
 **tworing** 5 seeds at 390-430k of 600k -- **still unread**, per the read-at-the-end rule.
 **cap80** 8 seeds (N=80, L=65, 1.6M) at first checkpoint; pre-registration from last tick stands.
 **long160 / long160p** 38 seeds at 80-180k of 2.4M. **em160S** 7 of 12 still live, 5 finished at ~0.5M.
+
+## Tick: 30 runs were in the WRONG SOLVENT; culled 26 seeds; relaunched everything correctly
+
+### RETRACTED: every arm launched in the last two ticks ran without the project environment
+
+`_env_tag()` puts every `VIVARIUM_*` override in the output filename. The baseline frames read
+`..._ht-0.25_ww0.50_sd...`; the frames from `fs100`, `fs050`, `cap80`, `arc70`, `arc200` carried **no
+such tag**. An audit of `/proc/<pid>/environ` on every live process confirmed it:
+
+| arm | VIVARIUM_CHI_HT | VIVARIUM_CHI_WW | verdict |
+|---|---|---|---|
+| em160S, long160, tworing | -0.25 | 0.50 | correct |
+| **fs100, fs050, cap80, arc70, arc200** | **unset -> +0.20** | **unset -> 1.00** | **CONTAMINATED** |
+
+Two independent faults. `chi_WW = 1.00` makes the solvent **two-phase at kT=0.45** -- `field.py` says so
+in a comment, and the fs1.0 render shows exactly that, water separated into a network with vacuum voids.
+`chi_HT = +0.20` equals `chi_HH = 0.20`, so **the amphiphile condition `chi_HT < chi_HH` is only
+marginally met** and the molecule is barely amphiphilic.
+
+**The fs=1.0 arm LOOKED like a textbook confirmation** -- compact micelles, largest aggregate 21-28
+lipids, versus ribbons at fs=0.0. **That result is withdrawn.** It is not evidence about the packing
+parameter; it is evidence about a broken solvent. Last tick's `cap80` pre-registration is also void,
+since its comparator P(form per 1.6M) = 0.148 was measured in the correct environment.
+
+**All 30 runs killed and relaunched with `VIVARIUM_CHI_HT=-0.25 VIVARIUM_CHI_WW=0.50
+VIVARIUM_CHECKPOINT_EVERY=20000`, verified by re-reading `/proc/<pid>/environ` after launch.**
+
+### CULLED: the machine was 2.2x oversubscribed and the decisive arms were starved
+
+70 sims on 32 cores, load 87. `cap80` and the fs scan had produced **no checkpoint at all** -- 35 and
+15 minutes for zero rows -- while 38 `long160` seeds at 80-180k of 2.4M consumed 54% of the box.
+
+**Killed 26 `long160`/`long160p` seeds, kept 12.** Exposure drops from 91 to 28.8 seed-Msteps, so the
+half-density rate comparison now expects **2.89 events instead of 9.1** -- materially weaker, and stated
+here rather than discovered later. The `long160p` arm (6 previously-successful seeds) was killed
+outright: it was selected on prior success and could never give an unbiased rate.
+
+### CONFIRMED: the fission-fusion cycle closes a full round trip
+
+sd911003: `1380000:160  1400000:69  1420000:98  1440000:160  1460000:160  1480000:160`.
+sd683729 went 83 back up to 159. **Fission AND refusion, same seed.** Last tick's corrected picture --
+a dynamic steady state, not a frozen terminal state -- now has the return leg measured. nves still 0
+across all 12 emergence seeds.
+
+### NOT READ: the fs scan at 30k
+
+fs=1.0 largest 21-28, fs=0.5 largest 16-36, fs=0.0 baseline at 20-60k largest 13-40. **Indistinguishable,
+and far too early** -- the pre-registered read is 600k. Recorded so the numbers are not quietly reused.
+
+### LAUNCHED: the standing-plan critical-size arc test, at the two extremes
+
+`arc0.75` plants a three-quarter ring with two exposed ends at `R_mid = n*lat/(4*pi*span)`.
+- **5 seeds, n=70, L=40** (`R_mid` 14.85) -- `/tmp/arc70b_sd900{1..5}.log`
+- **5 seeds, n=200, L=98** (`R_mid` 42.4) -- `/tmp/arc200b_sd910{1..5}.log`
+- 300k steps each. Both plants intact at step 0: largest = 70/70 and 200/200.
+
+The extremes first, because the standing falsification is "if 70/120/200/300 ALL unroll the continuum
+picture is wrong" -- if n=200 also unrolls, the intermediate sizes are moot.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **Closure = `nenc >= 1` with `lumen_c > 0` for >= 2 consecutive checkpoints, `largest` still ~n.**
+- **n=200 closes in >= 3/5 and n=70 in <= 1/5** -> a critical size exists between them; edge-vs-bend
+  holds and `kappa` can be bracketed without a spectrum.
+- **0/5 closure at BOTH sizes** -> **no threshold below 200 lipids**, and the continuum picture behind
+  every energetic interpretation in this project is refuted at the sizes we can afford.
+- **`largest` collapses well below n** -> the run measured plant destruction, not closure; report as a
+  failed manipulation, not as a negative result.
