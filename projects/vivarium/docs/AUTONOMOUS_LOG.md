@@ -21227,3 +21227,72 @@ step 0: `largest=160, lumen_c=297, nenc=2`.**
 **elig + elig2** 20 seeds, **1.30 seed-Msteps at-risk, 0 formations** -- far short of the 16 seed-Ms
 target. **second** 80-100k of 800k. **fresh20** 240-280k of 1.6M, 6/20 eligible, 0 formations.
 **repro** 12/12, 1.30-1.56M. **em3M** 1.98-2.08M of 3M.
+
+## Tick: 15/15 two-compartment episodes end by nenc 2->1, NEVER by splitting
+
+### RETRACTED: "sd1459 held it for 21 consecutive checkpoints spanning 400000 steps"
+
+Written last tick. **Wrong.** Those 21 checkpoints are spread across **8 separate episodes** between
+680000 and 1440000. **The longest single episode is 6 checkpoints, 100000 steps.** I counted total
+checkpoints with `nenc >= 2` and described them as contiguous.
+
+### MEASURED: every two-compartment episode and how it ended
+
+| seed | start | duration | ckpts | ending |
+|---|---|---|---|---|
+| 1459 | 680000 | 20000 | 2 | nenc 2->1, largest 133->133 |
+| 1459 | 840000 | 0 | 1 | nenc 2->1, largest 120->133 |
+| 1459 | 900000 | 0 | 1 | nenc 2->1, largest 133->133 |
+| 1459 | 960000 | 0 | 1 | nenc 2->1, largest 133->133 |
+| 1459 | 1040000 | 60000 | 4 | nenc 2->1, largest 133->133 |
+| 1459 | 1140000 | 100000 | 6 | nenc 2->1, largest 133->133 |
+| 1459 | 1300000 | 20000 | 2 | nenc 2->1, largest 133->133 |
+| 1459 | 1380000 | 60000 | 4 | nenc 2->1, largest 133->133 |
+| 9317 | 1220000 | 120000 | 7 | nenc 2->1, largest 141->160 |
+| 9317 | 1380000 | 20000 | 2 | nenc 2->1, largest 160->160 |
+| 9317 | 1500000 | 40000 | 3 | still running |
+| em3M 6002 | 1900000 | 60000 | 4 | nenc 2->1, largest 160->132 |
+| em3M 6002 | 2000000 | 100000 | 6 | still running |
+| elig 51009 | 0 | 120000 | 7 | nenc 2->1, largest 160->160 |
+| second 52002 | 60000 | 0 | 1 | nenc 2->1, largest 160->152 |
+| second 52004 | 80000 | 0 | 1 | nenc 2->1, largest 90->90 |
+| second 52005 | 100000 | 0 | 1 | nenc 2->1, largest 148->160 |
+
+**17 episodes, 15 ended, ALL 15 by `nenc 2->1`. NOT ONE by the cluster splitting.**
+
+In **13 of 15** the largest cluster is **unchanged or larger** across the transition. The two that shrank
+went **160->132** and **160->152** -- nowhere near the **~80/80** a genuine split of a 160-lipid
+two-compartment object would give.
+
+**CONCLUSION: the fission channel is never taken.** Two-compartment membranes resolve by **one room
+closing up**, never by separating. 15 independent endings.
+
+**Median episode ~20000 steps.** The two-compartment state is **marginally stable, not persistent.**
+
+### CULLED: the `second` arm, 6 seeds at 100-120k of 800k
+
+Superseded. It asked whether a second vesicle appears beside an existing one -- a **strictly harder**
+version of the fission question, now that two compartments are known to form readily and never split.
+
+### LAUNCHED: the paired temperature manipulation on fission
+
+`/tmp/fis55_sd550{01..05}.log` -- **5 restarts from the identical `twocomp_sd9317.npz` state at
+kT = 0.55**, against the running kT = 0.45 arm. Same state, box, chemistry, lipid count; **one variable.**
+All five confirmed at step 0: `largest=160, lumen_c=297, nenc=2`.
+
+**The solvent confound runs the SAFE way here:** at kT=0.55 the water CV is **0.490 vs 0.586** at
+baseline -- **more** uniform, not less. The kT=0.35 direction was the dangerous one.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 1 of 5 reaches `nves = 2` at kT=0.55 while 0/5 do at kT=0.45** -> fission is a **thermally
+  activated barrier crossing** and the barrier is within +0.10 kT. First `nves = 2` in the project.
+- **0/5 at both temperatures** -> fission is **not thermally accessible at +0.10 kT**; the barrier is
+  large or the geometry forbids splitting.
+- **`nenc` collapses to 1 markedly faster at kT=0.55** -> higher temperature **destabilises compartments
+  rather than splitting them**; report as that, not as a failed fission test.
+
+### STILL UNREAD
+
+**fission** (kT=0.45) 5 seeds at step 0 of 800k. **elig + elig2** 20 seeds, **1.84 of 16 seed-Msteps
+at-risk, 0 formations.** **fresh20** 260-300k of 1.6M -- **11/20 now eligible** (up from 6), largest
+seen 99, 0 formations. **repro** 12/12, 1.32-1.58M. **em3M** 2.02-2.10M of 3M.
