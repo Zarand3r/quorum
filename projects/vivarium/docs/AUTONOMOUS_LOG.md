@@ -22192,3 +22192,55 @@ still 1. **The "too hot -- failed manipulation" clause has NOT fired.**
 **ultra** sd55002 at **71000**; its event sits at **78000** -- one tick away.
 **fine** 5 at 166-176k of 400k, 1 `nves = 2` checkpoint total. **finecmp** 5 at 92-100k of 1.6M, still
 zero enclosures of any kind. **deno** 18 at 120-200k. **n120** 10 at 400-440k. **n100** 10 at 460-500k.
+
+## Tick: TWO-VESICLE STATE VERIFIED -- 58 + 47 lipids, each with its own lumen, for 1000-1500 steps
+
+### BOTH HALVES OF THE PRE-REGISTRATION FIRE
+
+At **500-step resolution with `VIVARIUM_SAVE_ALL`**, the sd55002 event spans **2 consecutive
+checkpoints**, and the states were on disk to check:
+
+| step | clusters | n_enclosed | vesicle_call | nves |
+|---|---|---|---|---|
+| 77000 | **105** / 28 / 27 | 2 / 0 / 0 | rejected: *"n_enclosed unstable across dilation [2,2,2,2]"* | 0 |
+| **77500** | **58 / 47** / 28 | **1 / 1** / 0 | **"lumen 222, 0.207 of expected, stable at 1"** and **"lumen 311, 0.442 of expected, stable at 1"** | **2** |
+| **78000** | **58 / 47** / 28 | **1 / 1** / 0 | same, lumens **233** and **303** | **2** |
+| 78500 | **105** / 28 / 27 | 2 / 0 / 0 | rejected, as at 77000 | 0 |
+
+**Each of the two clusters passes `vesicle_call` independently.** Centroids **28 sigma apart in a 65
+sigma box.** The render at 78000 shows **two separate closed loops, each with its own dark interior**.
+**Render and metric agree.**
+
+**THE FIRST VERIFIED TWO-VESICLE STATE IN THIS PROJECT. Duration 1000-1500 steps.**
+
+### CORRECTED, AGAINST MY OWN READING
+
+I described the 28-sigma centroid separation as the vesicles being far apart. **That overstates it.**
+The merged object's centroid (28.0, 39.3) is the **midpoint** of the two lobe centroids (17.3, 45.7) and
+(41.2, 31.3). **This is a DUMBBELL whose lobes pinch apart and rejoin, not two bodies that drifted
+together.** The near edges never separate.
+
+**Fission here is the neck pinching; re-fusion is the neck reforming because the lobes have nowhere to
+go.**
+
+### LAUNCHED: how long do two vesicles survive once you HAVE them?
+
+Saved the verified configuration as `docs/states_vesicle/twoves_sd55002_s78000.npz` and restarted it
+with **5 fresh noise seeds**, `VIVARIUM_CHECKPOINT_EVERY = 500`, 100k steps --
+`/tmp/twoves_sd590{01..05}.log`. **All five confirm `nves = 2` at step 0** with the 58- and 47-lipid
+vesicles intact (lumens 233, 233, 236, 233, 233).
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **Survival beyond 20000 steps in >= 3 of 5** -> **two vesicles are genuinely metastable**; the problem
+  is REACHING the state, not holding it, and the lever is whatever raises the fission rate.
+- **Re-fusion within 5000 steps in all 5** -> **holding two vesicles requires SEPARATING the lobes**, not
+  merely creating them; the lever is whatever pulls them apart after the neck pinches.
+- **Survival is bimodal or spans 5000-20000** -> report the distribution; n=5 is too small to call a mean.
+
+### STILL UNREAD
+
+**kt65** 5 at 44-54k of 400k, membrane intact (largest 107-156), `max nves` 1.
+**fineform** 3 formers at 18000 of 600k -- the long-tail-episode test.
+**finecmp** 5 at 112-124k of 1.6M, still zero enclosures. **rest22** 22 at 380-420k, **0 formations**,
+biggest 127. **deno** 18 at 140-220k. **n120** 10 at 420-460k. **n100** 10 at 480-540k.
+**allstates/ 558 files; disk 87%.**
