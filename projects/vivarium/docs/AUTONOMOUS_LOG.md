@@ -22884,3 +22884,61 @@ session.**
 **emerge2** 8 at 40-60k, **emerge3** 6 at 20-40k of 1.6M -- **0 checkpoints with `nves >= 2`**, biggest
 clusters 11 and 14. **rest22** 22 at 640-720k, 0 formations, biggest 154. **deno** 18 at 400-520k.
 **n120** 10 at 780-880k. **finecmp** 5 at 400-428k. **fineform** 3 at 292-316k.
+
+## Tick: the chi_TW edge cost IS engaged (burial +60%) but the arc EXPANDS -- not yet readable
+
+### THE MANIPULATION IS ENGAGED
+
+`chi_TW` from 0.00 to -0.60 is the lever `field.py:98-105` names for pricing a bilayer edge.
+**Hydrophobic burial rises 2.281 -> 3.65-3.85, a ~60% increase**, consistently across every checkpoint
+of every seed. **Plants intact at 80/80 lipids** -- the failure clause has not fired.
+
+### BUT THE RADIUS GOES THE WRONG WAY
+
+`arc0.75`, n=80, mean `R_mid` start -> latest:
+
+| chi_TW | seeds | R_mid | ratio | reading |
+|---|---|---|---|---|
+| **0.00** | 5 | 14.77 -> **13.83** | **0.936** | contracts |
+| -0.30 | 5 | 14.77 -> 14.99 | 1.015 | -- |
+| **-0.60** | 5 | 14.77 -> **15.61** | **1.057** | expands |
+
+**A real line tension pulls the rim closed and should CONTRACT the arc.** Adding an edge cost makes it
+**expand** -- consistent with the membrane burying tails by **thickening locally** rather than by
+shrinking its rim.
+
+**NOT CLAIMED.** These are **30000-50000 of a 300000-step run**, and `R_mid` swings **14.74 to 16.72
+within a single seed**, so the trend is inside the noise. The baseline figure is at its 300k end while
+the sweep arms are at 10-17% -- **not a matched comparison.** **0/5 closed at both -0.30 and -0.60 so
+far.** The pre-registered read stands at **300k**.
+
+### LAUNCHED: does the edge cost create a MEASURABLE lambda?
+
+`/tmp/lamtw_sd690{01..10}.log` -- **`arc0.95`, n=80, L=44, kT=0.45, chi_TW = -0.60, 300k,
+`CHECKPOINT_EVERY = 2000`, 10 seeds.** Step 0 verified: `largest = 80, R_mid = 17.33, nenc = 0`; banner
+confirms `TW -0.60`.
+
+**This is the geometry that produced BOTH open and closed states in 6 of 10 seeds at chi_TW = 0.00**, so
+it yields a paired `delta E`. **Comparator: lambda = +1.61 +- 1.67 eps (n=9 paired), consistent with
+zero.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **lambda significantly > 0 and above the chi_TW=0.00 value** -> **the edge cost is real and lambda is
+  measurable**; `chi_TW` is the knob that was set to zero all along, and the edge-vs-bend programme
+  becomes runnable in a model that has an edge cost.
+- **lambda still consistent with zero at n >= 5 paired** -> either the manipulation creates **no edge
+  cost**, or **energy differencing cannot resolve lambda at n=80 at all**. Either way the edge-vs-bend
+  programme is **unmeasurable in this model, not merely unmeasured.**
+- **Fewer than 5 seeds produce both states** -> underpowered; report the count, quote no lambda.
+
+### CULLED
+
+**`finecmp`** (5 seeds at 420-448k of 1.6M) -- **zero enclosed checkpoints of any kind**; the 10x
+sampling replay was not turning up hidden formations. **84 -> 79, then +10 = 89.**
+
+### STILL UNREAD
+
+**tw30 / tw60** 5+5 at 30-50k of 300k -- 0/5 closed at both.
+**emerge2** 8 at 60k, **emerge3** 6 at 40k of 1.6M -- **0 checkpoints with `nves >= 2`**, biggest
+clusters 11 and 14. **rest22** 22 at 660-740k, **0 formations**, biggest 154. **deno** 18 at 420-540k.
+**n120** 10 at 820-900k. **fineform** 3 at 310-336k of 600k.
