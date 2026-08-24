@@ -23281,3 +23281,77 @@ sd45007's lumen over the last three checkpoints: **429, 438, 437 cells.** Stable
 **noise** 10 at 140-160k, **place** 10 at 40-60k of 600k -- **both 0/10, and sd9308 forms at 380000, so
 neither is readable yet.** **deno** 18 at 660-820k, **2/18 debounced**. **n120** 10 at 1.16-1.28M.
 **emerge3** 6 at 160-180k. **fineform** 3 at 556-594k of 600k.
+
+## Tick: variance decomposition of "why seeds matter" -- UNSTABLE at n=10, not answered
+
+### THE DESIGN
+
+Hold one factor fixed, measure how much trajectory spread survives:
+
+| arm | fixed | varied | isolates |
+|---|---|---|---|
+| **A** (`noise`) | placement (sd9308) | noise x10 | spread from **NOISE** |
+| **B** (`place`) | noise (9309) | placement x10 | spread from **PLACEMENT** |
+| **C** (`deno`) | -- | both x18 | **TOTAL** spread |
+
+### THE RESULT: THE TWO STEPS DISAGREE
+
+Largest-cluster standard deviation:
+
+| step | A (noise only) | B (placement only) | C (total) |
+|---|---|---|---|
+| 40000 | **5.06** | **8.54** | 8.65 |
+| 80000 | **9.73** | **7.25** | 10.50 |
+
+**At 40000 placement looks dominant; at 80000 noise does. Opposite conclusions from the same arms.**
+
+**And `A^2 + B^2` OVER-EXPLAINS the total at both steps**: 25.6 + 72.9 = **98.5** vs C^2 = 74.8, and
+94.7 + 52.6 = **147.3** vs 110.3. If the factors were independent these should sum to C^2. **The excess
+is a direct signal that n = 10 per arm is too small.**
+
+**NOT ANSWERED. Not quoting the step that tells a story** -- this is the same shape as the
+formers-vs-non-formers variance that looked striking at step 200000 and reversed at 100000.
+
+### THE ONE ROBUST PART
+
+**At both steps A's spread is comparable to C's** (5.06 vs 8.65; 9.73 vs 10.50), **not near zero.**
+**Holding the initial placement fixed does NOT collapse the trajectory spread.** The placement alone
+certainly does not determine the outcome. That half stands.
+
+### LAUNCHED: reinforce to n = 25 per arm, cheaply
+
+`/tmp/varA_ns210{01..15}.log` (placement fixed at 9308, noise varied) and
+`/tmp/varB_bs460{01..15}.log` (noise fixed at 9309, placement varied) -- **15 more each, run to 100000
+only**, since the divergence is fully developed by 80000. **A 100k run costs 1/6 of the 600k formation
+arms**, which is how 30 more seeds are affordable. **Both arms now 25 seeds.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **A ~ C and B < C consistently across steps 40k/60k/80k/100k** -> **the NOISE dominates**; placement
+  contributes little, and a "forming seed" is a lucky thermal history.
+- **B ~ C and A < C consistently** -> **the PLACEMENT dominates**; a forming seed is a lucky starting
+  configuration.
+- **A ~ B ~ C/sqrt(2) with `A^2 + B^2 ~ C^2`** -> both contribute about equally.
+- **Still unstable across steps at n = 25** -> **the decomposition is not estimable at this system
+  size. PRE-COMMITTED STOPPING RULE: say so and stop buying seeds for it**, as with kappa.
+
+### DENO: three seeds now carry a lumen
+
+| seed | first | ckpts with lumen | debounced |
+|---|---|---|---|
+| **sd45007** | 600000 | **11** | YES |
+| **sd45015** | 600000 | 5 | YES |
+| sd45016 | 700000 | 2 (700000 and 780000, **not consecutive**) | **no** |
+
+**2/18 debounced stands.** sd45016's lumen is 131-139 cells on a 60-lipid cluster -- real, but it fails
+the >= 2 consecutive standard and is not counted.
+
+### CORRECTION TO MY OWN STATUS LINE LAST TICK
+
+I wrote that both 2x2 arms were "now past" sd9308's 380000 formation step. **They are not** -- `noise` is
+at 180-200k and `place` at 80-100k. **No formation verdict is possible yet in either arm.**
+
+### STILL UNREAD
+
+**k65b / k90b** 10+10 at 40-80k of 600k -- the kappa endpoint reinforcement.
+**noise** 10 at 180-200k, **place** 10 at 80-100k of 600k. **deno** 18 at 700-860k.
+**n120** 10 at 1.20-1.32M. **emerge3** 6 at 180-200k. **fineform** 1 left at 586k of 600k.
