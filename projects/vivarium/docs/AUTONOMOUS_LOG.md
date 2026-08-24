@@ -23145,3 +23145,70 @@ and further running would only confirm it. **81 -> 59, then +10 = 69.**
 **noise** 10 at step 0 of 600k -- placement fixed, noise varied; **the decisive test of why seeds
 matter.** **lam30** 10 at 152-182k of 300k. **deno** 18 at 540-680k, **1/18 formed**.
 **n120** 10 at 980k-1.08M. **emerge3** 6 at 100k. **fineform** 3 at 422-462k of 600k.
+
+## Tick: SECOND fresh-seed formation (2/18) -- and identical placements diverge within ONE checkpoint
+
+### THE DROUGHT IS COMPREHENSIVELY OVER
+
+| seed | formed at | checkpoints with a lumen | debounced |
+|---|---|---|---|
+| **deno sd45007** | 600000 | **7** | **YES** |
+| **deno sd45015** | 600000 | 3 (640000 and 660000 consecutive) | **YES** |
+| deno sd45016 | 700000 | 1 | no |
+
+**2 of 18 debounced.** Against the historical **8/30: Fisher p = 0.2816.** `deno` is still **under half
+its budget** (620-760k of 1.6M).
+
+sd45015 is a **46-lipid** vesicle, lumen **141-149 cells** -- near the small end of the observed 39-160
+closure range. Render shows the closed ring upper-centre. **Render and metric agree.**
+
+### WHY SEEDS MATTER -- first half of the answer
+
+**Placement held EXACTLY fixed at former sd9308; only the thermal noise varied over 10 streams.**
+Largest cluster at matched steps:
+
+| step | sd9308's own | the 10 variants | mean +- sd |
+|---|---|---|---|
+| 20000 | **20** | 15, 15, 15, 18, 19, 20, 24, 28, 28, 30 | **21.2 +- 5.9** |
+| 40000 | 28 | -- | 24.4 +- 5.1 |
+| 60000 | 32 | -- | 27.3 +- 4.9 |
+| 80000 | 32 | span **21 to 55** | **32.7 +- 9.7** |
+
+**By the FIRST checkpoint the cluster sizes already span a factor of two**, and **sd9308's own
+trajectory sits squarely inside the pack at every step** (20 vs 21.2; 32 vs 32.7).
+
+**The initial placement does not constrain the coarsening path.** One checkpoint interval of different
+thermal kicks and the configurations are unrelated. **Not yet a formation verdict** -- the arm is at
+80-100k and sd9308 forms at 380000 -- but the divergence itself is measured and monotone.
+
+### LAUNCHED: the other half of the 2x2
+
+`/tmp/place_bs93{00,01,03,04,05,06,07,09,10,11}.log` -- **`VIVARIUM_NOISE_SEED = 9309` FIXED** (the
+stream that produced sd9308's formation at 380000), **placement varied over 10 std160 seeds that never
+form under their own noise** (0/22 debounced in `rest22` by 1.6M). N=160, L=65, kT=0.45, 600k.
+
+| arm | fixed | varied | tests |
+|---|---|---|---|
+| **A (`noise`)** | placement (sd9308) | noise x10 | does **PLACEMENT** carry formation? |
+| **B (`place`)** | noise (9309) | placement x10 | does **NOISE** carry formation? |
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 3 of 10 in arm B form by 600k** -> **the NOISE STREAM carries formation.** Those 10 placements
+  never form under their own noise, so a base rate near zero makes this decisive.
+- **0-1 of 10 in arm B AND 0-2 of 10 in arm A** -> **NEITHER factor carries it alone.** Formation is a
+  joint property of the specific (placement, noise) pair -- **genuinely chaotic, and "forming seeds" are
+  not a characterisable class at all.** That is the answer to *why the seeds matter*: they do not matter
+  as a property, only as a label for one trajectory.
+- **>= 7 of 10 in arm A** -> placement carries it after all, and the divergence above is irrelevant to
+  the outcome.
+
+### kappa ARMS HEALTHY
+
+**k65** (span 0.65) largest **79-80**, min 79. **k70** (span 0.70) largest 80, min 67.
+**No fragmentation; the failure clause has not fired.** Both at 160-180k of 300k.
+
+### STILL UNREAD
+
+**noise** 10 at 80-100k of 600k. **place** 10 at step 0. **k65 / k70** 5+5 at 160-180k of 300k.
+**deno** 18 at 620-760k, **2/18 formed**. **n120** 10 at 1.08-1.20M. **emerge3** 6 at 140-160k.
+**fineform** 3 at 502-540k of 600k.
