@@ -21123,3 +21123,48 @@ No new arm should be launched next tick unless something is culled first.
 **elig** 10 restarts at 0-20k of 800k, all eligible from step 0 (largest 55-160), 0 formations.
 **fresh** 40 seeds, 100-160k of 1.6M -- **4/40 now eligible**, 0 formations, expectation still ~0.
 **nonform** 8 seeds at 60k of 1.6M. **repro** 12/12, 1.20-1.46M. **em3M** 1.90-1.98M of 3M.
+
+## Tick: culled 28 processes as promised; eligible-restart arm doubled to 20 seeds
+
+### ACTED ON LAST TICK'S MACHINE WARNING
+
+**83 processes on 32 cores, load 87** -- every arm at ~1/3 uncontended speed. Culled **28**:
+
+| arm | killed | cost, stated plainly |
+|---|---|---|
+| `fresh20b` | 20 seeds at 160-200k | **Exposure 64 -> 32 seed-Msteps; expected formations 6.4 -> 3.2.** The ">= 1 formation" criterion still holds, so the arm keeps its meaning, but **the power loss is recorded, not quietly re-scoped.** |
+| `nonform` | 8 seeds at 100-120k | **Abandoned at 120k of the 380k it needed** to say anything. Its identification was weak at launch and was flagged then. Lowest value per unit compute on the machine. |
+
+**83 -> 55 processes.** Then +10 (below) = 65.
+
+### LAUNCHED: 10 more eligible restarts, sources verified vesicle-free
+
+The dead-zone finding says a fresh seed spends its first ~400000 steps unable to form. Restarts from
+already-coarsened states buy **at-risk exposure ~4x faster per unit compute.**
+
+`/tmp/elig2_sd530{01..10}.log` -- 10 restarts, **sources screened by `count_vesicles == 0` and largest
+>= 52**, fresh noise seeds, 800k steps. Step-0 largest: **131, 69, 92, 112, 133, 136, 74, 127, 160, 122.**
+
+**Combined eligible-restart arm: 20 seeds x 800k = 16 seed-Msteps, every step at-risk.**
+
+**A BIAS I AM DECLARING BEFORE THE READ.** Several sources start with `nenc = 1` and a **sub-threshold
+pocket (42-193 cells)** that `count_vesicles` rejects -- batch 1 sd51005 (48 cells), sd51009 (193, and
+`nenc = 2`); batch 2 sd53001 (68), sd53003 (116), sd53004 (56), sd53005 (42), sd53009 (54). They are
+vesicle-free **by the formation criterion** but **not pocket-free**, which is a head start toward
+closing. **This biases the arm toward a HIGHER hazard.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 6 formations in 16 seed-Msteps** -> post-eligibility hazard >= 0.375/Ms, **~4x the naive
+  0.1003/Ms**, confirming the historical rate was diluted by dead-zone exposure. **Discount for the
+  pocket head start before quoting the number.**
+- **0 formations** -> hazard **< 0.144/Ms at 90% confidence** even from a favourable start. That would
+  be a **strong negative**: the dead-zone correction does not explain the drought, and the head-start
+  bias makes it stronger, not weaker.
+- **1-5 formations** -> consistent with the naive rate; the dead-zone correction is real but modest.
+
+### NOTHING REACHED A READ POINT
+
+**second** (multi-vesicle) 40-60k of 800k -- **max nves = 1 on two seeds, 0 on four.** Held to 800k.
+**elig** batch 1 at 60-80k of 800k, 0 formations. **fresh20** 200-240k of 1.6M -- **6/20 now eligible**
+(up from 2), largest seen 94, 0 formations, expectation still ~0.
+**repro** 12/12 formed, 1.26-1.52M. **em3M** 1.96-2.02M of 3M.
