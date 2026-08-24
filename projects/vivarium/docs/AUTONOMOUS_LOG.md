@@ -22006,3 +22006,66 @@ formation.** **deno** 18 at 20-80k, biggest 64. **n120** 10 at 260-300k, biggest
 **fission**/**fis55** 5+5 at 320-360k of 800k.
 
 **Disk 87% (116G free); the two fine arms together write 10x the usual frame rate.**
+
+## Tick: a SECOND nves=2 event, found only by 10x sampling -- fission happens, the products RE-FUSE
+
+### THE ALIASING PREDICTION PAID OFF
+
+Replaying seed **sd55002** at 2000-step resolution turned up an `nves = 2` checkpoint the coarse run
+never saw:
+
+```
+  76000   largest 105   lumen 217   nenc 1   nves 0
+  78000   largest  58   lumen 233   nenc 1   nves 2      <-- nves = 2
+  80000   largest 105   lumen 368   nenc 2   nves 0
+```
+
+**The coarse run of this exact seed sampled 60000 and 80000 -- straddling the event -- and recorded
+nothing** (`largest` 132 then 105, `nves` 0 at both).
+
+### TWO INDEPENDENT SEEDS, SAME SIGNATURE
+
+| seed | step | largest before | largest at event | largest after | nves |
+|---|---|---|---|---|---|
+| 55001 (coarse) | 240000 | 97 | **57** | 98 | 2 |
+| 55002 (fine) | 78000 | 105 | **58** | 105 | 2 |
+
+**The largest cluster roughly HALVES at the instant of the event and recovers within one interval.**
+A ~100-lipid two-compartment cluster **momentarily splits into two ~50-lipid pieces and re-fuses in
+under 4000 steps.**
+
+**REFRAMED, AGAIN: fission is NOT the obstruction. Fission happens. The obstruction is that the two
+products RE-FUSE almost immediately.**
+
+### STILL NOT CLAIMED, AND WHY
+
+- **Each event is ONE checkpoint** -- fails this project's debounce standard of >= 2 consecutive.
+- **The states were overwritten**, so the geometry could not be inspected.
+- The cluster-size halving is corroboration, **but it comes from the same clustering routine**, so it is
+  not fully independent of the vesicle call.
+
+### LAUNCHED: 500-step replay with EVERY state written to disk
+
+`/tmp/ultra_sd55002.log` (to 100000) and `/tmp/ultra_sd55001.log` (to 260000) --
+**`VIVARIUM_CHECKPOINT_EVERY = 500`, `VIVARIUM_SAVE_ALL = 1`.** Deterministic, so the same events replay
+at **40x the original resolution with a saved configuration at each one.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **The event spans >= 2 consecutive 500-step checkpoints AND the saved state shows two spatially
+  separate closed membranes** -> **transient fission is real and measured**; the multi-vesicle
+  obstruction is **re-fusion**, and the lever becomes whatever keeps the products apart.
+- **The event appears at exactly ONE checkpoint even at 500-step resolution, OR the saved state shows a
+  single connected object with a marginal neck** -> **detector artifact at the moment of a thin neck;
+  no fission has been observed** and both events are withdrawn.
+
+### DROUGHT REPLAY: far too early
+
+`finecmp` 5 seeds at **16000-20000 of 1600000**, 0 formations, 0 `nenc > 0`. **Nothing readable.**
+
+### STILL UNREAD
+
+**rest22** 22 at 280-300k of 1.6M, 0 formations, biggest 102. **deno** 18 at 40-100k.
+**n120** 10 at 300-320k, biggest 89. **n100** 10 at 340-380k, biggest 72.
+**fine** 5 at 88-92k of 400k. **fission**/**fis55** 5+5 at 340-380k of 800k.
+
+**Disk 87% (116G free); `allstates/` now 209 files and growing under SAVE_ALL.**
