@@ -22942,3 +22942,73 @@ sampling replay was not turning up hidden formations. **84 -> 79, then +10 = 89.
 **emerge2** 8 at 60k, **emerge3** 6 at 40k of 1.6M -- **0 checkpoints with `nves >= 2`**, biggest
 clusters 11 and 14. **rest22** 22 at 660-740k, **0 formations**, biggest 154. **deno** 18 at 420-540k.
 **n120** 10 at 820-900k. **fineform** 3 at 310-336k of 600k.
+
+## Tick: lambda is MEASURABLE and NEGATIVE at chi_TW = -0.60 -- the edge-cost lever makes closure WORSE
+
+### THE MEASUREMENT
+
+`arc0.95`, n=80, L=44, matched radius. **9 of 10 seeds produced both open and closed states.**
+Paired `delta E/lip` (open minus closed) at chi_TW = -0.60:
+
+```
+  -0.2046  +0.0223  -0.1607  -0.1586  -0.1050  -0.0430  -0.2976  -0.2306  +0.0201
+```
+
+**7 of 9 NEGATIVE -- the CLOSED state costs MORE energy than the open one.**
+
+| chi_TW | n | delta E/lip | t | lambda |
+|---|---|---|---|---|
+| **0.00** | 9 | +0.0403 +- 0.0417 | +0.97 | **+1.61 +- 1.67 eps** (zero) |
+| **-0.60** | 9 | **-0.1286 +- 0.0372** | **-3.46** | **-5.15 +- 1.49 eps** |
+
+**Difference between the two: t = +3.02 on 16 dof.**
+
+**Making tails hydrophobic -- the lever `field.py` itself names for pricing a bilayer edge -- does NOT
+create a positive line tension. It makes closure energetically WORSE.**
+
+### NONE OF MY THREE PRE-REGISTERED BRANCHES FIRED
+
+I named **"lambda > 0"**, **"lambda still zero"**, and **"underpowered"**. **A significantly NEGATIVE
+lambda is a fourth outcome I did not anticipate** -- recorded as such rather than forced into one of the
+prepared boxes, the same way the metastable-arc outcome was.
+
+**It does explain the sweep it was meant to support:** `arc0.75` closed **0/5 at both -0.30 and -0.60**,
+with **1 checkpoint out of 83** ever closed at -0.60. **Exactly what a negative lambda predicts.**
+
+### A FAILURE CLAUSE DID FIRE, PARTLY
+
+I pre-registered *"largest collapsing below 60 -> FAILED MANIPULATION."* **sd67001 dipped to
+`largest = 46` at step 100000** and **recovered to 80**. A transient, not membrane collapse -- but
+**the manipulation is rough on the plant** and that is on the record.
+
+### THE PICTURE THIS COMPLETES
+
+**There is NO setting in the swept range where closure is energetically favoured:** lambda ~ 0 at
+chi_TW = 0.00 (because a tail is indifferent to water) and lambda < 0 once tails are made hydrophobic.
+**Closure in this model is geometric and kinetic, driven by the end gap, with no energetic drive behind
+it.**
+
+### LAUNCHED: the third point of the lambda(chi_TW) curve
+
+`/tmp/lam30_sd700{01..10}.log` -- **`arc0.95`, n=80, L=44, kT=0.45, chi_TW = -0.30, 300k,
+`CHECKPOINT_EVERY = 2000`, 10 seeds.** Banner confirms `TW -0.30`.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **lambda at -0.30 falls between +1.61 and -5.15, monotone in chi_TW** -> **a real, measured
+  parameter-to-property map**; the first in this project besides the packing parameter, and it says the
+  edge term drives closure the wrong way throughout.
+- **lambda at -0.30 falls OUTSIDE that bracket** -> non-monotone; the two endpoints do not define a
+  trend and neither can be read as a lever.
+- **Fewer than 5 seeds produce both states** -> underpowered; report the count, quote no lambda.
+
+### CULLED: 20 processes
+
+**`lamtw`** (10) -- answered above. **`tw30` + `tw60`** (10) -- **superseded**: the lambda measurement
+explains their 0/5 directly, and they would only have confirmed it at 300k.
+**89 -> 69, then +10 = 79.**
+
+### STILL UNREAD
+
+**emerge2** 8 at 80-100k, **emerge3** 6 at 60k of 1.6M -- **0 checkpoints with `nves >= 2`.**
+**rest22** 22 at 720-780k, **0 formations**, biggest 154. **deno** 18 at 460-600k.
+**n120** 10 at 880-980k. **fineform** 3 at 358-388k of 600k.
