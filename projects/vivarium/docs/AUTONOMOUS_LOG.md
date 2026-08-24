@@ -21949,3 +21949,60 @@ frame rate. Watch it.
 **rest22** 22 at 220-260k of 1.6M, **0 formations**. **deno** 18 at 0-60k. **n120** 10 at 220-260k,
 biggest **86** -- now inside the window. **n100** 10 at 260-280k, biggest 49.
 **fission**/**fis55** 5+5 at 280-400k. **fine** 5 at 36-46k of 400k.
+
+## Tick: 20000-step sampling ALIASES a state that flips every ~10000 steps -- all event counts are LOWER BOUNDS
+
+### MEASURED: the flip timescale, from the fine-resolution replay
+
+Same deterministic trajectory, sampled 10x finer:
+
+| seed | fine ckpts (2000-step) | nenc transitions | nves transitions | mean run |
+|---|---|---|---|---|
+| **55001** | 36 | **6** | **5** | **~10285 steps** |
+| 55002 | 37 | 0 | 0 | -- |
+| 55003 | 38 | 0 | 0 | -- |
+| 55004 | 34 | 0 | 2 | -- |
+| 55005 | 36 | 1 | 2 | 36000 steps |
+
+**The same window at 20000-step sampling: sd55001 shows 4 checkpoints and ZERO transitions.**
+**Coarse sampling detected none of the 6 transitions it actually made.**
+
+### THE TWO CONSEQUENCES CUT DIFFERENTLY
+
+- **Time-average quantities are UNAFFECTED.** A closed fraction estimated from samples is unbiased
+  whether or not it is aliased. **The 0.458 for emergent vesicles and 0.812 for the 1.63-sigma arc
+  stand.**
+- **Event COUNTS are biased low.** A formation living less than one sampling interval can be missed
+  entirely. **Every formation count in this project -- mine AND the historical 8/30 -- is a lower bound.**
+
+**Flipping is strongly seed-dependent: 3 of 5 fine seeds show ZERO transitions over the same 70000
+steps.** sd55001, the volatile one, is also the seed that produced the `nves = 2` candidate -- which is
+consistent with that candidate being one sample of a fast-flipping state rather than a rare event.
+
+### LAUNCHED: replay 5 comparison-group seeds at 10x sampling
+
+`/tmp/finecmp_sd{217283,331777,449549,566773,683729}.log` -- **the five em160S seeds that ran the full
+1.6M and scored ZERO formations at 20000-step sampling**, replayed with
+`VIVARIUM_CHECKPOINT_EVERY = 2000`. Deterministic, so the identical trajectory runs again with **10x the
+samples.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 1 of 5 now shows a formation** -> **the drought is partly a SAMPLING ARTIFACT.** The 0/12 is an
+  undercount and the comparison against the historical 8/30 **must be redone at matched resolution**
+  before any drought claim survives.
+- **0 of 5** -> 20000-step sampling was **not** hiding formations in these seeds; **the drought stands as
+  measured**, and the `deno` arm's verdict can be read at face value.
+
+### DETERMINISM: still holding
+
+Fine vs coarse for sd55001: **4 common 20k-multiple steps, 0 mismatches** (up from 2 last tick).
+
+### STILL UNREAD
+
+**rest22** 22 at 260-280k of 1.6M, 0 formations, biggest 102 -- **short of the 380k earliest historical
+formation.** **deno** 18 at 20-80k, biggest 64. **n120** 10 at 260-300k, biggest **89**. **n100** 10 at
+300-340k, biggest **72** -- both arms now well inside the 52-119 window.
+**fine** 5 at 66-72k of 400k; the `nves = 2` event sits at **240000**, not yet reached.
+**fission**/**fis55** 5+5 at 320-360k of 800k.
+
+**Disk 87% (116G free); the two fine arms together write 10x the usual frame rate.**
