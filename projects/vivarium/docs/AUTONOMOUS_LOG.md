@@ -22501,3 +22501,83 @@ value in every log.
 - **The membrane destabilises** -- `largest` falling below 40 or `nenc` to 0 in the first 2000 steps ->
   **FAILED MANIPULATION**: at chi_HT = -0.25 vs chi_HH = -0.20 the amphiphile condition
   `chi_HT < chi_HH` is only **barely** satisfied.
+
+## Tick: TWO VESICLES COEXIST INDEFINITELY when born apart -- 3/5 past 30000 steps, geometry verified
+
+### THE PRE-REGISTERED CLAUSE FIRES
+
+Five seeds from two independent 52-lipid vesicles in an L=92 box, kT=0.55, 500-step sampling:
+
+| seed | ckpts at nves=2 | fraction | still 2 at |
+|---|---|---|---|
+| **61001** | **79/79** | **1.00** | **39000** |
+| **61002** | 63/64 | **0.98** | **31500** |
+| **61005** | 66/72 | **0.92** | **35500** |
+| 61003 | 39/65 | 0.60 | lost at 19000 |
+| 61004 | 33/77 | 0.43 | lost at 16000 |
+
+**3 of 5 sustained past 30000 steps**, against a pre-registered threshold of **20000 in >= 3 of 5**.
+
+**GEOMETRY VERIFIED, not just the counter.** For all three survivors: **two intact 52-lipid clusters,
+each passing `vesicle_call` independently:**
+
+| seed | cluster sizes | lumens (cells) | ratio of expected | centroid separation |
+|---|---|---|---|---|
+| 61001 | 52, 52 | 352, 450 | 0.409, 0.523 | **41.6 sigma** |
+| 61002 | 52, 52 | 433, 379 | 0.503, 0.440 | 38.9 sigma |
+| 61005 | 52, 52 | 418, 425 | 0.486, 0.494 | 40.9 sigma |
+
+Those ratios (0.41-0.52) are **twice as round as the pinch products' 0.21**. The render shows two clean
+rings with clear interiors. **Render and metric agree.**
+
+### THE CONTRAST THAT SETTLES THE MULTIPLICITY QUESTION
+
+| origin | median survival | seeds past 5000 |
+|---|---|---|
+| **born by PINCHING** (26 seeds, pooled) | **500 steps** | 6/26 |
+| **born APART** (5 seeds) | **> 30000** | **5/5** |
+
+**The obstruction was never that two vesicles cannot coexist. It is that FISSION PRODUCTS ARE BORN
+TOUCHING.**
+
+### chi_HH IS DEAD IN BOTH DIRECTIONS
+
+All three values of the effective (solvent-averaged) head-head interaction:
+
+| effective HH | raw chi_HH | seeds past 5000 | checkpoint fraction at nves=2 |
+|---|---|---|---|
+| -0.400 | +0.60 | 4/13 | 0.0552 |
+| **-0.800** | **+0.20** | **2/13** | **0.0408** |
+| -1.200 | -0.20 | 5/13 | 0.0591 |
+
+**NON-MONOTONE -- the baseline sits LOWEST with both extremes above it.**
+Fisher: -1.200 vs -0.800 **p = 0.378**; -1.200 vs -0.400 **p = 1.0**.
+
+**ARITHMETIC ERROR IN MY OWN PRE-REGISTRATION, OWNED:** I wrote *">= 5 of 13 -> p <= 0.039"*, but that
+p was computed against a **0/13** baseline and the baseline turned out to be **2/13**. **The count
+criterion was met and the p it rested on was not, so the clause cannot fire as written** -- and the
+three-point non-monotonicity says no lever regardless.
+
+### LAUNCHED: can two vesicles emerge independently from a DISPERSED start?
+
+`/tmp/emerge2_sd630{01..08}.log` -- **8 seeds, N=104, L=92, kT=0.45, dispersed, 1.6M.**
+**Exactly the born-apart composition, but self-assembling instead of planted.** Confirmed at launch: 104
+long lipids + 5407 water; the new banner reports effective HH -0.800, HT -0.500, TT +1.200.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 1 of 8 reaches `nves = 2` for >= 2 consecutive checkpoints by 1.6M** -> **EMERGENT MULTIPLICITY**;
+  the project's second goal is met from a dispersed start and independent nucleation is the route.
+- **0 of 8** -> the born-apart persistence is real but **unreachable by self-assembly** at this
+  composition; multiplicity needs a nucleation lever, not a persistence lever.
+- **No vesicle at all (`nves` never >= 1)** -> N=104/L=92 does not form vesicles dispersed; **FAILED
+  MANIPULATION**, since this composition has never been run from a random start.
+
+### CULLED
+
+**`hhneg`** (13) -- answered above. **79 -> 66, then +8 = 74.**
+
+### STILL UNREAD
+
+**rest22** 22 at 520-580k of 1.6M, **0 formations**, biggest **154**. **deno** 18 at 280-380k.
+**n120** 10 at 620-700k. **finecmp** 5 at 266-288k, still zero enclosures.
+**fineform** 3 at 172-182k of 600k. **ultra** sd55001 at 234000; its event sits at 240000.
