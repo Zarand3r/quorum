@@ -21046,3 +21046,80 @@ because they formed.
 **fresh20 + fresh20b** 40 seeds, 80-140k of 1.6M -- **2/40 eligible, 0 formations, expectation ~0.**
 **nonform** 8 seeds at 20-40k of 1.6M, 0 formations -- far short of the 380k std160 threshold.
 **repro** 12/12 formed, 1.18-1.44M. **em3M** 1.88-1.94M of 3M.
+
+## Tick: NOTHING predicts the formation lag -- the two apparent correlates are definitional artifacts
+
+### THE QUESTION
+
+The 12 formers' lag from eligibility (largest >= 52) to first closure spans **40k to 1060000 steps, a
+26x range.** If an observable at the crossing predicted it, seeds could be **screened** instead of run
+to completion.
+
+### MEASURED, WITH THE MULTIPLICITY STATED
+
+| seed | t_elig | size_elig | E_elig | growth | lag | size_form | mean_size |
+|---|---|---|---|---|---|---|---|
+| 9302 | 140000 | 58 | -6.09 | 340 | 1060000 | 84 | 69.4 |
+| 9308 | 300000 | 71 | -6.52 | 270 | 80000 | 66 | 72.8 |
+| 9312 | 180000 | 52 | -6.54 | 150 | 700000 | 94 | 87.6 |
+| 9314 | 320000 | 52 | -6.42 | 80 | 260000 | 99 | 73.0 |
+| 9315 | 320000 | 52 | -6.93 | 90 | 140000 | 52 | 52.0 |
+| 9316 | 100000 | 69 | -6.64 | 590 | 940000 | 67 | 80.3 |
+| 9317 | 280000 | 76 | -6.88 | 370 | 100000 | 92 | 84.3 |
+| 9326 | 380000 | 85 | -6.95 | 440 | 860000 | 86 | 106.0 |
+| 1459 | 200000 | 55 | -7.05 | 260 | -20000 | 39 | 39.0 |
+| 349 | 460000 | 77 | -7.15 | 480 | 40000 | 77 | 77.0 |
+| 9805 | 180000 | 62 | -7.23 | 320 | 1040000 | 160 | 114.1 |
+| 9809 | 300000 | 84 | -6.87 | 490 | 780000 | 118 | 108.1 |
+
+| correlate | r | t (10 dof) |
+|---|---|---|
+| t_elig | **-0.529** | -1.97 |
+| size_elig | +0.113 | +0.36 |
+| E_elig | +0.236 | +0.77 |
+| growth before eligibility | +0.370 | +1.26 |
+| size at formation | +0.565 | +2.16 |
+| mean size over the lag | **+0.638** | +2.62 |
+
+### BOTH APPARENT HITS ARE ARTIFACTS, AND NOTHING SURVIVES MULTIPLICITY
+
+**`mean_size` and `size_form` are measured OVER the lag interval itself.** A longer lag mechanically
+means more coarsening and a bigger cluster -- **the correlation is definitional, not causal.**
+
+**Six tests were run.** The best genuine p of 0.026 becomes **0.15 family-wise.** **Nothing survives.**
+
+**CONCLUSION: no observable measurable at the eligibility crossing predicts when a seed closes.** A
+reliable seed range **cannot be obtained by screening** -- only by running seeds to completion, which is
+what the 12-former set already is.
+
+The one candidate not ruled out by construction is **t_elig, r = -0.529, uncorrected p = 0.077** (later
+eligibility -> shorter lag). **Flagged for testing with more seeds, not claimed.**
+
+### LAUNCHED: does a SECOND vesicle ever appear beside the first?
+
+Six states that **currently contain a vesicle** were copied to `docs/states_vesicle/` and restarted with
+**fresh noise seeds**, 800k steps: `/tmp/second_sd520{01..06}.log`. Step-0 state: five of six start with
+`nenc=1` and lumens of 570, 301, 936, 221, 253 cells.
+
+**`max nves` has never exceeded 1 anywhere in this project**, and the detector is known to count 2 and 3
+correctly on planted rings, so this is **physics, not instrumentation.**
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **`nves = 2` in >= 1 of 6** -> two vesicles coexist; the obstruction to multiple vesicles is **purely
+  the formation rate**, and the lever is exposure, not compatibility.
+- **all six stay at `nves <= 1` across 4.8 seed-Msteps** -> the case that **one vesicle suppresses a
+  second** strengthens materially; the next question becomes whether it is material competition or
+  something else.
+- **the seed vesicle dissolves in >= 4 of 6** -> the restart perturbed the state and the arm measures
+  restart damage, not coexistence; report as a failed manipulation.
+
+### MACHINE NOTE
+
+**83 processes on 32 cores, load 85.** Every arm is running at roughly a third of its uncontended speed.
+No new arm should be launched next tick unless something is culled first.
+
+### STILL RUNNING
+
+**elig** 10 restarts at 0-20k of 800k, all eligible from step 0 (largest 55-160), 0 formations.
+**fresh** 40 seeds, 100-160k of 1.6M -- **4/40 now eligible**, 0 formations, expectation still ~0.
+**nonform** 8 seeds at 60k of 1.6M. **repro** 12/12, 1.20-1.46M. **em3M** 1.90-1.98M of 3M.
