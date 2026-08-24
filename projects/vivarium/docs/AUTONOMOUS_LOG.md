@@ -20984,3 +20984,65 @@ lumen **cannot rule out a seed that formed and reopened** earlier in its run.
 **fresh20 + fresh20b** 40 seeds, 40-100k of 1.6M -- **2.62 of 64 seed-Msteps, 0 formations, expected
 0.26 so far. Nothing to read.**
 **em3M** 1.84-1.90M of 3M. **repro** 12/12 formed, still running to 1.6M.
+
+## Tick: the hazard is NOT constant -- there is a dead zone before coarsening, and I was scoring it
+
+### CORRECTED, AGAINST MY OWN BOOKKEEPING
+
+I have been reporting the fresh arm as *"40 seeds, 4.44 seed-Msteps, 0.45 formations expected."* That
+assumes a **constant hazard**. The 12 reproduced formers show it is not:
+
+**Formation times: 180k, 380k, 380k, 460k, 500k, 580k, 880k, 1040k, 1080k, 1200k, 1220k, 1240k.**
+**No seed forms before 180000; no std160 seed before 380000.**
+
+The reason is coarsening. First step at which each former's largest cluster reached 52 lipids:
+
+| seed | first >=52 | seed | first >=52 | seed | first >=52 |
+|---|---|---|---|---|---|
+| 9316 | 100000 | 1459 | 200000 | 9314 | 320000 |
+| 9302 | 140000 | 9317 | 280000 | 9315 | 320000 |
+| 9312 | 180000 | 9308 | 300000 | 9326 | 380000 |
+| 9805 | 180000 | 9809 | 300000 | 349 | 460000 |
+
+**Only 2 of the 40 fresh seeds have reached 52 lipids**, at a mean step of 113000. **38 of 40 are not
+yet eligible, so the honest expectation for formations so far is ~0, not 0.45.** The 0/40 is
+uninformative, exactly as it should be.
+
+**This partly rehabilitates the drought.** Every P(0) test this session scored **total** exposure,
+including the pre-coarsening dead zone where the hazard is ~0. Those tests **overstated** the expected
+counts and made the zeros look more surprising than they were.
+
+### CORRECTED: the closure-size range is 39-160, not 52-137
+
+**sd1459 formed with a 39-lipid cluster** (before its own first >=52 crossing, hence the negative lag)
+and **sd9805 with 160.** The 52-137 figure came from 8 states measured in an earlier session; the full
+observed range across all 12 is **39 to 160.**
+
+### MEASURED: eligibility is necessary and nowhere near sufficient
+
+Lag from first reaching 52 lipids to first forming: **40k, 80k, 100k, 140k, 260k, 700k, 780k, 860k,
+940k, 1040k, 1060k** -- a **26x spread**. Being big enough does not predict when closure happens.
+
+### LAUNCHED: skip the dead zone -- restarts from already-coarsened configurations
+
+`/tmp/elig_sd510{01..10}.log` -- **10 restarts from emergent states**, each given a **fresh noise seed**,
+N=160, L=65, kT=0.45, **800k steps.** Largest cluster at step 0: **116, 88, 77, 83, 158, 148, 151, 160,
+160, 124 -- every one eligible from the first step.**
+
+This buys at-risk exposure ~4x faster per unit compute than waiting for fresh seeds to coarsen, and it
+samples the **post-eligibility hazard on an unselected set**, unlike the 12 formers who were chosen
+because they formed.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **>= 3 formations in 8 seed-Msteps of at-risk time** -> post-eligibility hazard >= 0.375/Ms, **well
+  above the naive 0.1003/Ms**, confirming that the historical rate was **diluted by dead-zone exposure**
+  and that the correct denominator is at-risk time, not total time.
+- **0 formations** -> post-eligibility hazard < 0.29/Ms at 90% confidence; **the dead-zone correction
+  does not explain the drought** and something else suppresses closure in these configurations.
+- **1-2 formations** -> consistent with the naive rate; the dead-zone correction is real but small.
+
+### STILL RUNNING
+
+**fresh20 + fresh20b** 40 seeds, 80-140k of 1.6M -- **2/40 eligible, 0 formations, expectation ~0.**
+**nonform** 8 seeds at 20-40k of 1.6M, 0 formations -- far short of the 380k std160 threshold.
+**repro** 12/12 formed, 1.18-1.44M. **em3M** 1.88-1.94M of 3M.
