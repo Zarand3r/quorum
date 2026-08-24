@@ -20398,3 +20398,85 @@ here is already informative, but the read is 300k.
 **arc200b** 140-160k of 300k. **fs100b/fs050b** 400-420k of 600k -- pre-registered read at 600k.
 **em3M** 340-380k of 3M (largest 31, 40, 46, 50, 72). **kT035/kT055** 120-160k, confound recorded.
 **tworing** sd3 at 590k; the other four are done and give **1/5**.
+
+## Tick: the END GAP controls closure and ribbon LENGTH does not -- the standing plan's variable is wrong
+
+### READ AT THE END: span scan at fixed n=80 (identical box, lipids, water, chi, kT)
+
+Fraction of checkpoints with `nenc >= 1`:
+
+| span | end gap | closed checkpoints | fraction | seeds closed at 300k |
+|---|---|---|---|---|
+| 0.75 | 26.7 sigma | 0 / 74 | **0.000** | 0/5 |
+| 0.85 | 14.1 sigma | 2 / 74 | **0.027** | 0/5 |
+| 0.95 | 4.2 sigma | 28 / 80 | **0.350** | 2/5 |
+
+**Monotone, and 13x from 0.85 to 0.95.** This fires the pre-registered clause: *"closure fraction rises
+monotonically with span -> the end gap is the control variable for closure in this model, and lipid
+count is not."*
+
+### READ AT THE END: size scan at fixed span 0.75
+
+| n | closed checkpoints |
+|---|---|
+| 70 | 0 / 80 |
+| 80 | 0 / 74 |
+| 120 | 0 / 80 |
+
+**Zero closure in 234 checkpoints across a 1.7x range of ribbon length**, while a 6x smaller gap at one
+fixed length gives 0.350.
+
+**CONCLUSION: the end-to-end gap controls closure; ribbon length does not.** The standing plan's
+threshold ribbon length **does not exist because length is not the operative variable.** Combined with
+last tick's flat ring series (8/10, 5/5, 3/5 at n=52/80/120), **neither the open nor the closed geometry
+shows any size dependence over the range measured.**
+
+### MEASURED: closure is REVERSIBLE
+
+`arc0.95` nenc per 20k checkpoint, step 0 first:
+
+```
+sd9601  0111000000010111
+sd9602  0011111111111100
+sd9603  0000000111111111
+sd9604  0000000000000000
+sd9605  0000000000000000
+```
+
+**Closes, reopens, closes again.** Runs of 3-11 are far beyond the 0.057 flicker rate, so the
+transitions are real. A two-state system with a barrier **low enough to cross in both directions** at a
+4-sigma gap -- not a one-way commitment. sd9602 was closed at 40k, **and is open at 300k**; scoring only
+the final checkpoint would have called it a failure.
+
+### NEGATIVE CONTROL FOR THE DETECTOR, PASSED
+
+`arc80s075` holds genuinely open arcs for 74 checkpoints: **0 false positives.** Combined with the
+false-negative rate of 0.057 measured on closed rings, **both error rates of the lumen detector are now
+bounded**, which is what makes the 28/80 credible.
+
+### tworing COMPLETE: 1/5
+
+sd3 reached 600000 with `lumen_c=0, nenc=0`. Final: **1 of 5 closed** (sd5 only). Unchanged from the
+matched-300k reading, so exposure was never the explanation.
+
+### LAUNCHED: gap held constant, length varied -- the clean separation
+
+Gap = `n*lat*(1-span)/(2*span)`, so gap can be pinned at **4.2 sigma** while `n` changes:
+
+- **5 seeds, n=52, `arc0.925`, L=44** -- `/tmp/gap52_sd810{1..5}.log`
+- **5 seeds, n=120, `arc0.966`, L=66** -- `/tmp/gap120_sd820{1..5}.log`
+- Both verified **open** at step 0 (`lumen_c=0, nenc=0`); compare against **n=80 span 0.95 = 0.350**.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **Both arms land within ~2x of 0.350** -> the end gap is the control variable and lipid count is
+  irrelevant from 52 to 120. The span scan's confound (radius covaries with span) is then also settled,
+  because radius differs 2.8x across these three while the gap is fixed.
+- **Either arm differs by more than 5x from 0.350** -> gap alone does not determine closure and ribbon
+  length matters after all at fixed gap; this tick's conclusion is withdrawn.
+- **Zero closure in both** -> the span-0.95 result was specific to n=80 and the generalisation fails.
+
+### STILL RUNNING
+
+**arc200b** 180k of 300k. **fs100b/fs050b** 460-480k of 600k -- pre-registered read at 600k, close now.
+**em3M** 400-440k of 3M (largest 46, 51, 64, 72, 109). **kT035** 160-180k, **kT055** 200-220k of 600k,
+both carrying the solvent confound. **ring52L92** 20k of 300k.
