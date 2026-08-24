@@ -21875,3 +21875,77 @@ interval in the filename, so these cannot collide with the coarse runs' states o
 **fission**/**fis55** 10+10 at 240-360k of 800k. **em3M** 2.32-2.42M of 3M.
 
 **Machine: 86 processes on 32 cores, load 99.** Next tick must cull before launching.
+
+## Tick: a promising formers-vs-non-formers signal, checked at four steps and DISCARDED
+
+### THE PATTERN THAT LOOKED REAL
+
+The 8 std160 formers and 22 non-formers are **the same seed block, same code, same composition** -- so
+anything separating them is mechanism, not confound. At **step 200000**:
+
+| group | largest cluster | n |
+|---|---|---|
+| formers | **48.0 +- 8.7** | 8 |
+| non-formers | **52.5 +- 19.8** | 22 |
+
+Nearly identical means, **variance ratio 5.2** -- reading as *"formers coarsen in a narrow band;
+non-formers are either too slow or too fast."* That would have been a real mechanism, and it fits the
+120-lipid cliff.
+
+### CHECKED AT THREE MORE STEPS, AND IT EVAPORATED
+
+| step | formers | non-formers |
+|---|---|---|
+| 100000 | 34.6 +- **14.7** | 37.0 +- **6.8** |
+| 140000 | 38.4 +- 14.5 | 46.1 +- 17.3 |
+| 200000 | 48.0 +- **8.7** | 52.5 +- **19.8** |
+| 240000 | 45.5 +- 14.9 | 60.3 +- 20.4 |
+
+**At step 100000 the spread is REVERSED** -- formers more than twice as wide as non-formers.
+**The variance signal is a single-step fluctuation. DISCARDED.**
+
+The **means** lean consistently one way -- non-formers coarsen faster at 140k, 200k and 240k, reaching
+**60.3 vs 45.5** -- but **four steps x two statistics = eight comparisons**, and the best of them sits at
+**p ~ 0.04**, which does not survive that. **Exploratory, not claimed.**
+
+### LAUNCHED: comparison group extended from 12 seeds to 30
+
+`/tmp/deno_sd450{13..18}.log` -- 6 more seeds, N=160, L=65, kT=0.45, dispersed, 1.6M. With the 12 from
+last tick, **the fresh comparison group will be 30 seeds, matching std160's 30 exactly.**
+
+| new-arm formers | Fisher p vs std160's 8/30 |
+|---|---|
+| **0 of 30** | **0.0046** |
+| 1 of 30 | 0.0257 |
+
+**FALSIFICATION is unchanged from last tick**, now at the larger n: **0 forming establishes the drought;
+1 is borderline and will be reported as borderline; >= 2 dissolves it into chance and every drought claim
+in this log is withdrawn.**
+
+### CULLED: 15 processes
+
+- **`em3M`** (5 seeds at 2.36-2.46M of 3M, 82% done). Its coarsening-asymptote question is largely
+  answered by the size distributions already measured; its 5 seeds remain in the 0/12 comparison group.
+- **coarse `fis55` sd55001-55005** (5) -- **exactly redundant with the fine-resolution rerun**, which
+  replays the same deterministic trajectories at 10x sampling.
+- **`fission` sd54001-54005** (5) -- culled alongside to **keep the temperature comparison balanced** at
+  5 seeds per arm rather than silently unbalancing it.
+
+**86 -> 71 processes, then +6 = 77.**
+
+### FINE ARM: determinism holding, event not yet reached
+
+`fine` at **36000-46000 of 400000**; the nves=2 event sits at **240000**, not yet reached.
+Determinism check so far: **2 common 20k-multiple steps, 0 mismatches** (step 0 and 20000 identical in
+E/lip, largest, lumen, nenc, nves).
+
+### OPERATIONAL
+
+**Disk 87% used (116G free); 67149 render files totalling 1.9G.** The fine arm writes **10x** the usual
+frame rate. Watch it.
+
+### STILL UNREAD
+
+**rest22** 22 at 220-260k of 1.6M, **0 formations**. **deno** 18 at 0-60k. **n120** 10 at 220-260k,
+biggest **86** -- now inside the window. **n100** 10 at 260-280k, biggest 49.
+**fission**/**fis55** 5+5 at 280-400k. **fine** 5 at 36-46k of 400k.
