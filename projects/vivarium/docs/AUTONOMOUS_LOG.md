@@ -20113,3 +20113,66 @@ error bar and the closed-state energy finally gets one.
 **ring80** 40-60k, **ring120** 20-40k, **arc120** 60k, **arc200b** 60k -- all of 300k.
 **tworing** 490-540k of 600k. **fs100b/fs050b** 160-180k of 600k. **cap80b** 160-180k of 1.6M
 (largest 9-19). **em3M** 140-160k of 3M (largest 22, 32, 33, 50, 83).
+
+## Tick: packing parameter confirmed at 7.7 sigma; detector false-negative rate measured at 0.057
+
+### MEASURED: the lumen detector's per-checkpoint false-negative rate
+
+Across **20 planted rings** (n=52 x10, n=80 x5, n=120 x5), restricted to seeds **closed at their last
+checkpoint**: **8 `nenc=0` rows out of 141 -> 0.057 per checkpoint, longest run 2.**
+
+This **independently reproduces the 0.941 recall** measured earlier by a different route (1 - 0.057 =
+0.943), and it resolves last tick's worry in both directions:
+
+- **A single `nenc=0` is NOT evidence a vesicle opened.** 6 of the 9 rings that ever read zero recovered
+  and are closed now -- ring52 sd9501 (7 recoveries), sd9502 (6), ring80 sd9301 (9), sd9303 (4),
+  ring120 sd9402 (3), sd9405 (3).
+- **The tworing openings WERE real.** sd1/sd2/sd4 read zero for 45+ consecutive checkpoints; at 0.057
+  per checkpoint that is ~10^-55. **Flicker cannot explain them.**
+
+**Net effect on last tick:** the detector is exonerated and the tworing openings stand as real events.
+**The timing caveat stands unchanged** -- they occurred at 30-80k, where plant relaxation lives, so they
+still do not establish that a 52-lipid ring is unstable at equilibrium.
+
+Opening times in the new single-ring arms are **20k, 20k, 60k, 60k, 60k, 80k, 120k, 140k, 140k** -- only
+6 of 9 at or below 80k, so the "all early" pattern is **weaker here than in tworing**.
+
+### REPORTED EARLY, WITH THE DEVIATION FLAGGED: the packing parameter
+
+Largest cluster at a **matched step of 240000**, identical box, N, kT and chi; only tail length differs:
+
+| arm | n | mean | sd | sem |
+|---|---|---|---|---|
+| frac_short = 1.0 (2 tails) | 6 | **13.0** | 5.3 | 2.2 |
+| frac_short = 0.5 | 6 | **29.2** | 5.9 | 2.4 |
+| frac_short = 0.0 (4 tails) | 14 | **43.6** | 12.5 | 3.3 |
+
+Monotone, and every adjacent pair separates: **fs1.0 vs fs0.0 t = 7.7; fs0.5 vs fs0.0 t = 3.5;
+fs1.0 vs fs0.5 t = 5.0.** Halving tail volume at fixed head area collapses a 44-lipid ribbon to a
+13-lipid micelle -- the Israelachvili packing parameter, behaving as the theory says.
+
+**DEVIATION, stated plainly: the pre-registered read is 600000 steps and this is 240000.** Reported now
+because the >= 5-seed bar is met and the effect is 7.7 sigma. **The 600k read stands and will be
+reported whatever it says.**
+
+### LAUNCHED: a temperature scan on the emergent system
+
+The one lever never varied here. Every run in this project is kT = 0.45, and closure is a barrier
+crossing, so its rate should be strongly temperature-dependent.
+
+- **5 seeds kT = 0.35** -- `/tmp/kT035_sd700{1..5}.log`
+- **5 seeds kT = 0.55** -- `/tmp/kT055_sd750{1..5}.log`
+- N=160, L=65, dispersed, 600k, correct chi. Both confirmed at launch: 160 long lipids + 2159 water.
+
+**FALSIFICATION, stated before any checkpoint is read:**
+- **kT=0.35 gives >= 2 formations in 3.0 seed-Ms** (expected 0.30 at the established 0.1003/Ms;
+  P(>=2 | 0.30) = **0.037**) -> temperature is a lever on the drought.
+- **Both arms give 0 formations AND largest-cluster means at 600k within 1 sd of the kT=0.45 baseline**
+  -> temperature over +-0.10 is not the lever, and the drought is not thermally limited.
+- **The kT=0.35 render shows a structured or voided solvent** -> failed manipulation, exactly as
+  `chi_WW = 1.00` produced; report as such and do not read the lipid result. **This check runs first.**
+
+### STILL UNREAD (planted; read at 300k)
+
+**ring52** 140-160k, **ring80** 200-240k, **ring120** 120-160k, **arc120** 120-140k, **arc200b**
+80-100k. **tworing** 520-570k of 600k. **cap80b** 240-260k of 1.6M. **em3M** 220k of 3M.
