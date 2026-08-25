@@ -23697,3 +23697,54 @@ can nucleate without competing for lipids.
 - **0/5, with each seed funnelling into one large aggregate** -> **coarsening funnels everything into a
   single object regardless of box size**, which matches the measured fusion-dominates-below-90 result
   and makes separate nucleation, not waiting, the only route to two.
+
+## FISSION ARM COMPLETE: deflation makes a DUMBBELL. The neck never pinches.
+
+20 runs, planted n=80 ring, L=44, kT=0.45, 300000 steps, 5000-step sampling, 4 fills x 5 seeds.
+
+| fill | R_mid end | lumen end | **seeds with `nenc>=2`** | `nenc>=2` ckpts | lumen-lost ckpts | largest end |
+|---|---|---|---|---|---|---|
+| **1.0** (taut) | 15.67 +- 2.07 | 943 | **0/5** | **0/305** | 0.279 | 80-80 |
+| 0.70 | 14.07 +- 2.98 | 1055 | 1/5 | 4/305 | 0.062 | 79-80 |
+| **0.50** | 13.89 +- 2.78 | 346 | **2/5** | **59/305** | 0.236 | 80-80 |
+| 0.35 | 13.76 +- 1.72 | 447 | 1/5 | 15/305 | 0.148 | 80-80 |
+
+### THE PRE-REGISTERED BRANCH THAT FIRES: shape change WITHOUT fission
+
+*"Deflated rings buckle but never pinch -> deflation produces shape change without fission; the neck does
+not pass scission. This is the physically expected protein-free outcome."*
+
+**`nves >= 2` is ZERO in all 20 runs. `largest` ends at 79-80 in all 20 runs. The cluster never divides.**
+
+**But a two-compartment state appears ONLY under deflation: 0/5 taut against 4/15 deflated.** Looked at
+the strongest case, `fill 0.50 sd4` at 300000 (35 checkpoints with `nenc >= 2`): **the render is an
+unambiguous DUMBBELL** -- two lobes, each enclosing its own dark void, joined by a visible neck, heads
+lining both lobes inside and out. **This is the reduced-volume shape sequence doing exactly what
+membrane theory says: taut circle -> ellipse -> dumbbell. The project has never produced this before.**
+
+### HONEST STATISTICS: SUGGESTIVE, NOT ESTABLISHED
+
+**0/5 against 4/15 gives Fisher exact p = 0.2817. NOT significant at n = 5 per arm.** The 59/305
+checkpoint count is not independent evidence, since checkpoints within a seed correlate heavily.
+**Not claiming the deflation effect yet.**
+
+Also note the fill response is **not monotone** in seeds-with-a-dumbbell (0, 1, 2, 1). fill 0.50 looks
+best and fill 0.35 worse, which at n = 5 is unreadable.
+
+### LAUNCHED: `fis2`, 15 seeds each at fill 1.0 and fill 0.50, same 300000 steps
+
+**FALSIFICATION, BEFORE ANY CHECKPOINT:**
+- **`fill 0.50` shows a dumbbell in >= 7/20 pooled seeds against <= 2/20 taut** -> **deflation drives the
+  shape transformation**, Fisher p < 0.05, and the result is established.
+- **The two arms land within a factor of 2** -> **the dumbbell is not deflation-driven** and the 4/15 was
+  seed noise.
+- **Any run reaches `nves >= 2` with `largest` dropping below 60** -> **the neck pinched and the model CAN
+  divide a vesicle**, which none of the first 20 runs did.
+- Anything between -> under-powered, extend before reporting.
+
+### WHAT THIS MEANS FOR "SPLIT"
+
+**The model produces the pre-fission geometry and stops there.** That matches protein-free vesicles,
+which need osmotic shock, shear, or curvature-generating machinery to complete scission. **Getting
+fission will require adding a driving term, not waiting longer.** The dumbbell held for 35 checkpoints
+(175000 steps) without pinching, so this is an arrested shape, not a slow transition.
