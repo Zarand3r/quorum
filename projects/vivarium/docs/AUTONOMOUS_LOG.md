@@ -23585,3 +23585,115 @@ in many ticks: **2/18 formation from a dispersed start, ZERO runs with nves >= 2
 ever, kappa closed as unmeasurable, lambda retracted to ~0.** What remains in flight (`pocket` 5
 replicas, `emerge3T` 6 transformer seeds, `varA`/`varB` 15+15, `noise`/`place`) all carry pre-registered
 criteria and will resolve without supervision. Next deliverable is the written paper.
+
+## RE-SCOPE (2026-08-25): bilayer and vesicle physics only. Emerge, come together, split.
+
+The user has narrowed the target: **no biology, no proteins, no DNA. Simulate membrane physics and the
+three vesicle operations.** Status of each, honestly:
+
+| goal | status | evidence |
+|---|---|---|
+| **emerge** | **works, rarely** | 2/18 fresh seeds debounced; ~10/48 across all arms |
+| **come together** (fuse) | **never observed** | born-apart pairs: **8/8** losses of `nves=2` had `largest` unchanged at 52, i.e. detector flicker, not fusion |
+| **split** (fission) | **never observed** | **15/15** two-compartment episodes ended by `nenc` 2 -> 1, **never** by the cluster splitting |
+
+**Two of the three goals sit at a rate of exactly zero, and neither has ever been attacked directly.**
+
+## TWO PRE-REGISTERED CRITERIA FIRED OVERNIGHT
+
+### 1. THE TRANSFORMER PATH PRODUCES A VESICLE. First science result from the attention formulation.
+
+Both arms complete at 1.6M steps, same six seeds, `emerge3T` on the transformer engine and `emerge3` on
+the integrator as a matched control.
+
+`emerge3T` **sd65001** carries a **debounced** formation:
+
+| step | largest | lumen_c | nenc | perc | nves |
+|---|---|---|---|---|---|
+| 700000 | 35 | 154 | 1 | n | 1 |
+| **720000** | 34 | 161 | 1 | n | **1** |
+| 760000 | 35 | 158 | 1 | n | 1 |
+| **780000** | 35 | 145 | 1 | n | **1** |
+
+Two consecutive pairs, `perc = n` throughout, so no periodic-wrap artifact.
+
+| arm | seeds with any `nves` | **debounced** |
+|---|---|---|
+| **transformer** | 1/6 (sd65001) | **1/6** |
+| integrator control | 2/6 (sd65002, sd65006) | **1/6** (sd65002; sd65006 is a single checkpoint) |
+
+**1/6 against 1/6. The pre-registered clause fires:** *"if emerge3T forms at a rate consistent with
+emerge3, the transformer formulation is doing the physics."* **It is not limited to short horizons.**
+
+**FLAGGED, not resolved:** sd65001's last two rows read `nves = 1` with `lumen_c = 0` and `nenc = 0`.
+The same inconsistency was recorded earlier for sd9312 and sd9326. **`nves` can exceed `nenc`, which
+should be impossible, and this is an open detector bug.** It does not touch the 700-780k formation,
+which has `nenc = 1` throughout.
+
+### 2. THE POCKET IS AN ARRESTED TRAP, NOT A WAY STATION
+
+Five replicas from sd45004's 900000-step state, thermal noise varied alone, 200000 steps:
+
+| replica | last step | largest | lumen | ckpts | `nenc>0` | `nves>0` |
+|---|---|---|---|---|---|---|
+| ns81001 | 200000 | 149 | 118 | 11 | 11 | **0** |
+| ns81002 | 200000 | 149 | 92 | 11 | 11 | **0** |
+| ns81003 | 200000 | 149 | 110 | 11 | 10 | **0** |
+| ns81004 | 200000 | 149 | 117 | 11 | 11 | **0** |
+| ns81005 | 200000 | 120 | 108 | 11 | 11 | **0** |
+
+**0/5 reached a vesicle call, and the pocket persisted in 54 of 55 checkpoints.** The pre-registered
+clause fires exactly: *"0/5 reach it AND `nenc > 0` persists through >= half the checkpoints -> it is an
+arrested trap; closure is not reachable from here on this timescale."*
+
+**The branched network with a pocket is a dead end, not a precursor.** It also coarsened rather than
+closed, 123 -> 149 lipids. **And sd45004's +16.7 +- 3.7 lumen growth trend is now retracted as a
+single-seed fluctuation**, since none of five noise replicas from its own state grew a vesicle.
+
+## NEW LEVER: `VIVARIUM_LUMEN_FILL`, osmotic deflation
+
+**Why this and not something else.** A closed 2-D membrane has a circumference fixed by its lipid count
+and an enclosed area fixed by how much water is inside. Every ring planted in this project has been
+filled to bulk, which is the **taut circle**, and a taut circle has no excess membrane to buckle with.
+Under-filling leaves the same circumference around a smaller area. That is the **reduced-volume axis**
+of the standard vesicle shape sequence: circle, ellipse, dumbbell, neck, and possibly pinch. **Fission
+in protein-free vesicles is driven exactly this way.**
+
+**The first implementation did nothing, and the failure is worth recording.** Patching `_fill_lumen`
+gave **byte-identical trajectories at fill 1.0, 0.6 and 0.35**. The reason: the grid water placement
+already leaves the lumen at bulk, because the lumen interior sits far from any lipid and the lattice
+only rejects sites within 0.9 sigma of one. So `need` is already about zero, and **a function that only
+ADDS water cannot deflate anything.** Removing the surplus is the half that does the work.
+
+**Gated for backward compatibility.** Removal fires only at `fill < 1.0`. Verified: `fill = 1.0`
+reproduces `lumH2O = 1.035` at step 0, identical to the pre-lever baseline. Measured at plant:
+
+| fill | 1.0 | 0.70 | 0.50 | 0.35 |
+|---|---|---|---|---|
+| lumen water / bulk | 1.071 | 0.621 | 0.467 | 0.354 |
+
+## LAUNCHED, WITH FALSIFICATION STATED FIRST
+
+### `fis` -- does deflation split a vesicle? 4 fills x 5 seeds, n=80 ring, 300000 steps, 5000-step sampling
+
+- **Deflated arms reach `nves = 2` (two clusters, each with its own lumen) while `fill = 1.0` does not**
+  -> **osmotic deflation drives fission in this model, and "split" is achieved.**
+- **Deflated rings buckle (`R_mid` falls, shape leaves circular) but never pinch** -> deflation produces
+  **shape change without fission**; the neck does not pass scission. This is the physically expected
+  protein-free outcome and would bound what the model can do without extra machinery.
+- **Deflated rings lose the lumen entirely (`nenc` -> 0)** -> the model cannot hold a deflated vesicle
+  and deflation destroys rather than divides.
+- **No arm differs from `fill = 1.0`** -> **the lumen water does no mechanical work here**, there is no
+  osmotic coupling, and this route to fission is closed.
+
+### `multi` -- can two vesicles emerge at once given material and room? 5 seeds, 1.6M steps
+
+**N = 320 lipids in L = 92**, density 0.0378 lipids/sigma^2, **matched to the standard N=160 / L=65 arm
+at 0.0379**. Twice the material and twice the area, so two aggregates of the ~88-lipid closure median
+can nucleate without competing for lipids.
+
+- **>= 1 of 5 reaches a debounced `nves >= 2`** -> **multiplicity emerges once there is enough material
+  and enough room**, and the previous universal zero was a system-size artifact.
+- **0/5, with each seed funnelling into one large aggregate** -> **coarsening funnels everything into a
+  single object regardless of box size**, which matches the measured fusion-dominates-below-90 result
+  and makes separate nucleation, not waiting, the only route to two.

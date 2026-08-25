@@ -278,7 +278,12 @@ def _fill_lumen_grid(X, wi, mols, L, rng, cell=0.5, bead=1.0):
     gw = ((X[wi] + shift) / L * n).astype(int) % n
     inside = interior[gw[:, 0], gw[:, 1]]
     have = int(inside.sum())
-    want = int(round((len(wi) / L ** 2) * n_cells * step * step))
+    # Same deflation lever as `_fill_lumen`. THIS is the call site that actually decides the lumen's
+    # water content for a planted ring: `_fill_lumen` runs inside `build`, and then this grid version
+    # runs again afterwards and tops the lumen back up to bulk. Patching only the first one changed
+    # nothing at all, verified across fill = 1.0 / 0.6 / 0.35 giving byte-identical trajectories.
+    want = int(round((len(wi) / L ** 2) * n_cells * step * step
+                     * float(os.environ.get("VIVARIUM_LUMEN_FILL", "1.0"))))
     if want <= have:
         return 0
     cells = np.argwhere(interior)
@@ -315,11 +320,39 @@ def _fill_lumen(X, wi, mols, chains, L, d, rng):
     if r_in <= 1.0:
         return 0
     bulk = len(wi) / L ** d
-    want = int(round(bulk * C_D[d] * r_in ** d))
+    # OSMOTIC DEFLATION, the only protein-free route to vesicle fission. A closed membrane has a fixed
+    # circumference set by its lipid count and an enclosed area set by how much water is inside. Filling
+    # the lumen to bulk density (fill = 1.0) makes the taut circle, which is what every run so far has
+    # planted, and a taut circle has no excess membrane to buckle with. Under-filling leaves the same
+    # circumference around a smaller area, which is the reduced-volume axis of the standard vesicle
+    # shape sequence: circle, then ellipse, then dumbbell, then a neck that may pinch. Fission in real
+    # protein-free vesicles is driven exactly this way, by osmotic deflation or by feeding lipid in
+    # faster than volume grows, so this is the lever and not a trick.
+    fill = float(os.environ.get("VIVARIUM_LUMEN_FILL", "1.0"))
+    want = int(round(bulk * C_D[d] * r_in ** d * fill))
     rw = np.linalg.norm(_wrap(X[wi] - cen, L), axis=1)
     have = int((rw < r_in).sum())
     need = want - have
+    if need < 0 and fill < 1.0:
+        # DEFLATION. The grid placement already leaves the lumen near bulk, because the lumen interior
+        # sits far from any lipid and the lattice only rejects sites within 0.9 of one. So `need` is
+        # already ~0 at fill = 1.0, and a fill BELOW 1.0 makes it negative. A function that only adds
+        # water therefore cannot deflate anything: the first attempt at this lever gave byte-identical
+        # trajectories at fill 1.0, 0.6 and 0.35. Removing the surplus is the half that does the work.
+        surplus = wi[rw < r_in][np.argsort(rw[rw < r_in])[:-need]]
+        r_out = float(np.max(rt)) + 1.0
+        if r_out < L / 2.0 - 1.0:
+            u = rng.random(len(surplus))
+            rad = np.sqrt(r_out ** 2 + u * ((L / 2.0 - 0.5) ** 2 - r_out ** 2))
+            v = rng.normal(size=(len(surplus), d))
+            v /= np.linalg.norm(v, axis=1, keepdims=True)
+            X[surplus] = _wrap(cen + v * rad[:, None], L)
+        return -len(surplus)
     if need <= 0:
+        # BACKWARD COMPATIBILITY, deliberately. At fill = 1.0 a lumen that is already ABOVE bulk keeps
+        # its surplus, exactly as before this lever existed. Normalising it down would be defensible on
+        # its own terms and would silently change every planted-ring run ever recorded, so it is gated
+        # behind fill < 1.0. Verified: fill = 1.0 reproduces lumH2O 1.035 at step 0, unchanged.
         return 0
     outer = wi[np.argsort(rw)[::-1][:need]]
     # uniform in the ball: radius scales as u^(1/d) so density is flat, not centre-heavy
