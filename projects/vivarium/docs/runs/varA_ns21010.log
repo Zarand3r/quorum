@@ -1,0 +1,11 @@
+MIXTURE 2-D: 0 short (2 tails) + 160 long (4 tails) + 2159 water, L=65.0, packing fraction 0.55, kT=0.45, start=random
+  chi RAW      HH +0.20  HT -0.25  TT +0.70  HW +0.75  TW +0.00  WW +0.50
+  chi EFFECTIVE (solvent-averaged, this is what the beads feel): HH -0.800  HT -0.500  TT +1.200   [negative = repulsive]
+enrichment = (short fraction of OUTER leaflet) - (short fraction of INNER leaflet); 0 = no partitioning
+    step    E/lip  largest  R_mid  shellCV  hollow    mix    seg  burial   core  lumen_c  nenc  perc  lumen  lumenW  shortOUT  shortIN   enrichment  nves  lumH2O
+       0     6.74        7   1.95    0.527   3.478  0.993  0.250   1.607  0.977        0     0     n   0.00       0      1.00     1.00   +0.000     0     nan
+   20000    -6.24       19   5.74    0.516   3.429  0.871  0.100   3.539  1.417        0     0     n   0.00       0      1.00     1.00   +0.000     0     nan
+   40000    -6.32       21   5.42    0.481   2.849  0.877 -0.173   3.321  1.412        0     0     n   0.00       0      1.00     1.00   +0.000     0     nan
+   60000    -6.15       21   6.11    0.539   3.821  0.860  0.018   2.845  1.402        0     0     n   0.14       1      1.00     1.00   +0.000     0     nan
+   80000    -6.40       25   5.21    0.476   2.261  0.775 -0.111   3.480  1.408        0     0     n   0.00       0      1.00     1.00   +0.000     0     nan
+  100000    -6.31       36   7.94    0.466   2.605  0.844  0.052   3.000  1.399        0     0     n   0.40      10      1.00     1.00   +0.000     0     nan

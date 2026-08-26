@@ -22,6 +22,15 @@ change in gap moves the closed fraction from 0.000 to 0.512, while a 2.9x change
 gives zero closures in 320 checkpoints. Closure is two-state and reversible, with emergent vesicles
 holding their lumen 0.458 of the time, placing them between planted arcs of 4.2 and 1.63 sigma gap.
 
+The transformer path also produces the result end to end: six seeds run to 1.6 x 10^6 steps give a
+debounced formation rate of 1/6 against 1/6 for a matched integrator control, so the equivalence is not
+limited to the short horizons the bit-for-bit test covers.
+
+Neither of the other two vesicle operations occurs. **Fusion has never been observed**, and osmotic
+deflation drives a taut ring through the reduced-volume sequence to a **dumbbell whose neck never
+pinches: zero fission in 50 runs**. We name the leading suspect, a Langevin thermostat that screens the
+hydrodynamics driving Rayleigh-Plateau pinch-off, and state it as untested.
+
 Three negative results constrain the interpretation. Line tension is not the driver: `chi_TW = 0.00`
 removes the hydrophobic drive by construction, and a direct measurement gives lambda = +2.8 +- 2.8 eps
 against a retracted +18.31 +- 7.07. Bending rigidity resists three independent measurement routes. And
@@ -40,6 +49,19 @@ framing decorative. A large cost penalty would make it a curiosity rather than a
 vesicles forming under the integrator but not under the transformer would limit the equivalence to short
 horizons. Section 3 settles the first two. Section 12.4 leaves the third open with the experiment
 running.
+
+### 1.1 Scoreboard against the three operations
+
+The project targets three vesicle operations and nothing else. No proteins, no biology.
+
+| operation | status | best evidence |
+|---|---|---|
+| **emerge** | **works, rarely** | 2/18 fresh dispersed-start seeds; ~10/48 across all arms; **1/6 through the transformer path**, matching its integrator control |
+| **come together** | **never observed** | 8/8 losses of a two-vesicle state were detector flicker with `largest` unchanged at 52, not fusion |
+| **split** | **never observed** | **0 fission in 50 deflation runs**; 15/15 earlier two-compartment episodes ended by `nenc` 2 -> 1, never by dividing |
+
+**Each blocked operation now has a named mechanism rather than a mystery**, which is what Sections 13
+and 14.1 are for.
 
 ## 2. The model
 
@@ -177,6 +199,19 @@ for the network**, both far above the CV well under 0.2 a ring should give. On t
 to report that the gate cannot separate the two cases and that 2/18 is an artifact. The number is
 correct and the inference is wrong: **the attached tail inflates the CV**, so a tailed vesicle scores
 like a ribbon. **Radius CV is retracted as a ring discriminator in this system.**
+
+### 4.4 The pocket state is an arrested trap, not a precursor
+
+Three seeds hold a durable enclosed pocket that the gate rejects. To test whether such a pocket is a
+vesicle in progress, we took sd45004's 900,000-step state and ran **five replicas varying only the
+thermal noise**, 200,000 steps each.
+
+**0/5 reached a vesicle call, and the pocket persisted in 54 of 55 checkpoints**, while the cluster
+coarsened from 123 to 149 lipids. The branched network with a pocket is a **dead end**, not a precursor.
+
+This also **retracts** a within-seed lumen growth trend of +16.7 +- 3.7 cells per 100,000 steps
+(t = 4.54) measured on sd45004, since none of five noise replicas started from its own state grew a
+vesicle. Two other seeds had already given -6.8 +- 4.3 and -8.3 +- 13.5 on the same measurement.
 
 ## 5. The end gap controls closure. Length, radius and lipid count do not.
 
@@ -386,6 +421,22 @@ is sampled, so the 8/30 comparison is much less affected than the raw factor sug
 
 **Zero runs, in any arm, have reached two simultaneous vesicles from a dispersed start.**
 
+**Doubling the material makes this worse, not better.** Five seeds at N = 320 lipids in L = 92, density
+0.0378 matched to the standard arm's 0.0379, run to 1.6 x 10^6 steps:
+
+| seed | largest reached | at end | `nves >= 2` |
+|---|---|---|---|
+| 91001 | 243 | 210 | 0 |
+| 91002 | 174 | 174 | 0 |
+| 91003 | 131 | 94 | 0 |
+| 91004 | **309** | 309 | 0 |
+| 91005 | 274 | 153 | 0 |
+
+**0/5, and every seed coarsened past the 120-lipid cliff of Section 9**, one of them putting 309 of 320
+lipids into a single cluster. The extra material went into a bigger branched network rather than into a
+second vesicle. **Waiting for two to nucleate is closed as a strategy**, which leaves separate
+nucleation as the only untested route.
+
 Two-vesicle states do exist. At 500-step resolution the sd55002 event resolves into **58 and 47 lipids,
 each passing the gate independently** (lumens 222 and 311, then 233 and 303), for 1,000 to 1,500 steps,
 with the render showing two separate closed loops. That is the first verified two-vesicle state in the
@@ -403,15 +454,113 @@ the cluster splitting.** The obstruction is fission, not the making of a second 
 claim that one seed held the state for 21 consecutive checkpoints: those 21 checkpoints span 8 separate
 episodes, and the longest single episode is 6 checkpoints.
 
-### 12.4 No result yet comes from the transformer path
+### 12.4 The transformer path now produces the result, and the equivalence holds at full length
 
-All results here come from the integrator calling `field.forces` directly. We discovered on 2026-08-24
-that a launch script omitted `VIVARIUM_ENGINE=transformer`, so the six-seed arm committed two days
-earlier as the transformer emergence arm had been running the integrator. Six matched transformer seeds
-now run against six integrator seeds as a control. **The equivalence is proven per step and not yet
-demonstrated across a full emergent trajectory.**
+**Superseded on 2026-08-25.** This section previously read "no result yet comes from the transformer
+path," which was true when written and is now false.
 
-## 13. Two negative results on the energetics
+Six seeds ran the full 1.6 x 10^6 steps with `VIVARIUM_ENGINE=transformer`, against the same six seeds
+on the integrator as a matched control. `emerge3T` seed 65001 carries a **debounced formation**:
+
+| step | largest | lumen_c | nenc | perc | nves |
+|---|---|---|---|---|---|
+| 700,000 | 35 | 154 | 1 | n | 1 |
+| 720,000 | 34 | 161 | 1 | n | 1 |
+| 760,000 | 35 | 158 | 1 | n | 1 |
+| 780,000 | 35 | 145 | 1 | n | 1 |
+
+Two consecutive pairs, with `perc = n` so the lumen is not a periodic-wrap artifact.
+
+| arm | seeds with any vesicle call | **debounced** |
+|---|---|---|
+| **transformer** | 1/6 | **1/6** |
+| integrator control | 2/6 | **1/6** |
+
+**The pre-registered clause fires.** A formation rate consistent with the integrator means the
+transformer formulation does the physics rather than merely reproducing a step, and the equivalence is
+**not** limited to the short horizons Section 3 proves it on.
+
+**How the error was found, since it matters more than the result.** A launch script omitted
+`VIVARIUM_ENGINE=transformer`, and the arm committed two days earlier as the transformer emergence arm
+had been running the integrator for two days. We caught it by reading `/proc/<pid>/environ` for all 108
+live simulations rather than trusting the commit message. **Every result in this paper predating
+2026-08-25 came from the integrator.**
+
+## 13. Fission: deflation produces a dumbbell, and the neck never pinches
+
+A closed 2-D membrane has a circumference fixed by its lipid count and an enclosed area fixed by how
+much water is inside. Every ring planted before 2026-08-25 was filled to bulk, which is the taut circle,
+and a taut circle has no excess membrane to buckle with. `VIVARIUM_LUMEN_FILL` under-fills the lumen,
+leaving the same circumference around a smaller area. That is the **reduced-volume axis** of the
+standard vesicle shape sequence, and it is how protein-free vesicles divide.
+
+Natural systems make the same distinction. Cells divide membranes with dedicated machinery that spends
+GTP or ATP, dynamin for endocytic necks and ESCRT-III for reversed-topology scission, and none of that
+is in scope here. **Protein-free vesicles still divide, but only under an imposed drive**: osmotic
+deflation, shear, or lipid fed in faster than volume grows. **The lever below supplies that drive
+directly**, which is why a null result from it constrains the model rather than the setup.
+
+### 13.1 The lever, and a first implementation that did nothing
+
+Patching the fill target alone produced **byte-identical trajectories at fill 1.0, 0.6 and 0.35.** The
+grid water placement already leaves the lumen near bulk, because the lumen interior sits far from any
+lipid and the lattice rejects only sites within 0.9 sigma of one. A function that only **adds** water
+cannot deflate anything. Removing the surplus is the half that does the work.
+
+Removal is gated at `fill < 1.0`, so `fill = 1.0` reproduces the pre-lever baseline exactly, verified at
+lumen water 1.035 of bulk at step 0. Measured at plant: **1.071 / 0.621 / 0.467 / 0.354** for fill
+1.0 / 0.70 / 0.50 / 0.35.
+
+### 13.2 The dumbbell is real, and it is not a plant artifact
+
+Planted 80-lipid ring, L = 44, kT = 0.45, 300,000 steps. Seed 4 at fill 0.50:
+
+| step | R_mid | lumen | nenc |
+|---|---|---|---|
+| 0 (plant) | 17.46 | 1289 | 1, a taut circle |
+| 60,000 | 15.01 | 1139 | 1 |
+| 120,000 | 15.80 | 629 | 1 |
+| **125,000** | 16.24 | **505** | **2** |
+| 300,000 | 14.36 | 413 | 2 |
+
+**The plant is one circular ring. The two-compartment state develops over 125,000 steps as the lumen
+deflates, then holds for the remaining 175,000.** The render shows two lobes, each enclosing its own
+void, joined by a visible neck, with heads lining both lobes inside and out.
+
+### 13.3 No fission, in 50 runs
+
+**`nves >= 2` never occurred, and `largest` never left 79-80.** The cluster did not divide in any run at
+any fill.
+
+### 13.4 The deflation effect shrank by 6x on replication
+
+| arm | first 5 seeds | next 15 seeds | pooled |
+|---|---|---|---|
+| taut, fill 1.0 | 0/5 | 0/15 | **0/20** |
+| deflated, fill 0.50 | **2/5** | **1/15** | **3/20** |
+
+**Fisher one-sided p = 0.1154, not significant.** The pre-registered establishing clause required
+>= 7/20 against <= 2/20 and observed 3/20 against 0/20, so it does not fire.
+
+What survives is that a two-compartment state has appeared **only ever under deflation**, 3/20 against
+0/20 across 40 runs. That is the correct sign and it is under-powered. **The original 2/5 was a
+favourable fluctuation, and this is the third time in this project an n = 5 effect has shrunk on
+replication.**
+
+### 13.5 The leading hypothesis for the arrested neck
+
+**The thermostat screens hydrodynamics.** A Langevin thermostat applies friction to every particle
+independently in the lab frame, which destroys momentum conservation and suppresses long-range
+hydrodynamic coupling. Neck pinch-off is a hydrodynamic instability of Rayleigh-Plateau type, so the
+thermostat damps precisely the collective modes that would drive it. The dumbbell held 175,000 steps
+without pinching, which reads as an arrested shape rather than a slow transition.
+
+The testable fix is a **momentum-conserving thermostat**: DPD pairwise noise, or Lowe-Andersen. A
+pairwise DPD thermostat is itself a masked attention head, so it costs the transformer framing nothing.
+
+**NOT TESTED. Stated as the next experiment, not as a finding.**
+
+## 14. Two negative results on the energetics
 
 ### 13.1 Line tension is not the driver, and the earlier figure was wrong
 
@@ -441,7 +590,7 @@ passed, because including it raises chi-squared per degree of freedom to 1.84.
 
 **Kappa is closed as a line of work**, under a stopping rule fixed before the final fit.
 
-## 14. The packing parameter behaves as theory predicts
+## 15. The packing parameter behaves as theory predicts
 
 Largest cluster at a matched step, identical box, N, kT and chi, varying only tail length:
 
@@ -455,7 +604,7 @@ Monotone, and every adjacent pair separates: **t = 7.7, 3.5 and 5.0**. Halving t
 area collapses a 44-lipid ribbon to a 13-lipid micelle, which is the Israelachvili packing parameter
 behaving as stated.
 
-## 15. Method errors, and the guards installed
+## 16. Method errors, and the guards installed
 
 This section exists because the errors were more instructive than most positive results.
 
@@ -473,7 +622,7 @@ This section exists because the errors were more instructive than most positive 
 **Takeaway: in this project the render and the metric have each flattered the other. A structural claim
 now requires both, and the render must isolate the object being claimed.**
 
-## 16. Why seeds matter is not yet answered
+## 17. Why seeds matter is not yet answered
 
 A variance decomposition holds one factor fixed and measures the surviving spread in largest-cluster
 size. **The two sampling steps disagree:**
@@ -491,7 +640,7 @@ estimable and stop.
 **One result survives both steps.** Arm A's spread is comparable to the total rather than near zero, so
 **fixing the initial placement does not collapse the outcome spread.**
 
-## 17. Limitations
+## 18. Limitations
 
 The system is **two-dimensional**. A 2-D vesicle is a ring, and the packing arguments transfer only
 loosely.
@@ -501,12 +650,24 @@ forms fragmented droplets rather than a liquid. Every 3-D result is void.
 
 **The MLP is inert** at `W1 = W2 = 0`, and nothing is trained.
 
-**No result yet comes from the transformer path** (Section 12.4).
+**The thermostat is not momentum-conserving.** Langevin friction acts per particle in the lab frame,
+which screens the long-range hydrodynamics that governs undulation relaxation and neck pinch-off. This
+is the leading suspect for the arrested dumbbell of Section 13.5.
+
+**Active noise is absent.** The thermal noise is a correct equilibrium Ornstein-Uhlenbeck process
+obeying fluctuation-dissipation at kT = 0.45, and `check_same_ensemble` verifies the overdamped and
+inertial integrators sample the same ensemble. Real membranes in cells are driven far from equilibrium,
+with stronger and colored fluctuations. Equilibrium noise is the right baseline and not the whole story.
+
+**An open detector bug: `nves` can exceed `nenc`, which should be impossible.** Seen on `emerge3T`
+sd65001 at 1,560,000 and 1,600,000, reading `nves = 1` with `nenc = 0` and `lumen_c = 0`, and previously
+on sd9312 and sd9326. It does not touch any formation reported here, all of which carry `nenc >= 1`
+throughout, but it is unfixed and any future count should be checked against it.
 
 **Formation is rare and slow.** Two of 18 fresh seeds within 10^6 steps, with lags spanning 26x and no
 observable that predicts them.
 
-## 18. What would change the conclusion
+## 19. What would change the conclusion
 
 **Supplying a hydrophobic drive** by setting `chi_TW < 0` addresses the missing energetics. Measured
 alone it makes closure worse (lambda = -5.15 +- 1.49), so it needs pairing with a compensating change.
@@ -514,14 +675,18 @@ alone it makes closure worse (lambda = -5.15 +- 1.49), so it needs pairing with 
 **Engineering the end gap** follows directly from Section 5, which is the only lever shown to move
 closure by an order of magnitude. Nothing tested so far reduces the gap in an emergent run.
 
+**A momentum-conserving thermostat** (DPD pairwise noise, or Lowe-Andersen) restores the hydrodynamics
+that neck pinch-off needs, and a pairwise DPD thermostat is itself a masked attention head. This is the
+cheapest untested lever and the one we would run first.
+
 **Fixing the 3-D solvent** is the largest single blocker to physical realism.
 
 **Training the MLP** would make the architecture claim substantive rather than structural.
 
-## 19. Reproduction
+## 20. Reproduction
 
 ```
-bazel test //projects/vivarium:test_suite          # 157.6 s, 1 of 1 PASSED
+bazel test //projects/vivarium:test_suite          # 1 of 1 PASSED (157.6 s; 236.2 s after the deflation lever)
 
 # one emergent run, dispersed start
 VIVARIUM_CHI_HT=-0.25 VIVARIUM_CHI_WW=0.50 VIVARIUM_CHECKPOINT_EVERY=20000 \
@@ -534,7 +699,14 @@ VIVARIUM_ENGINE=transformer ...same arguments...
 python3 projects/vivarium/cluster_shot.py <state.npz> out.png
 ```
 
+```
+# a deflated ring: same circumference, smaller enclosed area (Section 13)
+VIVARIUM_LUMEN_FILL=0.50 VIVARIUM_CHI_HT=-0.25 VIVARIUM_CHI_WW=0.50 VIVARIUM_CHECKPOINT_EVERY=5000 \
+  ./bazel-bin/projects/vivarium/_mixture 300000 2 80 0.0 44 0.45 0.55 ring 4
+```
+
 `VIVARIUM_NOISE_SEED` overrides the thermal noise independently of placement.
+`VIVARIUM_LUMEN_FILL` sets lumen water as a fraction of bulk; below 1.0 it removes the surplus.
 `VIVARIUM_SAVE_ALL` writes step-tagged states that never collide.
 
 **Log column map:** 1 step, 2 E/lip, 3 largest, 4 R_mid, 11 lumen_c, 12 nenc, 13 perc, 19 nves.

@@ -1,0 +1,67 @@
+steric push-off: E/lipid -1.5 -> -21.4, min non-bonded r 0.072 -> 0.850
+MIXTURE 2-D: 0 short (2 tails) + 80 long (4 tails) + 956 water, L=44.0, packing fraction 0.55, kT=0.45, start=ring
+  chi RAW      HH +0.20  HT -0.25  TT +0.70  HW +0.75  TW +0.00  WW +0.50
+  chi EFFECTIVE (solvent-averaged, this is what the beads feel): HH -0.800  HT -0.500  TT +1.200   [negative = repulsive]
+enrichment = (short fraction of OUTER leaflet) - (short fraction of INNER leaflet); 0 = no partitioning
+    step    E/lip  largest  R_mid  shellCV  hollow    mix    seg  burial   core  lumen_c  nenc  perc  lumen  lumenW  shortOUT  shortIN   enrichment  nves  lumH2O
+       0    -7.59       80  17.46      nan     nan    nan    nan   2.581  1.459     1289     1     n    nan       0      1.00     1.00   +0.000     1   0.497
+    5000    -7.33       80  17.77      nan     nan    nan    nan   3.444  1.452     1397     1     n    nan       0      1.00     1.00   +0.000     1   0.448
+   10000    -7.25       80  17.61      nan     nan    nan    nan   3.581  1.434     1538     1     n    nan       0      1.00     1.00   +0.000     1   0.408
+   15000    -7.20       80  17.62      nan     nan    nan    nan   3.437  1.436     1557     1     n    nan       0      1.00     1.00   +0.000     1   0.415
+   20000    -6.68       80  16.97      nan     nan    nan    nan   3.484  1.431     1403     1     n    nan       0      1.00     1.00   +0.000     1   0.460
+   25000    -7.25       80  14.77      nan     nan    nan    nan   3.819  1.411     1347     1     n    nan       0      1.00     1.00   +0.000     1   0.475
+   30000    -6.96       80  13.32      nan     nan    nan    nan   3.472  1.428     1234     1     n    nan       0      1.00     1.00   +0.000     1   0.525
+   35000    -7.24       80  14.25      nan     nan    nan    nan   3.556  1.427     1259     1     n    nan       0      1.00     1.00   +0.000     1   0.504
+   40000    -7.29       80  15.68      nan     nan    nan    nan   3.575  1.436     1290     1     n    nan       0      1.00     1.00   +0.000     1   0.484
+   45000    -6.97       80  14.59      nan     nan    nan    nan   3.312  1.439     1278     1     n    nan       0      1.00     1.00   +0.000     1   0.497
+   50000    -7.32       80  15.51      nan     nan    nan    nan   3.275  1.447     1324     1     n    nan       0      1.00     1.00   +0.000     1   0.466
+   55000    -7.24       80  15.45      nan     nan    nan    nan   3.400  1.455     1176     1     n    nan       0      1.00     1.00   +0.000     1   0.532
+   60000    -7.12       80  15.01      nan     nan    nan    nan   3.478  1.459     1139     1     n    nan       0      1.00     1.00   +0.000     1   0.545
+   65000    -7.14       80  13.45      nan     nan    nan    nan   3.603  1.444     1034     1     n    nan       0      1.00     1.00   +0.000     1   0.589
+   70000    -7.15       80  13.60      nan     nan    nan    nan   3.647  1.440      981     1     n    nan       0      1.00     1.00   +0.000     1   0.623
+   75000    -7.47       80  13.53      nan     nan    nan    nan   3.384  1.437      839     1     n    nan       0      1.00     1.00   +0.000     1   0.729
+   80000    -7.29       80  14.23      nan     nan    nan    nan   3.416  1.429        0     0     n    nan       0      1.00     1.00   +0.000     0     nan
+   85000    -7.57       80  15.49      nan     nan    nan    nan   3.231  1.446      907     1     n    nan       0      1.00     1.00   +0.000     1   0.694
+   90000    -7.29       80  15.12      nan     nan    nan    nan   3.369  1.428      842     1     n    nan       0      1.00     1.00   +0.000     1   0.708
+   95000    -7.03       80  15.64      nan     nan    nan    nan   3.306  1.447      733     1     n    nan       0      1.00     1.00   +0.000     1   0.812
+  100000    -7.27       80  15.71      nan     nan    nan    nan   3.347  1.443      785     1     n    nan       0      1.00     1.00   +0.000     1   0.766
+  105000    -7.38       80  15.18      nan     nan    nan    nan   3.406  1.449      756     1     n    nan       0      1.00     1.00   +0.000     1   0.804
+  110000    -7.47       80  15.81      nan     nan    nan    nan   3.419  1.451      644     1     n    nan       0      1.00     1.00   +0.000     1   0.893
+  115000    -7.44       80  16.25      nan     nan    nan    nan   3.550  1.439      670     1     n    nan       0      1.00     1.00   +0.000     1   0.891
+  120000    -7.39       80  15.80      nan     nan    nan    nan   3.694  1.434      629     1     n    nan       0      1.00     1.00   +0.000     1   0.919
+  125000    -7.55       80  16.24      nan     nan    nan    nan   3.444  1.444      505     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  130000    -7.45       80  15.59      nan     nan    nan    nan   3.600  1.439      455     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  135000    -7.62       80  15.71      nan     nan    nan    nan   3.931  1.436      448     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  140000    -7.68       80  15.94      nan     nan    nan    nan   3.881  1.444      431     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  145000    -7.28       80  11.88      nan     nan    nan    nan   3.216  1.425      404     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  150000    -7.28       80  15.88      nan     nan    nan    nan   3.569  1.436      417     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  155000    -7.79       80  15.82      nan     nan    nan    nan   3.481  1.432      409     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  160000    -7.73       80  15.65      nan     nan    nan    nan   3.562  1.440      404     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  165000    -7.42       80  16.19      nan     nan    nan    nan   3.528  1.434      428     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  170000    -7.34       80  14.40      nan     nan    nan    nan   3.434  1.430      427     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  175000    -7.11       80  13.76      nan     nan    nan    nan   3.269  1.433      445     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  180000    -7.40       80  15.76      nan     nan    nan    nan   3.588  1.437      405     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  185000    -7.28       79  14.92      nan     nan    nan    nan   3.196  1.432      420     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  190000    -7.20       80  15.50      nan     nan    nan    nan   3.441  1.431      423     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  195000    -7.48       80  14.67      nan     nan    nan    nan   3.287  1.445      416     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  200000    -7.29       80  14.94      nan     nan    nan    nan   3.222  1.438      479     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  205000    -7.25       80  15.00      nan     nan    nan    nan   3.369  1.426      467     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  210000    -7.23       80  14.65      nan     nan    nan    nan   3.559  1.450      628     1     n    nan       0      1.00     1.00   +0.000     1   0.951
+  215000    -7.43       80  14.97      nan     nan    nan    nan   3.178  1.431      539     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  220000    -7.63       80  14.53      nan     nan    nan    nan   3.662  1.435      506     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  225000    -7.50       80  14.79      nan     nan    nan    nan   3.466  1.435      483     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  230000    -7.60       80  14.62      nan     nan    nan    nan   3.206  1.443      428     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  235000    -7.43       80  14.79      nan     nan    nan    nan   3.147  1.442      420     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  240000    -7.65       80  14.77      nan     nan    nan    nan   3.544  1.435      472     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  245000    -7.64       80  14.98      nan     nan    nan    nan   3.616  1.426      450     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  250000    -7.47       80  14.58      nan     nan    nan    nan   3.634  1.425      426     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  255000    -7.71       80  14.41      nan     nan    nan    nan   3.659  1.440      420     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  260000    -7.58       80  14.11      nan     nan    nan    nan   3.606  1.440      493     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  265000    -7.47       80  14.62      nan     nan    nan    nan   3.697  1.436      415     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  270000    -7.57       80  14.44      nan     nan    nan    nan   3.388  1.441      444     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  275000    -7.34       80  14.62      nan     nan    nan    nan   3.366  1.436      464     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  280000    -7.54       80  14.97      nan     nan    nan    nan   3.406  1.436      445     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  285000    -7.61       80  14.24      nan     nan    nan    nan   3.772  1.439      411     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  290000    -7.37       80  14.44      nan     nan    nan    nan   3.581  1.429      337     3     n    nan       0      1.00     1.00   +0.000     0     nan
+  295000    -7.56       80  14.23      nan     nan    nan    nan   3.847  1.455      417     2     n    nan       0      1.00     1.00   +0.000     0     nan
+  300000    -7.57       80  14.36      nan     nan    nan    nan   3.637  1.446      413     2     n    nan       0      1.00     1.00   +0.000     0     nan
