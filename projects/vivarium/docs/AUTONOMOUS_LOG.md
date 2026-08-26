@@ -23748,3 +23748,69 @@ best and fill 0.35 worse, which at n = 5 is unreadable.
 which need osmotic shock, shear, or curvature-generating machinery to complete scission. **Getting
 fission will require adding a driving term, not waiting longer.** The dumbbell held for 35 checkpoints
 (175000 steps) without pinching, so this is an arrested shape, not a slow transition.
+
+## BOTH ARMS RESOLVE, BOTH NEGATIVE. The first dumbbell arm overstated itself 2.7x.
+
+### `fis2`: the deflation effect SHRINKS on replication
+
+15 fresh seeds per arm, added to the original 5:
+
+| arm | first 5 seeds | next 15 seeds | **pooled** |
+|---|---|---|---|
+| taut, `fill = 1.0` | 0/5 | **0/15** | **0/20** |
+| deflated, `fill = 0.50` | **2/5** | **1/15** | **3/20** |
+
+**Fisher one-sided p = 0.1154. Still not significant.**
+
+**The rate fell from 0.40 to 0.067, a factor of 6.** The pre-registered establishing clause required
+**>= 7/20 against <= 2/20** and observed **3/20 against 0/20**, so it **does not fire**. This lands in
+the declared "anything between -> under-powered" branch.
+
+**What survives:** a two-compartment state has appeared **only ever under deflation, 3/20 against 0/20
+taut, across 40 runs.** That is suggestive and it is the correct sign, but **the honest reading is that
+the original 2/5 was a favourable fluctuation and the real rate is nearer 15%.** Recording this because
+it is the third time in this project an n=5 effect has shrunk on replication.
+
+**FISSION: 0 events in 50 runs.** `nves >= 2` with `largest` below 60 never occurred at any fill.
+
+### `multi`: MORE MATERIAL GIVES ONE BIGGER NETWORK, NOT MORE VESICLES
+
+N = 320 lipids in L = 92, density 0.0378 matched to the standard arm's 0.0379, 5 seeds, 1.6M steps:
+
+| seed | largest reached | largest at end | `nves>=2` ckpts | `nenc>=2` ckpts |
+|---|---|---|---|---|
+| 91001 | 243 | 210 | **0** | 0 |
+| 91002 | 174 | 174 | **0** | 10 |
+| 91003 | 131 | 94 | **0** | 0 |
+| 91004 | **309** | 309 | **0** | 1 |
+| 91005 | 274 | 153 | **0** | 0 |
+
+**0/5. The pre-registered clause fires:** *"0/5, with each seed funnelling into one large aggregate ->
+coarsening funnels everything into a single object regardless of box size, and separate nucleation, not
+waiting, is the only route to two."*
+
+**Every seed coarsened past 120 lipids, and one reached 309 of 320 in a single cluster.** This is the
+**120-lipid cliff** doing exactly what it was measured to do: above 120 the clusters are branched
+networks whose pockets are not vesicles, P(vesicle) falls from 0.48-0.86 to 0.02-0.14.
+
+**Doubling the material made vesicles LESS likely, not more.** The extra lipids went into a bigger
+network. **This closes "wait for two to nucleate" as a strategy.**
+
+## SCOREBOARD AGAINST THE THREE STATED GOALS
+
+| goal | status | best evidence |
+|---|---|---|
+| **emerge** | **works, rarely** | 2/18 fresh seeds; **and 1/6 through the transformer path**, matching its integrator control |
+| **come together** | **never observed** | 8/8 losses of a pair were detector flicker at `largest` 52->52 |
+| **split** | **never observed** | **0 fission in 50 deflation runs**; 15/15 earlier episodes ended by `nenc` 2->1 |
+
+**Both remaining goals now have a measured mechanism blocking them, which is progress of a kind:**
+- **Fusion** has no drive, because `chi_TW = 0.00` leaves tails indifferent to water, so nothing pays
+  for completing a stalk.
+- **Fission** reaches the dumbbell and arrests. **The leading hypothesis is the thermostat**: a Langevin
+  thermostat applies friction per particle in the lab frame, which destroys momentum conservation and
+  screens the long-range hydrodynamics that drives Rayleigh-Plateau neck pinch-off. A momentum-conserving
+  thermostat (DPD pairwise noise, or Lowe-Andersen) is the specific, testable fix, and a pairwise DPD
+  thermostat is itself a masked attention head, so it costs the transformer framing nothing.
+
+**NOT TESTED. Stated as the next experiment, not as a finding.**
