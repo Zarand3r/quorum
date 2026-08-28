@@ -56,12 +56,27 @@ py_binary(
     deps = [":vivarium"],
 )
 
+# Saved 2-D states `--vesicle --vesicle-start formed` can load. TRACKED, so the viewer works from a
+# fresh clone. NOTE: none of these passes `vesicle_call`; the engine reports the verdict rather than
+# claiming a vesicle. See vesicle.py's docstring for the per-file measurements.
+filegroup(
+    name = "vesicle_states",
+    srcs = glob(
+        [
+            "docs/controls/*.npz",
+            "docs/states_protected/former_*.npz",
+        ],
+        allow_empty = True,
+    ),
+)
+
 py_binary(
     name = "serve",
     srcs = ["server.py"],
     main = "server.py",
     data = [
         ":configs",
+        ":vesicle_states",
         "viewer.html",
     ],
     imports = ["."],

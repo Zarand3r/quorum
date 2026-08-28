@@ -298,19 +298,25 @@ const KDESC = {
 const SINK_OF = {repel:'sink_repel', attract:'sink_attract', polarity:'sink_polarity'};
 const SINK_NAMES = new Set(Object.values(SINK_OF));
 let KRANGE = {};   // server-supplied per-knob slider maxima; authoritative over KMAX
+let KMIN = {};     // server-supplied per-knob slider MINIMA. Absent = 0. The chi affinities of the
+//                    vesicle dish are meaningful on both sides of zero (chi_HT is -0.25), and a
+//                    slider floored at 0 could not express the production chemistry at all.
 function makeSlider(parent, name, val, cls){
   // the ENGINE knows its own scale -- KMAX is one global table shared by three engines and cannot
   // represent all of them (it maxes repel at 0.6 while the 2-D dish runs 12).
   const max = KRANGE[name] ?? KMAX[name] ?? Math.max(1, val*2);
+  const min = KMIN[name] ?? 0;
+  const span = Math.max(1e-9, max - min);   // step/decimals follow the SPAN, not the max: a knob on
+  //   [-1, 1] has span 2, and using max alone would halve its resolution.
   const wrap = document.createElement('div'); if(cls) wrap.className = cls;
   wrap.title = KDESC[name] || '';
   const cap = document.createElement('span'); cap.textContent = name; cap.className = 'kcap';
   const inp = document.createElement('input');
-  inp.type='range'; inp.min=0; inp.max=max; inp.step=max/100; inp.value=val; inp.dataset.knob=name;
+  inp.type='range'; inp.min=min; inp.max=max; inp.step=span/100; inp.value=val; inp.dataset.knob=name;
   // decimals follow the STEP, not a fixed 2. `speed` runs at 0.001 with a step near 0.00001,
   // so toFixed(2) rendered every position as "0.00" and the slider looked dead while it was
   // in fact moving the engine.
-  const dp = Math.min(6, Math.max(2, Math.ceil(-Math.log10(max/100))));
+  const dp = Math.min(6, Math.max(2, Math.ceil(-Math.log10(span/100))));
   const b = document.createElement('b'); b.textContent=(+val).toFixed(dp);
   // push ONLY this slider — never re-send the whole panel, or a stale slider elsewhere (e.g. a
   // weakened repel left over from earlier play) would be silently re-applied on every nudge.
@@ -320,9 +326,10 @@ function makeSlider(parent, name, val, cls){
   wrap.append(cap, inp, b, desc); parent.appendChild(wrap); return wrap;
 }
 let KDEFAULTS = null;
-function buildKnobs(k, ranges){
+function buildKnobs(k, ranges, mins){
   if(knobsBuilt || !k) return;
   if(ranges) KRANGE = ranges;
+  if(mins) KMIN = mins;
   KDEFAULTS = {...k};                                   // the server's showcase defaults (for reset)
   const box = document.getElementById('knobs'); box.innerHTML = '';
   for(const [name,val] of Object.entries(k)){
@@ -433,7 +440,7 @@ function draw(al){
   const ae = document.getElementById('alive');
   ae.textContent = (s.aliveness ?? 0).toFixed(3);
   ae.style.color = s.aliveness > 0.02 ? '#34d399' : '#f59e0b';
-  buildKnobs(s.knobs, s.ranges);
+  buildKnobs(s.knobs, s.ranges, s.mins);
   renderArch(s.dims);
   drawFastWeights(s);
 

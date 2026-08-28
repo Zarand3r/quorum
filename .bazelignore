@@ -1,0 +1,6 @@
+# Directories bazel must not treat as packages.
+# Pip-installed wheels (e.g. orbax) ship their own BUILD files; when a venv lives
+# inside the source tree the //... wildcard walks into them and fails to load.
+# These venvs are gitignored build artifacts, not sources.
+.venv
+projects/quorum/asal/.venv

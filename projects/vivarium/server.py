@@ -91,6 +91,8 @@ class Sim:
         self.pseudo: dict = {}
         self.defaults: dict = {}
         self.ranges: dict = {}   # knob -> slider max, sent to the client so it never guesses  # canonical showcase knob values → /reset restores these (never stale)
+        self.mins: dict = {}     # knob -> slider MIN. Absent = 0, which every engine but the vesicle
+        #   dish wants; chi terms are affinities that are meaningful when negative.
         self.substeps = 1         # engine steps per displayed frame. A physically-correct timestep
         #   is much smaller than the old capped one, so without substepping the dish would appear to
         #   crawl; this restores the apparent rate of motion at proportional CPU cost.
@@ -182,6 +184,7 @@ class Sim:
         snap["knobs"] = {k: float(getattr(self.engine, k)) for k in self.knob_names
                          if hasattr(self.engine, k)}
         snap["ranges"] = self.ranges
+        snap["mins"] = self.mins
         for name, (get, _set) in self.pseudo.items():
             snap["knobs"][name] = round(float(get()), 3)
         # live plasticity readout: ‖W_fast‖ shows how much has been learned (0 → grows → plateaus).
@@ -311,6 +314,17 @@ def main(argv: list[str] | None = None) -> int:
                         "viewer unrepresentative of the results.")
     p.add_argument("--polar", action="store_true",
                    help="serve the POLAR PACK engine (electrostatic polarity head from the contour + water)")
+    p.add_argument("--vesicle", action="store_true",
+                   help="serve THE VESICLE DISH: the 2-D production lipid system every result in "
+                        "docs/PAPER.md came from (160 lipids, L=65, kT=0.45, explicit water), stepped "
+                        "through the transformer path. This is a different system from --lipid2d, "
+                        "which is the micelle configuration.")
+    p.add_argument("--vesicle-start", default="dispersed", choices=["dispersed", "formed"],
+                   help="dispersed (default) = the honest cold start; formation takes 6e5-1e6 steps "
+                        "and 16 of 18 seeds never close, so expect to watch aggregation, not "
+                        "closure. formed = load the best surviving saved aggregate and report the "
+                        "gate's verdict on it -- NOT a certified vesicle: no saved 2-D production "
+                        "state passes vesicle_call (see vesicle.py).")
     args = p.parse_args(argv)
 
     cfg = load_config(args.config)
@@ -508,6 +522,24 @@ def main(argv: list[str] | None = None) -> int:
             knob_names = knob_names + ("k_tail", "k_hydro")
         label = ("POLAR PACK 3-D (spherical-harmonic contour · emergent amphiphiles)" if args.dim3
                  else "POLAR PACK (water + amphiphile lipids → membrane self-assembly)")
+    if args.vesicle:
+        # THE SYSTEM THE RESULTS CAME FROM. Built here rather than through the pack/polar chain
+        # because it shares no code with them: its topology is `_mixture.build`, its energy is
+        # `field.Field`, and its step is `_mixture.make_step_engine` -- the same call the research
+        # runs make. cfg is replaced so the viewer's frame matches the dish: the integrator wraps to
+        # [-L/2, L/2), and N is the BEAD count (2,959), not the molecule count.
+        from dataclasses import replace
+
+        from vesicle import VesicleEngine
+
+        _probe = VesicleEngine(seed=seed, start=args.vesicle_start)
+        cfg = replace(cfg, N=len(_probe.X), pos_dim=2, pos_bound=_probe.L / 2.0)
+        make_engine = lambda s: VesicleEngine(seed=s, start=args.vesicle_start)  # noqa: E731
+        knob_names = ()          # every knob here is a pseudo-knob: chi changes need a rebuild,
+        #   because the transformer factors Wq/Wk out of chi at construction, and set_knobs clamps
+        #   real knobs to >= 0 while chi_HT is -0.25.
+        label = ("VESICLE DISH (2-D production lipids, transformer path) "
+                 f"-- start={args.vesicle_start}")
     if args.lipid2d and not args.polar:
         # `make_engine_lipid2d` is defined only inside the `elif args.polar:` branch, so --lipid2d on
         # its own fell through and died with "UnboundLocalError: cannot access local variable
@@ -569,6 +601,22 @@ def main(argv: list[str] | None = None) -> int:
                                    (chain_box[0] if args.dim3 else lipid_box[0])}
         server.sim.ranges = {k: knob_range(k, v, server.sim.engine)
                              for k, v in server.sim.defaults.items()}
+    if args.vesicle:
+        server.sim.pseudo = server.sim.engine.pseudo_knobs()
+        server.sim.defaults = {k: round(float(get()), 3)
+                               for k, (get, _set) in server.sim.pseudo.items()}
+        # chi is an affinity ratio that is MEANINGFUL ON BOTH SIDES OF ZERO -- chi_HT is -0.25 and
+        # chi_TW is swept below zero to make tails hydrophobic -- so these sliders need an explicit
+        # negative floor. `knob_range`'s 4x-the-default rule also collapses on a default of 0.00
+        # (chi_TW) and inverts on a negative one (chi_HT), so the span is stated rather than derived.
+        server.sim.mins = {"chi_HT": -1.0, "chi_TW": -1.0, "chi_HH": -1.0, "chi_WW": 0.0,
+                           "kT": 0.05}
+        server.sim.ranges = {"chi_HT": 1.0, "chi_TW": 1.0, "chi_HH": 1.0, "chi_WW": 2.0,
+                             "kT": 1.5}
+        # ~5 ms/step: one substep per frame already saturates a core, and each is held under the
+        # state lock. More would starve /state without making a 1e6-step process look any faster.
+        server.sim.substeps = 1
+        server.sim.autopause = 0          # nothing here has a transient worth freezing on
     print(f"serving: {label}")
     print(
         f"vivarium viewer on http://{args.host}:{server.server_address[1]}\n"

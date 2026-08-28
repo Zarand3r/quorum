@@ -830,6 +830,50 @@ def largest_members(X, mols, L, cut=1.4):
     return np.flatnonzero(lab == int(np.bincount(lab).argmax()))
 
 
+class _TransformerEngine:
+    """One production step as a transformer forward pass.
+
+    The interaction term is a sum of masked attention heads whose scores are a query-key inner product
+    with a distance bias; the velocity-Verlet update is the residual structure around it. Verified to
+    reproduce `Inertial.step` bit-for-bit on one step and to match `field.forces()` to 1e-16 relative
+    on the production topology.
+    """
+
+    def __init__(self, tf, X, kT, dt, seed):
+        self.tf, self.kT, self.dt = tf, kT, dt
+        self.rng = np.random.default_rng(seed)
+        self.v = self.rng.normal(size=X.shape) * np.sqrt(kT)
+        self.F = tf.attention(X)
+
+    def step(self, X):
+        X, self.v, self.F = self.tf.forward(X, self.v, self.dt, self.kT,
+                                            rng=self.rng, F=self.F)
+        return X
+
+    def temperature(self):
+        return float((self.v ** 2).mean())
+
+
+def make_step_engine(f, X, kT, dt, noise_seed, engine=None):
+    """The stepping engine a production run uses: transformer forward pass, or the integrator.
+
+    Extracted to module level on 2026-08-27. Until then both branches were defined inline in the
+    `__main__` body and were therefore unimportable, so the hosted viewer could not run the system any
+    result came from -- it served a different engine entirely. Anything that wants the production
+    dynamics calls this, so the viewer and the research runs cannot drift apart.
+
+    `engine` defaults to $VIVARIUM_ENGINE (default "integrator"). NOTE, preserved rather than fixed:
+    the caller in `__main__` passes `1 + seed` on the transformer branch and $VIVARIUM_NOISE_SEED (or
+    `1 + seed`) on the integrator branch, so VIVARIUM_NOISE_SEED does NOT reach the transformer path.
+    That asymmetry predates this extraction and is left intact so behaviour is bit-identical.
+    """
+    engine = os.environ.get("VIVARIUM_ENGINE", "integrator") if engine is None else engine
+    if engine == "transformer":
+        from transformer import VivariumTransformer
+        return _TransformerEngine(VivariumTransformer(f), X, kT, dt, noise_seed)
+    return Inertial(f, kT, dt, seed=noise_seed)
+
+
 if __name__ == "__main__":
     steps = int(sys.argv[1]) if len(sys.argv) > 1 else 150000
     d = int(sys.argv[2]) if len(sys.argv) > 2 else 2
@@ -938,24 +982,7 @@ if __name__ == "__main__":
     # the same claim be tested on a full emergent run rather than on a single step.
     _engine = os.environ.get("VIVARIUM_ENGINE", "integrator")
     if _engine == "transformer":
-        from transformer import VivariumTransformer
-        _tf = VivariumTransformer(f)
-        class _TransformerEngine:
-            def __init__(self, tf, X, kT, dt, seed):
-                self.tf, self.kT, self.dt = tf, kT, dt
-                self.rng = np.random.default_rng(seed)
-                self.v = self.rng.normal(size=X.shape) * np.sqrt(kT)
-                self.F = tf.attention(X)
-
-            def step(self, X):
-                X, self.v, self.F = self.tf.forward(X, self.v, self.dt, self.kT,
-                                                    rng=self.rng, F=self.F)
-                return X
-
-            def temperature(self):
-                return float((self.v ** 2).mean())
-
-        ig = _TransformerEngine(_tf, X, kT, dt, 1 + seed)
+        ig = make_step_engine(f, X, kT, dt, 1 + seed, engine="transformer")
     else:
         # WHY THE SEED MATTERS -- separable at last. One argv seed has always fixed BOTH the initial
         # placement (`build(..., seed=seed)`) and the entire thermal-noise realisation (here), so no
@@ -964,7 +991,7 @@ if __name__ == "__main__":
         # lag, which leaves exactly this question open. VIVARIUM_NOISE_SEED overrides only the noise, so
         # placement and noise can be varied one at a time. Unset, behaviour is bit-identical to before.
         _noise = int(os.environ.get("VIVARIUM_NOISE_SEED", 1 + seed))
-        ig = Inertial(f, kT, dt, seed=_noise)
+        ig = make_step_engine(f, X, kT, dt, _noise, engine="integrator")
 
     print(f"MIXTURE {d}-D: {n_short} short (2 tails) + {n_long} long (4 tails) + {n_water} water, "
           f"L={L}, packing fraction {phi}, kT={kT}, start={plant}", flush=True)
