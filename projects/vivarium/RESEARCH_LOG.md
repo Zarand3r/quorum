@@ -189,3 +189,29 @@ scratch; the demix progression should be read as a hypothesis about the mechanis
 *Sweep harness:* [`research.py`](research.py) · *substrate:* [`design/dock_and_morph.md`](design/dock_and_morph.md)
 · *why crystallisation:* [`design/potential_flux.md`](design/potential_flux.md)
 · *idea lineage:* [`design/m2_collapse.md`](design/m2_collapse.md), [`design/signalling.md`](design/signalling.md)
+
+## 2026-08-28 — head-area geometry: NEGATIVE (screen)
+
+**Question.** Every energetic lever on closure is a measured null, and `WHY_THE_ORACLE_DOES_NOT_TRANSFER`
+refuses YLZ's `beta` because supplying spontaneous curvature imports the answer. The bottom-up origin
+of the same quantity is the packing parameter P = v/(a0*l). `chain_bonds` already records that the
+TAIL axis cannot move it, leaving head area a0 — which had no knob, because `field.Field` carried one
+scalar sigma for every bead. `sigma_species` (exact no-op at default, transformer identity re-verified
+at 1e-13) made a0 reachable.
+
+**Result: FAIL. 0 of 15 runs formed, every arm 0/3, at L = 22, 100k steps, sigma_head 1.0–1.8.**
+A parallel sweep at L = 25 (phi = 0.034) adds 0 of 12. Twenty-seven runs, no closure.
+Mean `largest` across arms: 38.3, 39.3, 43.3, 40.0, 36.7 — not monotone, so the §6 escalation rule
+does not fire and the 1M-step decision run is not authorised.
+
+**Not a falsification.** 100k steps against a 2-D formation time of 6e5–1e6. The screen shows head
+area gives no FAST route to closure; it cannot rule out a slow one. Pre-registered in
+`specs/2026-08-28_head_area_geometry.md` before any treatment run existed, with two dated amendments
+(box density) and the outcome appended.
+
+**Process errors this run, both caught and recorded.** (1) The registered box L = 25 was phi = 0.034,
+a gas; the first correction to L = 13 was jammed (largest = 199/200 at step 0); L = 22 was chosen by
+measuring the dispersed-start window across L = 13..25. (2) `setsid nohup ... &` returns the wrapper
+PID, not python's, so a sweep reported as killed ran for another hour alongside its replacement,
+inflating wall-clock and interleaving two schemas into one results file. The `L` column added in
+Amendment 2 is what kept the two separable and the gate correct.

@@ -194,3 +194,39 @@ L = 25 is known to be wrong.
 
 **Unchanged:** the gate in §5, the AC-2 clause, every margin, the arms, and the endpoint. Only the box
 moves, and it moves before any treatment-arm run exists at any density.
+
+---
+
+## 10. Outcome — screen, 2026-08-28
+
+**Gate output, verbatim:**
+
+```
+  verdict: FAIL
+  fractions: {1.0: 0.0, 1.2: 0.0, 1.4: 0.0, 1.6: 0.0, 1.8: 0.0}
+  best_arm: 1.2
+  best_formed: 0/3
+  baseline_formed: 0/3
+  fisher_p: 1.0
+  ac2_triggered: False
+```
+
+**0 of 15 runs formed a vesicle.** Every arm is 0/3, including the baseline, at L = 22 / 100k steps.
+The accidental L = 25 (phi = 0.034) sweep that ran in parallel adds **0 of 12**, across the same arms
+at a fourth of the density. Twenty-seven runs, no closure anywhere.
+
+**Escalation rule (§6) does not fire.** No arm reached >= 2/3, and mean `largest` across
+`sigma_head` = 1.0 → 1.8 is 38.3, 39.3, 43.3, 40.0, 36.7 — **not monotone** (computed, not eyeballed).
+The decision run is therefore NOT authorised by this pre-registration. Spending 25 seed-runs at 1M
+steps would be spending budget the screen says is unlikely to pay.
+
+**What this does and does not establish.** It does not falsify H1. The screen was 100k steps, and
+formation in the 2-D system takes 6e5–1e6; a null at 100k is consistent with "too short" as much as
+with "no effect", and §8 registered exactly that risk. What it does establish is that head area does
+not produce a *fast* route to closure at this box, duration and lipid count, which is the question the
+screen was built to answer.
+
+**AC-2 did not trigger** (baseline 0/3), so the "3-D solvent-free is what did it" alternative is not
+in play either — nothing formed under any condition.
+
+**Status: H1 not supported by the screen; not falsified. Decision run not authorised.**
