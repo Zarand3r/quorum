@@ -25,16 +25,20 @@ _HERE = pathlib.Path(__file__).resolve().parent
 RESULTS = _HERE / "docs" / "results" / "head_area_sweep.tsv"
 
 # Fixed by the pre-registration. Do not edit to fit an outcome; append an amendment instead.
-ARMS = (1.0, 1.2, 1.4, 1.6, 1.8)
+ARMS = (1.0, 0.9, 0.75, 0.6)   # H2: DOWNWARD. See specs/2026-08-28_head_area_direction.md
 BASELINE = 1.0
 # L = 22 (phi = 0.049): the densest box that still starts DISPERSED, measured -- largest = 9 of 200 at
 # step 0, against 199 at L = 13 (jammed, and 5.7x slower on the dense neighbour path) and 8 at the
 # registered L = 25. See Amendments 1 and 2 in specs/2026-08-28_head_area_geometry.md; Amendment 2
 # partly withdraws Amendment 1. `L` is a logged COLUMN so a density change can never again be
 # invisible in the results file.
-N_LIP, L_BOX, KT, PHI, DIM = 200, 22.0, 0.45, 0.0, 3
+N_LIP, L_BOX, KT, PHI, DIM = 400, 28.0, 0.45, 0.0, 3
 CHI_HT, CHI_WW = -0.25, 0.50
 MODES = {"screen": (3, 100_000), "decision": (10, 1_000_000)}
+# S1: escape from the micelle band. Every run to date plateaus at largest 26-72
+# regardless of available material; >= 150 of 400 means the preferred aggregation
+# number broke, which is the mechanism H2 predicts even without closure.
+S1_ESCAPE = 150
 
 PASS_BEST, PASS_BASELINE, PASS_P = 0.6, 0.2, 0.05
 COLUMNS = ("mode", "L", "sigma_head", "seed", "steps", "largest_max", "nves_max",
@@ -137,7 +141,13 @@ def gate(mode: str) -> dict:
     ac2 = base >= PASS_BEST
     ok = (treat[best_sh] >= PASS_BEST) and (base <= PASS_BASELINE) and (p <= PASS_P)
     verdict = "PASS" if ok else ("FAIL (AC-2: baseline also forms)" if ac2 else "FAIL")
-    return {"verdict": verdict, "fractions": frac, "best_arm": best_sh,
+    esc = {}
+    for line in RESULTS.read_text().splitlines()[1:]:
+        f = line.split("\t")
+        if f[0] == mode and float(f[1]) == L_BOX:
+            esc.setdefault(float(f[2]), []).append(int(f[5]) >= S1_ESCAPE)
+    return {"verdict": verdict, "s1_escape_fraction": {k: sum(v)/len(v) for k, v in sorted(esc.items())},
+            "fractions": frac, "best_arm": best_sh,
             "best_formed": f"{bf}/{bn}", "baseline_formed": f"{cf}/{cn}",
             "fisher_p": round(p, 4), "ac2_triggered": ac2}
 
