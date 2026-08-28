@@ -27,12 +27,17 @@ RESULTS = _HERE / "docs" / "results" / "head_area_sweep.tsv"
 # Fixed by the pre-registration. Do not edit to fit an outcome; append an amendment instead.
 ARMS = (1.0, 1.2, 1.4, 1.6, 1.8)
 BASELINE = 1.0
-N_LIP, L_BOX, KT, PHI, DIM = 200, 25.0, 0.45, 0.0, 3
+# L = 22 (phi = 0.049): the densest box that still starts DISPERSED, measured -- largest = 9 of 200 at
+# step 0, against 199 at L = 13 (jammed, and 5.7x slower on the dense neighbour path) and 8 at the
+# registered L = 25. See Amendments 1 and 2 in specs/2026-08-28_head_area_geometry.md; Amendment 2
+# partly withdraws Amendment 1. `L` is a logged COLUMN so a density change can never again be
+# invisible in the results file.
+N_LIP, L_BOX, KT, PHI, DIM = 200, 22.0, 0.45, 0.0, 3
 CHI_HT, CHI_WW = -0.25, 0.50
 MODES = {"screen": (3, 100_000), "decision": (10, 1_000_000)}
 
 PASS_BEST, PASS_BASELINE, PASS_P = 0.6, 0.2, 0.05
-COLUMNS = ("mode", "sigma_head", "seed", "steps", "largest_max", "nves_max",
+COLUMNS = ("mode", "L", "sigma_head", "seed", "steps", "largest_max", "nves_max",
            "debounced", "formed", "wall_s")
 
 
@@ -75,8 +80,8 @@ def _done(mode: str) -> set:
     out = set()
     for line in RESULTS.read_text().splitlines()[1:]:
         f = line.split("\t")
-        if len(f) >= 3 and f[0] == mode:
-            out.add((float(f[1]), int(f[2])))
+        if len(f) >= 4 and f[0] == mode and float(f[1]) == L_BOX:
+            out.add((float(f[2]), int(f[3])))
     return out
 
 
@@ -93,7 +98,7 @@ def run_one(mode: str, sigma_head: float, seed: int, steps: int, scratch: pathli
     largest, nves, best_run, formed = _parse(p.stdout)
     (scratch / "logs").mkdir(parents=True, exist_ok=True)
     (scratch / "logs" / f"{mode}_sh{sigma_head}_sd{seed}.log").write_text(p.stdout + p.stderr)
-    return {"mode": mode, "sigma_head": sigma_head, "seed": seed, "steps": steps,
+    return {"mode": mode, "L": L_BOX, "sigma_head": sigma_head, "seed": seed, "steps": steps,
             "largest_max": largest, "nves_max": nves, "debounced": best_run,
             "formed": formed, "wall_s": round(wall, 1)}
 
@@ -115,8 +120,8 @@ def gate(mode: str) -> dict:
     rows = []
     for line in RESULTS.read_text().splitlines()[1:]:
         f = line.split("\t")
-        if f[0] == mode:
-            rows.append((float(f[1]), int(f[7])))
+        if f[0] == mode and float(f[1]) == L_BOX:
+            rows.append((float(f[2]), int(f[8])))
     by_arm = {}
     for sh, formed in rows:
         by_arm.setdefault(sh, []).append(formed)

@@ -1,0 +1,2 @@
+mode	sigma_head	seed	steps	largest_max	nves_max	debounced	formed	wall_s
+screen	1.0	1	100000	28	0	0	0	374.0

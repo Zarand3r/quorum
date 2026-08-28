@@ -125,4 +125,72 @@ these runs and are therefore **fitted, not predictive**; the decision run is the
 
 Appended below, dated, never by rewriting the above.
 
-*(none yet)*
+### Amendment 1 — 2026-08-28: the registered box is a gas, not a liquid
+
+**What was wrong.** §4 fixed `L = 25` for 200 lipids (1000 beads). That is a packing fraction of
+
+    phi = 1000 * (pi/6) / 25^3 = 0.034
+
+i.e. a dilute gas, **16x thinner than the 2-D production system this experiment is meant to speak
+to**, which runs at phi = 0.55. The error is mine and it was in the pre-registration, not in the
+result.
+
+**Evidence it matters, from the one run that completed before the sweep was stopped.**
+`sigma_head = 1.0`, seed 1: `largest` was 27 molecules at step 5,000 and **28 at step 100,000**.
+The aggregate does not coarsen — at that density micelles form quickly and then have to find one
+another by diffusion, which does not happen on this budget. A screen there cannot discriminate
+between `sigma_head` arms, because no arm can reach a closable aggregate regardless of its geometry.
+A null would have been a statement about the box, not about head area.
+
+**Correction.** `L = 13`, giving phi = 0.24 -- a liquid, in the band the 3-D solvent-free literature
+assembles at, and comparable in spirit to the 2-D system's 0.55 without crowding a 200-lipid vesicle
+(a 200-lipid shell at ~1.5 sigma^2 per lipid has R ~ 4.9 sigma, comfortably inside L = 13).
+Everything else in §4 is unchanged, and **the gate in §5, the AC-2 clause and all margins are
+untouched.**
+
+**Status of the data already collected.** The single phi = 0.034 row is preserved as
+`docs/results/head_area_sweep_L25_phi0.034.tsv` and is NOT pooled with the corrected screen. The
+results schema gains an explicit `L` column so this class of confusion cannot recur silently.
+
+**Why this is an amendment and not a fix.** No `sigma_head != 1.0` run has been executed at any
+density. The correction is to the harness, decided from an arithmetic property of the box and one
+baseline run, with no treatment-arm outcome in evidence. Recording it here rather than editing §4 so
+the original error stays visible.
+
+### Amendment 2 — 2026-08-28: L = 13 was wrong in the other direction; L = 22. And Amendment 1's diagnosis is partly withdrawn.
+
+**L = 13 is jammed, measured.** At `L = 13` the dispersed start is not dispersed: `largest = 199 of
+200 at step 0`. Every lipid is already inside one connected cluster, so there is no self-assembly to
+observe. It is also 16.6 ms/step against 2.9 at L = 25, because the box drops below three cells per
+axis and the neighbour list falls back to the dense path. Amendment 1 replaced a gas with a solid.
+
+**The measured window** (`largest` at step 0, 200 lipids, seed 1, cluster cutoff 1.4 sigma):
+
+| L | phi | largest @ step 0 |
+|---|---|---|
+| 13 | 0.238 | 199 |
+| 15 | 0.155 | 184 |
+| 16 | 0.128 | 158 |
+| 17 | 0.107 | 62 |
+| 18 | 0.090 | 55 |
+| 20 | 0.065 | 31 |
+| **22** | **0.049** | **9** |
+| 25 | 0.034 | 8 |
+
+**Corrected value: L = 22.** The densest box that still gives a genuinely dispersed start (9 of 200),
+at 1.4x the number density of the registered L = 25, keeping the fast cell-list path (7 cells/axis).
+
+**PARTIAL WITHDRAWAL OF AMENDMENT 1.** Amendment 1 asserted the L = 25 stall was a density artifact —
+aggregates too dilute to find one another. Re-reading that run against the step trace, most of the
+growth happened by step 5,000 (`largest` 8 -> 27) and then nothing moved for the remaining 95,000
+steps. That is the signature of a **stable preferred aggregate size**, which is what a micelle is and
+what `P < 1/3` predicts. So the baseline may have been reporting the physics, not a broken box, and
+"the aggregate does not coarsen" in Amendment 1 was too strong.
+
+Both readings survive the evidence available, and they are not distinguishable from one baseline run.
+Stating the ambiguity rather than picking the convenient half. L = 22 is chosen because it is denser
+while still dispersed, so a null there is harder to attribute to density; it is NOT chosen because
+L = 25 is known to be wrong.
+
+**Unchanged:** the gate in §5, the AC-2 clause, every margin, the arms, and the endpoint. Only the box
+moves, and it moves before any treatment-arm run exists at any density.
