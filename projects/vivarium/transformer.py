@@ -94,12 +94,16 @@ class VivariumTransformer:
         them. That would trade an exact force law for architectural box-ticking.
         """
         f = self.f
-        s = r / f.sigma
+        # `f.pair_sigma` is the SAME helper `field.forces` uses, deliberately. Per-species bead size
+        # enters the radial gate, so a second copy of the Lorentz rule here would be a place for the
+        # attention identity to drift away from the force law without any test noticing.
+        sig = f.pair_sigma(*pairs)
+        s = r / sig
         _, duc = _core(s, f.core_height)
         _, duw = _well(s, f.rc)
         chi = np.einsum("ic,ic->i", self.q()[pairs[0]], self.k()[pairs[1]])
-        dudr = f.eps * (duc + duw * chi) / f.sigma
-        dudr = np.where(r < f.rc * f.sigma, dudr, 0.0)
+        dudr = f.eps * (duc + duw * chi) / sig
+        dudr = np.where(r < f.rc * sig, dudr, 0.0)
         return -dudr / np.maximum(r, 1e-12)
 
     def q(self):

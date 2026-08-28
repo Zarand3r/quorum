@@ -215,11 +215,35 @@ class Field:
     """
 
     def __init__(self, species, bonds, L, eps=1.0, sigma=1.0, rc=2.5, k_bond=200.0,
-                 r_bond=1.0, chi=None, bend_frac=1.0, angles=None, core_height=None):
+                 r_bond=1.0, chi=None, bend_frac=1.0, angles=None, core_height=None,
+                 sigma_species=None):
         self.species = np.asarray(species, dtype=np.int64)
         self.bonds = np.asarray(bonds, dtype=np.int64).reshape(-1, 2)
         self.L = float(L)
         self.eps, self.sigma, self.rc = float(eps), float(sigma), float(rc)
+        # PER-SPECIES BEAD SIZE, combined by the Lorentz rule sigma_ij = (sigma_i + sigma_j)/2.
+        #
+        # Added 2026-08-28 to make HEAD AREA reachable. The packing parameter P = v/(a0*l) is the
+        # bottom-up origin of spontaneous curvature, and `chain_bonds` already records that the tail
+        # axis cannot move it ("both v and l proportional to the tail bead count, so P is INDEPENDENT
+        # of tail length"). Head area was the only remaining geometric lever and there was no knob for
+        # it: one scalar sigma made every bead the same size. Cooke-Deserno calls the head diameter
+        # "the single most important parameter in the model".
+        #
+        # DEFAULT IS AN EXACT NO-OP. With every entry equal to `sigma`, sigma_ij == sigma for every
+        # pair and the neighbour cutoff is unchanged, so forces are bit-identical to the scalar path.
+        # `tests/test_field_sigma_species.py` pins that, because a silent change here would invalidate
+        # every number in AUTONOMOUS_LOG.md at once.
+        self.sigma_species = (np.full(N_SPECIES, self.sigma, dtype=np.float64)
+                              if sigma_species is None
+                              else np.asarray(sigma_species, dtype=np.float64))
+        if self.sigma_species.shape != (N_SPECIES,):
+            raise ValueError(f"sigma_species must have {N_SPECIES} entries, got "
+                             f"{self.sigma_species.shape}")
+        if not np.all(self.sigma_species > 0.0):
+            raise ValueError("every sigma_species entry must be > 0")
+        # The neighbour list must use the LARGEST pair sigma or it silently drops interacting pairs.
+        self.sigma_max = float(self.sigma_species.max())
         self.k_bond, self.r_bond = float(k_bond), float(r_bond)
         # exposed so core and well can be swept SEPARATELY; they are two dimensionless groups
         # (core/kT and well/kT) and one temperature cannot set both
@@ -317,12 +341,13 @@ class Field:
         """
         d, r, (pi, pj) = self._pairs(X)
         keep = ~((self.species[pi] == WATER) & (self.species[pj] == WATER))
-        s = r[keep] / self.sigma
+        sig = self.pair_sigma(pi[keep], pj[keep])
+        s = r[keep] / sig
         uc, _ = _core(s, self.core_height)
         uw, _ = _well(s, self.rc)
         chi = self.content_pairs(pi[keep], pj[keep])
         u = self.eps * (uc + uw * chi)
-        e = float(u[r[keep] < self.rc * self.sigma].sum())
+        e = float(u[r[keep] < self.rc * sig].sum())
         for pairs, k, r0 in self._springs():
             if not len(pairs):
                 continue
@@ -362,7 +387,7 @@ class Field:
         cells per axis a cell is its own periodic neighbour more than once and the offset enumeration
         would double count.
         """
-        cut = self.rc * self.sigma + self.SKIN
+        cut = self.rc * self.sigma_max + self.SKIN
         ncell = int(self.L // cut)
         if ncell < 3:
             return self._rebuild_dense(X)
@@ -421,7 +446,7 @@ class Field:
         stale, which at these settings is several hundred steps.
         """
         n = len(X)
-        cut = (self.rc * self.sigma + self.SKIN) ** 2
+        cut = (self.rc * self.sigma_max + self.SKIN) ** 2
         pis, pjs = [], []
         for lo in range(0, n, self.CHUNK):
             hi = min(lo + self.CHUNK, n)
@@ -474,14 +499,20 @@ class Field:
             pi, pj, dd, rr = pi[keep], pj[keep], dd[keep], rr[keep]
         return dd, rr, (pi, pj)
 
+    def pair_sigma(self, i, j):
+        """Lorentz-combined bead size for each pair. One definition, used by `field` AND by
+        `transformer`, so the attention identity cannot drift from the force law."""
+        return 0.5 * (self.sigma_species[self.species[i]] + self.sigma_species[self.species[j]])
+
     def energy(self, X):
         d, r, iu = self._pairs(X)
-        s = r / self.sigma
+        sig = self.pair_sigma(*iu)
+        s = r / sig
         uc, _ = _core(s, self.core_height)
         uw, _ = _well(s, self.rc)
         chi = self.content_pairs(*iu)
         u = self.eps * (uc + uw * chi)
-        e = float(u[r < self.rc * self.sigma].sum())
+        e = float(u[r < self.rc * sig].sum())
         for pairs, k, r0 in self._springs():
             bd = X[pairs[:, 0]] - X[pairs[:, 1]]
             bd -= self.L * np.round(bd / self.L)
@@ -500,13 +531,14 @@ class Field:
         """-dU/dX, analytic. Verified against finite differences by `check_gradients`."""
         n = len(X)
         d, r, iu = self._pairs(X)
-        s = r / self.sigma
+        sig = self.pair_sigma(*iu)
+        s = r / sig
         _, duc = _core(s, self.core_height)
         uw, duw = _well(s, self.rc)
         chi = self.content_pairs(*iu)
         # dU/dr, guarding r = 0 where the direction is undefined
-        dudr = self.eps * (duc + duw * chi) / self.sigma
-        dudr = np.where(r < self.rc * self.sigma, dudr, 0.0)
+        dudr = self.eps * (duc + duw * chi) / sig
+        dudr = np.where(r < self.rc * sig, dudr, 0.0)
         safe = np.maximum(r, 1e-12)
         coef = (dudr / safe)[:, None]
         pf = -coef * d                       # force on i from j

@@ -965,7 +965,14 @@ if __name__ == "__main__":
     # The solvent-averaged (exchange-energy) chi restores that drive by integrating the solvent out
     # instead of dropping it. See `solvent_averaged_chi`.
     chi = solvent_averaged_chi() if phi == 0.0 else None
-    f = Field(species, bonds, L, chi=chi)
+    # HEAD BEAD SIZE, the packing-parameter lever. Default 1.0 reproduces the scalar-sigma path
+    # bit-for-bit (pinned by tests/test_field_sigma_species.py), so unset behaviour is unchanged.
+    # See specs/2026-08-28_head_area_geometry.md.
+    _sh = float(os.environ.get("VIVARIUM_SIGMA_HEAD", 1.0))
+    _sig_sp = None if _sh == 1.0 else np.array([_sh, 1.0, 1.0])
+    f = Field(species, bonds, L, chi=chi, sigma_species=_sig_sp)
+    if _sig_sp is not None:
+        print(f"  sigma_species: HEAD {_sh:.2f}  TAIL 1.00  WATER 1.00", flush=True)
     if plant != "random" and not plant.startswith("state:"):
         e0, r0 = f.energy(X) / n_lip, float(f._pairs(X)[1].min())
         X = relax_overlaps(X, f, L)
