@@ -77,15 +77,26 @@ GEL_MSD = 0.127        # one tenth of the CD fluid reference (1.272)
 _WRITE_LOCK = threading.Lock()
 
 
-def build_planted(seed: int, kT: float, rc: float):
+def build_planted(seed: int, kT: float, rc: float, core_height=None, dt=DT):
     """A planted vesicle under Cooke-Deserno chemistry: one tail-tail attraction, heads purely steric."""
     X, species, bonds, mols, wi, chains = _mixture.build(
         N_LIP, 0, 0, L_BOX, DIM, tails=(2, 2), plant="sphere", branched=False, seed=seed)
     sig = np.array([SIGMA_HEAD, 1.0, 1.0])
-    f = Field(species, bonds, L_BOX, chi=cooke_chi(), sigma_species=sig, rc=rc, k_bond=K_BOND)
-    ig = make_step_engine(f, X, kT, DT, 1 + seed, engine="transformer")
+    f = Field(species, bonds, L_BOX, chi=cooke_chi(), sigma_species=sig, rc=rc, k_bond=K_BOND,
+              core_height=core_height)
+    ig = make_step_engine(f, X, kT, dt, 1 + seed, engine="transformer")
     mm = np.array([np.asarray(m, dtype=np.int64) for m in mols], dtype=np.int64)
     return X, f, ig, mm
+
+
+def packing(f, X) -> float:
+    """Minimum non-bonded separation over contact distance. 1.0 = just touching.
+
+    docs/WHY_THE_ORACLE_DOES_NOT_TRANSFER section 2 measures 0.36 here and calls the excluded volume
+    "roughly 4x too weak", with the consequence that every planted ring collapses to a filled blob.
+    """
+    _, r, iu = f._pairs(X)
+    return float((r / f.pair_sigma(*iu)).min())
 
 
 def core_fraction(P: np.ndarray) -> float:
@@ -169,6 +180,45 @@ def probe(steps: int = 4000) -> int:
     return 0 if ok else 1
 
 
+def core_sweep(steps: int, workers: int) -> int:
+    """Does a stiffer excluded-volume core hold the shell open -- and is it even stable?
+
+    A stiffer core needs a smaller timestep. Reporting hollowness from an unstable integration would be
+    reporting a blowup, so every cell carries an explicit stability verdict: positions finite AND the
+    thermostat holding the target temperature. An unstable cell reports no hollowness at all.
+    """
+    def one(ch, dt, seed):
+        t0 = time.perf_counter()
+        X, f, ig, mols = build_planted(seed, 0.6, 2.4, core_height=ch, dt=dt)
+        for _ in range(steps):
+            X = ig.step(X)
+        finite = bool(np.all(np.isfinite(X)))
+        temp = float(ig.temperature()) if finite else float("nan")
+        stable = finite and abs(temp - 0.6) < 0.3          # thermostat must hold kT = 0.6
+        lip = np.concatenate(mols)
+        return {"core_height": ch, "dt": dt, "seed": seed, "stable": int(stable),
+                "temp": round(temp, 3) if finite else "nan",
+                "nn_contact": round(packing(f, X), 3) if stable else "-",
+                "core_frac": round(core_fraction(X[lip]), 4) if stable else "-",
+                "wall_s": round(time.perf_counter() - t0, 1)}
+
+    grid = [(ch, dt, 1) for ch in (37.8, 100.0, 300.0, 1000.0) for dt in (8e-3, 4e-3, 2e-3)]
+    print(f"core sweep: {len(grid)} cells, {steps} steps  (shell 0.000 | uniform ball 0.125)", flush=True)
+    print(f"  {'core':>7} {'dt':>7} {'stable':>7} {'temp':>7} {'nn/contact':>11} {'core_frac':>10}", flush=True)
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        futs = {ex.submit(one, *g): g for g in grid}
+        rows = []
+        for fut in as_completed(futs):
+            try:
+                rows.append(fut.result())
+            except Exception as exc:
+                print(f"  FAILED {futs[fut]}: {exc!r}", flush=True)
+    for r in sorted(rows, key=lambda r: (r["core_height"], -r["dt"])):
+        print(f"  {r['core_height']:>7} {r['dt']:>7} {r['stable']:>7} {str(r['temp']):>7} "
+              f"{str(r['nn_contact']):>11} {str(r['core_frac']):>10}", flush=True)
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--probe", action="store_true")
@@ -176,7 +226,10 @@ def main(argv=None) -> int:
     ap.add_argument("--steps", type=int, default=20000)
     ap.add_argument("--seeds", type=int, default=3)
     ap.add_argument("--workers", type=int, default=12)
+    ap.add_argument("--core", action="store_true", help="core_height x dt stability + hollowness")
     a = ap.parse_args(argv)
+    if a.core:
+        return core_sweep(a.steps, a.workers)
     if a.probe:
         return probe()
     if not a.sweep:

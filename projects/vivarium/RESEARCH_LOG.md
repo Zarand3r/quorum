@@ -310,3 +310,38 @@ theory value of 0.125) before use.
 
 **Next:** core_height with a stability-checked timestep, measured by core_frac, is the one lever with
 a measured mechanism behind it. Chemistry and geometry are both excluded by this map.
+
+## 2026-08-29 — interpenetration is NOT the cause either (hypothesis 2 refuted)
+
+core_height x dt, 12 cells, 20000 steps, planted vesicle, CD chemistry. **All 12 stable** (thermostat
+holds 0.57-0.64 against a 0.6 target), so the timestep concern is resolved: dt = 8e-3 is fine even at
+core_height 1000.
+
+     core      dt   nn/contact   core_frac
+     37.8   0.008        0.302      0.388
+    100.0   0.008        0.735      0.840
+    300.0   0.008        0.884      0.295
+   1000.0   0.002        0.952      0.193      (shell 0.000 | uniform ball 0.125)
+
+**Excluded volume repairs monotonically (nn/contact 0.30 -> 0.95) and the shell still collapses.**
+core_frac never approaches zero; the best cell is 0.193, still denser at the centre than a uniform
+ball. So the 0.36 interpenetration is a real defect but is NOT the cause of the collapse.
+
+Caveat: n = 1 per cell and the spread across dt at fixed core_height is large (300: 0.295/0.693/0.447;
+1000: 0.528/0.257/0.193), so these are noisy. But no cell in the grid is near a shell.
+
+**Four independent levers now swept, none holds a 3-D lumen open:** head area (0.6-1.8), temperature
+(0.3-1.3), attraction width (0.6-1.8), excluded-volume stiffness (37.8-1000).
+
+**Untested structural differences from Cooke-Deserno**, in the order they are worth trying:
+1. Chain stiffness. CD's 1-3 spring has rest length 4 sigma against a straight-chain geometric length
+   of ~2 sigma, i.e. permanently stretched and strongly straightening. Ours sits at 2.0 * r_bond, so a
+   straight chain is merely the minimum, not actively enforced. Floppy lipids do not tile a bilayer.
+2. Bond form: FENE (CD) vs harmonic (ours).
+3. Core form: divergent WCA (CD) vs bounded quadratic (ours). Raising the height does not make a
+   bounded core divergent, and the residual softness near contact may be what matters.
+
+**Next: run the vendored oracle itself.** `cooke_deserno.py` is a working CD implementation in this
+repo. If it produces a hollow vesicle under `core_fraction` and our engine does not, the difference is
+localised to our engine and can be bisected against a control that works. That is the M0 rung of
+ROADMAP_V2, and it is the cheapest decisive test available.
