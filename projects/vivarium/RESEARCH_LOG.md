@@ -345,3 +345,51 @@ Caveat: n = 1 per cell and the spread across dt at fixed core_height is large (3
 repo. If it produces a hollow vesicle under `core_fraction` and our engine does not, the difference is
 localised to our engine and can be bisected against a control that works. That is the M0 rung of
 ROADMAP_V2, and it is the cheapest decisive test available.
+
+## 2026-08-29 — core_fraction RETIRED; what the vesicle becomes, properly measured
+
+**`core_fraction` measures SPHERICAL hollowness only.** Synthetic controls: hollow shell 0.0000,
+uniform ball 0.1253, **flat bilayer sheet 0.3755** -- a correct membrane scores like a blob. Worse, it
+is anti-correlated with solidity on real states: a solid ball (hollow 1.000) scored core_frac 0.365
+while a genuine sheet scored 0.745. Every structural reading in the 2026-08-29 phase map rested on it.
+
+**Withdrawn:** "the planted vesicle collapses into a dense core denser than a solid ball".
+**Survives:** the planted vesicle does not REMAIN a hollow sphere in any cell.
+
+`bilayer_metrics.py` ports the discriminators `cooke_deserno.py` already had (thickness, shape_of,
+hollow) onto (X, mols), and validates on FOUR controls -- vesicle, sheet, blob, gas -- requiring the
+metric to SEPARATE them rather than score one well. The sheet control is the case that broke
+core_fraction and that my shell-and-ball validation never contained.
+
+    control    thickness  hollow  L1/L3
+    vesicle        2.847   0.000  0.832
+    sheet          7.000   0.573  0.207
+    blob           3.112   0.987  0.891
+    gas            0.103   0.493  0.828
+
+**Re-scored, 6 cells, planted vesicle, 20k steps:**
+
+     w_c    kT   thick  hollow  L1/L3   structure
+     1.0  0.45   3.646   0.812  0.418   partly flattened
+     1.0   1.0   3.309   0.647  0.126   SHEET
+     1.4  0.45   3.408   1.000  0.894   solid ball
+     1.4   1.0   3.384   0.995  0.826   solid ball
+     1.8  0.45   3.273   1.000  0.938   solid ball
+     1.8   1.0   3.244   1.000  0.949   solid ball
+
+**Broad attraction collapses the shell; narrow attraction leaves a sheet.** `hollow` rises 0.65 ->
+1.00 monotonically with w_c, independent of temperature.
+
+**Mechanism, stated as a hypothesis.** A bilayer here is ~4 sigma thick (planted reference 4.40). At
+w_c = 1.8 the tail-tail attraction reaches 2.8 sigma, comparable to the leaflet separation, so tails
+attract ACROSS the bilayer and pull the leaflets through one another. If so, "broader is better" --
+which I imported from CD's title claim about lateral FLUIDITY -- is exactly backwards for holding a
+closed shell open, and the H1/H2 sweeps inherited that error.
+
+**Testable prediction:** structure should be recoverable at SHORT attraction range (w_c well under the
+bilayer thickness), and the second candidate remains chain stiffness -- CD's 1-3 spring has rest
+length 4 sigma against a straight-chain length of ~2 sigma, permanently stretched, while ours merely
+makes straight the minimum. Floppy lipids interdigitate.
+
+Third instrument defect of the day, all the same shape: the metric could not separate success from the
+failure mode actually present. Running total for the project: eighteen.
