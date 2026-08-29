@@ -19,7 +19,9 @@ import os
 import pathlib
 import subprocess
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 _HERE = pathlib.Path(__file__).resolve().parent
 RESULTS = _HERE / "docs" / "results" / "head_area_sweep.tsv"
@@ -67,7 +69,17 @@ def _parse(stdout: str):
     return largest_max, nves_max, best_run, int(best_run >= 2)
 
 
+_WRITE_LOCK = threading.Lock()
+
+
 def _append(row: dict) -> None:
+    """Only the parent writes. Workers are threads blocked on subprocess.run, so a single lock is
+    enough; separate writer PROCESSES would interleave partial lines into the same file."""
+    with _WRITE_LOCK:
+        _append_locked(row)
+
+
+def _append_locked(row: dict) -> None:
     RESULTS.parent.mkdir(parents=True, exist_ok=True)
     new = not RESULTS.exists()
     with open(RESULTS, "a") as fh:
@@ -93,7 +105,11 @@ def run_one(mode: str, sigma_head: float, seed: int, steps: int, scratch: pathli
     env = dict(os.environ)
     env.update(VIVARIUM_ENGINE="transformer", VIVARIUM_CHI_HT=str(CHI_HT),
                VIVARIUM_CHI_WW=str(CHI_WW), VIVARIUM_SIGMA_HEAD=str(sigma_head),
-               BUILD_WORKSPACE_DIRECTORY=str(scratch))
+               BUILD_WORKSPACE_DIRECTORY=str(scratch),
+               # One BLAS thread per child. Without this each of N workers tries to use every core
+               # and they thrash: the pool gets slower than running serially.
+               OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1",
+               NUMEXPR_NUM_THREADS="1")
     cmd = [sys.executable, str(_HERE / "_mixture.py"), str(steps), str(DIM), str(N_LIP),
            "0.0", str(L_BOX), str(KT), str(PHI), "random", str(seed)]
     t0 = time.perf_counter()
@@ -157,24 +173,42 @@ def main(argv=None) -> int:
     ap.add_argument("--mode", choices=sorted(MODES), default="screen")
     ap.add_argument("--score", action="store_true")
     ap.add_argument("--scratch", default="/tmp/head_area_sweep")
+    ap.add_argument("--workers", type=int, default=12,
+                    help="concurrent runs. The box has 32 cores but is shared, so the default "
+                         "leaves headroom rather than taking the machine.")
+    ap.add_argument("--steps", type=int, default=None,
+                    help="override the mode's step count. `largest` plateaus by ~5k steps, so phase "
+                         "questions do not need the 100k a closure question does.")
     a = ap.parse_args(argv)
     if a.score:
         for k, v in gate(a.mode).items():
             print(f"  {k}: {v}")
         return 0
     n_seed, steps = MODES[a.mode]
+    if a.steps is not None:
+        steps = a.steps
     scratch = pathlib.Path(a.scratch)
     scratch.mkdir(parents=True, exist_ok=True)
     done = _done(a.mode)
     todo = [(sh, sd) for sh, sd in itertools.product(ARMS, range(1, n_seed + 1))
             if (sh, sd) not in done]
-    print(f"{a.mode}: {len(todo)} runs to do, {len(done)} already in {RESULTS}", flush=True)
-    for sh, sd in todo:
-        row = run_one(a.mode, sh, sd, steps, scratch)
-        _append(row)
-        print(f"  sigma_head={sh} seed={sd}: largest={row['largest_max']} "
-              f"nves_max={row['nves_max']} debounced={row['debounced']} "
-              f"formed={row['formed']} ({row['wall_s']}s)", flush=True)
+    print(f"{a.mode}: {len(todo)} runs to do, {len(done)} already in {RESULTS}; "
+          f"{a.workers} workers, {steps} steps", flush=True)
+    t0 = time.perf_counter()
+    with ThreadPoolExecutor(max_workers=a.workers) as ex:
+        futs = {ex.submit(run_one, a.mode, sh, sd, steps, scratch): (sh, sd) for sh, sd in todo}
+        for fut in as_completed(futs):
+            sh, sd = futs[fut]
+            try:
+                row = fut.result()
+            except Exception as exc:                      # one bad run must not kill the sweep
+                print(f"  sigma_head={sh} seed={sd}: FAILED {exc!r}", flush=True)
+                continue
+            _append(row)
+            print(f"  sigma_head={row['sigma_head']} seed={row['seed']}: "
+                  f"largest={row['largest_max']} nves_max={row['nves_max']} "
+                  f"debounced={row['debounced']} formed={row['formed']} ({row['wall_s']}s)", flush=True)
+    print(f"  wall total {time.perf_counter() - t0:.0f}s for {len(todo)} runs", flush=True)
     for k, v in gate(a.mode).items():
         print(f"  {k}: {v}")
     return 0
