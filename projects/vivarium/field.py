@@ -106,6 +106,27 @@ def default_chi():
     return chi
 
 
+def cooke_chi():
+    """The Cooke-Deserno chemistry: ONE attraction, tail-tail, and nothing else.
+
+    This is the geometry route stated as a table. `default_chi` carries six hand-set affinities --
+    who likes whom -- of which two (chi_HT = -0.25, chi_WW = 0.50) exist purely to manufacture an
+    amphiphile. Here amphiphilicity is not an input at all: heads carry NO attractive term, so their
+    only property is excluded volume, and what makes the molecule an amphiphile is that its head is a
+    different SIZE from its tails (`sigma_species`). Chemistry becomes geometry plus one cohesion.
+
+    Cooke, Kremer & Deserno (Phys. Rev. E 72, 011506, 2005) is a solvent-free coarse-grained lipid
+    model that self-assembles vesicles on exactly this construction, and `cooke_deserno.py` in this
+    directory is a working implementation of it. The attraction RANGE is `Field.rc` here, which plays
+    the role of CD's `w_c`: its `_well` is the same cosine tail from contact to the cutoff.
+
+    Six free parameters become two: the head/tail size ratio and the attraction range.
+    """
+    chi = np.zeros((N_SPECIES, N_SPECIES))
+    chi[TAIL, TAIL] = 1.0
+    return chi
+
+
 def solvent_averaged_chi(chi=None):
     """The chi an IMPLICIT-solvent run must use, derived from the explicit one rather than tuned.
 

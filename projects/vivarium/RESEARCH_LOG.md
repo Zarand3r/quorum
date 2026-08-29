@@ -239,3 +239,29 @@ has produced.
 
 **Next lever, per the spec.** Branch count. `chain_bonds` hardcodes two chains per head; a third
 raises v at fixed l, the largest term in P = v/(a0*l), and no experiment here has touched it.
+
+## 2026-08-29 — ERRATUM: the 3-D closure endpoint was an instrument artifact
+
+`n_enclosed` / `count_vesicles` / `vesicle_call` are **2-D detectors**: `_interior_mask` builds
+`np.zeros((n, n))` and floods with 4-connectivity. On 3-D input they project onto a plane, fill the
+disc, and find no interior.
+
+Known-answer test: a planted 3-D sphere (verified hollow, lipid beads at r = 2.66-6.66 with the
+five-band bilayer profile) reads **nenc [0,0,0,0], nves 0, vesicle_call False**. The 2-D planted ring
+reads 1,1,1,1 / 1 / True correctly.
+
+**So `formed` could never fire in 3-D, and "0 vesicles in 39 runs" measures the instrument.** The
+closure claims of H1 and H2 are withdrawn.
+
+Surviving, because they never touch the grid: S1 (`largest >= 150`, never fired), the aggregation
+number invariant (13-78; 45/47/48 at N=400), and the burial-vs-head-size trend (rho = -1.000). The
+conclusion "head area does not move this model out of the micelle phase" stands on those; "head area
+does not produce vesicles" does not.
+
+Cause: a 2-D-validated endpoint carried into 3-D and scored 39 runs without a 3-D known-answer check.
+Sixteenth instrument defect in this project (docs/MEASUREMENT_DISCIPLINE.md records fifteen). Found
+only because fixing sweep efficiency made the planted-structure probe cheap enough to run -- which is
+the check that should have come first.
+
+**Blocked until fixed:** any 3-D closure experiment, including the Cooke-Deserno chi collapse
+(implemented: `field.cooke_chi`, `VIVARIUM_CHI_MODE=cooke`, `VIVARIUM_RC` as the w_c analogue).

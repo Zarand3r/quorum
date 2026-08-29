@@ -39,7 +39,7 @@ import numpy as np
 
 from _shot import disc, write_png
 from _lumen_field import count_vesicles, n_enclosed, percolates
-from field import Field, HEAD, TAIL, WATER, solvent_averaged_chi
+from field import Field, HEAD, TAIL, WATER, cooke_chi, solvent_averaged_chi
 from integrate import Inertial
 
 W, H = 760, 560
@@ -964,13 +964,21 @@ if __name__ == "__main__":
     # hydrophobic drive in head-water, and with the water deleted nothing makes a buried head costly.
     # The solvent-averaged (exchange-energy) chi restores that drive by integrating the solvent out
     # instead of dropping it. See `solvent_averaged_chi`.
-    chi = solvent_averaged_chi() if phi == 0.0 else None
+    # VIVARIUM_CHI_MODE=cooke collapses the six-value chi table to ONE attraction (tail-tail) and
+    # puts amphiphilicity in the bead SIZES instead. See field.cooke_chi and
+    # specs/2026-08-28_cooke_collapse.md.
+    if os.environ.get("VIVARIUM_CHI_MODE", "") == "cooke":
+        chi = cooke_chi()
+        print("  chi MODE: cooke-deserno (tail-tail attraction only; heads purely steric)", flush=True)
+    else:
+        chi = solvent_averaged_chi() if phi == 0.0 else None
     # HEAD BEAD SIZE, the packing-parameter lever. Default 1.0 reproduces the scalar-sigma path
     # bit-for-bit (pinned by tests/test_field_sigma_species.py), so unset behaviour is unchanged.
     # See specs/2026-08-28_head_area_geometry.md.
     _sh = float(os.environ.get("VIVARIUM_SIGMA_HEAD", 1.0))
     _sig_sp = None if _sh == 1.0 else np.array([_sh, 1.0, 1.0])
-    f = Field(species, bonds, L, chi=chi, sigma_species=_sig_sp)
+    _rc = float(os.environ.get("VIVARIUM_RC", 2.5))
+    f = Field(species, bonds, L, chi=chi, sigma_species=_sig_sp, rc=_rc)
     if _sig_sp is not None:
         print(f"  sigma_species: HEAD {_sh:.2f}  TAIL 1.00  WATER 1.00", flush=True)
     if plant != "random" and not plant.startswith("state:"):

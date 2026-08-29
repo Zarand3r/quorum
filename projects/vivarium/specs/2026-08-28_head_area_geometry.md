@@ -230,3 +230,46 @@ screen was built to answer.
 in play either — nothing formed under any condition.
 
 **Status: H1 not supported by the screen; not falsified. Decision run not authorised.**
+
+---
+
+## ERRATUM — 2026-08-29: the primary endpoint could not fire in 3-D
+
+**The `formed` endpoint of this experiment is WITHDRAWN as uninformative.**
+
+`n_enclosed`, `count_vesicles` and `vesicle_call` are **two-dimensional detectors**.
+`_lumen_field._interior_mask` builds its occupancy grid as `np.zeros((n, n))` -- two axes -- and the
+flood fill uses 4-connectivity `((1,0),(-1,0),(0,1),(0,-1))`. Given 3-D coordinates it projects them
+onto a plane, which fills the disc and leaves no interior region to find.
+
+Known-answer test, run 2026-08-29:
+
+| planted structure | correct answer | measured |
+|---|---|---|
+| 2-D ring, 160 lipids | nenc 1, nves 1, call True | **[1,1,1,1], 1, True** |
+| 3-D sphere, 200 lipids | nenc 1, nves 1 | **[0,0,0,0], 0, False** |
+
+The planted sphere is genuinely hollow -- its lipid beads span r = 2.66 to 6.66 about the centroid
+with the five-band inner-head / tail / outer-head profile of a bilayer shell.
+
+**Therefore `nves >= 1` could never have fired in any 3-D run, and "0 formations" measures the
+instrument, not the physics.** Every closure claim in this spec is withdrawn.
+
+**What survives, because it never touched the grid:**
+
+- **S1** (`largest >= 150`) is a cluster count. It did not fire in any arm. Stands.
+- The aggregation-number invariant (13-78 across 39 runs; 45, 47, 48 at N = 400). Stands.
+- The `burial` trend against head size (Spearman rho = -1.000). Stands.
+
+So **"head area does not move this model out of the micelle phase" stands**; **"head area does not
+produce vesicles" was never tested** and is withdrawn.
+
+**Cause, recorded plainly.** A 2-D-validated endpoint was carried into 3-D and 39 runs were scored
+against it without once planting a 3-D vesicle to confirm it read 1. `CLAUDE.md` requires exactly that
+check ("validate against a known-answer case AND a null case"), and
+`docs/MEASUREMENT_DISCIPLINE.md` records fifteen prior defects, "all instrument bugs, none physics".
+This is the sixteenth. The check costs ninety seconds.
+
+**Blocking item before any 3-D closure experiment:** generalise `_interior_mask` to a 3-D occupancy
+grid with 6-connectivity, then gate it on the planted sphere (must read 1) and a planted micelle
+(must read 0).
