@@ -901,9 +901,12 @@ if __name__ == "__main__":
     if n_water < 0:
         raise ValueError(f"L={L} too small for {n_lip} lipids at packing fraction {phi}")
 
+    # Cooke-Deserno's lipid is a LINEAR 3-bead chain (head-t1-t2), not a branched two-chain lipid.
+    # Reproducing their phase diagram requires their architecture, so this is no longer hardcoded.
+    _branched = os.environ.get("VIVARIUM_BRANCHED", "1") != "0"
     X, species, bonds, mols, wi, chains = build(n_short, n_long, n_water, L, d,
                                                 plant=("random" if plant.startswith("state:") else plant),
-                                                branched=True, seed=seed)
+                                                branched=_branched, seed=seed)
     if plant.startswith("state:"):
         # Continue from a saved configuration. Needed to measure PERSISTENCE: the only enclosure this
         # project has found appeared at one checkpoint and was absent at the previous one, and waiting
@@ -978,7 +981,10 @@ if __name__ == "__main__":
     _sh = float(os.environ.get("VIVARIUM_SIGMA_HEAD", 1.0))
     _sig_sp = None if _sh == 1.0 else np.array([_sh, 1.0, 1.0])
     _rc = float(os.environ.get("VIVARIUM_RC", 2.5))
-    f = Field(species, bonds, L, chi=chi, sigma_species=_sig_sp, rc=_rc)
+    # CD uses FENE with k_bond = 30 eps/sigma^2; ours is harmonic and defaults to 200, i.e. 6.7x
+    # stiffer, which pushes toward the gel side of their phase diagram.
+    _kb = float(os.environ.get("VIVARIUM_K_BOND", 200.0))
+    f = Field(species, bonds, L, chi=chi, sigma_species=_sig_sp, rc=_rc, k_bond=_kb)
     if _sig_sp is not None:
         print(f"  sigma_species: HEAD {_sh:.2f}  TAIL 1.00  WATER 1.00", flush=True)
     if plant != "random" and not plant.startswith("state:"):
