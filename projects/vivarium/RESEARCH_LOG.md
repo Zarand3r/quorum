@@ -265,3 +265,48 @@ the check that should have come first.
 
 **Blocked until fixed:** any 3-D closure experiment, including the Cooke-Deserno chi collapse
 (implemented: `field.cooke_chi`, `VIVARIUM_CHI_MODE=cooke`, `VIVARIUM_RC` as the w_c analogue).
+
+## 2026-08-29 — 3-D phase map: the bilayer does not stay open ANYWHERE, and the cause is interpenetration
+
+**Reproduced Cooke-Deserno's phase diagram qualitatively.** 72 cells, w_c in {0.6,1.0,1.4,1.8} x
+kT/eps in {0.3..1.3}, planted vesicle, CD chemistry (one tail-tail attraction, heads purely steric),
+CD architecture (linear 3-bead), k_bond 30. Gel at low kT, breakup in the narrow-attraction/hot
+corner, fluid between, and the fluid band broadens with w_c -- which is the paper's own title claim.
+MSD monotone in temperature at every width. This is the first time this engine has been validated
+against a published phase diagram.
+
+**My gel hypothesis is REFUTED.** Our production point (w_c 1.5, kT/eps 0.64) sits in the fluid band,
+not the gel: interpolated MSD ~0.29 against a frozen reference of 0.06. What survives is quantitative
+only -- we are 3-4x less mobile than the CD-like fluid region, sluggish rather than frozen.
+
+**THE DECISIVE RESULT: 0 of 72 cells hollow.** core_frac (share of lipid beads inside half the outer
+radius; 0.00 for a shell, 0.125 for a uniform solid ball) reads **0.26 to 0.93 in every cell** -- 2 to
+7x MORE centre-dense than a solid ball. The planted vesicle collapses into a dense core across the
+entire (w_c, kT) plane. Temperature, attraction width and head area have now all been swept, and none
+of them holds a bilayer open.
+
+**Cause, measured: excluded volume is too weak and beads interpenetrate.** At the production
+core_height 37.8 the minimum non-bonded separation is **0.366 of contact** -- reproducing exactly the
+0.36 that docs/WHY_THE_ORACLE_DOES_NOT_TRANSFER section 2 records as "roughly 4x too weak", and whose
+consequence it already stated: "every planted ring collapsing to a filled blob at every size". That
+was diagnosed in 2-D; it holds in 3-D too, and it explains every null in this project better than
+chemistry or geometry ever did.
+
+    core_height   nn/contact   core_frac
+          37.8        0.366       0.387
+         100.0        0.784       0.892
+         300.0        0.881       0.482
+        1000.0        0.943       0.170     (uniform ball 0.125, shell 0.00)
+
+Raising the core repairs packing monotonically but did NOT restore a hollow shell in this probe.
+PRELIMINARY: one seed, 3000 steps, and integrator stability at high core_height is unverified (a
+stiffer core needs a smaller dt than the 8e-3 used). Not a result yet.
+
+**Two instrument corrections were needed to get here, both caught by rendering before claiming.**
+`frac_largest` reads 1.000 for a collapsed globule, so an earlier claim that "a 3-D vesicle is stable
+in this engine" was wrong and is withdrawn -- the render showed a filled blob. `core_fraction`
+replaces it, validated on a known-answer shell (0.000) AND a null uniform ball (0.1253 against a
+theory value of 0.125) before use.
+
+**Next:** core_height with a stability-checked timestep, measured by core_frac, is the one lever with
+a measured mechanism behind it. Chemistry and geometry are both excluded by this map.

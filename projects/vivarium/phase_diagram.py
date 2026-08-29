@@ -57,7 +57,7 @@ N_LIP, L_BOX, DIM = 200, 16.0, 3
 SIGMA_HEAD, K_BOND = 0.95, 30.0
 DT = 8e-3
 COLUMNS = ("rc", "w_c", "kT", "seed", "steps", "frac_largest", "msd_per_1k",
-           "phase", "wall_s")
+           "core_frac", "hollow", "phase", "wall_s")
 
 # Thresholds CALIBRATED ON THE PROBE (--probe, 2026-08-29), and therefore FITTED, not predictive.
 # They are stated here so the classification is reproducible, but the primary result of the sweep is
@@ -88,6 +88,21 @@ def build_planted(seed: int, kT: float, rc: float):
     return X, f, ig, mm
 
 
+def core_fraction(P: np.ndarray) -> float:
+    """Share of lipid beads inside HALF the aggregate's outer radius. Grid-free hollowness.
+
+    `frac_largest` cannot tell a vesicle from a collapsed globule -- both put every lipid in one
+    aggregate, and a render caught exactly that after the metric called a filled blob "intact".
+    A uniform ball gives (1/2)^3 = 0.125; a shell gives ~0. No occupancy grid, so this cannot repeat
+    the 2-D-detector failure.
+    """
+    r = np.linalg.norm(P - P.mean(axis=0), axis=1)
+    return float((r < 0.5 * r.max()).mean())
+
+
+HOLLOW_MAX = 0.06          # half the uniform-ball value of 0.125
+
+
 def _com_removed_msd(a: np.ndarray, b: np.ndarray, L: float) -> float:
     """Mean squared displacement of lipid beads between two frames, with rigid drift removed.
 
@@ -112,9 +127,12 @@ def run_cell(rc: float, kT: float, seed: int, steps: int) -> dict:
         X = ig.step(X)
     msd = _com_removed_msd(ref, X[lip], L_BOX) / max(1, (steps - warm)) * 1000.0
     frac = _mixture.largest_cluster(X, mols, L_BOX) / len(mols)
+    cf = core_fraction(X[lip])
+    hollow = cf <= HOLLOW_MAX
     phase = ("breakup" if frac < BREAKUP_FRAC else ("gel" if msd < GEL_MSD else "fluid"))
     return {"rc": rc, "w_c": round(rc - 1.0, 2), "kT": kT, "seed": seed, "steps": steps,
-            "frac_largest": round(frac, 3), "msd_per_1k": round(msd, 4), "phase": phase,
+            "frac_largest": round(frac, 3), "msd_per_1k": round(msd, 4),
+            "core_frac": round(cf, 4), "hollow": int(hollow), "phase": phase,
             "wall_s": round(time.perf_counter() - t0, 1)}
 
 
