@@ -215,3 +215,27 @@ measuring the dispersed-start window across L = 13..25. (2) `setsid nohup ... &`
 PID, not python's, so a sweep reported as killed ran for another hour alongside its replacement,
 inflating wall-clock and interleaving two schemas into one results file. The `L` column added in
 Amendment 2 is what kept the two separable and the gate correct.
+
+## 2026-08-28 — head area, the other direction (H2): NEGATIVE
+
+**FAIL on both registered endpoints. 0 of 12 formed; S1 (largest >= 150) fired in no arm, against a
+maximum observed value of 78.** largest_max by arm: 1.0 -> [45,47,48]; 0.9 -> [38,61,63];
+0.75 -> [39,51,62]; 0.6 -> [58,70,78].
+
+With H1, head area is now swept 0.6-1.8 — spanning both sides of the Cooke-Deserno 0.95 reference —
+for **zero vesicles in 39 runs**. Head area is not the closure lever in either direction.
+
+**Lead, explicitly not a result.** At sigma_head = 0.6 all 3 seeds beat the baseline maximum (exact
+one-sided p = 0.050) and mean burial rises (71.3 vs 58.3). It is not the registered endpoint (S1 was
+150), n = 3, p exactly on the line, and burial is NOT monotone across arms, so the motivating
+mechanism is not cleanly supported. Needs its own pre-registration at n >= 10 before it means
+anything.
+
+**The finding that is actually solid.** Across 39 runs, three densities, two lipid counts, two box
+sizes and a threefold head-size range, the largest aggregate has never left 13-78; at N = 400 the
+baseline reproduces at 45, 47, 48 — spread of 3 with 400 lipids available. That is a stable preferred
+aggregation number, i.e. a micelle phase, and it is better measured than anything the closure endpoint
+has produced.
+
+**Next lever, per the spec.** Branch count. `chain_bonds` hardcodes two chains per head; a third
+raises v at fixed l, the largest term in P = v/(a0*l), and no experiment here has touched it.

@@ -114,3 +114,57 @@ not head area. H2 is then unsupported however good the small-head arms look.
 ## 8. Amendments
 
 *(none yet)*
+
+---
+
+## 9. Outcome — screen, 2026-08-28
+
+**Gate output, verbatim:**
+
+```
+  verdict: FAIL
+  s1_escape_fraction: {0.6: 0.0, 0.75: 0.0, 0.9: 0.0, 1.0: 0.0}
+  fractions: {1.0: 0.0, 0.9: 0.0, 0.75: 0.0, 0.6: 0.0}
+  best_arm: 0.9
+  fisher_p: 1.0
+  ac2_triggered: False
+```
+
+**0 of 12 formed. S1 did not fire in any arm** — the threshold was `largest >= 150` and the largest
+value observed anywhere in the sweep was **78**. Both registered endpoints fail.
+
+`largest_max` by arm: 1.0 → [45, 47, 48]; 0.9 → [38, 61, 63]; 0.75 → [39, 51, 62]; 0.6 → [58, 70, 78].
+
+**Combined with H1, head area has now been swept from 0.6 to 1.8 — a threefold range spanning both
+sides of the Cooke-Deserno reference ratio — with zero vesicles in 39 runs.**
+
+### An unregistered observation, recorded as a lead and NOT as a result
+
+At `sigma_head = 0.6`, all 3 seeds exceed the baseline's maximum (58, 70, 78 against 45, 47, 48).
+Under exchangeability that is exact one-sided p = 1/C(6,3) = **0.050**, and mean burial also rises
+(71.3 against 58.3) while the intermediate arms show neither.
+
+This is **not** a result and is not claimed as one:
+
+- It is not the registered endpoint. S1 was `>= 150`; 78 is half that, and the threshold was fixed
+  before the data precisely so it could not be renegotiated afterwards.
+- n = 3, at p exactly on the conventional line, on the smallest arm — the shape of finding this
+  project has watched shrink on replication three times, once by a factor of six.
+- Burial is **not** monotone across the arms (58.3, 59.9, 57.2, 71.3), so the mechanism story that
+  motivated H2 is not cleanly supported even by the suggestive arm.
+
+If it is worth anything it is worth a fresh pre-registration at `sigma_head <= 0.6` with n >= 10 and
+its own endpoint. It does not license reading H2 as a partial success.
+
+**Status: H2 not supported. Head area is not the lever, in either direction, over 0.6-1.8.**
+
+### The invariant that keeps surviving
+
+Across 39 runs spanning three densities (phi 0.034-0.060), two lipid counts (200 and 400), two box
+sizes and head sizes from 0.6 to 1.8, **the largest aggregate has never left the range 13-78**, and at
+N = 400 the baseline reproduces at 45, 47, 48 — a spread of 3 with 400 lipids available. A stable
+preferred aggregation number that survives this much variation is the definition of a micelle phase,
+and it is a stronger and more reproducible measurement than anything the closure endpoint has
+produced. Per §6, the next lever is **branch count**: `chain_bonds` hardcodes two chains per head, and
+a third raises `v` at fixed `l`, which is the largest term in `P` and the only one no experiment here
+has touched.
