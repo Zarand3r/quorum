@@ -137,6 +137,10 @@ def main(argv=None) -> int:
     ap.add_argument("--steps", type=int, default=400_000)
     ap.add_argument("--seeds", type=int, default=3)
     ap.add_argument("--workers", type=int, default=12)
+    ap.add_argument("--engines", default="ours",
+                    help="comma-separated. Default 'ours' only: Amendment 1 STAGES the oracle, which "
+                         "costs 23.1 h per seed against 0.8 h and only discriminates on the branch "
+                         "where our engine fails.")
     a = ap.parse_args(argv)
     if a.score or not a.run:
         return score()
@@ -145,7 +149,8 @@ def main(argv=None) -> int:
         for line in RESULTS.read_text().splitlines()[1:]:
             f = line.split("\t")
             done.add((f[0], float(f[1]), int(f[2])))
-    todo = [(e, L, sd) for e, L, sd in itertools.product(("ours", "oracle"), BOXES,
+    engines = tuple(x.strip() for x in a.engines.split(",") if x.strip())
+    todo = [(e, L, sd) for e, L, sd in itertools.product(engines, BOXES,
                                                          range(1, a.seeds + 1))
             if (e, L, sd) not in done]
     print(f"assembly: {len(todo)} runs, N={N_LIP}, {a.steps} steps, {a.workers} workers", flush=True)
