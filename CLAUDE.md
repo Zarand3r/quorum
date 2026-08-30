@@ -6,7 +6,7 @@ This is a Bazel workspace at the repo root (`MODULE.bazel` + `BUILD.bazel` + `.b
 
 | Project | Build system | Brief |
 |---|---|---|
-| [`projects/vivarium/`](projects/vivarium/) | Bazel (`rules_python`) | **Transformer-only molecular dynamics** — every molecule is a token, every force an attention operation, every step a forward pass. Goal: make a **lipid bilayer self-assemble** from excluded volume + van der Waals + electrostatics alone. Hydrophobic demixing and micelle formation emerge; the bilayer does not. Read `projects/vivarium/docs/BILAYER_REVIEW.md` (the research narrative) and `projects/vivarium/design/HARD_REQUIREMENT.md` (the rule). |
+| [`projects/vivarium/`](projects/vivarium/) | Bazel (`rules_python`) | **Transformer-only molecular dynamics** — every molecule is a token, every force an attention operation, every step a forward pass. Goal: make a **lipid bilayer self-assemble** from excluded volume + van der Waals + electrostatics alone. A 2-D vesicle emerges (rarely); 3-D is open. **Read [`projects/vivarium/SUMMARY.md`](projects/vivarium/SUMMARY.md) first** — the living executive summary. Then `docs/BILAYER_REVIEW.md` (research narrative) and `design/HARD_REQUIREMENT.md` (the rule). |
 | [`projects/quorum/`](projects/quorum/) | Bazel | Single-pass LLM population simulator for emergent behavior. Goal: **computed** (irreducible) emergence, validated by Boids / Schelling baselines and an irreducibility test. See `projects/quorum/PLAN.md`. Design only; no implementation yet. |
 | [`projects/thermolife/`](projects/thermolife/) | Bazel (`rules_python`) | Embedding folding as ligand–receptor docking — a toy transformer whose token embeddings fold through iterated attention, each rendered as a **grounded** 2D contour blob (the drawn shape *is* the attention query/key, so `Q·K` = contour overlap by Parseval) that docks with complementary blobs. Goal: **earned** meaningful folding (trained + objective-driven), not "pretty blobs." See `projects/thermolife/PLAN.md`. S0 (numpy mechanism) implemented; training is M2. |
 
@@ -63,6 +63,12 @@ The autonomous overnight harness is the **`elves`** skill; per-project prerequis
   physics.
 - **Derive constants from the configuration; do not pick them.** A hand-chosen threshold there was
   wrong in both directions within hours.
+- **Keep `projects/vivarium/SUMMARY.md` current.** It is the living executive summary: one paragraph
+  of objective, a Roadmap bullet list, a Results bullet list. Update it **in the same commit** as any
+  significant development — a result, a retraction, a change of plan, a new blocker. Rules: plain
+  human language a non-specialist can follow, no jargon, as short as possible; state negatives and
+  withdrawn claims as plainly as positives; delete stale lines rather than accumulating history (the
+  research log is where history lives). If a reader can only read one file, this is the one.
 - **Look at the artifact before believing the summary statistic.** Every time an image was rendered in
   that project it contradicted the scalar it was supposed to confirm.
 
