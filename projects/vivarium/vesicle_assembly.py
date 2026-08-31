@@ -10,6 +10,14 @@ instrument, so a disagreement localises to the engine rather than to the measure
 
 from __future__ import annotations
 
+import os as _os
+
+# Workers here are THREADS in one process, so every BLAS call would otherwise spawn its own thread
+# pool and the pools thrash. Measured cost of not doing this: 23.4 CPU-hours against ~4.5 of actual
+# work. This must run BEFORE numpy is imported or it has no effect.
+for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+    _os.environ.setdefault(_v, "1")
+
 import argparse
 import itertools
 import os
@@ -67,6 +75,9 @@ def _loop(tag, L, seed, steps, t0, _unused, mols, _g, X, ig):
             last = classify(X, mols)
             run = run + 1 if is_vesicle(last) else 0
             best = max(best, run)
+            print(f"    [{tag} L={L:g} sd={seed}] step {i+1}/{steps} "
+                  f"thick={last['thickness']} hollow={last['hollow']} "
+                  f"aniso={last['aniso_l1_l3']} ({time.perf_counter()-t0:.0f}s)", flush=True)
     if best >= 2:
         STATES.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(STATES / f"assembly_{tag}_L{L:g}_sd{seed}_s{steps}.npz",
