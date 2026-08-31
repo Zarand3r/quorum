@@ -237,7 +237,7 @@ class Field:
 
     def __init__(self, species, bonds, L, eps=1.0, sigma=1.0, rc=2.5, k_bond=200.0,
                  r_bond=1.0, chi=None, bend_frac=1.0, angles=None, core_height=None,
-                 sigma_species=None):
+                 sigma_species=None, bend_r0=None):
         self.species = np.asarray(species, dtype=np.int64)
         self.bonds = np.asarray(bonds, dtype=np.int64).reshape(-1, 2)
         self.L = float(L)
@@ -283,6 +283,11 @@ class Field:
         # junctions resolve), while the vesicle sits 262 +- 17 eps below the sponge, so the barrier
         # has to be lowered rather than climbed.
         self.bend_frac = float(os.environ.get("VIVARIUM_BEND", bend_frac))
+        # 1-3 REST LENGTH, in units of r_bond. Resolved ONCE here, not re-read from the environment on
+        # every force evaluation: os.environ is process-global, so concurrent worker THREADS racing to
+        # set it silently gave every arm the same value and produced a bit-identical A/B.
+        self.bend_r0 = (float(os.environ.get("VIVARIUM_BEND_R0", 2.0))
+                        if bend_r0 is None else float(bend_r0))
         self.angles = (self._infer_13() if angles is None else
                        np.asarray(angles, dtype=np.int64).reshape(-1, 2))
         self.chi = default_chi() if chi is None else np.asarray(chi, dtype=float)
@@ -545,7 +550,15 @@ class Field:
         """(pairs, k, rest) for every harmonic term: the 1-2 backbone and the 1-3 stiffener."""
         out = [(self.bonds, self.k_bond, self.r_bond)]
         if len(self.angles) and self.bend_frac > 0.0:
-            out.append((self.angles, self.k_bond * self.bend_frac, 2.0 * self.r_bond))
+            # 1-3 REST LENGTH. At 2*r_bond (a straight chain's own geometric length) this spring has
+            # ZERO harmonic bending stiffness: with r13 = 2r cos(d/2) ~ 2r - r d^2/4, the energy is
+            # (K/32) r^2 d^4 -- purely QUARTIC, second derivative zero at d = 0. Verified numerically:
+            # V/d^4 = 0.9375 constant, V/d^2 = 0.0004 at d = 0.02.
+            # Cooke-Deserno pre-stretch it to 4 sigma, which makes the leading term quadratic with
+            # k_theta = k * sigma^2 (V/d^2 = 15.0 constant), i.e. an ordinary bending potential.
+            # Default keeps the old value so existing results are unchanged; set VIVARIUM_BEND_R0=4.0
+            # for Cooke's bending physics.
+            out.append((self.angles, self.k_bond * self.bend_frac, self.bend_r0 * self.r_bond))
         return [(p, k, r) for p, k, r in out if len(p)]
 
     def forces(self, X):
