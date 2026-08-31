@@ -23,14 +23,25 @@ a bubble that emerged.
   against four known shapes it must tell apart.
 - **DONE — validated against an outside reference.** Our engine reproduces the published phase
   behaviour of a known-good lipid model, and makes a flat membrane sheet nearly identical to it.
-- **NOW — first 3-D vesicle.** Running: 1000 molecules in a box big enough that the membrane cannot
-  span it, so its only way to lose its edges is to close into a ball.
+- **DONE — seven chemistry settings cut to one.** The old model hand-set seven "how much does X like
+  Y" numbers, two of them purely to force the molecules to behave like soap. Now there is exactly one
+  attraction (tail-to-tail) and the heads have none at all — what makes a molecule soap-like is only
+  that its head is a different *size*. Chemistry replaced by shape.
+- **NOW — testing that reduction by trying for a 3-D bubble.** Running: 1000 molecules, one
+  attraction, in a box too big for the sheet to stretch across, so its only way to lose its exposed
+  edges is to close into a ball. **This is the test of the knob reduction, not a separate goal** — if
+  the stripped-down model builds a bubble, the six deleted settings were never needed. If it fails we
+  cannot tell whether stripping broke it or the target was unreachable, which is exactly what made the
+  earlier attempts uninterpretable.
 - **NEXT if that fails** — run the outside reference model at the same settings, to tell whether the
   fault is our engine or the recipe.
 - **LATER — fusion and splitting.** Neither has ever been seen. Splitting stalls at a dumbbell that
   never pinches; the leading suspect is the thermostat, untested.
-- **LATER — fewer knobs.** Three of the current settings are not physics, just "don't do anything
-  absurd" conditions, and can be replaced by rules. Two are irreducible unless water is put back in.
+- **LATER — cut the remaining knobs.** Three left are not physics at all, just "don't do anything
+  absurd" conditions, and can each be replaced by a rule (make beads solid enough not to pass through
+  each other; make bonds stiff enough not to stretch). One more (chain floppiness) can be fitted to a
+  measurable property instead of chosen. The last two — how strongly and how far tails attract — are
+  irreducible unless water is put back into the simulation, which costs about 9x.
 
 ## Results
 
@@ -54,5 +65,8 @@ a bubble that emerged.
 - **Measurement has been the main obstacle, repeatedly.** Eighteen instrument defects on record, three
   found in one day. Each time the tool could not tell success from the specific way things were
   failing. Every structural claim now needs both a number and a picture.
+- **Seven chemistry numbers are now one, and the current run is on the stripped-down version.** Heads
+  carry no attraction; being soap-like comes from head size alone. Whether this still works is what is
+  being tested right now.
 - **"Transformer-only" is structural, not learned.** The network's weights are fixed and its MLP is
   switched off in every run. It is a hand-written force law expressed as attention, not a trained model.
