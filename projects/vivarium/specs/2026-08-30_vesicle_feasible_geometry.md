@@ -181,3 +181,62 @@ the recipe is **undecided**, and the staged oracle control is what would decide 
 
 **Status: H3 not supported. Not a clean refutation either** -- the density confound is a live
 alternative explanation, and it was registered in section 7 as a threat before the run.
+
+## 10. Amendment 2 — 2026-08-31: test the density diagnosis directly, before spending on the oracle
+
+Section 9 attributes the 0/6 to dilution: aggregates formed and evaporated because phi was 0.070-0.111
+against the reference's 0.192. **That is currently an inference from trajectories, not a measurement.**
+
+Two ways forward, and the cheap one comes first:
+
+- staged oracle at N=1000: ~23 h per seed, and answers "is the recipe sound", not "why did ours fail".
+- **density series: ~1 h, and tests the stated mechanism directly.**
+
+**Prediction, registered before the runs.** Hold N = 1000 fixed and vary only the box:
+
+    L = 25 -> phi 0.192 (reference density, BELOW the 26.0 spanning threshold)
+    L = 27 -> phi 0.152
+    L = 30 -> phi 0.111 (failed arm)
+    L = 36 -> phi 0.070 (failed arm)
+
+If dilution is the cause, **thickness should consolidate and STAY high at phi >= 0.15, and oscillate
+or decay at phi <= 0.11**. Scored as the mean and the minimum of thickness over the second half of
+each run: a consolidated membrane holds a high minimum, an evaporating one does not.
+
+**If thickness decays at every density**, dilution is NOT the cause, section 9's diagnosis is wrong,
+and the failure is something about our engine that the oracle control must then decide. That is the
+outcome that would refute my own explanation, which is why it is written down first.
+
+2 seeds x 4 boxes, 100k steps. Note L = 25 is deliberately below the spanning threshold: this
+experiment asks only whether membranes CONSOLIDATE, not whether they close.
+
+### Outcome of Amendment 2 — the density diagnosis is REFUTED
+
+    packing   mean thickness (2nd half of run, 2 seeds)
+     0.034     1.58
+     0.058     2.48
+     0.080     1.51
+     0.101     1.52
+
+    monotone increasing with density (the prediction): False
+    correlation(density, thickness) = -0.30    (prediction required strongly positive)
+    best density is 0.058 -- the SECOND MOST DILUTE
+
+**Section 9's explanation of the 0/6 is withdrawn.** Thickness does not rise with density; the
+correlation is slightly negative and the best cell is near the dilute end. Every trace oscillates
+between ~0.1 and ~3.3 at every density. Membranes fail to consolidate **everywhere**, not just when
+thin.
+
+**The stronger statement:** the best cell in the whole series reaches mean thickness 2.48, against a
+random start of 1.31 and a real bilayer of 4.05-4.40. **At no density does this configuration hold a
+membrane together.** The 0/6 is not about closure and not about dilution -- nothing gets far enough to
+attempt closure.
+
+**Unit error, recorded.** Section 9 quotes "phi 0.111 / 0.070 against reference 0.192". Those are
+NUMBER DENSITIES (beads per sigma^3), not packing fractions; the true packing fractions are 0.058,
+0.034 and 0.101. The comparison was ratio-consistent so the "2-3x more dilute" claim was arithmetically
+fine, but the quantity was mislabelled throughout.
+
+**This is the branch where the oracle earns its 23 h.** With density excluded, the candidates are our
+engine (chain stiffness, bond form, bounded core) or the recipe/harness. The oracle at these settings
+separates them: if a known-working model also fails to consolidate here, the fault is not our engine.

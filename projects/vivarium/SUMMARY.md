@@ -31,9 +31,14 @@ a bubble that emerged.
   again; nothing ever closed. The cause looks like too few molecules: the box has to be big enough
   that the sheet cannot stretch across it, *and* crowded enough that pieces meet and stick. With 1000
   molecules you cannot have both — we got the first and lost the second, and the pieces evaporated.
-- **NOW — decide between two explanations.** Either the model cannot close a bubble, or the run was
-  simply too thin. Cheapest way to tell: run the outside reference model at the same settings. If it
-  also fails, the recipe was wrong, not our engine.
+- **DONE — "too thin" was wrong.** Tested it directly: varied only how crowded the box was, across a
+  3x range. Membranes fell apart just as much when crowded as when sparse — the *most* sparse setting
+  did best. So thinness is not the reason.
+- **NOW — find why membranes will not hold together at all.** In this stripped-down setup a sheet
+  never survives; it keeps forming and falling apart at every crowding level, never reaching even
+  two-thirds of a real membrane's thickness. Next: run the outside reference model at the same
+  settings. If its membranes also fall apart, our recipe is wrong; if they hold, the fault is in our
+  simulator and can be tracked down against a working example.
 - **NEXT if that fails** — run the outside reference model at the same settings, to tell whether the
   fault is our engine or the recipe.
 - **LATER — fusion and splitting.** Neither has ever been seen. Splitting stalls at a dumbbell that
@@ -70,8 +75,10 @@ a bubble that emerged.
   all; being soap-like comes from head size alone. Sheets of the right thickness still form under it,
   so the six deleted settings were not needed for that. Whether they are needed for a *bubble* is
   still unknown.
-- **The first 3-D attempt at a workable size failed, 0 of 6** — but too thinly spread to be a fair
-  test. Two requirements fight each other at this molecule count, and we satisfied one by breaking the
-  other.
+- **The first 3-D attempt at a workable size failed, 0 of 6**, and the reason is not what we first
+  thought. Membranes never held together long enough to try closing — they formed and fell apart
+  repeatedly, at every crowding level tested. The best case reached about half a real membrane's
+  thickness. So this says nothing yet about whether a bubble can close; it says a sheet will not even
+  survive in this stripped-down setup.
 - **"Transformer-only" is structural, not learned.** The network's weights are fixed and its MLP is
   switched off in every run. It is a hand-written force law expressed as attention, not a trained model.
