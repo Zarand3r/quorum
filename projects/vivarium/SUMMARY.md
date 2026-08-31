@@ -42,8 +42,12 @@ a bubble that emerged.
 - **DONE — with the fix, a membrane survives.** A flat membrane placed in the box holds together for
   the whole run at the reference stiffness, staying near real-membrane thickness. Without the fix it
   disintegrates to nothing. This is the first thing in this effort that has actually worked.
-- **NOW — can a membrane now build itself from scratch?** Repeating the from-random-soup test that
-  previously failed 6 out of 6, this time with stiffness fixed.
+- **DONE — a membrane now builds itself from scratch.** Repeated the from-random-soup test that
+  previously failed 6 out of 6. With stiffness fixed it reaches 77% of the way from "random soup" to a
+  real membrane and stays there; without it, 15%. Every fixed run beat every unfixed run.
+- **NOW — get the membrane to close into a bubble.** Sheets form and persist but stay open. This is
+  the original goal and the remaining unknown. Needs enough molecules that a bubble is bigger than the
+  membrane is thick (about 1600), and a box too big for the sheet to stretch across.
 - **NEXT if that fails** — run the outside reference model at the same settings, to tell whether the
   fault is our engine or the recipe.
 - **LATER — fusion and splitting.** Neither has ever been seen. Splitting stalls at a dumbbell that
@@ -80,6 +84,9 @@ a bubble that emerged.
   all; being soap-like comes from head size alone. Sheets of the right thickness still form under it,
   so the six deleted settings were not needed for that. Whether they are needed for a *bubble* is
   still unknown.
+- **Membranes now form by themselves and hold.** From a random start, with stiffness fixed: thickness
+  3.41 against 4.05 for a real membrane and 1.31 for random soup — 77% of the way. The unfixed control
+  reaches 1.72 (15%) and repeatedly falls apart. All three fixed runs beat all three unfixed ones.
 - **The cause of the 3-D failures was a broken stiffness term, found by algebra rather than by
   simulation.** A molecule's straightening spring resting at its own natural length gives *zero*
   resistance to small bends. With it fixed, a placed membrane survives instead of dissolving
