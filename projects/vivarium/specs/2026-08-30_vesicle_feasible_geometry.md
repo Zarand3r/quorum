@@ -240,3 +240,33 @@ fine, but the quantity was mislabelled throughout.
 **This is the branch where the oracle earns its 23 h.** With density excluded, the candidates are our
 engine (chain stiffness, bond form, bounded core) or the recipe/harness. The oracle at these settings
 separates them: if a known-working model also fails to consolidate here, the fault is not our engine.
+
+## 11. Amendment 3 — 2026-08-31: closure retest, now on a membrane that actually exists
+
+Sections 9-10 are superseded in their *cause*, not their data. The 0/6 and the density null were both
+produced by a model whose lipids had **zero harmonic bending stiffness** (1-3 spring resting at its own
+geometric length gives a quartic, not quadratic, bending energy -- verified by algebra on our own
+potential, V/delta^4 constant at 0.9375). With that fixed:
+
+- a planted planar bilayer SURVIVES (min thickness 0.65 -> 2.87), Gate B;
+- a membrane SELF-ASSEMBLES from a random start and persists (1.72 -> 3.41 mean thickness, 15% -> 77%
+  of the way from random gas to a real bilayer, perfect 3v3 separation, p = 0.050).
+
+**Only now is a closure test meaningful**, because every previous one asked an object that could not
+persist to also close.
+
+**Sizing, recomputed against the MEASURED thickness of 3.4** (not the 4.0 assumed earlier):
+
+    N=1000  R=7.3  R/thick=2.15  patch side 26.0
+    N=1600  R=9.3  R/thick=2.72  patch side 32.9
+    N=2400  R=11.4 R/thick=3.34  patch side 40.2
+
+**Arms:** N = 1600, boxes L in {36, 40} (9% and 22% above the 32.9 spanning threshold), k_theta = 33,
+bend_r0 = 4.0, cooke_chi, kT = 1.0, w_c = 1.4, 3 seeds each, 150k steps.
+
+**Endpoint unchanged from section 5:** hollow < 0.25 AND aniso L1/L3 > 0.5 AND thickness > 3.0, at two
+or more consecutive checkpoints, plus a confirming render.
+
+**Threat, stated now.** The density series that showed consolidation is independent of crowding was run
+under the BROKEN bending term. It should not be assumed to transfer to the fixed model. If both boxes
+fail, density returns as a live variable and must be retested on the fixed model rather than inherited.
