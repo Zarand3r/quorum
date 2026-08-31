@@ -129,3 +129,55 @@ satisfied without it, and the oracle becomes a confirmation rather than a discri
 our instrument with no simultaneous external control at this N. Stated here rather than discovered in
 the writeup. The instrument itself is separately validated against four synthetic controls and against
 the oracle at N = 200, where it correctly read a bilayer sheet of thickness 4.05.
+
+---
+
+## 9. Outcome — 2026-08-31
+
+```
+  engine      L     formed
+    ours   30.0    0/3
+    ours   36.0    0/3
+
+  PASS (ours >= 2/3 in any box): False
+  AC-2: NOT EVALUABLE -- no oracle runs on record.
+```
+
+**0 of 6. FAIL.** Final rows (thickness / hollow / aniso; vesicle needs < 0.25 hollow, > 0.5 aniso,
+> 3.0 thickness):
+
+    L=36 sd=1  3.176  0.507  0.578      L=30 sd=1  1.293  0.530  0.775
+    L=36 sd=2  1.991  0.441  0.248      L=30 sd=2  1.250  0.547  0.276
+    L=36 sd=3  0.098  0.474  0.519      L=30 sd=3  0.235  0.554  0.459
+
+**`hollow` never moved.** It sat at 0.44-0.55 in all six runs from step 25,000 to step 400,000 --
+2.4 million integrator steps in total with no drift toward the 0.000 vesicle reference. This is the
+variable that must fall for a vesicle to exist.
+
+**Membranes formed and dissolved rather than consolidating.** Thickness oscillated all run: L=30 sd=2
+went 0.90 -> 2.99 -> 1.26 -> 2.44 -> 0.22 -> 1.25; L=36 sd=3 reached 4.02 at step 25k (a genuine
+bilayer, matching the oracle's 4.05) and ended at 0.098, which is the GAS control's value. The
+reference model's published trajectory coarsens monotonically and then zips shut. This does not
+resemble it.
+
+### Diagnosis: the two conditions are incompatible at N = 1000
+
+The box must EXCEED the spanning threshold (26.0 sigma) or a patch spans and has no edges to lose. It
+must also be DENSE enough for patches to survive and merge. At N = 1000 those cannot both hold:
+
+    L = 30  ->  phi 0.111       L = 36  ->  phi 0.070       reference: phi 0.192
+
+Both arms are 2-3x too dilute. Satisfying the spanning constraint forced a violation of the density
+constraint, and the aggregates evaporated. **At fixed N the two pull in opposite directions, so the
+fix is MORE LIPIDS, not a different box** -- N such that a box above the spanning threshold still
+reaches phi ~ 0.19. That is roughly N = 2700 at L = 30 (8100 beads), about 8x the cost of these runs.
+
+### AC-2 is NOT satisfied -- and the gate said it was
+
+The scoring function reported "AC-2 (oracle also fails -> recipe untested): True" while **no oracle run
+existed**: the oracle rate defaulted to 0 and `0 < 0.66` is trivially true. The gate asserted a
+conclusion it had no data for. Fixed to report NOT EVALUABLE. Whether this null indicts our engine or
+the recipe is **undecided**, and the staged oracle control is what would decide it.
+
+**Status: H3 not supported. Not a clean refutation either** -- the density confound is a live
+alternative explanation, and it was registered in section 7 as a threat before the run.

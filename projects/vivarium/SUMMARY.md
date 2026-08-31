@@ -27,12 +27,13 @@ a bubble that emerged.
   Y" numbers, two of them purely to force the molecules to behave like soap. Now there is exactly one
   attraction (tail-to-tail) and the heads have none at all — what makes a molecule soap-like is only
   that its head is a different *size*. Chemistry replaced by shape.
-- **NOW — testing that reduction by trying for a 3-D bubble.** Running: 1000 molecules, one
-  attraction, in a box too big for the sheet to stretch across, so its only way to lose its exposed
-  edges is to close into a ball. **This is the test of the knob reduction, not a separate goal** — if
-  the stripped-down model builds a bubble, the six deleted settings were never needed. If it fails we
-  cannot tell whether stripping broke it or the target was unreachable, which is exactly what made the
-  earlier attempts uninterpretable.
+- **TRIED, FAILED — 3-D bubble at 1000 molecules.** 0 of 6. Sheets formed and fell apart again and
+  again; nothing ever closed. The cause looks like too few molecules: the box has to be big enough
+  that the sheet cannot stretch across it, *and* crowded enough that pieces meet and stick. With 1000
+  molecules you cannot have both — we got the first and lost the second, and the pieces evaporated.
+- **NOW — decide between two explanations.** Either the model cannot close a bubble, or the run was
+  simply too thin. Cheapest way to tell: run the outside reference model at the same settings. If it
+  also fails, the recipe was wrong, not our engine.
 - **NEXT if that fails** — run the outside reference model at the same settings, to tell whether the
   fault is our engine or the recipe.
 - **LATER — fusion and splitting.** Neither has ever been seen. Splitting stalls at a dumbbell that
@@ -65,8 +66,12 @@ a bubble that emerged.
 - **Measurement has been the main obstacle, repeatedly.** Eighteen instrument defects on record, three
   found in one day. Each time the tool could not tell success from the specific way things were
   failing. Every structural claim now needs both a number and a picture.
-- **Seven chemistry numbers are now one, and the current run is on the stripped-down version.** Heads
-  carry no attraction; being soap-like comes from head size alone. Whether this still works is what is
-  being tested right now.
+- **Seven chemistry numbers are now one, and it still makes a membrane.** Heads carry no attraction at
+  all; being soap-like comes from head size alone. Sheets of the right thickness still form under it,
+  so the six deleted settings were not needed for that. Whether they are needed for a *bubble* is
+  still unknown.
+- **The first 3-D attempt at a workable size failed, 0 of 6** — but too thinly spread to be a fair
+  test. Two requirements fight each other at this molecule count, and we satisfied one by breaking the
+  other.
 - **"Transformer-only" is structural, not learned.** The network's weights are fixed and its MLP is
   switched off in every run. It is a hand-written force law expressed as attention, not a trained model.

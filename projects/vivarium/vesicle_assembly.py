@@ -135,9 +135,17 @@ def score() -> int:
         v = by[k]
         print(f"  {k[0]:>8} {k[1]:>6} {sum(v):>4}/{len(v)}")
     ours = max((sum(v) / len(v) for (e, _), v in by.items() if e == "ours"), default=0)
-    orac = max((sum(v) / len(v) for (e, _), v in by.items() if e == "oracle"), default=0)
+    oracle_rows = [v for (e, _), v in by.items() if e == "oracle"]
     print(f"\n  PASS (ours >= 2/3 in any box): {ours >= 0.66}")
-    print(f"  AC-2 (oracle also fails -> recipe untested, not our engine): {orac < 0.66}")
+    # AC-2 must not be reported as SATISFIED when the oracle was simply never run. The first version
+    # defaulted the oracle rate to 0, so `orac < 0.66` was trivially true with zero oracle data and the
+    # gate asserted 'the recipe is untested' as though it had been established.
+    if not oracle_rows:
+        print("  AC-2: NOT EVALUABLE -- no oracle runs on record. Whether a null here indicts our "
+              "engine or the recipe is UNDECIDED.")
+    else:
+        orac = max(sum(v) / len(v) for v in oracle_rows)
+        print(f"  AC-2 (oracle also fails -> recipe untested, not our engine): {orac < 0.66}")
     return 0
 
 
