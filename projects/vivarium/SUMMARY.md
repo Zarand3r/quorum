@@ -34,11 +34,16 @@ a bubble that emerged.
 - **DONE — "too thin" was wrong.** Tested it directly: varied only how crowded the box was, across a
   3x range. Membranes fell apart just as much when crowded as when sparse — the *most* sparse setting
   did best. So thinness is not the reason.
-- **NOW — find why membranes will not hold together at all.** In this stripped-down setup a sheet
-  never survives; it keeps forming and falling apart at every crowding level, never reaching even
-  two-thirds of a real membrane's thickness. Next: run the outside reference model at the same
-  settings. If its membranes also fall apart, our recipe is wrong; if they hold, the fault is in our
-  simulator and can be tracked down against a working example.
+- **DONE — found it: our molecules had no stiffness against bending.** The spring meant to keep a
+  molecule straight was set to its own relaxed length, which makes it do nothing for small bends —
+  provably zero resistance, about 37,000x weaker than the reference model near straight. Published
+  literature says every working model of this kind needs a strong straightening term; ours had none.
+  Fixed by pre-stretching that spring, exactly as the reference does.
+- **DONE — with the fix, a membrane survives.** A flat membrane placed in the box holds together for
+  the whole run at the reference stiffness, staying near real-membrane thickness. Without the fix it
+  disintegrates to nothing. This is the first thing in this effort that has actually worked.
+- **NOW — can a membrane now build itself from scratch?** Repeating the from-random-soup test that
+  previously failed 6 out of 6, this time with stiffness fixed.
 - **NEXT if that fails** — run the outside reference model at the same settings, to tell whether the
   fault is our engine or the recipe.
 - **LATER — fusion and splitting.** Neither has ever been seen. Splitting stalls at a dumbbell that
@@ -75,6 +80,11 @@ a bubble that emerged.
   all; being soap-like comes from head size alone. Sheets of the right thickness still form under it,
   so the six deleted settings were not needed for that. Whether they are needed for a *bubble* is
   still unknown.
+- **The cause of the 3-D failures was a broken stiffness term, found by algebra rather than by
+  simulation.** A molecule's straightening spring resting at its own natural length gives *zero*
+  resistance to small bends. With it fixed, a placed membrane survives instead of dissolving
+  (thickness floor 0.65 → 2.87 against a real membrane's 4.05). Four earlier sweeps could not have
+  worked, because no setting they varied can supply a missing term.
 - **The first 3-D attempt at a workable size failed, 0 of 6**, and the reason is not what we first
   thought. Membranes never held together long enough to try closing — they formed and fell apart
   repeatedly, at every crowding level tested. The best case reached about half a real membrane's
