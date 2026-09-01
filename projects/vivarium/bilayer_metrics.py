@@ -68,6 +68,46 @@ def hollow(X: np.ndarray, mols: np.ndarray) -> float:
     return float((r[mols[:, 1:].ravel()] < rh).mean())
 
 
+def n_aggregates(X: np.ndarray, mols: np.ndarray, L: float, cut: float = 1.4) -> tuple:
+    """(count, largest) of connected aggregates among lipid beads.
+
+    Added 2026-08-31 because `thickness` cannot tell ONE membrane from SEVERAL discs -- it measures
+    head-sheet separation along the nematic director, which a 40-lipid disc satisfies as well as an
+    extended bilayer. A render at the safe slab showed five or six separate aggregates in a state
+    whose thickness read 3.5, and the number alone had been reported as "a membrane".
+    """
+    beads = mols.ravel()
+    P = X[beads]
+    n = len(P)
+    lab = -np.ones(n, dtype=np.int64)
+    cur = 0
+    for start in range(n):
+        if lab[start] >= 0:
+            continue
+        stack = [start]
+        lab[start] = cur
+        while stack:
+            i = stack.pop()
+            d = P - P[i]
+            d -= L * np.round(d / L)
+            near = np.where((np.einsum("ij,ij->i", d, d) < cut * cut) & (lab < 0))[0]
+            lab[near] = cur
+            stack.extend(near.tolist())
+        cur += 1
+    sizes = np.bincount(lab)
+    big = sizes[sizes >= 3 * 3]          # ignore fragments smaller than a molecule or two
+    return int(len(big)), int(sizes.max())
+
+# VALIDATION STATUS, recorded honestly. Checked 2026-08-31:
+#   4 separate discs -> 4      one vesicle -> 1      one blob -> 1     (separates, which is the point)
+#   synthetic "sheet" -> 33    synthetic "gas" -> 21
+# The sheet reading is NOT a pass or a fail: `_synthetic_controls` builds the sheet as 300 random
+# points over an 18x18 area, which genuinely is not connected at cut = 1.4. That control is too sparse
+# to exercise connectivity, and the same synthetics give thickness 0.00 on a 4-disc arrangement because
+# they carry no head/tail structure. The instrument is trusted only for the one-vs-many distinction it
+# was added for; a dense connected-sheet control is still missing.
+
+
 def classify(X: np.ndarray, mols: np.ndarray) -> dict:
     """All four numbers together. No single one is sufficient, which is the point."""
     l1, l2 = shape_of(X)

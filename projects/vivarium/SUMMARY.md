@@ -97,6 +97,13 @@ a bubble that emerged.
   all; being soap-like comes from head size alone. Sheets of the right thickness still form under it,
   so the six deleted settings were not needed for that. Whether they are needed for a *bubble* is
   still unknown.
+- **What self-assembles is several small patches, not one big membrane.** Looking at a properly-cut
+  picture (an earlier one was cut too thick, which makes hollow things look solid) shows five or six
+  separate blobs of about 30-80 molecules each, with the right local structure — oily tails inside,
+  water-liking heads outside — but not one continuous sheet. The thickness measure reads the same for a
+  small patch as for a big membrane, so it could not tell the difference and we did not check.
+  This also makes the closure failure less mysterious: patches of 30-80 are far too small to close into
+  a bubble, which needs roughly 1600.
 - **Membranes reach full real-membrane thickness, and still will not close.** At the right size,
   self-assembled sheets hit 103% of a real membrane's thickness — but the hollowness measure sat at
   0.51 in every single run, exactly where it sat when membranes were falling apart. Everything that
