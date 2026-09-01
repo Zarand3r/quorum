@@ -48,6 +48,11 @@ a bubble that emerged.
 - **TRIED, FAILED — closing the sheet into a bubble.** 0 of 6, at the right size and in a box too big
   for the sheet to span. The membranes were excellent — as thick as a real one, better than anything
   else this project has made — and they simply stayed flat.
+- **NOW — removing the hand-set knobs one at a time, in 2-D.** 2-D is the only place this project has
+  ever made a bubble, so it is the only place we can check that removing a knob did not break
+  anything. First knob: the one number set purely to force the molecules to behave like soap. Removing
+  it did not stop them clumping — but the test was too short to say whether bubbles still form, which
+  is the thing that matters. A longer run is needed.
 - **PAUSED — closing the sheet.** Making a membrane and closing one turned out to be separate
   problems. Fixing molecular stiffness solved the first completely and did nothing for the second. The
   hollowness measure has stayed at 0.49 (needs 0.25) across a 40x range of membrane quality, three
