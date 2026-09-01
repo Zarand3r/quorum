@@ -365,3 +365,29 @@ leaves `lambda` -- never measured in 3-D here, and the subject of the reviewer h
 
 **Status: H4 not supported. Closure is independent of both membrane stability (Amendment 3) and
 bending rigidity (Amendment 4).**
+
+## 13. QUALIFICATION 2026-08-31 — the self-assembly result is small DISCS, not one sheet
+
+Re-rendered the k_theta = 33 self-assembly state at the documented safe slab (1.2; earlier renders used
+1.6-2.5, which the `shot` docstring warns "manufactures apparent density"). The picture shows **five or
+six separate aggregates**, each with the correct local structure -- tails inside, heads outside -- and
+**not** one extended bilayer sheet.
+
+`thickness` reads 3.5-3.9 for this state. It measures head-sheet separation along the nematic director,
+which a small bilayer-like disc satisfies just as well as an extended membrane. **The metric cannot
+distinguish "one membrane" from "several discs".**
+
+**What this qualifies.** "Membranes self-assemble and persist" (Amendment 3 / the 1.72 -> 3.41 A/B)
+should read: *bilayer-like aggregates self-assemble and persist, with correct head-out/tail-in local
+order, at sizes of roughly 30-80 lipids.* The bending fix is unaffected -- it is still the difference
+between that and nothing (k_theta = 0 gives thickness 0.1-0.6, no structure at all) -- and Gate B's
+PLANTED planar bilayer surviving is also unaffected, since there the extended sheet is given.
+
+**What it does NOT change.** The closure result stands and is if anything better explained: discs of
+30-80 lipids are far below the ~1600 needed for a coherent vesicle, so `hollow` sitting at 0.50
+throughout is what a collection of small solid-cored discs should read.
+
+**Method note.** Four of the five instrument problems this session were "the metric cannot separate
+success from the failure mode present". This is the fifth, found the same way -- by looking at the
+picture. Aggregate COUNT and size distribution should be reported alongside thickness from now on;
+neither was.
