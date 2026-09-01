@@ -340,3 +340,28 @@ result where some intermediate k_theta both holds a membrane and closes.
 That would mean closure is not bending-limited at all, `hollow` is insensitive to the one parameter
 theory says should control it, and the obstacle is elsewhere -- most likely the edge term, since a
 solvent-free model's line tension comes only from tails losing tail-tail contacts at the rim.
+
+### Outcome of Amendment 4 — H4 REFUTED; closure is not bending-limited
+
+    k_theta=10: formed 0/3  mean thickness 3.21  mean hollow 0.479  best hollow 0.460
+    k_theta=20: formed 0/3  mean thickness 3.62  mean hollow 0.501  best hollow 0.468
+    k_theta=33: formed 0/6  mean thickness 4.14  mean hollow 0.512  (from Amendment 3)
+
+**The refuting outcome registered in advance is exactly what occurred.** `hollow` stays at ~0.50 at
+every stiffness while thickness varies 3.21 -> 3.62 -> 4.14. Softening the membrane by 3.3x did not
+move closure at all.
+
+Two details sharpen it:
+
+- At k_theta = 20 the three seeds gave `hollow` = 0.501, 0.501, 0.500 -- agreeing to three decimals --
+  while their thickness ranged 3.17 to 3.90. The membrane observable varies freely between seeds; the
+  closure observable does not vary at all.
+- `hollow_min`, the lowest value at ANY checkpoint of any run, is **0.460** across all 12 runs. Not a
+  single trajectory ever transiently approached the 0.25 threshold.
+
+`hollow` is behaving like a fixed geometric property of a flat sheet rather than a thermodynamic
+quantity under the model's control. **R_c = 2 kappa/lambda cannot be reached by lowering kappa**, which
+leaves `lambda` -- never measured in 3-D here, and the subject of the reviewer handoff.
+
+**Status: H4 not supported. Closure is independent of both membrane stability (Amendment 3) and
+bending rigidity (Amendment 4).**
