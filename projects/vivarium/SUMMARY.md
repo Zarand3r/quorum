@@ -45,9 +45,13 @@ a bubble that emerged.
 - **DONE — a membrane now builds itself from scratch.** Repeated the from-random-soup test that
   previously failed 6 out of 6. With stiffness fixed it reaches 77% of the way from "random soup" to a
   real membrane and stays there; without it, 15%. Every fixed run beat every unfixed run.
-- **NOW — get the membrane to close into a bubble.** Sheets form and persist but stay open. This is
-  the original goal and the remaining unknown. Needs enough molecules that a bubble is bigger than the
-  membrane is thick (about 1600), and a box too big for the sheet to stretch across.
+- **TRIED, FAILED — closing the sheet into a bubble.** 0 of 6, at the right size and in a box too big
+  for the sheet to span. The membranes were excellent — as thick as a real one, better than anything
+  else this project has made — and they simply stayed flat.
+- **NOW — work out why sheets will not curl.** We have separated two things that were tangled: making
+  a membrane, and closing one. Fixing the molecules' stiffness solved the first completely and did
+  nothing at all for the second, so closing is a different problem with a different cause. That is
+  where the remaining work is.
 - **NEXT if that fails** — run the outside reference model at the same settings, to tell whether the
   fault is our engine or the recipe.
 - **LATER — fusion and splitting.** Neither has ever been seen. Splitting stalls at a dumbbell that
@@ -84,6 +88,11 @@ a bubble that emerged.
   all; being soap-like comes from head size alone. Sheets of the right thickness still form under it,
   so the six deleted settings were not needed for that. Whether they are needed for a *bubble* is
   still unknown.
+- **Membranes reach full real-membrane thickness, and still will not close.** At the right size,
+  self-assembled sheets hit 103% of a real membrane's thickness — but the hollowness measure sat at
+  0.51 in every single run, exactly where it sat when membranes were falling apart. Everything that
+  improved the membrane changed it by less than its own noise. **Closing is not a harder version of
+  making a membrane; it is a separate unsolved problem.**
 - **Membranes now form by themselves and hold.** From a random start, with stiffness fixed: thickness
   3.41 against 4.05 for a real membrane and 1.31 for random soup — 77% of the way. The unfixed control
   reaches 1.72 (15%) and repeatedly falls apart. All three fixed runs beat all three unfixed ones.

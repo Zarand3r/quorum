@@ -270,3 +270,39 @@ or more consecutive checkpoints, plus a confirming render.
 **Threat, stated now.** The density series that showed consolidation is independent of crowding was run
 under the BROKEN bending term. It should not be assumed to transfer to the fixed model. If both boxes
 fail, density returns as a live variable and must be retested on the fixed model rather than inherited.
+
+### Outcome of Amendment 3 — membranes YES, vesicles NO
+
+    L=36: formed 0/3   mean hollow 0.504
+    L=40: formed 0/3   mean hollow 0.519
+    VERDICT formed: 0/6
+
+**The membranes are excellent.** thickness = 3.11, 5.27, 4.96, 3.56, 3.86, 4.07; mean **4.14** against a
+reference bilayer of 4.05 and random gas of 1.31 -- **103% of the way**, with 3 of 6 at or above the
+reference. Self-assembled from a random start. This is by a wide margin the best membrane the project
+has produced.
+
+**`hollow` did not move at all.** 0.512 +- 0.022, against 0.000 for a vesicle. Compare across every
+configuration measured today:
+
+    broken bending, N=200 planted spheres   0.995
+    k_theta=100 planted spheres             0.652
+    H3 assembly N=1000 (broken bending)     0.505
+    assembly N=1000, bending FIXED          0.500
+    closure  N=1600, bending FIXED          0.512
+
+Once a membrane exists at all, `hollow` sits at ~0.50 and is **completely insensitive** to everything
+that improved the membrane. Thickness went from "no membrane" to "better than reference" and this
+number changed by less than its own scatter.
+
+**The conclusion, stated carefully.** Closure is NOT downstream of membrane stability. The bending fix
+was decisive for membranes -- planted bilayers survive, membranes self-assemble and persist -- and it
+brought closure no closer whatsoever. The two are independent in this model.
+
+That is a genuine and reportable negative, and it is a *different* negative from the earlier 0/6: then,
+nothing survived long enough to attempt closure; now good membranes exist and simply stay open. The
+question this finally poses cleanly is the closure mechanism itself -- edge energy versus bending
+rigidity -- which could not be asked before because no stable membrane existed to ask it of.
+
+**Density is NOT recovered as the explanation** (the threat registered above): both boxes give the same
+`hollow` to within noise, and both produced reference-quality membranes.
