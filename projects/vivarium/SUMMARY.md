@@ -48,10 +48,14 @@ a bubble that emerged.
 - **TRIED, FAILED — closing the sheet into a bubble.** 0 of 6, at the right size and in a box too big
   for the sheet to span. The membranes were excellent — as thick as a real one, better than anything
   else this project has made — and they simply stayed flat.
-- **NOW — work out why sheets will not curl.** We have separated two things that were tangled: making
-  a membrane, and closing one. Fixing the molecules' stiffness solved the first completely and did
-  nothing at all for the second, so closing is a different problem with a different cause. That is
-  where the remaining work is.
+- **PAUSED — closing the sheet.** Making a membrane and closing one turned out to be separate
+  problems. Fixing molecular stiffness solved the first completely and did nothing for the second. The
+  hollowness measure has stayed at 0.49 (needs 0.25) across a 40x range of membrane quality, three
+  molecule counts, four box sizes and every stiffness tried. Paused for outside review rather than
+  trying a sixth guess — see `docs/REVIEWER_HANDOFF_2026-08-31.md`.
+- **The open question for a reviewer:** with no water in the simulation, the only thing making an open
+  edge costly is tails at the rim losing contact with other tails. Is that penalty big enough to make
+  a sheet curl up, and how would we measure it directly?
 - **NEXT if that fails** — run the outside reference model at the same settings, to tell whether the
   fault is our engine or the recipe.
 - **LATER — fusion and splitting.** Neither has ever been seen. Splitting stalls at a dumbbell that

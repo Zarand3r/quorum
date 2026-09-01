@@ -306,3 +306,37 @@ rigidity -- which could not be asked before because no stable membrane existed t
 
 **Density is NOT recovered as the explanation** (the threat registered above): both boxes give the same
 `hollow` to within noise, and both produced reference-quality membranes.
+
+## 12. Amendment 4 — 2026-08-31: the fix that made membranes may be what prevents closure
+
+A finite patch closes when edge energy beats bending energy:
+
+    edge cost   ~ lambda * perimeter   (falls as the patch curls)
+    bend cost   ~ 8*pi*kappa           (roughly size-independent for a sphere)
+    critical radius  R_c = 2*kappa/lambda
+
+`kappa` rises with chain stiffness. **Raising k_theta therefore raises R_c** -- the same change that
+made the membrane stable makes it harder to close. At k_theta = 33 we got reference-quality membranes
+and 0/6 closure. That is exactly the signature of an over-stiff membrane above its critical radius.
+
+Gate B membrane survival against stiffness:
+
+    k_theta=  0   min thickness 0.65   no membrane
+    k_theta= 10                 1.83   marginal
+    k_theta= 33                 2.87   stable
+    k_theta=100                 2.52   stable
+
+**H4: there is a window in k_theta -- stiff enough to hold a membrane, soft enough to close it.**
+
+**Arms:** k_theta in {10, 20} at N = 1600, L = 36, 3 seeds, 150k steps. k_theta = 33 already has its
+0/6 and serves as the upper control. Endpoint unchanged (hollow < 0.25, aniso > 0.5, thickness > 3.0,
+twice consecutively, plus render).
+
+**Predicted, before the data:** if closure is bending-limited, `hollow` should fall as k_theta falls,
+and the membrane should degrade at the same time -- so the interesting outcome is a NON-MONOTONE
+result where some intermediate k_theta both holds a membrane and closes.
+
+**The outcome that refutes H4:** `hollow` stays at ~0.51 at every k_theta while the membrane degrades.
+That would mean closure is not bending-limited at all, `hollow` is insensitive to the one parameter
+theory says should control it, and the obstacle is elsewhere -- most likely the edge term, since a
+solvent-free model's line tension comes only from tails losing tail-tail contacts at the rim.
