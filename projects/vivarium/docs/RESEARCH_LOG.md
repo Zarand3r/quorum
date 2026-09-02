@@ -2933,3 +2933,17 @@ Cause: r-hat taken at the HEAD, whose position is cen + (L/2)u, so u sits on bot
 product. Fixed metric `cyl_c`: null 0.000 +/- 0.178, planted micelle +0.961.
 
 **Changed.** Retracted three micelle claims. No radial order exists in the aggregates.
+
+## 2026-09-02 — operational: a pattern grep can return MORE THAN ONE pid
+
+`pkill -f <pattern>` matching the agent's own shell is already recorded here. New variant, hit today:
+
+    REAL=$(ps -eo pid,cmd | grep "[g]ap_closure.py --gate" | awk '{print $1}')
+    while kill -0 "$REAL"; do sleep 20; done      # exits IMMEDIATELY
+
+`setsid nohup` leaves a wrapper, so the pattern matched four processes and `$REAL` was a four-line
+string. `kill -0` on it fails, the wait loop falls straight through, and the job looks FINISHED while
+it is 2.5 minutes into a 22-minute run. The empty results file then reads as "every run crashed".
+
+I nearly diagnosed a working harness. Use `pgrep -f <pattern> | head -1`, and check `etime` against
+how long the job should have been running before believing a completion.
