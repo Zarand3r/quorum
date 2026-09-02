@@ -1,6 +1,6 @@
 # vivarium — executive summary
 
-*Updated 2026-09-01. Current state only — history lives in `RESEARCH_LOG.md`. Plain language, short.*
+*Updated 2026-09-02. Current state only — history lives in `RESEARCH_LOG.md`. Plain language, short.*
 
 ## Objective
 
@@ -23,7 +23,14 @@ not emerged.
 - **DONE — first hand-set number removed, and it survives.** Removing the number set purely to force
   soap-like behaviour changed nothing measurable: clump sizes 109.5 vs 113.2, overlapping. Neither arm
   produced a bubble in six runs each, but that was the expected outcome for both (see Results).
-- **NOW — remove the next numbers**, one at a time, still in 2-D against the working baseline.
+- **NOW — replace all six hand-set numbers, one at a time, in 2-D.** Each is either swapped for a
+  physical or geometric mechanism, or shown to be irreducible. The one attraction between oily tails
+  is declared irreducible up front: without it nothing sticks to anything and there is no liquid.
+- **NOW — measuring it a completely different way.** The old test asked "did a bubble appear?", which
+  happens 11% of the time, so six tries per side could never tell two recipes apart — and did not,
+  twice. The new test plants a nearly-closed ribbon and asks whether the two ends find each other.
+  That closes 5 times in 5 when the ends start 3.4 wide apart and 1 time in 10 at 10.1, so it gives a
+  graded answer instead of a coin flip, and each run is about 30x cheaper.
 - **BLOCKED — closing a sheet into a bubble in 3-D.** Six explanations tried, all refuted. Paused for
   outside review: `docs/REVIEWER_HANDOFF_2026-08-31.md`.
 - **NOT STARTED — fusing and dividing.** Neither has ever been observed.
@@ -41,11 +48,16 @@ not emerged.
 - **The first knob removal did no harm.** Full-length 2-D runs, six seeds per arm: clump sizes overlap
   completely (78–154 with the knob, 80–155 without). Neither arm made a bubble — but at the known 2-in-18
   rate, getting none in six runs is a coin flip (50%), so that is not evidence either way.
-- **A curious signal worth one follow-up.** The arm *without* the knob registered 18 moments where the
-  aggregate briefly enclosed a region; the arm *with* it registered zero. None passed the full bubble
-  test. This is the first hint that removing the knob might help rather than hurt, and it is exactly the
-  kind of small-sample pattern this project has repeatedly watched evaporate — so it needs replication
-  before it means anything.
+- **A curious signal, now being replicated.** Counting runs rather than snapshots, 4 of 6 runs without
+  the knob briefly enclosed a region against 0 of 6 with it. None passed the full bubble test. It is
+  the first hint that removing the knob helps rather than hurts, and it is exactly the kind of
+  small-sample pattern this project has repeatedly watched evaporate. A fresh 12-per-side replication
+  is running.
+- **The new test was checked against a trick it could have fallen for.** Its detector counts enclosed
+  space after fattening the molecules slightly. Fattened enough, it bridges a 3.4-wide gap on its own
+  and would have scored the starting arrangement as already closed. The setting actually used reads
+  "not closed" on every starting arrangement and "closed" on a real ring, and that setting was written
+  down before the check was run.
 - **Measurement is the recurring obstacle.** Nineteen instrument defects on record, six in two days.
   Every time, the tool could not tell success from the way things were actually failing. Every
   structural claim now needs a number **and** a picture.
