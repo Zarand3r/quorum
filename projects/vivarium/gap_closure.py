@@ -65,6 +65,7 @@ from field import Field, HEAD, TAIL, WATER, N_SPECIES
 
 _HERE = pathlib.Path(__file__).resolve().parent
 RESULTS = _HERE / "docs" / "results" / "gap_closure.tsv"
+STATES = _HERE / "docs" / "states_gap"
 
 N_LIP, L_BOX, KT, PHI, DT = 70, 45.0, 0.45, 0.55, 8e-3
 LAT = 2.0                       # lateral footprint of a branched 4-tail lipid, per _plant_ring
@@ -136,7 +137,20 @@ def run_one(rung: str, gap: float, seed: int, steps: int = STEPS) -> dict:
             ne = int(n_enclosed(X, mm, L_BOX)[0])
             if ne >= 1 and first < 0:
                 first = i + 1
+            # PROGRESS, every 100k. A run that prints nothing until it returns is how a 4-hour job in
+            # this project got killed on a cost model that was wrong by 5x: the only way to price the
+            # sweep was a solo benchmark, which does not include worker contention.
+            if (i + 1) % 100_000 == 0:
+                print(f"    [{rung} gap={gap} sd={seed}] {i+1}/{steps} n_enc={ne} "
+                      f"first={first} ({time.perf_counter()-t0:.0f}s)", flush=True)
     ok, _why = vesicle_call(X, mm, L_BOX)
+    # SAVE THE COORDINATES. Every structural claim in this project has to be checked against a
+    # picture -- the scalar has contradicted the render every time one was made. A `closed` column
+    # with no state behind it cannot be checked, so the first two seeds of each arm/gap are kept.
+    if seed % 100 < 2:
+        STATES.mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(STATES / f"r{rung}_g{gap}_sd{seed}.npz",
+                            X=X, mols=mm, species=species, L=L_BOX, gap=gap, closed=int(first >= 0))
     return {"rung": rung, "arm": label, "gap": gap, "span": round(span, 6), "seed": seed,
             "closed": int(first >= 0), "first_closed_step": first, "n_enc_final": ne,
             "vesicle_call": int(ok), "largest": len(mm), "wall_s": round(time.perf_counter() - t0, 1)}
