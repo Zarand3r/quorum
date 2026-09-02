@@ -28,7 +28,7 @@ well-powered dose-response (`docs/RESULTS.md`):
 | 6.7 sigma | 4/5 |
 | 10.1 sigma | 1/10 |
 
-Fisher on the two extremes is p = 0.0016. Closure is also *fast* — 4/5 seeds closed by step 10,000
+Fisher on the two extremes is p = 0.0020 (computed, not quoted). Closure is also *fast* — 4/5 seeds closed by step 10,000
 against a 300,000 budget — so each run is ~30x cheaper than a self-assembly run. This converts a rare
 event into a graded measurement, which is the only way to test six knobs in one session.
 
@@ -56,6 +56,27 @@ data is exactly the yardstick failure this project has already committed once.
 
 If GATE I fails, no rung is run and the session's finding is that the reaction coordinate does not
 reproduce — which is itself a result worth having, since two documents depend on it.
+
+## Instrument controls, run before the gate (2026-09-02)
+
+The detector must read the PLANT as not-closed, or the assay measures the plant. On the freshly built
+arc at step 0, with no dynamics:
+
+| planted arc, step 0 | n_enclosed @ bead 1.0 / 1.5 / 2.0 / 3.0 | vesicle_call |
+|---|---|---|
+| gap 3.4 sigma | `[0, 0, 0, 1]` | False |
+| gap 6.7 sigma | `[0, 0, 0, 0]` | False |
+| gap 10.1 sigma | `[0, 0, 0, 0]` | False |
+| gap 20 sigma | `[0, 0, 0, 0]` | False |
+| **closed ring, gap 0 (positive control)** | `[1, 1, 1, 1]` | **True** |
+
+The registered endpoint uses **bead = 1.0** and reads 0 on every planted arc, so it responds to
+dynamics rather than to geometry handed in at step 0. The positive control fires at every dilation.
+
+Worth stating plainly: at dilation **3.0 the detector bridges a 3.4 sigma gap by itself**. Had the
+endpoint been `vesicle_call` -- whose gate 1 requires a stable count across dilations 1.0-3.0 -- the
+near arm would have been partly an artifact of the instrument. It was registered as `n_enclosed` at
+bead 1.0 before this control was run, which is the only reason the choice was not made by the data.
 
 ## The ladder
 
