@@ -147,3 +147,40 @@ stop relying on.
 - The assay hands the system its curvature. It therefore cannot show that curvature *emerges* — only
   that a knob replacement preserves closure once curvature exists. Both this and the point above mean
   a full pass supports "the chemistry reduces", NOT "vesicles emerge from geometry alone".
+
+---
+
+## Amendment 1 — 2026-09-02, before any rung runs
+
+**Every rung gets a REMOVAL arm as well as a REPLACEMENT arm.** As first written, rung 1 changed two
+things at once (`chi_HT -> 0` and `sigma_head -> 0.95`), so a pass could not distinguish
+
+- *geometry substitutes for the affinity* (the claim), from
+- *the affinity was never load-bearing* (a much weaker statement, and the likelier one).
+
+Each rung therefore runs three arms against the same gaps and seeds:
+
+| arm | chemistry | what a pass means |
+|---|---|---|
+| **A** baseline | the rung below, unchanged | the control |
+| **B** removal | knob zeroed, nothing added | the knob was not load-bearing |
+| **C** replacement | knob zeroed + the geometric/thermodynamic mechanism | the mechanism carries it |
+
+Readings:
+
+- **B passes** -> the knob was decoration. Report it as removed, and say plainly that no replacement
+  was needed. Do NOT credit the mechanism in C for work that B shows was unnecessary.
+- **B fails, C passes** -> the substitution is real. This is the only pattern that supports
+  "physics and geometry replace the hand-set number."
+- **B fails, C fails** -> the knob is load-bearing and the proposed mechanism does not cover it. Stop
+  the ladder and characterise.
+- **B passes, C fails** -> the added mechanism is harmful. Keep the removal, discard the replacement.
+
+Cost: 3 arms x 2 gaps x 10 seeds = 60 runs per rung, ~11 min each, ~66 min wall at 10 workers.
+
+**Stated in advance so a rung-1 pass is not over-read.** Production amphiphilicity does not rest on
+`chi_HT` alone. Heads are held in water by `chi_HW = 0.75` while tails are indifferent at
+`chi_TW = 0.00`, and that solvophobic contrast is probably the larger driver. So arm B passing at
+rung 1 is the *expected* outcome, and `sigma_head` is expected to be a weak lever. The head-area
+sweep that would have told us this (H1/H2, 39 runs) was scored on the 3-D-broken `n_enclosed` and
+establishes nothing. Rung 1 is the first honest test of head size on a working endpoint.
