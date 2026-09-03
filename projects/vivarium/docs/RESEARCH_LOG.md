@@ -2947,3 +2947,21 @@ it is 2.5 minutes into a 22-minute run. The empty results file then reads as "ev
 
 I nearly diagnosed a working harness. Use `pgrep -f <pattern> | head -1`, and check `etime` against
 how long the job should have been running before believing a completion.
+
+## 2026-09-03 — the solo-benchmark cost error, committed twice in one day
+
+Earlier today I logged the multi-pid wait hazard. Here is the other recurring one, and I walked into
+it again a few hours later.
+
+H7 was smoke-tested at **1.02 ms/step solo** and the sweep was announced at "~17 min/run". Under
+16-way contention it runs at **9.0 ms/step** -- 2.5 h/run, a 9x miss. The identical error is already
+on record in this project: a 4-hour run was killed on a cost model built from a 2000-step benchmark
+taken in a different regime, wrong by 5x.
+
+The rule that keeps failing to stick: **a solo benchmark does not price a contended sweep.** Measure
+one run *at the concurrency the sweep will actually use*, or state the estimate as solo-only and say
+so. Announcing a solo number as the sweep cost is how a healthy job gets killed for looking stuck.
+
+Note the slowdown is worse than the core ratio suggests (16 workers on 32 cores giving 9x, not ~2x),
+which points at memory bandwidth rather than CPU contention -- the per-step work here is small and
+the neighbour search is scatter-heavy.
