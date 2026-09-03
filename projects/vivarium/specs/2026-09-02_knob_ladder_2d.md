@@ -184,3 +184,55 @@ Cost: 3 arms x 2 gaps x 10 seeds = 60 runs per rung, ~11 min each, ~66 min wall 
 rung 1 is the *expected* outcome, and `sigma_head` is expected to be a weak lever. The head-area
 sweep that would have told us this (H1/H2, 39 runs) was scored on the 3-D-broken `n_enclosed` and
 establishes nothing. Rung 1 is the first honest test of head size on a working endpoint.
+
+---
+
+## GATE I — PASSED, 2026-09-02
+
+20 runs, production chemistry, N=70, L=45, kT=0.45, phi=0.55, 300,000 steps, seeds 100-109.
+
+| gap | closed (registered endpoint) | published | vesicle_call |
+|---|---|---|---|
+| 3.4 sigma | **10/10** | 5/5 | 9/10 |
+| 10.1 sigma | **2/10** | 1/10 | 0/10 |
+
+    rung 0 (production): near 10/10 vs far 2/10, Fisher one-sided p = 0.0004
+      coordinate still discriminates (near > far, p <= 0.05): True
+      GATE I (reproduces the published dose-response): True
+
+Both criteria met (near >= 4/5, far <= 3/10, p <= 0.05). The reaction coordinate reproduces on the
+production stack, and the strict `vesicle_call` gate separates the arms even harder than the
+registered endpoint does (9/10 vs 0/10).
+
+**Checked against renders, not believed from the count.** `docs/figures/gap_3.4_closed.png` is a
+continuous closed bilayer ring with a water-filled lumen, heads on both faces and a tail core between.
+`docs/figures/gap_10.1_open.png` is an open C with two free ends that never met. The metric and the
+picture agree.
+
+Two rendering notes worth keeping. The first render plotted `np.mod(X, L)` and put the ring in the
+four corners of the box, where it reads as four separate fragments -- `_plant_ring` builds around the
+origin. `gap_shot.py` now recentres on the CIRCULAR mean of the lipid beads, which is defined across a
+periodic boundary where an arithmetic mean is not. And re-running seed 100 for 40,000 steps reproduced
+the 300,000-step result exactly (closed at step 10,000, `vesicle_call` true), so the engine is
+deterministic under this harness.
+
+## Amendment 2 — 2026-09-02, before rung 1
+
+**Two changes, both to cost, neither to the registered endpoint.**
+
+1. **The baseline arm is not re-run.** Rung N's arm A is rung N-1's winning arm, already measured on
+   the same gaps and the same seeds. Each rung is therefore 2 arms x 2 gaps x 10 seeds = 40 runs, not
+   60.
+2. **A run stops 50,000 steps after its first closure** instead of always running 300,000. The
+   registered primary endpoint is "n_enclosed >= 1 at ANY checkpoint", so stopping after the first
+   one is exactly equivalent for it -- the value is already determined. Runs that never close are
+   unaffected and still run the full 300,000.
+
+The 50,000-step tail is not padding: it converts `n_enc_final` and `vesicle_call` into a **persistence**
+check -- did the ring that formed survive 50,000 further steps of thermal noise. `steps_run` is
+recorded per row so nothing is hidden.
+
+**The cost of this, stated plainly.** For rungs >= 1 the secondary `vesicle_call` is evaluated at
+closure + 50,000 steps rather than at a fixed 300,000, so it is NOT comparable across rung 0 and later
+rungs. The primary endpoint is comparable throughout; the secondary is comparable only among rungs
+1-6. Measured saving: ~40% of the step budget per rung.
