@@ -2962,6 +2962,17 @@ The rule that keeps failing to stick: **a solo benchmark does not price a conten
 one run *at the concurrency the sweep will actually use*, or state the estimate as solo-only and say
 so. Announcing a solo number as the sweep cost is how a healthy job gets killed for looking stuck.
 
-Note the slowdown is worse than the core ratio suggests (16 workers on 32 cores giving 9x, not ~2x),
-which points at memory bandwidth rather than CPU contention -- the per-step work here is small and
-the neighbour search is scatter-heavy.
+**Correction, same day.** I first blamed memory bandwidth. The per-interval rate says otherwise: it is
+**flat at 8.6 ms/step from the very first checkpoint**, so it is not condensation (which rises as
+lipids aggregate -- the 5x error already on record) and load is 11 on 32 cores, so it is not CPU
+oversubscription either. Sixteen threads delivering ~2x effective parallelism is **GIL serialization**:
+solvent-free drops the system from 2959 beads to 800, and at that size numpy's GIL releases no longer
+cover the per-step work.
+
+So the reduction that made the science cheaper made the *harness* wrong. `ThreadPoolExecutor` was the
+right choice at 2959 beads and the wrong one at 800. Switched to `ProcessPoolExecutor`; the result
+append already happens in the parent, so nothing else had to change.
+
+Three distinct cost errors in one project now, all of which looked identical from the outside (a job
+running slower than announced): wrong regime (dispersed vs condensed), wrong concurrency (solo vs
+contended), and wrong parallelism primitive (threads vs processes on small arrays).

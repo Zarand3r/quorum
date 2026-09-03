@@ -16,7 +16,7 @@ import os
 import pathlib
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import numpy as np
 
@@ -134,7 +134,11 @@ def main(argv=None):
             if (ar, sd) not in done]
     print(f"H7 emergence: {len(todo)} runs, N={N_LIP} L={L_BOX} {a.steps} steps, "
           f"{a.workers} workers", flush=True)
-    with ThreadPoolExecutor(max_workers=a.workers) as ex:
+    # PROCESSES, not threads. Solvent-free is 800 beads against 2959 with explicit water, and at
+    # that array size numpy's GIL releases no longer cover the per-step work: 16 threads delivered
+    # ~2x effective parallelism (8.6 ms/step against 1.02 solo, flat across the whole run, at load 11
+    # on 32 cores). The result append happens here in the parent, so no cross-process lock is needed.
+    with ProcessPoolExecutor(max_workers=a.workers) as ex:
         futs = {ex.submit(run_one, ar, sd, a.steps): (ar, sd) for ar, sd in todo}
         for fut in as_completed(futs):
             ar, sd = futs[fut]
