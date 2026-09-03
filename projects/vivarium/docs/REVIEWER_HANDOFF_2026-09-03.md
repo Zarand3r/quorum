@@ -120,6 +120,35 @@ right, gate 2 is too strict at N = 160 and needs recalibrating — note `vesicle
 `vesicle_call` sizes the expected lumen from the whole system's 160 lipids while the observed cluster
 was 84, and that rescaling by (84/160)^2 would put sd9302 at 0.25, well inside.
 
+### ADDENDUM, same day — the renders push toward option (3)
+
+The loose criterion was checked against pictures rather than left as a number, and it does not survive.
+
+`sd313` is the strongest production seed: enclosed at 47 of 100 checkpoints with all 160 lipids in one
+aggregate. Its render (`docs/figures/emerge_sd313.png`) is a **branched ribbon network with one small
+incidental pocket**, lumen 161 cells against 8149 expected. `sd302` (46/100) fails the same way at
+ratio 0.020.
+
+That is precisely the failure `vesicle_call`'s own docstring records gate 2 was added to catch: *"a
+160-lipid branched network passed it. The render caught that, not the metric."*
+
+**So the 13/20 figure is not 13 near-misses. It is 13 tangled ribbons with pockets**, and gate 2 is
+being correct rather than over-strict. Two consequences:
+
+1. Option (1) is dead -- `n_enclosed >= 1` counts pockets and must not be used as an emergence
+   criterion.
+2. **The historical 2/18, scored on gate 1, was very likely counting the same artifact.** Gate 1 is
+   stricter than option (1) but still admitted a branched network, which is why gate 2 exists at all.
+
+This does not fully settle the question, because the `vesicle.py` concern still stands independently:
+`vesicle_call` sizes the expected lumen from all 160 lipids while a real emergent vesicle may contain
+only part of the system, and rescaling sd9302 by (84/160)^2 moves it from 0.070 to 0.25. That is a
+genuine calibration defect in gate 2 and it needs fixing regardless of the verdict.
+
+**Recommendation, offered not asserted:** fix gate 2 to size the lumen from the *observed cluster*
+rather than the whole system, then re-score. If the emergent states still fail -- and sd313 at ratio
+0.020 would fail by any rescaling -- the 2-D emergence claim should be withdrawn.
+
 That is a judgement about what a vesicle is. It is not something another run can decide, which is why
 this stops here.
 

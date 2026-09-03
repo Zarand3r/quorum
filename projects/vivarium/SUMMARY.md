@@ -100,7 +100,9 @@ The project's headline 2-D result — "a bubble emerges in 2 runs out of 18" —
 that has since been tightened. The stricter test rejects **every** saved picture from those runs, and
 the two runs that counted as successes are no longer on disk: one file was overwritten by a re-run.
 So the old result is not disproved, it is **uncheckable**. Recent runs give 0 out of 40 under the strict
-test and 13 out of 20 under a loose one, which brackets the old number rather than contradicting it.
+test and 13 out of 20 under a loose one — but we looked at the pictures behind the loose number, and
+they are tangled ribbons with a small trapped gap, not bubbles. The loose test counts the wrong thing,
+and the old result was scored with a test closer to the loose one than the strict one.
 
 Deciding which test is the right one is a judgement about what should count as a bubble, not something
 another run can settle. That decision is what the project needs next.
