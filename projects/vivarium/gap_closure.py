@@ -89,20 +89,20 @@ PRODUCTION = {"tt": 0.70, "hh": 0.20, "ht": -0.25, "hw": 0.75, "tw": 0.00, "ww":
 # Rungs beyond 1 are added ONLY after the rung below returns a verdict, because each builds on
 # whichever arm won. Pre-writing them would commit the ladder to a chemistry that may not survive.
 ARMS = {
-    "0":  ("production baseline",         dict(PRODUCTION),                    1.0,  PHI),
-    "1B": ("chi_HT removed",              {**PRODUCTION, "ht": 0.00},          1.0,  PHI),
-    "1C": ("chi_HT -> head sigma 0.95",   {**PRODUCTION, "ht": 0.00},          0.95, PHI),
+    "0":  ("production baseline",         dict(PRODUCTION),                    1.0,  PHI, KT, 2.5),
+    "1B": ("chi_HT removed",              {**PRODUCTION, "ht": 0.00},          1.0,  PHI, KT, 2.5),
+    "1C": ("chi_HT -> head sigma 0.95",   {**PRODUCTION, "ht": 0.00},          0.95, PHI, KT, 2.5),
     # Rung 1 verdict: arm B passed, so chi_HT is removed with NO replacement and sigma_head stays 1.0
     # -- adding a geometric parameter that buys nothing is a knob gained, not a knob removed.
-    "2B": ("chi_HH removed",              {**PRODUCTION, "ht": 0.00, "hh": 0.00}, 1.0, PHI),
+    "2B": ("chi_HH removed",              {**PRODUCTION, "ht": 0.00, "hh": 0.00}, 1.0, PHI, KT, 2.5),
     # chi_HW = 0.75 against chi_TW = 0.00 is the contrast rung 1 identified as the REAL amphiphilic
     # driver, so this is the first rung expected to fail. A failure here is the informative outcome:
     # it locates the physics that geometry has to reproduce.
-    "3B": ("chi_HW removed",              {**PRODUCTION, "ht": 0.00, "hh": 0.00, "hw": 0.00}, 1.0, PHI),
+    "3B": ("chi_HW removed",              {**PRODUCTION, "ht": 0.00, "hh": 0.00, "hw": 0.00}, 1.0, PHI, KT, 2.5),
     # Rung 4 (chi_TW) is VACUOUS: production already has chi_TW = 0.00, so the arm would be
     # bit-identical to 3B. Not defined, not run. The honest knob count is five, not six.
     "5B": ("chi_WW removed",
-           {**PRODUCTION, "ht": 0.00, "hh": 0.00, "hw": 0.00, "ww": 0.00}, 1.0, PHI),
+           {**PRODUCTION, "ht": 0.00, "hh": 0.00, "hw": 0.00, "ww": 0.00}, 1.0, PHI, KT, 2.5),
 }
 
 def span_for_gap(gap: float, n: int = N_LIP) -> float:
@@ -138,14 +138,24 @@ def chi_from(spec: dict) -> np.ndarray:
 _EFF = solvent_averaged_chi(chi_from(PRODUCTION))
 ARMS["6A"] = ("solvent-averaged, water removed",
               {"tt": float(_EFF[TAIL, TAIL]), "hh": float(_EFF[HEAD, HEAD]),
-               "ht": float(_EFF[HEAD, TAIL]), "hw": 0.0, "tw": 0.0, "ww": 0.0}, 1.0, 0.0)
+               "ht": float(_EFF[HEAD, TAIL]), "hw": 0.0, "tw": 0.0, "ww": 0.0}, 1.0, 0.0, KT, 2.5)
 ARMS["6B"] = ("Cooke: chi_TT only + head size",
-              {"tt": 1.00, "hh": 0.0, "ht": 0.0, "hw": 0.0, "tw": 0.0, "ww": 0.0}, 0.95, 0.0)
+              {"tt": 1.00, "hh": 0.0, "ht": 0.0, "hw": 0.0, "tw": 0.0, "ww": 0.0}, 0.95, 0.0, KT, 2.5)
+
+# --- Stage 3 of specs/2026-09-03_phase_search.md -------------------------------------------------
+# The phase map put rung 6B at (T* = 0.45, w* = 1.5) = GEL and production at (0.643, 1.5) = FLUID.
+# These arms move 6B into the fluid band. T* = kT / (eps * chi_TT), and chi_TT = 1.0 here, so kT IS T*.
+ARMS["6Bf"] = ("6B at production T*=0.643",
+               {"tt": 1.00, "hh": 0.0, "ht": 0.0, "hw": 0.0, "tw": 0.0, "ww": 0.0}, 0.95, 0.0,
+               0.643, 2.5)
+ARMS["6Bo"] = ("6B at the most-fluid cell T*=1.1 w*=2.0",
+               {"tt": 1.00, "hh": 0.0, "ht": 0.0, "hw": 0.0, "tw": 0.0, "ww": 0.0}, 0.95, 0.0,
+               1.10, 3.0)
 
 
 def run_one(rung: str, gap: float, seed: int, steps: int = STEPS) -> dict:
     t0 = time.perf_counter()
-    label, spec, sig_head, phi = ARMS[rung]
+    label, spec, sig_head, phi, kT, rc = ARMS[rung]
     span = span_for_gap(gap)
     d = 2
     lip_beads = N_LIP * 5
@@ -157,8 +167,8 @@ def run_one(rung: str, gap: float, seed: int, steps: int = STEPS) -> dict:
         0, N_LIP, n_water, L_BOX, d, plant=f"arc{span:.6f}", branched=True, seed=seed)
     sig = np.full(N_SPECIES, 1.0)
     sig[HEAD] = sig_head
-    f = Field(species, bonds, L_BOX, chi=chi_from(spec), sigma_species=sig)
-    ig = _mixture.make_step_engine(f, X, KT, DT, 1 + seed, engine="transformer")
+    f = Field(species, bonds, L_BOX, chi=chi_from(spec), sigma_species=sig, rc=rc)
+    ig = _mixture.make_step_engine(f, X, kT, DT, 1 + seed, engine="transformer")
     mm = np.array([np.asarray(m, dtype=np.int64) for m in mols], dtype=np.int64)
 
     # Amendment 2: stop TAIL_STEPS after the first closure. The registered endpoint is

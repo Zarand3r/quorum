@@ -37,7 +37,7 @@ _LOCK = threading.Lock()
 
 def run_one(arm: str, seed: int, steps: int = STEPS, check_every: int = CHECK_EVERY) -> dict:
     t0 = time.perf_counter()
-    label, spec, sig_head, phi = ARMS[arm]
+    label, spec, sig_head, phi, kT, rc = ARMS[arm]
     d = 2
     lip = N_LIP * 5
     n_water = 0 if phi <= 0 else int(round(phi * L_BOX ** d / _mixture.C_D[d] * (2 ** d))) - lip
@@ -45,8 +45,8 @@ def run_one(arm: str, seed: int, steps: int = STEPS, check_every: int = CHECK_EV
         0, N_LIP, n_water, L_BOX, d, plant="random", branched=True, seed=seed)
     sig = np.full(N_SPECIES, 1.0)
     sig[HEAD] = sig_head
-    f = Field(species, bonds, L_BOX, chi=chi_from(spec), sigma_species=sig)
-    ig = _mixture.make_step_engine(f, X, KT, DT, 1 + seed, engine="transformer")
+    f = Field(species, bonds, L_BOX, chi=chi_from(spec), sigma_species=sig, rc=rc)
+    ig = _mixture.make_step_engine(f, X, kT, DT, 1 + seed, engine="transformer")
     mm = np.array([np.asarray(m, dtype=np.int64) for m in mols], dtype=np.int64)
     X = np.ascontiguousarray(X, dtype=np.float64)
 
