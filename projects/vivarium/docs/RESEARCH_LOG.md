@@ -2976,3 +2976,23 @@ append already happens in the parent, so nothing else had to change.
 Three distinct cost errors in one project now, all of which looked identical from the outside (a job
 running slower than announced): wrong regime (dispersed vs condensed), wrong concurrency (solo vs
 contended), and wrong parallelism primitive (threads vs processes on small arrays).
+
+## 2026-09-03 — do not change a results schema while a writer is running
+
+I added a `check_every` column to `emerge_reduced.tsv` and migrated the existing rows **while H8 was
+still appending to it**. The running process had the old code, so it kept writing 9-column rows into a
+10-column file, and `load()` -- which filters on column count -- silently dropped every one of them.
+
+The visible symptom was `--score` reporting `6B 0/12` and **no production arm at all**, on a run whose
+log showed 40/40 finished. Read casually, that looks like the production arm crashed. It had not; 28
+good runs were sitting in the file being filtered out.
+
+Repaired by seed range (H7 used 200-219 at cadence 50000, H8 used 300-319 at 10000, so the
+discriminator is unambiguous), with an assertion that no pre-300 seed appears in a short row rather
+than trusting the reasoning.
+
+Two rules, the second of which I already knew:
+1. A schema change waits for the writer to exit. This is the same family as "do not switch git
+   branches while a sweep is writing".
+2. A width filter must **fail loudly** on an unexpected width, not skip the row. `len(f) == len(COLUMNS)`
+   discards data without a word; it should raise, or at minimum count and report what it dropped.
