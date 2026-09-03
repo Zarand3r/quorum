@@ -35,7 +35,7 @@ COLUMNS = ("arm", "seed", "steps", "vesicle_ckpts", "first_vesicle", "enc_ckpts"
 _LOCK = threading.Lock()
 
 
-def run_one(arm: str, seed: int, steps: int = STEPS) -> dict:
+def run_one(arm: str, seed: int, steps: int = STEPS, check_every: int = CHECK_EVERY) -> dict:
     t0 = time.perf_counter()
     label, spec, sig_head, phi = ARMS[arm]
     d = 2
@@ -55,7 +55,7 @@ def run_one(arm: str, seed: int, steps: int = STEPS) -> dict:
     lmax = lfin = 0
     for i in range(steps):
         X = ig.step(X)
-        if (i + 1) % CHECK_EVERY == 0:
+        if (i + 1) % check_every == 0:
             ne = n_enclosed(X, mm, L_BOX)[0]
             ok, _ = vesicle_call(X, mm, L_BOX)
             if ne >= 1:
@@ -120,6 +120,10 @@ def main(argv=None):
     ap.add_argument("--seed0", type=int, default=200)
     ap.add_argument("--steps", type=int, default=STEPS)
     ap.add_argument("--workers", type=int, default=14)
+    ap.add_argument("--check-every", type=int, default=CHECK_EVERY,
+                    help="H8: 10000 instead of 50000. A vesicle that forms and reopens "
+                         "inside one interval is invisible, and the gap assay measured "
+                         "exactly that -- closed at 10k, open again by 60k.")
     ap.add_argument("--score", action="store_true")
     a = ap.parse_args(argv)
     if a.score:
@@ -139,7 +143,7 @@ def main(argv=None):
     # ~2x effective parallelism (8.6 ms/step against 1.02 solo, flat across the whole run, at load 11
     # on 32 cores). The result append happens here in the parent, so no cross-process lock is needed.
     with ProcessPoolExecutor(max_workers=a.workers) as ex:
-        futs = {ex.submit(run_one, ar, sd, a.steps): (ar, sd) for ar, sd in todo}
+        futs = {ex.submit(run_one, ar, sd, a.steps, a.check_every): (ar, sd) for ar, sd in todo}
         for fut in as_completed(futs):
             ar, sd = futs[fut]
             try:

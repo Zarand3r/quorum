@@ -80,3 +80,72 @@ historical.
   nucleation independently of the chemistry.
 - Box and lipid count are held at production values so lipid concentration is matched; what is not
   matched is total bead density, which necessarily falls when 2799 water beads are removed.
+
+---
+
+## H7 — RESULT: FAILS the registered gate, 2026-09-03
+
+20 runs, seeds 200-219, reduced chemistry (`chi_TT` only + `sigma_head = 0.95`), solvent-free.
+
+| | |
+|---|---|
+| vesicles (`vesicle_call` at any checkpoint) | **0/20** |
+| any enclosure (`n_enclosed >= 1`) | **0/20** |
+| mean largest aggregate | **80.3** of 160 lipids |
+
+    GATE (>= 6/20 AND p <= 0.01 vs 2/42): FALSE
+
+This is the second registered outcome, verbatim: *"FAIL, and the arm assembles but does not close.
+The reduction preserves closure-given-a-membrane but not emergence."* The system condenses to half its
+lipids in one aggregate and never encloses anything.
+
+### But the reduction is NOT what failed
+
+| runs at N=160, L=65, kT=0.45, 1e6 steps | vesicles |
+|---|---|
+| historical, production chemistry | 2/18 |
+| H5, 2026-09-02, production chemistry | **0/24** |
+| H7, 2026-09-03, reduced chemistry | **0/20** |
+| **recent, pooled across both chemistries** | **0/44** |
+
+`0/20` against the registered comparator `2/42` gives p = 1.000 -- the two arms cannot be
+distinguished, because both are approximately zero. The reduced chemistry is not worse at emergence
+than the production chemistry. **Neither of them emerges anything in recent runs.**
+
+Historical 2/18 against recent 0/44 is one-sided p = 0.0809: suggestive, NOT established. The
+operative fact is 0/44, not a demonstrated discrepancy.
+
+### The most likely artifact, and it is checkable
+
+**H7 checkpoints every 50,000 steps.** The gap assay measured rings that close and REOPEN inside that
+window -- rung 3B seed 105 closed at step 10,000 and was open again by 60,000. A transient vesicle
+shorter than one checkpoint interval is invisible to this harness, and transient is exactly what a
+marginal, encounter-limited closure would be.
+
+So `0/20` may be a **sampling-cadence artifact rather than a physical result**, and the same applies
+to H5's `0/24`. This must be resolved before H7 is read as evidence about the chemistry at all.
+
+## H8 — registered 2026-09-03, before running
+
+**Does the original 2-D emergence result reproduce under dense checkpointing?**
+
+| | |
+|---|---|
+| arms | production chemistry (rung 0) **and** reduced (6B), run contemporaneously |
+| change | `CHECK_EVERY = 10,000` instead of 50,000 -- 5x denser |
+| seeds | 20 per arm, fresh: 300-319 |
+| everything else | identical to H7 |
+
+```
+The question is not which arm wins. It is whether EITHER arm reproduces 2/18.
+
+  BOTH arms > 0    -> emergence is real and was being missed by cadence. Compare the arms.
+  BOTH arms 0/20   -> the historical 2/18 does not reproduce at 5x denser sampling either.
+                      The project's headline 2-D emergence result is then in question and that,
+                      not the knob ladder, becomes the most important open item.
+  production > 0, reduced 0 -> the reduction genuinely costs emergence. The ladder result stands
+                      for closure and explicitly does not extend to emergence.
+```
+
+The production arm is run **contemporaneously** this time. H7 leaned on a historical control and its
+own spec said a near-baseline result would be uninterpretable without one. It was, so here it is.
