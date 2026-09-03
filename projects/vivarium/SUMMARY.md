@@ -28,8 +28,13 @@ not emerged.
   was already set to "no effect", so it never did anything; the honest count was always five.
 - **DONE — and one of them genuinely replaced by physics.** See Results. This is the first time in the
   project a chosen number has been *replaced* rather than merely deleted.
-- **NOW — the last arm is running**: can the whole thing run on a single attraction between oily
-  tails, with the head doing its job purely by being a different size? Each is either swapped for a
+- **DONE — yes, for closing a bubble that already exists.** One attraction between oily tails, plus a
+  head that is 5% smaller, closes a nearly-shut ribbon 19 times in 20 and holds it 17 times in 20 —
+  as good as the original six-number recipe.
+- **DONE — but NO, for building one from scratch.** Starting from scattered molecules, the stripped-down
+  recipe almost never gets to an enclosed shape: 2 runs in 20 against 13 in 20 for the original. Making
+  a membrane and keeping one shut are different problems, and only the second one was simplified.
+- **NOW — a problem with our own older result.** See Results. It needs a human decision, not more runs. Each is either swapped for a
   physical or geometric mechanism, or shown to be irreducible. The one attraction between oily tails
   is declared irreducible up front: without it nothing sticks to anything and there is no liquid.
 - **DONE — a much better way of measuring it, and it works.** The old test asked "did a bubble
@@ -88,6 +93,17 @@ not emerged.
   structural claim now needs a number **and** a picture.
 - **"Transformer-only" is structural, not learned.** Weights are fixed and the network's MLP is off in
   every run. A hand-written force law expressed as attention, not a trained model.
+
+## The open question that matters most
+
+The project's headline 2-D result — "a bubble emerges in 2 runs out of 18" — was scored with a test
+that has since been tightened. The stricter test rejects **every** saved picture from those runs, and
+the two runs that counted as successes are no longer on disk: one file was overwritten by a re-run.
+So the old result is not disproved, it is **uncheckable**. Recent runs give 0 out of 40 under the strict
+test and 13 out of 20 under a loose one, which brackets the old number rather than contradicting it.
+
+Deciding which test is the right one is a judgement about what should count as a bubble, not something
+another run can settle. That decision is what the project needs next.
 
 ## Known gaps
 

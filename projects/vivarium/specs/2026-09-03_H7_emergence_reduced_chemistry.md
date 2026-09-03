@@ -149,3 +149,61 @@ The question is not which arm wins. It is whether EITHER arm reproduces 2/18.
 
 The production arm is run **contemporaneously** this time. H7 leaned on a historical control and its
 own spec said a near-baseline result would be uninterpretable without one. It was, so here it is.
+
+---
+
+## H8 — RESULT, 2026-09-03. Both arms 0/20 on the strict gate.
+
+40 runs, seeds 300-319, both arms contemporaneous, checkpoint every 10,000 steps.
+
+| arm, n = 20 | vesicles (`vesicle_call`) | seeds with any enclosure | total enclosure-checkpoints | mean largest aggregate |
+|---|---|---|---|---|
+| production (rung 0) | **0/20** | **13/20** | 181 | **131.4** / 160 lipids |
+| 6B reduced | **0/20** | **2/20** | 8 | **78.0** / 160 lipids |
+
+### Finding 1 — the reduction costs self-assembly, and this is established
+
+Seeds with enclosure, 13/20 against 2/20: **Fisher one-sided p = 0.000386**. Production also
+aggregates far more of the system (131 of 160 lipids against 78).
+
+So the ladder's scope limit was the right call and the honest reading is:
+
+> Reducing five affinities plus an explicit solvent to one affinity plus a size ratio **preserves the
+> ability to close and hold a planted vesicle** (19/20 closure, 17/20 persistence, indistinguishable
+> from production) and **degrades self-assembly** (2/20 against 13/20 seeds reaching any enclosure).
+
+Nucleating a membrane from dispersed lipids and holding one shut are different problems. The ladder
+only ever tested the second, said so in advance, and H8 is why that mattered.
+
+### Finding 2 — the "2/18 does not reproduce" reading is probably a CRITERION change, not physics
+
+Both arms give 0/20 on `vesicle_call`, against a historical 2/18. Before concluding the headline
+result fails to reproduce, note what this project has already written down about it:
+
+- `vesicle.py`: *"every saved 2-D production state was checked on 2026-08-27 and **not one passes
+  `vesicle_call`**"* -- listing five states with lumen ratios 0.021-0.070 against a 0.10 threshold.
+- `_lumen_field.vesicle_call` docstring: *"Gate 2 exists because the pre-registered emergence
+  criterion had only gate 1, and a 160-lipid branched network passed it. The render caught that, not
+  the metric."*
+
+**The historical 2/18 was scored on gate 1 alone.** Gate 2 -- the lumen must be the right size for the
+lipid count -- was added afterwards, and it rejects every 2-D state the project ever saved. H8 applies
+both gates.
+
+Under a weak enclosure criterion, production gives **13/20** -- *more* than 2/18. Under the strict
+two-gate criterion, **0/20**. The old number and the new number were never measuring the same object,
+and 2/18 vs 0/40 is therefore **not** evidence of non-reproduction.
+
+**What this does mean, and it is not comfortable:** the project's headline 2-D emergence result is
+stated against a criterion that its own successor instrument rejects, and no saved state survives the
+current gate. The result is not refuted -- it is **unverifiable from the artifacts on disk**. Deciding
+what 2-D emergence should be scored on is a judgement call about what counts as a vesicle, not a
+measurement, and it is handed to review rather than settled here.
+
+### What was NOT done
+
+No re-scoring of the historical runs under gate 1 alone, which would make the comparison exact. The
+raw states are the five listed in `vesicle.py` and they do not include the two that were counted as
+successes -- one was overwritten in place by a relaunch (`docs/states_protected/former_sd45007_*`,
+whose filename says step 960,000 while the file reports 1,600,000). **The vesicle that existed at
+960k is gone from disk.** That is the reason this cannot be closed by measurement.
