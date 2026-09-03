@@ -26,11 +26,11 @@ not emerged.
 - **NOW — replace all six hand-set numbers, one at a time, in 2-D.** Each is either swapped for a
   physical or geometric mechanism, or shown to be irreducible. The one attraction between oily tails
   is declared irreducible up front: without it nothing sticks to anything and there is no liquid.
-- **NOW — measuring it a completely different way.** The old test asked "did a bubble appear?", which
-  happens 11% of the time, so six tries per side could never tell two recipes apart — and did not,
-  twice. The new test plants a nearly-closed ribbon and asks whether the two ends find each other.
-  That closes 5 times in 5 when the ends start 3.4 wide apart and 1 time in 10 at 10.1, so it gives a
-  graded answer instead of a coin flip, and each run is about 30x cheaper.
+- **DONE — a much better way of measuring it, and it works.** The old test asked "did a bubble
+  appear?", which happens 11% of the time, so six tries per side could never tell two recipes apart —
+  and did not, twice. The new test plants a nearly-closed ribbon and asks whether the two ends find
+  each other. Checked on the current code: **10 closures out of 10** when the ends start 3.4 apart,
+  **2 out of 10** when they start 10.1 apart. A graded answer instead of a coin flip.
 - **BLOCKED — closing a sheet into a bubble in 3-D.** Six explanations tried, all refuted. Paused for
   outside review: `docs/REVIEWER_HANDOFF_2026-08-31.md`.
 - **NOT STARTED — fusing and dividing.** Neither has ever been observed.
@@ -58,6 +58,14 @@ not emerged.
   and would have scored the starting arrangement as already closed. The setting actually used reads
   "not closed" on every starting arrangement and "closed" on a real ring, and that setting was written
   down before the check was run.
+- **The new measurement was checked against pictures, not trusted from the count.** The near case is a
+  continuous closed ring with water inside, heads on both faces and oily cores between them. The far
+  case is an open C whose two ends never met. Metric and picture agree, which is not something this
+  project can take for granted.
+- **A rendering trap, caught and fixed.** The first picture showed four separate fragments in the
+  corners of the box, because the ring is built around the origin and the box wraps around. Recentring
+  it properly showed one intact ring. Had that picture been believed, a perfectly good result would
+  have been thrown away.
 - **Measurement is the recurring obstacle.** Nineteen instrument defects on record, six in two days.
   Every time, the tool could not tell success from the way things were actually failing. Every
   structural claim now needs a number **and** a picture.
