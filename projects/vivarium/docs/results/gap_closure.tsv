@@ -229,3 +229,13 @@ rung	arm	gap	span	seed	closed	first_closed_step	n_enc_final	vesicle_call	steps_r
 6B	Cooke: chi_TT only + head size	10.1	0.873908	106	0	-1	0	0	300000	70	2226.9
 6B	Cooke: chi_TT only + head size	10.1	0.873908	108	0	-1	0	0	300000	70	2196.6
 6B	Cooke: chi_TT only + head size	10.1	0.873908	109	0	-1	0	0	300000	70	2176.6
+6B	Cooke: chi_TT only + head size	10.1	0.873908	110	0	-1	0	0	300000	70	2121.8
+6B	Cooke: chi_TT only + head size	10.1	0.873908	112	0	-1	0	0	300000	70	1871.5
+6B	Cooke: chi_TT only + head size	10.1	0.873908	111	0	-1	0	0	300000	70	1874.7
+6B	Cooke: chi_TT only + head size	10.1	0.873908	113	0	-1	0	0	300000	70	1593.7
+6B	Cooke: chi_TT only + head size	10.1	0.873908	114	0	-1	0	0	300000	70	1481.3
+6B	Cooke: chi_TT only + head size	10.1	0.873908	115	0	-1	0	0	300000	70	1472.5
+6B	Cooke: chi_TT only + head size	10.1	0.873908	118	0	-1	0	0	300000	70	1344.6
+6B	Cooke: chi_TT only + head size	10.1	0.873908	117	0	-1	0	0	300000	70	1351.1
+6B	Cooke: chi_TT only + head size	10.1	0.873908	116	0	-1	0	0	300000	70	1359.3
+6B	Cooke: chi_TT only + head size	10.1	0.873908	119	0	-1	0	0	300000	70	1150.7

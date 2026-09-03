@@ -540,3 +540,73 @@ heads are pushed onto the surfaces and out of the core).
 3. **Persistence was not a registered primary.** It became a co-primary in Amendment 3, after rung 3's
    n = 10 data was seen. The n = 20 extension and this rung are out-of-sample tests of it, but the
    decision to look at persistence at all was made after seeing a number.
+
+---
+
+## RUNG 6B — Cooke: ONE affinity + head size — PASS. THE LADDER IS COMPLETE.
+
+40 runs, seeds 100-119, solvent-free. Chemistry: `chi_TT = 1.0` and **nothing else**. Heads carry no
+attractive term at all; what makes the molecule an amphiphile is that its head is a different SIZE
+(`sigma_head = 0.95`).
+
+| | near 3.4 | far 10.1 |
+|---|---|---|
+| closed | **19/20** | 4/20 |
+| persisted | **17/20** | 4/20 |
+
+    discrimination p = 0.0000011                              -> PASS
+    not degraded vs rung 5B (0.95 vs 0.70)                    -> PASS
+
+### Against the production chemistry it replaces
+
+| | production (rung 0) | 6B (one affinity + geometry) | p |
+|---|---|---|---|
+| closure, near | 10/10 | 19/20 | 0.6667 |
+| persistence, near | 9/10 | 17/20 | 0.5928 |
+
+**Production is not better than one affinity plus a size ratio on either endpoint.**
+
+### The persistence story, end to end
+
+| near gap, n = 20 | persisted |
+|---|---|
+| 2B -- all water terms present | 18/20 |
+| 3B -- `chi_HW` deleted, nothing put back | **10/20** |
+| 6A -- solvent-averaged (derived from the same numbers) | 16/20 |
+| **6B -- one affinity + head size** | **17/20** |
+
+6B vs 3B: p = 0.0204. 6B vs 2B: p = 0.5, **indistinguishable from carrying every knob**.
+
+Render: `docs/figures/rung6B_cooke_one_affinity.png` -- a closed bilayer ring in vacuum, heads lining
+both faces, tail core between, clean lumen. Built from one attraction and a 5% size difference.
+
+### The ladder, complete
+
+| knob | value | outcome |
+|---|---|---|
+| `chi_HT` | -0.25 | **decoration** -- deleted, 9/10 vs 10/10 |
+| `chi_HH` | +0.20 | **decoration** -- deleted, 8/10 |
+| `chi_HW` | +0.75 | **LOAD-BEARING** -- deleting it halves persistence (18/20 -> 10/20, p = 0.0069) |
+| `chi_TW` | 0.00 | **vacuous** -- already at "no interaction"; never a knob |
+| `chi_WW` | +0.50 | **decoration** -- deleted, 7/10 |
+| explicit solvent | phi = 0.55 | **replaced** -- 2799 beads -> solvent averaging, or dropped entirely |
+| `chi_TT` | 0.70 | **kept, irreducible** -- declared so before the ladder ran |
+
+Five hand-set affinities plus an explicit solvent reduce to **one affinity and one geometric ratio**,
+with no measurable loss on either endpoint.
+
+## WHAT THIS DOES NOT SHOW — the limit that matters most
+
+**Every rung was run on a PLANTED ARC.** The assay hands the system its curvature and asks whether the
+ends find each other and stay joined. It therefore establishes:
+
+> the chemistry required to CLOSE and HOLD a 2-D vesicle reduces to one affinity plus geometry
+
+and it does **not** establish that a vesicle EMERGES from that chemistry. Self-assembly under the
+reduced chemistry has never been run. This limit was registered in the threat register before any rung
+and is restated here because it is the difference between the result we have and the result the
+project wants.
+
+It is now cheap to test. Solvent-free runs at 0.55 ms/step against 2.2 with explicit water -- a 4x
+speedup on the ribbon, and roughly 12x on a self-assembly run, which turns a 3.3-hour job into ~17
+minutes. **That is the next experiment and it is registered below.**
