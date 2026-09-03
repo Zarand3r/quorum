@@ -484,3 +484,59 @@ affinity in the model is zero, and ribbons still close 7 times in 10.
 Cumulative check registered after rung 2 (report against rung 0 whenever the near arm reaches
 <= 6/10): 7/10 has not crossed that line, but against rung 0's 10/10 the slide is now 10 -> 9 -> 18/20
 -> 18/20 -> 7/10. Reported for visibility; the per-rung gate passes.
+
+---
+
+## RUNG 6A — Flory-Huggins solvent averaging, water removed — PASS, 2026-09-03
+
+40 runs, seeds 100-119, solvent-free (`phi = 0`, 2799 water beads gone, 350 beads remain).
+
+Chemistry, computed by `field.solvent_averaged_chi` from the production table, not chosen:
+
+    eff[TT] = 0.70 + 0.50 - 0.00 - 0.00 = +1.20
+    eff[HH] = 0.20 + 0.50 - 0.75 - 0.75 = -0.80
+    eff[HT] = -0.25 + 0.50 - 0.75 - 0.00 = -0.50
+
+| | near 3.4 | far 10.1 |
+|---|---|---|
+| closed | **16/20** | **4/20** |
+| persisted | **16/20** | 4/20 |
+
+    gate clause 1, not degraded vs rung 5B (7/10): 0.80 vs 0.70  -> PASS
+    gate clause 2, coordinate still discriminates: p = 0.00018   -> PASS
+
+**The fail-by-winning clause did not fire.** The far arm was at 3/8 mid-run, which would have failed
+the discrimination clause had it finished near 12/20. It settled at 4/20. This is worth recording as
+the one time in this project a registered "criterion you can fail by winning" was genuinely at risk
+and survived on the data rather than on argument.
+
+### The crux result
+
+| persistence, near gap, n = 20 | | |
+|---|---|---|
+| 2B -- `chi_HW` present | 18/20 | |
+| 3B -- `chi_HW` DELETED | 10/20 | |
+| **6A -- solvent-averaged, water gone** | **16/20** | **p = 0.0479 vs 3B** |
+| 6A vs 2B | | p = 0.3307 -- *not distinguishable* |
+
+Deleting `chi_HW` costs persistence (established, p = 0.0069). Integrating the solvent out into an
+effective interaction **restores it to a level indistinguishable from having the number**. That is a
+hand-set chemical parameter replaced by derived physics rather than merely removed, and it is the
+first such demonstration in this project.
+
+Render: `docs/figures/rung6A_solventfree.png` -- a closed ring in vacuum with heads lining both faces
+and a tail core between them. The head/tail segregation is visibly cleaner than in any explicit-water
+render, which is what the derived numbers predict (`eff[HH]` and `eff[HT]` are both repulsive, so
+heads are pushed onto the surfaces and out of the core).
+
+### Three things this does NOT establish, stated plainly
+
+1. **6A is a RE-EXPRESSION, not a knob reduction.** The three effective numbers are computed FROM the
+   six hand-set ones. The count of independent chosen quantities does not fall at this rung. What
+   falls is the *explicit solvent* -- 2799 beads replaced by arithmetic. Rung 6B is the arm that tests
+   an actual reduction.
+2. **p = 0.0479 is marginal.** It clears 0.05 by a hair on n = 20. It should be replicated before it
+   is leaned on.
+3. **Persistence was not a registered primary.** It became a co-primary in Amendment 3, after rung 3's
+   n = 10 data was seen. The n = 20 extension and this rung are out-of-sample tests of it, but the
+   decision to look at persistence at all was made after seeing a number.

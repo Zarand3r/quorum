@@ -149,3 +149,83 @@ rung	arm	gap	span	seed	closed	first_closed_step	n_enc_final	vesicle_call	steps_r
 2B	chi_HH removed	10.1	0.873908	112	0	-1	0	0	300000	70	2112.5
 2B	chi_HH removed	10.1	0.873908	114	0	-1	0	0	300000	70	2111.3
 5B	chi_WW removed	10.1	0.873908	109	0	-1	0	0	300000	70	834.2
+3B	chi_HW removed	10.1	0.873908	110	0	-1	0	0	300000	70	1730.0
+3B	chi_HW removed	10.1	0.873908	111	0	-1	0	0	300000	70	1721.2
+3B	chi_HW removed	10.1	0.873908	112	0	-1	0	0	300000	70	1720.5
+6A	solvent-averaged, water removed	3.4	0.953678	103	1	10000	1	1	60000	70	455.4
+6A	solvent-averaged, water removed	3.4	0.953678	107	1	10000	1	1	60000	70	456.2
+6A	solvent-averaged, water removed	3.4	0.953678	104	1	10000	1	1	60000	70	456.7
+6A	solvent-averaged, water removed	3.4	0.953678	102	1	10000	1	1	60000	70	457.1
+3B	chi_HW removed	10.1	0.873908	113	0	-1	0	0	300000	70	1577.5
+3B	chi_HW removed	10.1	0.873908	114	0	-1	0	0	300000	70	1556.4
+3B	chi_HW removed	10.1	0.873908	115	0	-1	0	0	300000	70	1546.8
+3B	chi_HW removed	10.1	0.873908	117	0	-1	0	0	300000	70	1537.0
+3B	chi_HW removed	10.1	0.873908	116	0	-1	0	0	300000	70	1541.6
+3B	chi_HW removed	10.1	0.873908	118	0	-1	0	0	300000	70	1540.6
+3B	chi_HW removed	10.1	0.873908	119	0	-1	0	0	300000	70	1541.2
+6A	solvent-averaged, water removed	3.4	0.953678	111	1	30000	1	1	80000	70	609.6
+6A	solvent-averaged, water removed	3.4	0.953678	115	1	40000	1	1	90000	70	674.6
+6A	solvent-averaged, water removed	3.4	0.953678	100	1	50000	1	1	100000	70	741.2
+6A	solvent-averaged, water removed	3.4	0.953678	116	1	10000	1	1	60000	70	423.3
+6A	solvent-averaged, water removed	3.4	0.953678	119	1	10000	1	1	60000	70	423.3
+6A	solvent-averaged, water removed	3.4	0.953678	105	1	90000	1	1	140000	70	1007.7
+6A	solvent-averaged, water removed	3.4	0.953678	114	1	130000	1	1	180000	70	1277.5
+6A	solvent-averaged, water removed	3.4	0.953678	101	1	130000	1	1	180000	70	1279.1
+6A	solvent-averaged, water removed	3.4	0.953678	106	1	170000	1	1	220000	70	1540.3
+6A	solvent-averaged, water removed	3.4	0.953678	118	1	110000	1	1	160000	70	1084.8
+6A	solvent-averaged, water removed	3.4	0.953678	110	1	180000	1	1	230000	70	1604.7
+6A	solvent-averaged, water removed	3.4	0.953678	117	1	130000	1	1	180000	70	1211.9
+6A	solvent-averaged, water removed	10.1	0.873908	101	1	140000	1	1	190000	70	1252.3
+6A	solvent-averaged, water removed	3.4	0.953678	108	0	-1	0	0	300000	70	2062.0
+6A	solvent-averaged, water removed	3.4	0.953678	112	0	-1	0	0	300000	70	2062.8
+6A	solvent-averaged, water removed	3.4	0.953678	113	0	-1	0	0	300000	70	2063.4
+6A	solvent-averaged, water removed	3.4	0.953678	109	0	-1	0	0	300000	70	2063.7
+6A	solvent-averaged, water removed	10.1	0.873908	100	0	-1	0	0	300000	70	1982.8
+6A	solvent-averaged, water removed	10.1	0.873908	102	1	240000	1	1	290000	70	1927.5
+6A	solvent-averaged, water removed	10.1	0.873908	103	0	-1	0	0	300000	70	1990.4
+6A	solvent-averaged, water removed	10.1	0.873908	104	0	-1	0	0	300000	70	1989.3
+6A	solvent-averaged, water removed	10.1	0.873908	105	0	-1	0	0	300000	70	2000.9
+6A	solvent-averaged, water removed	10.1	0.873908	107	1	220000	1	1	270000	70	1793.1
+6A	solvent-averaged, water removed	10.1	0.873908	106	0	-1	0	0	300000	70	1997.0
+6B	Cooke: chi_TT only + head size	3.4	0.953678	100	1	10000	1	1	60000	70	406.1
+6A	solvent-averaged, water removed	10.1	0.873908	110	1	230000	1	1	280000	70	1863.8
+6A	solvent-averaged, water removed	10.1	0.873908	108	0	-1	0	0	300000	70	1997.2
+6A	solvent-averaged, water removed	10.1	0.873908	109	0	-1	0	0	300000	70	1998.7
+6A	solvent-averaged, water removed	10.1	0.873908	111	0	-1	0	0	300000	70	2002.4
+6B	Cooke: chi_TT only + head size	3.4	0.953678	104	1	10000	1	1	60000	70	396.8
+6B	Cooke: chi_TT only + head size	3.4	0.953678	103	1	10000	1	1	60000	70	398.8
+6B	Cooke: chi_TT only + head size	3.4	0.953678	102	1	50000	1	0	100000	70	672.0
+6B	Cooke: chi_TT only + head size	3.4	0.953678	101	1	70000	1	0	120000	70	806.2
+6A	solvent-averaged, water removed	10.1	0.873908	112	0	-1	0	0	300000	70	2004.8
+6B	Cooke: chi_TT only + head size	3.4	0.953678	107	1	10000	1	1	60000	70	406.0
+6A	solvent-averaged, water removed	10.1	0.873908	114	0	-1	0	0	300000	70	2007.7
+6A	solvent-averaged, water removed	10.1	0.873908	113	0	-1	0	0	300000	70	2011.1
+6A	solvent-averaged, water removed	10.1	0.873908	115	0	-1	0	0	300000	70	2011.6
+6A	solvent-averaged, water removed	10.1	0.873908	116	0	-1	0	0	300000	70	2011.5
+6B	Cooke: chi_TT only + head size	3.4	0.953678	111	1	30000	1	1	80000	70	532.0
+6B	Cooke: chi_TT only + head size	3.4	0.953678	105	1	80000	1	0	130000	70	869.9
+6B	Cooke: chi_TT only + head size	3.4	0.953678	116	1	10000	1	1	60000	70	391.8
+6B	Cooke: chi_TT only + head size	3.4	0.953678	118	1	10000	1	1	60000	70	392.4
+6B	Cooke: chi_TT only + head size	3.4	0.953678	113	1	40000	1	1	90000	70	597.7
+6A	solvent-averaged, water removed	10.1	0.873908	117	0	-1	0	0	300000	70	2000.6
+6A	solvent-averaged, water removed	10.1	0.873908	118	0	-1	0	0	300000	70	2006.9
+6B	Cooke: chi_TT only + head size	3.4	0.953678	117	1	60000	1	1	110000	70	772.6
+6B	Cooke: chi_TT only + head size	3.4	0.953678	119	1	30000	1	1	80000	70	577.7
+6A	solvent-averaged, water removed	10.1	0.873908	119	0	-1	0	0	300000	70	2039.5
+6B	Cooke: chi_TT only + head size	3.4	0.953678	110	1	130000	0	0	180000	70	1265.9
+6B	Cooke: chi_TT only + head size	3.4	0.953678	115	1	90000	1	1	140000	70	992.7
+6B	Cooke: chi_TT only + head size	3.4	0.953678	106	1	220000	1	0	270000	70	1944.4
+6B	Cooke: chi_TT only + head size	3.4	0.953678	108	1	200000	1	0	250000	70	1814.0
+6B	Cooke: chi_TT only + head size	3.4	0.953678	109	1	250000	0	0	300000	70	2217.6
+6B	Cooke: chi_TT only + head size	10.1	0.873908	101	1	150000	1	0	200000	70	1585.8
+6B	Cooke: chi_TT only + head size	3.4	0.953678	112	1	300000	1	0	300000	70	2249.7
+6B	Cooke: chi_TT only + head size	10.1	0.873908	107	1	120000	1	1	170000	70	1360.3
+6B	Cooke: chi_TT only + head size	10.1	0.873908	100	1	190000	1	0	240000	70	1883.5
+6B	Cooke: chi_TT only + head size	3.4	0.953678	114	0	-1	0	0	300000	70	2281.1
+6B	Cooke: chi_TT only + head size	10.1	0.873908	105	1	170000	1	0	220000	70	1765.3
+6B	Cooke: chi_TT only + head size	10.1	0.873908	102	0	-1	0	0	300000	70	2337.5
+6B	Cooke: chi_TT only + head size	10.1	0.873908	103	0	-1	0	0	300000	70	2337.4
+6B	Cooke: chi_TT only + head size	10.1	0.873908	104	0	-1	0	0	300000	70	2322.0
+6B	Cooke: chi_TT only + head size	10.1	0.873908	106	0	-1	0	0	300000	70	2226.9
+6B	Cooke: chi_TT only + head size	10.1	0.873908	108	0	-1	0	0	300000	70	2196.6
+6B	Cooke: chi_TT only + head size	10.1	0.873908	109	0	-1	0	0	300000	70	2176.6

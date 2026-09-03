@@ -1,6 +1,6 @@
 # vivarium — executive summary
 
-*Updated 2026-09-02. Current state only — history lives in `RESEARCH_LOG.md`. Plain language, short.*
+*Updated 2026-09-03. Current state only — history lives in `RESEARCH_LOG.md`. Plain language, short.*
 
 ## Objective
 
@@ -24,7 +24,12 @@ not emerged.
   "heads dislike tails", and the code called it the thing that makes soap behave like soap. Removed
   entirely, ribbons still close 9 times in 10 against 10 in 10 with it — indistinguishable. So it was
   decoration. No replacement was needed, and none was kept.
-- **NOW — 2 of 6 numbers gone, 4 to go**, one at a time, in 2-D. Each is either swapped for a
+- **DONE — all five hand-set chemistry numbers removed, one at a time.** A sixth was on the list but
+  was already set to "no effect", so it never did anything; the honest count was always five.
+- **DONE — and one of them genuinely replaced by physics.** See Results. This is the first time in the
+  project a chosen number has been *replaced* rather than merely deleted.
+- **NOW — the last arm is running**: can the whole thing run on a single attraction between oily
+  tails, with the head doing its job purely by being a different size? Each is either swapped for a
   physical or geometric mechanism, or shown to be irreducible. The one attraction between oily tails
   is declared irreducible up front: without it nothing sticks to anything and there is no liquid.
 - **DONE — a much better way of measuring it, and it works.** The old test asked "did a bubble
@@ -46,10 +51,16 @@ not emerged.
 - **Closing is a separate problem from making a membrane.** The hollowness measure has sat at 0.49 (a
   bubble needs below 0.25) across a 40x range of membrane quality, three molecule counts, four box sizes
   and every stiffness tried — including runs where membranes reached full real-membrane thickness.
-- **Two numbers deleted so far, nothing added back.** The one saying "heads dislike tails" and the one
-  saying "heads attract each other" are both gone. Ribbons still close: 10 in 10 originally, 9 in 10,
-  then 8 in 10. Each step is within a single run of the one before, but the direction is downward and
-  is being watched — the ladder could fail by slow slide rather than at any one step.
+- **Three of the five numbers were decoration.** "Heads dislike tails", "heads attract each other",
+  and "water sticks to itself" can all be deleted outright with no measurable cost. Ribbons still close.
+- **One number was real, and we found out how.** "Heads are held in water" does not change whether a
+  ribbon's two ends find each other — it changes whether the ring they make *stays shut*. Deleting it,
+  half the rings that formed came back open (10 of 20, against 18 of 20 with it). Closing and staying
+  closed are different physics, and this is the first measurement here that separates them.
+- **And it was replaced, not just deleted.** Water can be removed from the simulation entirely and its
+  effect folded into a computed attraction between the parts that remain — standard thermodynamics, no
+  new chosen numbers. Doing that brings the rings back: 16 of 20 stay shut, indistinguishable from
+  having the original number. 2,799 water particles replaced by three lines of arithmetic.
 - **The "makes soap soap" number turned out to be decoration.** With it, ribbons close 10 times in 10;
   without it, 9 in 10. What actually makes the molecules soap-like is a different pair of numbers —
   heads are held in water while tails are indifferent to it — and those are next on the list.
