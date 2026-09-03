@@ -95,6 +95,10 @@ ARMS = {
     # Rung 1 verdict: arm B passed, so chi_HT is removed with NO replacement and sigma_head stays 1.0
     # -- adding a geometric parameter that buys nothing is a knob gained, not a knob removed.
     "2B": ("chi_HH removed",              {**PRODUCTION, "ht": 0.00, "hh": 0.00}, 1.0),
+    # chi_HW = 0.75 against chi_TW = 0.00 is the contrast rung 1 identified as the REAL amphiphilic
+    # driver, so this is the first rung expected to fail. A failure here is the informative outcome:
+    # it locates the physics that geometry has to reproduce.
+    "3B": ("chi_HW removed",              {**PRODUCTION, "ht": 0.00, "hh": 0.00, "hw": 0.00}, 1.0),
 }
 
 

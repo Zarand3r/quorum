@@ -24,7 +24,7 @@ not emerged.
   "heads dislike tails", and the code called it the thing that makes soap behave like soap. Removed
   entirely, ribbons still close 9 times in 10 against 10 in 10 with it — indistinguishable. So it was
   decoration. No replacement was needed, and none was kept.
-- **NOW — 1 of 6 numbers gone, 5 to go**, one at a time, in 2-D. Each is either swapped for a
+- **NOW — 2 of 6 numbers gone, 4 to go**, one at a time, in 2-D. Each is either swapped for a
   physical or geometric mechanism, or shown to be irreducible. The one attraction between oily tails
   is declared irreducible up front: without it nothing sticks to anything and there is no liquid.
 - **DONE — a much better way of measuring it, and it works.** The old test asked "did a bubble
@@ -46,16 +46,19 @@ not emerged.
 - **Closing is a separate problem from making a membrane.** The hollowness measure has sat at 0.49 (a
   bubble needs below 0.25) across a 40x range of membrane quality, three molecule counts, four box sizes
   and every stiffness tried — including runs where membranes reached full real-membrane thickness.
+- **Two numbers deleted so far, nothing added back.** The one saying "heads dislike tails" and the one
+  saying "heads attract each other" are both gone. Ribbons still close: 10 in 10 originally, 9 in 10,
+  then 8 in 10. Each step is within a single run of the one before, but the direction is downward and
+  is being watched — the ladder could fail by slow slide rather than at any one step.
 - **The "makes soap soap" number turned out to be decoration.** With it, ribbons close 10 times in 10;
   without it, 9 in 10. What actually makes the molecules soap-like is a different pair of numbers —
   heads are held in water while tails are indifferent to it — and those are next on the list.
   We also tried giving the head a different *size* to do the job instead. It closed 10 in 10, but since
   simply deleting the number already worked, the size change earns no credit and was not kept.
-- **A curious signal, now being replicated.** Counting runs rather than snapshots, 4 of 6 runs without
-  the knob briefly enclosed a region against 0 of 6 with it. None passed the full bubble test. It is
-  the first hint that removing the knob helps rather than hurts, and it is exactly the kind of
-  small-sample pattern this project has repeatedly watched evaporate. A fresh 12-per-side replication
-  is running.
+- **A curious signal, replicated, and it was noise.** Earlier, 4 of 6 runs without the knob briefly
+  enclosed a region against 0 of 6 with it. On a fresh 12-per-side rerun it is 4 of 12 against 4 of 12
+  — no difference at all. The 0-of-6 was the fluke, not the effect. That is the fourth time a small
+  result here has vanished when repeated, and it is why the measurement was changed.
 - **The new test was checked against a trick it could have fallen for.** Its detector counts enclosed
   space after fattening the molecules slightly. Fattened enough, it bridges a 3.4-wide gap on its own
   and would have scored the starting arrangement as already closed. The setting actually used reads

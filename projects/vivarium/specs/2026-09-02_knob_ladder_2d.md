@@ -306,3 +306,68 @@ what removing the head-tail term should look like, and the ring closed regardles
 be the same run, so **rung 2 has only arm B, 20 runs**. If it fails, a genuine arm C (head size
 compensating for the lost head-head cohesion) becomes the next thing to try, and would be registered
 then.
+
+---
+
+## RUNG 2 — chi_HH — PASS, 2026-09-02
+
+20 runs, one arm (B and C would be the identical run; see the rung 2 design note).
+
+| arm | chemistry | near 3.4 sigma | far 10.1 sigma | Fisher |
+|---|---|---|---|---|
+| A (rung 1B) | `chi_HT = 0` | 9/10 | 0/10 | 0.0001 |
+| **2B** | `chi_HT = 0`, `chi_HH = 0` | **8/10** | **0/10** | 0.0004 |
+
+Gate: near 8/10 >= 6/10, not degraded against the 9/10 baseline, coordinate still discriminates.
+**PASS.** Two of six hand-set affinities are now gone, with nothing added in their place.
+
+Render: `docs/figures/rung2B_closed.png`, seed 100 at gap 3.4 -- a closed ring with a water-filled
+lumen and no head-head or head-tail term anywhere in the chemistry.
+
+Trend across the ladder so far, at the near gap: 10/10 -> 9/10 -> 8/10. Each step is within one seed
+of the last and each passes its gate, but the direction is monotone downward and worth watching. If it
+continues, the ladder will fail on a cumulative slide rather than on any single rung, and the gate as
+registered ("not degraded against the rung below") cannot see that. **Registered now, before rung 3:
+if the near arm reaches <= 6/10 at any rung, the cumulative comparison against rung 0 (10/10) is
+reported alongside the per-rung one, whatever the per-rung gate says.**
+
+## Rungs 3-5 are REMOVAL-ONLY; rung 6 is the replacement
+
+Flory-Huggins solvent averaging is `eff[i,j] = chi[i,j] + chi_WW - chi[i,W] - chi[j,W]`. It cannot be
+applied to one water term in isolation -- it is a single substitution that consumes all three at once
+and removes the solvent with them. So rungs 3, 4 and 5 zero `chi_HW`, `chi_TW` and `chi_WW` singly, as
+REMOVAL arms whose purpose is to locate which water term is load-bearing, and rung 6 performs the
+actual replacement. Stated here so the absence of a C arm in rungs 3-5 is not later read as an
+omission.
+
+`chi_HW = 0.75` against `chi_TW = 0.00` is the contrast rung 1 identified as the true amphiphilic
+driver. **Rung 3 is therefore the first rung expected to FAIL**, and a failure is the informative
+outcome: it would locate the physics that geometry has to reproduce.
+
+---
+
+## H5 — the assembly-side enclosure replication — FAILS, 2026-09-02
+
+Registered in `specs/2026-09-02_H5_enclosure_replication.md`. Fresh seeds 7-18, 12 per arm, 1e6 steps.
+
+| | seeds with >= 1 enclosure | vesicle calls | mean largest |
+|---|---|---|---|
+| `chi_HT = -0.25` (knob IN) | **4/12** | 0 | 111.8 |
+| `chi_HT = 0.00` (removed) | **4/12** | 0 | 117.5 |
+
+    Fisher one-sided p = 0.6666
+    GATE: removed >= 6/12 (False), baseline <= 2/12 (False), p <= 0.05 (False)  ==> FAILS
+
+The original signal was 4/6 against 0/6, p = 0.0303, post-hoc. It is gone. Note *which* half moved:
+the baseline's 0/6 was the fluctuation -- it now returns 4/12, the same as the removed arm. The effect
+was never in the treatment.
+
+**This is the fourth small-sample effect to evaporate on replication in this project**, and the
+outcome registered in advance for exactly this pattern was: *"The knob is neutral; report and move
+on."* Which is also, independently, what rung 1 concluded from a completely different endpoint --
+`chi_HT` does not matter. Two methods, one answer, and the honest one.
+
+It is also the strongest available argument for the endpoint change. Twelve seeds per arm at 1e6 steps
+cost about 3.3 CPU-hours per run and returned p = 0.67. The gap assay answered the same question at
+higher confidence in a fraction of the time. **Neither arm produced a single vesicle in 24 runs**, so
+the self-assembly endpoint remains unable to resolve anything at any n this project can afford.
