@@ -61,7 +61,7 @@ import numpy as np
 
 import _mixture
 from _lumen_field import n_enclosed, vesicle_call
-from field import Field, HEAD, TAIL, WATER, N_SPECIES
+from field import Field, HEAD, TAIL, WATER, N_SPECIES, solvent_averaged_chi
 
 _HERE = pathlib.Path(__file__).resolve().parent
 RESULTS = _HERE / "docs" / "results" / "gap_closure.tsv"
@@ -89,22 +89,21 @@ PRODUCTION = {"tt": 0.70, "hh": 0.20, "ht": -0.25, "hw": 0.75, "tw": 0.00, "ww":
 # Rungs beyond 1 are added ONLY after the rung below returns a verdict, because each builds on
 # whichever arm won. Pre-writing them would commit the ladder to a chemistry that may not survive.
 ARMS = {
-    "0":  ("production baseline",         dict(PRODUCTION),                    1.0),
-    "1B": ("chi_HT removed",              {**PRODUCTION, "ht": 0.00},          1.0),
-    "1C": ("chi_HT -> head sigma 0.95",   {**PRODUCTION, "ht": 0.00},          0.95),
+    "0":  ("production baseline",         dict(PRODUCTION),                    1.0,  PHI),
+    "1B": ("chi_HT removed",              {**PRODUCTION, "ht": 0.00},          1.0,  PHI),
+    "1C": ("chi_HT -> head sigma 0.95",   {**PRODUCTION, "ht": 0.00},          0.95, PHI),
     # Rung 1 verdict: arm B passed, so chi_HT is removed with NO replacement and sigma_head stays 1.0
     # -- adding a geometric parameter that buys nothing is a knob gained, not a knob removed.
-    "2B": ("chi_HH removed",              {**PRODUCTION, "ht": 0.00, "hh": 0.00}, 1.0),
+    "2B": ("chi_HH removed",              {**PRODUCTION, "ht": 0.00, "hh": 0.00}, 1.0, PHI),
     # chi_HW = 0.75 against chi_TW = 0.00 is the contrast rung 1 identified as the REAL amphiphilic
     # driver, so this is the first rung expected to fail. A failure here is the informative outcome:
     # it locates the physics that geometry has to reproduce.
-    "3B": ("chi_HW removed",              {**PRODUCTION, "ht": 0.00, "hh": 0.00, "hw": 0.00}, 1.0),
+    "3B": ("chi_HW removed",              {**PRODUCTION, "ht": 0.00, "hh": 0.00, "hw": 0.00}, 1.0, PHI),
     # Rung 4 (chi_TW) is VACUOUS: production already has chi_TW = 0.00, so the arm would be
     # bit-identical to 3B. Not defined, not run. The honest knob count is five, not six.
     "5B": ("chi_WW removed",
-           {**PRODUCTION, "ht": 0.00, "hh": 0.00, "hw": 0.00, "ww": 0.00}, 1.0),
+           {**PRODUCTION, "ht": 0.00, "hh": 0.00, "hw": 0.00, "ww": 0.00}, 1.0, PHI),
 }
-
 
 def span_for_gap(gap: float, n: int = N_LIP) -> float:
     """Invert gap = (n*lat/2)*(1-s)/s. A gap is never typed as a span anywhere in this file."""
@@ -123,13 +122,35 @@ def chi_from(spec: dict) -> np.ndarray:
     return chi
 
 
+# RUNG 6 -- the actual REPLACEMENT, and the only rung that adds physics rather than deleting a number.
+#
+# Flory-Huggins: a solvent can be integrated out into an EFFECTIVE interaction between the solutes,
+# eff[i,j] = chi[i,j] + chi_WW - chi[i,W] - chi[j,W]. `field.solvent_averaged_chi` implements it, and
+# it is used here rather than retyping the arithmetic.
+#
+# 6A is a RE-EXPRESSION, not a reduction: the effective numbers are computed FROM the six hand-set
+# ones, so the knob count does not fall. What it tests is whether the explicit solvent can be removed
+# without losing the behaviour -- 2799 water beads replaced by three derived numbers.
+#
+# 6B is the actual reduction: Cooke-Deserno chemistry, ONE affinity (tail-tail), heads carrying no
+# attraction at all, amphiphilicity supplied by head SIZE. Five hand-set numbers become one plus a
+# geometric ratio.
+_EFF = solvent_averaged_chi(chi_from(PRODUCTION))
+ARMS["6A"] = ("solvent-averaged, water removed",
+              {"tt": float(_EFF[TAIL, TAIL]), "hh": float(_EFF[HEAD, HEAD]),
+               "ht": float(_EFF[HEAD, TAIL]), "hw": 0.0, "tw": 0.0, "ww": 0.0}, 1.0, 0.0)
+ARMS["6B"] = ("Cooke: chi_TT only + head size",
+              {"tt": 1.00, "hh": 0.0, "ht": 0.0, "hw": 0.0, "tw": 0.0, "ww": 0.0}, 0.95, 0.0)
+
+
 def run_one(rung: str, gap: float, seed: int, steps: int = STEPS) -> dict:
     t0 = time.perf_counter()
-    label, spec, sig_head = ARMS[rung]
+    label, spec, sig_head, phi = ARMS[rung]
     span = span_for_gap(gap)
     d = 2
     lip_beads = N_LIP * 5
-    n_water = int(round(PHI * L_BOX ** d / _mixture.C_D[d] * (2 ** d))) - lip_beads
+    n_water = 0 if phi <= 0 else (
+        int(round(phi * L_BOX ** d / _mixture.C_D[d] * (2 ** d))) - lip_beads)
     if n_water < 0:
         raise ValueError(f"L={L_BOX} too small for {N_LIP} lipids at phi={PHI}")
     X, species, bonds, mols, wi, chains = _mixture.build(
