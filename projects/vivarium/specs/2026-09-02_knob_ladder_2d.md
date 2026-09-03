@@ -434,3 +434,53 @@ solvent-averaged substitution restores it, that is the one clean demonstration i
 of a hand-set chemical parameter being replaced by physics rather than merely deleted. If the rung-3
 loss is not real, rung 6 has nothing to restore and the ladder's result is the weaker "these numbers
 did not matter".
+
+---
+
+## THE PERSISTENCE RESULT — chi_HW, established at n = 20, 2026-09-02
+
+The seed extension registered in Amendment 3 did not dissolve the rung-3 effect. It confirmed it.
+
+| endpoint, near gap, n = 20 | rung 2B | rung 3B (`chi_HW` removed) | one-sided p |
+|---|---|---|---|
+| **closure** (registered primary) | 18/20 | **18/20** | 0.6975 |
+| **persistence** (`n_enc_final >= 1`) | 18/20 | **10/20** | **0.00691** |
+
+At the registered n = 10 it was 8/10 vs 5/10, p = 0.1749 -- correctly reported at the time as *not
+established*. At n = 20 it is p = 0.0069.
+
+**What this says.** `chi_HW = 0.75` -- heads are solvated, comparable to bulk water -- does not affect
+whether a ribbon's ends find each other. It affects whether the ring they form STAYS shut. Closure and
+persistence are different physics and this is the first measurement in the project that separates
+them. Two of the five real knobs (`chi_HT`, `chi_HH`) turned out to be decoration on both endpoints;
+this one is not.
+
+**Why it is trustworthy, and where it is not.**
+
+- The extension was registered before those runs existed, and the reason it targeted rung 3 was stated
+  in advance: rung 3 is the only rung where persistence moved at all.
+- It is a single-variable comparison. 2B and 3B differ in `chi_HW` and nothing else, share seeds
+  100-119, and the closure column being identical (18/20 vs 18/20) is the internal control -- a
+  confound that degraded the system generally would have moved both.
+- Persistence was NOT a registered primary. It is a co-primary from Amendment 3 onward, declared
+  after seeing rung 3's n = 10 data. The n = 20 extension is a genuine out-of-sample test of it, but
+  the *choice to look at persistence at all* was made after seeing a number, and that is stated here
+  rather than hidden.
+- `persistence` for rung 0 means "still enclosed at 300,000 steps" and for rungs 1+ means "still
+  enclosed at closure + 50,000". Rung 0 is not comparable on this column. The 2B-vs-3B comparison
+  above is between two arms with the identical protocol.
+
+## RUNG 5 — chi_WW — PASS
+
+| arm | chemistry | near closed | far closed | near persisted |
+|---|---|---|---|---|
+| A (rung 3B) | `chi_HT = chi_HH = chi_HW = 0` | 18/20 | 0/10 | 10/20 |
+| **5B** | `+ chi_WW = 0` | **7/10** | **0/10** | **6/10** |
+
+Gate: near 7/10 >= 6/10, coordinate still discriminates. **PASS.** With `chi_WW = 0` the water is now
+a purely steric ideal gas -- no self-attraction, no affinity for heads or tails. Every water-related
+affinity in the model is zero, and ribbons still close 7 times in 10.
+
+Cumulative check registered after rung 2 (report against rung 0 whenever the near arm reaches
+<= 6/10): 7/10 has not crossed that line, but against rung 0's 10/10 the slide is now 10 -> 9 -> 18/20
+-> 18/20 -> 7/10. Reported for visibility; the per-rung gate passes.
