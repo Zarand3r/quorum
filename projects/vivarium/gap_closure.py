@@ -92,6 +92,9 @@ ARMS = {
     "0":  ("production baseline",         dict(PRODUCTION),                    1.0),
     "1B": ("chi_HT removed",              {**PRODUCTION, "ht": 0.00},          1.0),
     "1C": ("chi_HT -> head sigma 0.95",   {**PRODUCTION, "ht": 0.00},          0.95),
+    # Rung 1 verdict: arm B passed, so chi_HT is removed with NO replacement and sigma_head stays 1.0
+    # -- adding a geometric parameter that buys nothing is a knob gained, not a knob removed.
+    "2B": ("chi_HH removed",              {**PRODUCTION, "ht": 0.00, "hh": 0.00}, 1.0),
 }
 
 

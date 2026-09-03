@@ -254,3 +254,55 @@ population estimate, and is written that way.
 
 Fresh seeds still matter for REPLICATION -- H5 is using seeds 7-18 precisely because seeds 1-6
 generated its hypothesis. That is a different purpose from pairing arms within a rung.
+
+---
+
+## RUNG 1 — chi_HT — BOTH ARMS PASS, 2026-09-02
+
+40 runs, seeds 100-109 paired against the rung-0 baseline.
+
+| arm | chemistry | near 3.4 sigma | far 10.1 sigma | Fisher (near vs far) |
+|---|---|---|---|---|
+| A (rung 0) | production, `chi_HT = -0.25` | 10/10 | 2/10 | 0.0004 |
+| **B** removal | `chi_HT = 0` | **9/10** | **0/10** | 0.0001 |
+| **C** replacement | `chi_HT = 0`, `sigma_head = 0.95` | **10/10** | **0/10** | 0.0000 |
+
+Gate: near >= 6/10 (both pass), not degraded against baseline (9/10 and 10/10 against 10/10, no
+degradation), coordinate still discriminates (both pass, p <= 0.05).
+
+### The verdict, read by Amendment 1's rules
+
+**B passes, so `chi_HT` was decoration.** It is removed, and NO replacement was needed. Per the
+reading fixed before the data: *"Do NOT credit the mechanism in C for work that B shows was
+unnecessary."* Arm C also passes, and slightly more cleanly (10/10 against 9/10), but that difference
+is one seed and is not evidence for head size doing anything.
+
+This is the outcome registered in advance as the expected one, and the reason matters: production
+amphiphilicity does not rest on `chi_HT`. Heads are held in water by `chi_HW = 0.75` while tails are
+indifferent at `chi_TW = 0.00`, and that solvophobic contrast is the larger driver. The knob that was
+described in `field.py` as "THE HEAD-TAIL CROSS TERM IS WHAT MAKES AN AMPHIPHILE" is, on this
+endpoint, not what makes an amphiphile.
+
+**The chemistry carried into rung 2 is arm B** -- `chi_HT = 0`, `sigma_head = 1.0`. Arm C's head size
+is dropped, because adding a geometric parameter that buys nothing is a knob gained, not a knob
+removed, and the point of the ladder is the count.
+
+### An unregistered observation, flagged as such
+
+The far arm fell from 2/10 at baseline to **0/10 in both rung-1 arms**. Removing `chi_HT` appears to
+have *sharpened* the coordinate rather than blunting it. This was not a registered endpoint, n is
+small, and the project has watched three effects this size evaporate. Recorded, not claimed.
+
+### Render check
+
+`docs/figures/rung1B_closed.png` -- seed 100 at gap 3.4 with `chi_HT = 0` is a closed ring with a
+water-filled lumen. The heads are visibly less well segregated than in the baseline render, which is
+what removing the head-tail term should look like, and the ring closed regardless.
+
+## Rung 2 design note — some knobs have no replacement other than removal
+
+`chi_HH = 0.20` is head-head attraction. The "mechanism that replaces it" in the ladder table is
+"heads keep excluded volume only", which is *exactly what setting it to zero does*. Arms B and C would
+be the same run, so **rung 2 has only arm B, 20 runs**. If it fails, a genuine arm C (head size
+compensating for the lost head-head cohesion) becomes the next thing to try, and would be registered
+then.

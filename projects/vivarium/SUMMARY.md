@@ -20,10 +20,11 @@ not emerged.
 - **DONE — found and fixed a real defect.** The spring meant to keep a molecule straight rested at its
   own natural length, giving *zero* resistance to small bends — about 37,000x weaker than the reference
   model. Before the fix, 3-D membranes dissolved to nothing; after it, they form by themselves and hold.
-- **DONE — first hand-set number removed, and it survives.** Removing the number set purely to force
-  soap-like behaviour changed nothing measurable: clump sizes 109.5 vs 113.2, overlapping. Neither arm
-  produced a bubble in six runs each, but that was the expected outcome for both (see Results).
-- **NOW — replace all six hand-set numbers, one at a time, in 2-D.** Each is either swapped for a
+- **DONE — first hand-set number removed, now on a test that can actually tell.** The number said
+  "heads dislike tails", and the code called it the thing that makes soap behave like soap. Removed
+  entirely, ribbons still close 9 times in 10 against 10 in 10 with it — indistinguishable. So it was
+  decoration. No replacement was needed, and none was kept.
+- **NOW — 1 of 6 numbers gone, 5 to go**, one at a time, in 2-D. Each is either swapped for a
   physical or geometric mechanism, or shown to be irreducible. The one attraction between oily tails
   is declared irreducible up front: without it nothing sticks to anything and there is no liquid.
 - **DONE — a much better way of measuring it, and it works.** The old test asked "did a bubble
@@ -45,9 +46,11 @@ not emerged.
 - **Closing is a separate problem from making a membrane.** The hollowness measure has sat at 0.49 (a
   bubble needs below 0.25) across a 40x range of membrane quality, three molecule counts, four box sizes
   and every stiffness tried — including runs where membranes reached full real-membrane thickness.
-- **The first knob removal did no harm.** Full-length 2-D runs, six seeds per arm: clump sizes overlap
-  completely (78–154 with the knob, 80–155 without). Neither arm made a bubble — but at the known 2-in-18
-  rate, getting none in six runs is a coin flip (50%), so that is not evidence either way.
+- **The "makes soap soap" number turned out to be decoration.** With it, ribbons close 10 times in 10;
+  without it, 9 in 10. What actually makes the molecules soap-like is a different pair of numbers —
+  heads are held in water while tails are indifferent to it — and those are next on the list.
+  We also tried giving the head a different *size* to do the job instead. It closed 10 in 10, but since
+  simply deleting the number already worked, the size change earns no credit and was not kept.
 - **A curious signal, now being replicated.** Counting runs rather than snapshots, 4 of 6 runs without
   the knob briefly enclosed a region against 0 of 6 with it. None passed the full bubble test. It is
   the first hint that removing the knob helps rather than hurts, and it is exactly the kind of
