@@ -30,7 +30,7 @@ RESULTS = _HERE / "docs" / "results" / "emerge_reduced.tsv"
 STATES = _HERE / "docs" / "states_emerge"
 N_LIP, L_BOX, KT, DT = 160, 65.0, 0.45, 8e-3
 STEPS, CHECK_EVERY = 1_000_000, 50_000
-COLUMNS = ("arm", "seed", "steps", "vesicle_ckpts", "first_vesicle", "enc_ckpts",
+COLUMNS = ("arm", "seed", "steps", "check_every", "vesicle_ckpts", "first_vesicle", "enc_ckpts",
            "largest_max", "largest_final", "wall_s")
 _LOCK = threading.Lock()
 
@@ -75,7 +75,8 @@ def run_one(arm: str, seed: int, steps: int = STEPS, check_every: int = CHECK_EV
     STATES.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(STATES / f"{arm}_sd{seed}.npz", X=X, mols=mm, species=species,
                         L=L_BOX, gap=-1.0, closed=int(ves > 0))
-    return {"arm": arm, "seed": seed, "steps": steps, "vesicle_ckpts": ves,
+    return {"arm": arm, "seed": seed, "steps": steps, "check_every": check_every,
+            "vesicle_ckpts": ves,
             "first_vesicle": first, "enc_ckpts": enc, "largest_max": lmax,
             "largest_final": lfin, "wall_s": round(time.perf_counter() - t0, 1)}
 
@@ -99,12 +100,14 @@ def score():
     rows = [dict(zip(COLUMNS, l.split("\t")))
             for l in RESULTS.read_text().splitlines()[1:] if len(l.split("\t")) == len(COLUMNS)]
     from gap_closure import _fisher_1s
-    for arm in sorted({r["arm"] for r in rows}):
-        v = [r for r in rows if r["arm"] == arm]
+    # GROUP BY CADENCE TOO. A vesicle that forms and reopens inside one checkpoint interval
+    # is invisible, so runs sampled 5x apart measure different things and must not pool.
+    for arm, ce in sorted({(r["arm"], r["check_every"]) for r in rows}):
+        v = [r for r in rows if r["arm"] == arm and r["check_every"] == ce]
         ves = sum(1 for r in v if int(r["vesicle_ckpts"]) > 0)
         enc = sum(1 for r in v if int(r["enc_ckpts"]) > 0)
         lm = sum(int(r["largest_max"]) for r in v) / len(v)
-        print(f"  {arm:>4}: vesicle {ves}/{len(v)}   any-enclosure {enc}/{len(v)}   "
+        print(f"  {arm:>4} ckpt/{ce}: vesicle {ves}/{len(v)}  any-enclosure {enc}/{len(v)}  "
               f"mean largest_max {lm:.1f}")
         if len(v) >= 20:
             p = _fisher_1s(ves, len(v), 2, 42)
