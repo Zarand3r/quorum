@@ -236,3 +236,21 @@ recorded per row so nothing is hidden.
 closure + 50,000 steps rather than at a fixed 300,000, so it is NOT comparable across rung 0 and later
 rungs. The primary endpoint is comparable throughout; the secondary is comparable only among rungs
 1-6. Measured saving: ~40% of the step budget per rung.
+
+### Amendment 2a — seeds are PAIRED across arms, not fresh per rung
+
+The original protocol said "fresh seeds per rung, never reused across rungs". Amendment 2 reuses rung
+N-1 as rung N's baseline arm, which requires the SAME seeds. The two rules contradict, so this states
+which wins and why.
+
+**Seeds 100-109 are used for every arm of every rung.** A knob replacement is compared against its
+baseline on the *same initial conditions*, which is a paired design and strictly more powerful than
+independent seeds: it removes between-seed variation in how closure-prone a given planted arc is.
+
+The cost is that a seed which happens to favour closure favours it in both arms. That inflates the
+*absolute* rate, not the *difference*, and the difference is what every rung gate tests. Where an
+absolute rate is quoted (e.g. "10/10 at 3.4 sigma"), it is a property of these ten arcs, not a
+population estimate, and is written that way.
+
+Fresh seeds still matter for REPLICATION -- H5 is using seeds 7-18 precisely because seeds 1-6
+generated its hypothesis. That is a different purpose from pairing arms within a rung.

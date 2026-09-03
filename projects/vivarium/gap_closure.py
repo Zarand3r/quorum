@@ -69,11 +69,11 @@ STATES = _HERE / "docs" / "states_gap"
 
 N_LIP, L_BOX, KT, PHI, DT = 70, 45.0, 0.45, 0.55, 8e-3
 LAT = 2.0                       # lateral footprint of a branched 4-tail lipid, per _plant_ring
-STEPS, CHECK_EVERY = 300_000, 10_000
+STEPS, CHECK_EVERY, TAIL_STEPS = 300_000, 10_000, 50_000
 GAPS = (3.4, 10.1)              # the two gates of the dose-response; 6.7 is the interpolation point
 _LOCK = threading.Lock()
 COLUMNS = ("rung", "arm", "gap", "span", "seed", "closed", "first_closed_step",
-           "n_enc_final", "vesicle_call", "largest", "wall_s")
+           "n_enc_final", "vesicle_call", "steps_run", "largest", "wall_s")
 
 # The production chemistry, written out rather than read from default_chi(), which consults
 # VIVARIUM_CHI_* in the process environment -- a global that another engine in the same process can
@@ -129,7 +129,12 @@ def run_one(rung: str, gap: float, seed: int, steps: int = STEPS) -> dict:
     ig = _mixture.make_step_engine(f, X, KT, DT, 1 + seed, engine="transformer")
     mm = np.array([np.asarray(m, dtype=np.int64) for m in mols], dtype=np.int64)
 
-    first, ne = -1, 0
+    # Amendment 2: stop TAIL_STEPS after the first closure. The registered endpoint is
+    # "n_enclosed >= 1 at ANY checkpoint", so its value is already determined once one is seen and
+    # early exit is exactly equivalent for it. The tail is not padding -- it turns the secondary
+    # readouts into a PERSISTENCE check (did the ring survive further noise). Runs that never close
+    # are unaffected and run the full budget.
+    first, ne, ran = -1, 0, steps
     X = np.ascontiguousarray(X, dtype=np.float64)
     for i in range(steps):
         X = ig.step(X)
@@ -140,6 +145,9 @@ def run_one(rung: str, gap: float, seed: int, steps: int = STEPS) -> dict:
             # PROGRESS, every 100k. A run that prints nothing until it returns is how a 4-hour job in
             # this project got killed on a cost model that was wrong by 5x: the only way to price the
             # sweep was a solo benchmark, which does not include worker contention.
+            if first >= 0 and (i + 1) - first >= TAIL_STEPS:
+                ran = i + 1
+                break
             if (i + 1) % 100_000 == 0:
                 print(f"    [{rung} gap={gap} sd={seed}] {i+1}/{steps} n_enc={ne} "
                       f"first={first} ({time.perf_counter()-t0:.0f}s)", flush=True)
@@ -153,7 +161,7 @@ def run_one(rung: str, gap: float, seed: int, steps: int = STEPS) -> dict:
                             X=X, mols=mm, species=species, L=L_BOX, gap=gap, closed=int(first >= 0))
     return {"rung": rung, "arm": label, "gap": gap, "span": round(span, 6), "seed": seed,
             "closed": int(first >= 0), "first_closed_step": first, "n_enc_final": ne,
-            "vesicle_call": int(ok), "largest": len(mm), "wall_s": round(time.perf_counter() - t0, 1)}
+            "vesicle_call": int(ok), "steps_run": ran, "largest": len(mm), "wall_s": round(time.perf_counter() - t0, 1)}
 
 
 def _append(row: dict) -> None:
@@ -230,11 +238,12 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     if a.score or (a.rung is None and not a.gate):
         return score()
-    rung = "0" if a.gate else a.rung
+    rungs = ["0"] if a.gate else [x.strip() for x in a.rung.split(",") if x.strip()]
     done = {(r["rung"], float(r["gap"]), int(r["seed"])) for r in load()}
-    todo = [(rung, g, sd) for g, sd in itertools.product(
-        GAPS, range(a.seed0, a.seed0 + a.seeds)) if (rung, g, sd) not in done]
-    print(f"gap_closure rung {rung} ({ARMS[rung][0]}): {len(todo)} runs, "
+    todo = [(rg, g, sd) for rg, g, sd in itertools.product(
+        rungs, GAPS, range(a.seed0, a.seed0 + a.seeds)) if (rg, g, sd) not in done]
+    names = ", ".join(f"{r} ({ARMS[r][0]})" for r in rungs)
+    print(f"gap_closure {names}: {len(todo)} runs, "
           f"N={N_LIP} L={L_BOX} {a.steps} steps, {a.workers} workers", flush=True)
     with ThreadPoolExecutor(max_workers=a.workers) as ex:
         futs = {ex.submit(run_one, r, g, sd, a.steps): (r, g, sd) for r, g, sd in todo}
