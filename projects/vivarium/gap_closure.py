@@ -99,6 +99,10 @@ ARMS = {
     # driver, so this is the first rung expected to fail. A failure here is the informative outcome:
     # it locates the physics that geometry has to reproduce.
     "3B": ("chi_HW removed",              {**PRODUCTION, "ht": 0.00, "hh": 0.00, "hw": 0.00}, 1.0),
+    # Rung 4 (chi_TW) is VACUOUS: production already has chi_TW = 0.00, so the arm would be
+    # bit-identical to 3B. Not defined, not run. The honest knob count is five, not six.
+    "5B": ("chi_WW removed",
+           {**PRODUCTION, "ht": 0.00, "hh": 0.00, "hw": 0.00, "ww": 0.00}, 1.0),
 }
 
 
@@ -162,7 +166,10 @@ def run_one(rung: str, gap: float, seed: int, steps: int = STEPS) -> dict:
     # SAVE THE COORDINATES. Every structural claim in this project has to be checked against a
     # picture -- the scalar has contradicted the render every time one was made. A `closed` column
     # with no state behind it cannot be checked, so the first two seeds of each arm/gap are kept.
-    if seed % 100 < 2:
+    # Save EVERY state, not a sample. At 23 kB a file the whole ladder is under 3 MB, and the seeds
+    # worth looking at are the ones that disagree with each other -- a run that closed but failed
+    # vesicle_call is the informative artifact, and under the old sample rule it was never kept.
+    if True:
         STATES.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(STATES / f"r{rung}_g{gap}_sd{seed}.npz",
                             X=X, mols=mm, species=species, L=L_BOX, gap=gap, closed=int(first >= 0))

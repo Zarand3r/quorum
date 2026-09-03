@@ -371,3 +371,66 @@ It is also the strongest available argument for the endpoint change. Twelve seed
 cost about 3.3 CPU-hours per run and returned p = 0.67. The gap assay answered the same question at
 higher confidence in a fraction of the time. **Neither arm produced a single vesicle in 24 runs**, so
 the self-assembly endpoint remains unable to resolve anything at any n this project can afford.
+
+---
+
+## RUNG 3 — chi_HW — PASSES THE REGISTERED GATE, but degrades persistence
+
+20 runs, seeds 100-109.
+
+| arm | chemistry | near closed | far closed | Fisher | near **persisted** | vesicle_call |
+|---|---|---|---|---|---|---|
+| A (rung 2B) | `chi_HT = chi_HH = 0` | 8/10 | 0/10 | 0.0004 | 8/10 | 8/10 |
+| **3B** | `+ chi_HW = 0` | **8/10** | **0/10** | 0.0004 | **5/10** | **5/10** |
+
+**Gate verdict: PASS.** Near 8/10 >= 6/10, identical to the rung below (p = 0.709, no degradation),
+coordinate still discriminates. Recorded as a pass because that is what the registered gate says, and
+the gate was fixed before the data.
+
+**But the registered gate cannot see what happened.** Persistence -- still enclosed at closure + 50,000
+steps -- is the column that moved: 8/10 to 5/10. Through rungs 0-2 every ring that closed also
+persisted; at rung 3 three of eight closures reopened. Seed 105 is the artifact: `closed = 1` at step
+10,000, `n_enc_final = 0` at 60,000, and the render
+(`docs/figures/rung3B_sd105_closed_notvesicle.png`) shows a thin breach at lower right. It closed and
+came back open.
+
+**The honest strength of this: NOT ESTABLISHED.** 8/10 against 5/10 is one-sided p = **0.1749** at
+n = 10. It is a suggestion, not a result, and this project has watched four effects of about this size
+evaporate. It is being powered rather than believed (see Amendment 3).
+
+This is nonetheless the first rung where anything at all was lost, and it is the term predicted in
+advance to be load-bearing: `chi_HW = 0.75` against `chi_TW = 0.00` is the solvophobic contrast rung 1
+identified as the real amphiphilic driver once `chi_HT` turned out to be decoration.
+
+## Rung 4 — chi_TW — VACUOUS, no run performed
+
+`chi_TW` is **already 0.00 in the production chemistry**. Removing it is a no-op: the arm would be
+bit-identical to rung 3B. No run was made, and none should be.
+
+This matters for the ladder's headline count. Of the "six hand-set affinities", one of them was
+already sitting at the value that means *no interaction*. `field.py` says so directly -- "At 0.00 a
+tail is INDIFFERENT to water... With no cost to an exposed edge there is no drive to close one". So
+the honest count of knobs that ever did anything is **five, not six**, and any final claim must say
+five.
+
+## Amendment 3 — 2026-09-02, after rung 3, before rung 5
+
+**Persistence becomes a REPORTED co-primary from here on**, alongside the registered closure endpoint.
+Defined as `n_enc_final >= 1`: still enclosed at the end of the run. It is reported for every rung
+including the ones already run, since it is already in the results file and needs no new runs.
+
+It does **not** retroactively change rung 3's verdict. The gate was fixed before the data and rung 3
+passed it; moving the goalposts after seeing a number is the failure this whole spec exists to
+prevent. What changes is what gets *reported*, not what counts as a pass.
+
+**Rung 3 is being extended to 20 seeds (110-119 added) to power the persistence comparison.** At
+n = 10 it is p = 0.17; the extension either establishes the loss or dissolves it. This is registered
+before those runs exist, and the direction of the extension was not chosen by the data -- rung 3 is
+extended because it is the *only* rung where persistence moved at all.
+
+**Why this matters for the ladder's central claim.** Rungs 3-5 remove the water terms; rung 6 replaces
+them with Flory-Huggins solvent averaging. If removing `chi_HW` genuinely costs persistence and the
+solvent-averaged substitution restores it, that is the one clean demonstration in this whole project
+of a hand-set chemical parameter being replaced by physics rather than merely deleted. If the rung-3
+loss is not real, rung 6 has nothing to restore and the ladder's result is the weaker "these numbers
+did not matter".
