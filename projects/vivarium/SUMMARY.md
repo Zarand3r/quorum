@@ -1,6 +1,6 @@
 # vivarium — executive summary
 
-*Updated 2026-09-03. Current state only — history lives in `RESEARCH_LOG.md`. Plain language, short.*
+*Updated 2026-09-05. Current state only — history lives in `RESEARCH_LOG.md`. Plain language, short.*
 
 ## Objective
 
@@ -34,6 +34,14 @@ not emerged.
 - **DONE — but NO, for building one from scratch.** Starting from scattered molecules, the stripped-down
   recipe almost never gets to an enclosed shape: 2 runs in 20 against 13 in 20 for the original. Making
   a membrane and keeping one shut are different problems, and only the second one was simplified.
+- **DONE — found why the stripped-down recipe assembles badly: it had frozen solid.** Making the oil
+  stickier without also raising the temperature pushed it into a *gel* — condensed but rigid, so
+  clumps stick where they touch and can never merge. That also explains why it still closes a
+  ready-made bubble perfectly: closing needs no rearranging.
+- **PARTLY — warming it back up helps, but less than hoped.** Reaching an enclosed shape goes from 2
+  runs in 20 (frozen) to 6, then 9, as the mixture is made more fluid, and the clumps grow from half
+  the system to all of it. The single cleanest test of this fell short of the bar we set in advance,
+  so it is a strong lead, not a settled result.
 - **NOW — a problem with our own older result.** See Results. It needs a human decision, not more runs. Each is either swapped for a
   physical or geometric mechanism, or shown to be irreducible. The one attraction between oily tails
   is declared irreducible up front: without it nothing sticks to anything and there is no liquid.
@@ -108,6 +116,9 @@ Deciding which test is the right one is a judgement about what should count as a
 another run can settle. That decision is what the project needs next.
 
 ## Known gaps
+
+- Still **no bubble at all** under the strict test, in any recipe, in 100+ recent runs. Warming the
+  mixture out of the frozen state fixed the clumping but did not produce a bubble.
 
 - Two deviations from the reference model's known-good recipe were never reconciled: molecule density is
   about half the reference value, and the one architectural comparison the plan called for (soft

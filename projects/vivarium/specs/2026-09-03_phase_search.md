@@ -234,3 +234,53 @@ emergence runs use a DISPERSED start at N = 160 in L = 65. Bead densities are 0.
 sigma^2, close but not equal, and a planted membrane's phase need not be the phase a dispersed system
 condenses into. If 6Bf fails, re-measuring the phase at the emergence density is the first check, not
 a new hypothesis.
+
+---
+
+## STAGE 3 — RESULT. The registered gate FAILS; the hypothesis is supported but not by the gated arm.
+
+40 runs, seeds 400-419, N = 160, 1e6 steps, checkpoint 10,000.
+
+| arm | T* | w* | phase | seeds with enclosure | mean largest aggregate |
+|---|---|---|---|---|---|
+| 6B (H8) | 0.45 | 1.5 | **gel** | 2/20 | 78.0 |
+| **6Bf** | 0.643 | 1.5 | fluid | **6/20** | 100.8 |
+| **6Bo** | 1.10 | 2.0 | fluid | **9/20** | **136.8** |
+| production (H8) | 0.643 | 1.5 | fluid | 13/20 | 131.4 |
+
+### The gate, first
+
+    REGISTERED: 6Bf >= 8/20 AND Fisher p <= 0.05 vs 6B's 2/20
+    ACTUAL:     6Bf = 6/20, p = 0.1176
+    ==> FAILS
+
+**6Bf is the arm that matters most and it failed.** It is the single-variable arm -- only `kT` changed
+from H8's 6B, nothing else -- so it is the clean test of "the deficit is reduced temperature". It
+moved in the predicted direction (2/20 -> 6/20, largest 78 -> 101) but did not clear either the
+count threshold or significance.
+
+### What did move
+
+- **6Bo reaches 9/20**, p = 0.0155 against the gel arm, and its mean largest aggregate (136.8)
+  **exceeds production's** (131.4). Against production's 13/20 it is p = 0.1703 — production is not
+  significantly better.
+- The trend is monotone in fluidity: gel 2/20 -> fluid 6/20 -> most-fluid 9/20, with largest
+  aggregate 78 -> 101 -> 137.
+- Pooling both fluid arms, 15/40 against the gel arm's 2/20 gives p = 0.0232.
+
+**But 6Bo changed TWO variables** (`kT` 0.45 -> 1.1 AND `rc` 2.5 -> 3.0). It is not a single-variable
+test and cannot carry the causal claim on its own. The clean arm is 6Bf, and 6Bf is the one that
+failed.
+
+### Honest verdict
+
+The gel hypothesis is **supported and not established**. Direction, monotonicity, the aggregate-size
+recovery and the pooled comparison all point the same way, and the phase map independently showed 6B
+and production sit on opposite sides of the gel/fluid boundary. But the pre-registered single-variable
+test did not clear its own bar, and this project has repeatedly watched effects of this size evaporate.
+
+What it would take: 6Bf at n = 40-60 to resolve 6/20 against 2/20, and a single-variable version of
+6Bo (raise `rc` at fixed `kT`, and `kT` at fixed `rc`) to separate width from temperature.
+
+**Still 0/20 vesicles by the strict gate in every arm.** Nothing here has produced an emergent vesicle
+by the criterion the project currently trusts, and the fluid band did not change that.
