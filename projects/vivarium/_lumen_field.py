@@ -346,12 +346,63 @@ def vesicle_call(X, mols, L, cell=0.5):
     if not all(c == 1 for c in counts):
         return False, f"n_enclosed unstable across dilation: {counts}"
     lumen = n_enclosed(X, mols, L, cell=cell)[1][0]
-    n = len(mols)
+    # SIZE THE EXPECTED LUMEN FROM THE ENCLOSING CLUSTER, NOT THE WHOLE SYSTEM.
+    #
+    # This was `n = len(mols)`, which is the total lipid count. A vesicle made of a SUBSET of the
+    # lipids -- with the rest still dispersed or hanging off as appendages -- was then compared against
+    # the lumen a vesicle of ALL of them would have, and penalised by (n_cluster / n_total)**2.
+    #
+    # The project's own emergent 2-D vesicle is the case in point. docs/RESULTS.md records it at step
+    # 360000 as "largest 116, n_enclosed 1, lumen 2145, ratio 0.501" -- and 0.501 is reproduced only by
+    # normalising with the CLUSTER (116). With len(mols) = 160 the same state reads 0.263. Both clear
+    # the 0.10 threshold, so no verdict changes here, but the two numbers differ by 1.9x and the
+    # analysis in RESULTS.md and the gate in this file were computing different quantities under the
+    # same name.
+    #
+    # This does NOT loosen the gate against the failure it exists to catch: a branched network spans
+    # essentially all the lipids, so cluster == system and its ratio is unchanged (sd313: 0.020 either
+    # way, still rejected).
+    n = largest_lipid_cluster(X, mols, L)
     expected = np.pi * (n / (2.0 * np.pi)) ** 2 / (cell * cell)
     ratio = lumen / expected
     if ratio < 0.10:
-        return False, f"lumen {lumen} is {ratio:.3f} of the {expected:.0f} expected for {n} lipids"
-    return True, f"lumen {lumen}, {ratio:.3f} of expected, n_enclosed stable at 1"
+        return False, (f"lumen {lumen} is {ratio:.3f} of the {expected:.0f} expected for the "
+                       f"{n}-lipid enclosing cluster")
+    return True, (f"lumen {lumen}, {ratio:.3f} of expected for the {n}-lipid cluster "
+                  f"({n}/{len(mols)} of the system), n_enclosed stable at 1")
+
+
+def largest_lipid_cluster(X, mols, L, cut=1.4) -> int:
+    """Lipids in the largest connected aggregate.
+
+    Matches the `largest` column of the emergence trajectory tables in docs/RESULTS.md, which is what
+    the recorded lumen ratios were normalised by. A lipid belongs to a cluster if ANY of its beads is
+    within `cut` of any bead of that cluster.
+    """
+    beads = np.asarray(mols)
+    flat = beads.ravel()
+    P = np.asarray(X)[flat]
+    nb = beads.shape[1]
+    m = len(P)
+    lab = -np.ones(m, dtype=np.int64)
+    best = 0
+    cur = 0
+    for start in range(m):
+        if lab[start] >= 0:
+            continue
+        stack, lab[start] = [start], cur
+        size = 0
+        while stack:
+            i = stack.pop()
+            size += 1
+            d = P - P[i]
+            d -= L * np.round(d / L)
+            near = np.where((np.einsum("ij,ij->i", d, d) < cut * cut) & (lab < 0))[0]
+            lab[near] = cur
+            stack.extend(near.tolist())
+        best = max(best, size)
+        cur += 1
+    return int(round(best / nb))
 
 
 def shell_split(X, mols, L, cell=0.5, reach=5.0):
