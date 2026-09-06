@@ -65,6 +65,20 @@ def run_one(arm: str, seed: int, steps: int = STEPS, check_every: int = CHECK_EV
                 ves += 1
                 if first < 0:
                     first = i + 1
+                    # SAVE THE STATE AT THE MOMENT THE GATE FIRST PASSES.
+                    #
+                    # Only the FINAL state was kept, and a vesicle is transient: seed 509 passed the
+                    # gate at 26 checkpoints from step 500,000 and had degraded to a branched tangle
+                    # by 1e6, so its final state renders as an artifact and the vesicle itself is not
+                    # on disk. That is the identical failure that destroyed the project's historical
+                    # emergent vesicle (states_protected/former_sd45007_*, overwritten in place).
+                    #
+                    # A gate pass that cannot be rendered cannot be believed -- every scalar in this
+                    # project has at some point contradicted its own picture.
+                    STATES.mkdir(parents=True, exist_ok=True)
+                    np.savez_compressed(
+                        STATES / f"VESICLE_{arm}_N{n_lip}_sd{seed}_s{i + 1}.npz",
+                        X=X, mols=mm, species=species, L=L_BOX, gap=-1.0, closed=1)
             # `_mixture.largest_cluster` is the SAME helper H5 used for its `largest` column, so
             # this number is directly comparable to the historical production baseline. An earlier
             # draft used count_vesicles()[1], which counts VESICLES not cluster size and read 0 on a
