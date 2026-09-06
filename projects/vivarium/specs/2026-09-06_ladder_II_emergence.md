@@ -139,3 +139,54 @@ network structure. It cannot mean "make it transformer-only" in the literal sens
 law is *already* exactly a transformer: every chi entry is a species-channel q.k product, verified to
 0.000e+00 over 30,186 pairs. A chosen number expressed as attention is still a chosen number, and the
 count of chosen numbers is what this ladder is trying to reduce.
+
+---
+
+## H10 — RESULT: FAILS, and the prediction was backwards
+
+48 runs, production chemistry, L = 65, seeds 500-511, 1e6 steps, cluster-normalised gate.
+
+| N | spanning threshold ~65 | vesicles | any enclosure | mean largest aggregate |
+|---|---|---|---|---|
+| 50 | **cannot span** | 0/12 | 0/12 | **17.8** |
+| 80 | can span | 0/12 | 0/12 | 37.5 |
+| 116 | can span | 0/12 | 2/12 | 62.4 |
+| 160 | can span 2.5x | **1/32** | 23/32 | **130.3** |
+
+    GATE: some N <= 80 gives >= 5/12 AND p <= 0.05 vs H8's 0/20
+    N=50: 0/12, N=80: 0/12  ==> FAILS
+
+### The predictions were wrong, all three
+
+Registered: (1) N=50 highest, (2) N=160 lowest, (3) rate falls monotonically with N. The rate **rises**
+monotonically with N. Every prediction was backwards.
+
+### What is actually limiting emergence
+
+Mean largest aggregate scales almost linearly with N: 17.8, 37.5, 62.4, 130.3. **At N = 50 the system
+never builds an aggregate big enough to be a vesicle at all** -- 17.8 lipids against the ~116 at which
+the historical vesicle closed. This is the fourth outcome registered in advance:
+
+> *"N = 50 assembles nothing (aggregates too small to be vesicles at all). Then the lower bound is
+> `R_c`, not spanning, and the window between `R_c` and the spanning threshold may be empty at
+> L = 65."*
+
+So the binding constraint is the **minimum viable vesicle size**, not the box. Starving the system of
+lipids to remove the flat state removes the vesicle instead. The edge-energy argument in
+`references.py` is not wrong -- it is simply not the active constraint here, and it was worth one cheap
+sweep to find that out.
+
+**H10's failure retires the spanning hypothesis.** It does not tell us why emergence is rare; it tells
+us one candidate explanation is not it.
+
+### The one positive: the gate fix produced a vesicle
+
+N = 160 reads 1/32, and the composition matters. The 20 H8 runs were scored during execution with the
+OLD whole-system normalisation and gave 0/20. The 12 H10 runs used the cluster-normalised gate and gave
+**1/12**. That is the first `vesicle_call` pass in any recent run, and it appeared when the
+normalisation defect was fixed rather than when the physics changed.
+
+**Not claimed as a result.** n = 12, one event, and the comparison against H8 is confounded because the
+two batches were scored by different gate versions -- which is exactly the kind of cross-version
+pooling this project has already been burned by. What it justifies is re-scoring the H8 states with the
+fixed gate, which is free, before anything else is concluded.
