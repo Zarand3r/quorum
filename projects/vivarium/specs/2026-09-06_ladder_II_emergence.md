@@ -190,3 +190,62 @@ normalisation defect was fixed rather than when the physics changed.
 two batches were scored by different gate versions -- which is exactly the kind of cross-version
 pooling this project has already been burned by. What it justifies is re-scoring the H8 states with the
 fixed gate, which is free, before anything else is concluded.
+
+## Re-scoring every saved state, and what it settles
+
+151 saved final states re-scored under BOTH normalisations:
+
+    pass under both        : 0
+    verdict FLIPS between  : 0
+    blocked by CLAUSE 1    : 149 / 151
+
+**The normalisation fix changes nothing in practice.** It is still correct -- the gate and the
+analysis were computing different quantities under one name -- but it is immaterial, because the ratio
+is almost never reached. **This retracts the claim made one message earlier that "the gate fix produced
+a vesicle": it cannot have, since the fix flips no verdict.** The 1/12 at N = 160 is a new seed.
+
+### Why clause 1 rejects — the aggregate is simply open
+
+| dilation ladder | count | reading |
+|---|---|---|
+| `[0,0,0,0]` | **140** | no enclosure at all; the aggregate is open |
+| `[1,0,0,0]` | 5 | small pocket, filled in when beads are fattened -- correctly rejected |
+| `[1,1,1,1]` | **2** | passes clause 1 |
+| `[1,1,1,0]` | 2 | near miss |
+| `[1,0,0,1]`, `[2,1,1,1]` | 1 each | mixed |
+
+**93% of states are simply not closed.** This is not a detector artifact and not a threshold dispute.
+Membranes form and do not close.
+
+### The two near-misses kill the proposed shell-normalisation fix
+
+`RESULTS.md`'s retraction argues the ratio collapses because "when a vesicle is attached to a larger
+aggregate, its lumen is normalized against the whole merged cluster", and implies the shell is the
+right denominator. Both states that pass clause 1 were scored three ways:
+
+| state | shell / appendage | by system | by cluster | **by shell** |
+|---|---|---|---|---|
+| `0_N160_sd501` | 38 / 122 | 0.032 | 0.032 | **0.559** |
+| `0_sd302` | 31 / 129 | 0.020 | 0.031 | **0.526** |
+
+Shell normalisation turns both into comfortable passes. **The render says both are branched ribbon
+networks with one small trapped pocket** (`docs/figures/nearmiss_sd501.png`) -- the same object as
+sd313, which was rejected on exactly this basis.
+
+`shell_split` labels the lipids lining an incidental pocket "shell" and everything else "appendage",
+so on a tangle it manufactures a passing ratio. **Shell normalisation is too loose and must not be
+adopted.** Cluster normalisation is correct for this case.
+
+### The real instrument problem, stated for review
+
+Both of these are true at once and neither normalisation resolves them:
+
+- **Too loose (shell):** a tangle with a pocket passes at 0.53-0.56. Verified by render, here.
+- **Too strict (cluster):** `RESULTS.md` reports a render-confirmed emergent vesicle at 0.032 and a
+  **planted** vesicle at 0.092, both below the 0.10 gate. Not re-verified here -- those states are the
+  ones no longer on disk.
+
+What separates a small vesicle-with-appendages from a tangle-with-a-pocket is **not a ratio at all**:
+it is whether the lumen is bounded by a closed BILAYER -- two leaflets, heads out both faces -- rather
+than by whatever ribbons happen to surround it. Every gate this project has tried is a scalar on the
+lumen; none tests the structure of its boundary. That is the gap.
