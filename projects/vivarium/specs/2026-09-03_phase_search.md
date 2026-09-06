@@ -284,3 +284,53 @@ What it would take: 6Bf at n = 40-60 to resolve 6/20 against 2/20, and a single-
 
 **Still 0/20 vesicles by the strict gate in every arm.** Nothing here has produced an emergent vesicle
 by the criterion the project currently trusts, and the fluid band did not change that.
+
+---
+
+# RETRACTED IN FULL — 2026-09-06
+
+**The phase map never measured production chemistry.** `phase.py:128` hardcodes
+
+    spec = {"tt": chi_tt, "hh": 0.0, "ht": 0.0, "hw": 0.0, "tw": 0.0, "ww": 0.0}
+
+and `run_map` overrides nothing, so **all 63 rows of `docs/results/phase_map.tsv` are 6B chemistry**,
+solvent-free, every cross term zero. Confirmed mechanically: `kT == t_star` in 63/63 rows, which forces
+`chi_TT = 1.0`. The row labelled "production / rungs 0-5" was 6B chemistry at `kT = 0.643`, not
+production at `kT = 0.45`.
+
+**Measured properly, both chemistries are the SAME phase.** Planted ring, w* = 1.5, 3 seeds each:
+
+| chemistry, at its actual operating point | condensed | retention | phase |
+|---|---|---|---|
+| production (6 affinities + explicit water, kT = 0.45) | 1.000 | **0.776** | **gel** |
+| 6B (`chi_TT` only, solvent-free, kT = 0.45) | 1.000 | **0.776** | **gel** |
+
+Identical to three decimals. **The H8 assembly gap is not a phase difference.**
+
+**And `T*` is not the controlling variable.** Production sits at `T* = 0.45/0.70 = 0.643` and reads
+gel; the map's `T* = 0.643` cell read fluid — because that cell was 6B chemistry at absolute
+`kT = 0.643`. Same reduced temperature, opposite phase. The threat registered in this very spec is
+what bit:
+
+> *"`T*` as defined uses the tail-tail well depth as the energy scale. With explicit solvent present,
+> water terms also carry energy and the single-parameter reduction is approximate."*
+
+It was registered and then the result was reported as though it had not applied.
+
+**The direct test confirms chemistry, not phase, carries the gap.** Seeds reaching enclosure at N=160:
+
+| arm | | vs production |
+|---|---|---|
+| production | 23/32 | — |
+| 6B (kT = 0.45) | 2/20 | — |
+| 6Bf (kT = 0.643, matched `T*`) | 6/20 | **p = 0.0036** |
+| 6Bo (kT = 1.1) | 9/20 | p = 0.0503 |
+
+Raising the temperature helps but does not close the gap. Production remains significantly better at
+matched `T*`.
+
+**What survives.** Only this: within 6B chemistry, raising `kT` moves the system from gel to fluid and
+improves assembly monotonically (2/20 -> 6/20 -> 9/20). That is a real effect on one chemistry. Every
+statement in this spec comparing production to 6B *by phase* is withdrawn, including the claim that the
+ladder carried a reduced-temperature confound — rungs 0-5 and rung 6 differ in chemistry, and the
+phase instrument cannot separate the two because it was only ever run on one of them.

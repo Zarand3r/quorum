@@ -1,6 +1,6 @@
 # vivarium — executive summary
 
-*Updated 2026-09-05. Current state only — history lives in `RESEARCH_LOG.md`. Plain language, short.*
+*Updated 2026-09-06. Current state only — history lives in `RESEARCH_LOG.md`. Plain language, short.*
 
 ## Objective
 
@@ -34,14 +34,16 @@ not emerged.
 - **DONE — but NO, for building one from scratch.** Starting from scattered molecules, the stripped-down
   recipe almost never gets to an enclosed shape: 2 runs in 20 against 13 in 20 for the original. Making
   a membrane and keeping one shut are different problems, and only the second one was simplified.
-- **DONE — found why the stripped-down recipe assembles badly: it had frozen solid.** Making the oil
-  stickier without also raising the temperature pushed it into a *gel* — condensed but rigid, so
-  clumps stick where they touch and can never merge. That also explains why it still closes a
-  ready-made bubble perfectly: closing needs no rearranging.
-- **PARTLY — warming it back up helps, but less than hoped.** Reaching an enclosed shape goes from 2
-  runs in 20 (frozen) to 6, then 9, as the mixture is made more fluid, and the clumps grow from half
-  the system to all of it. The single cleanest test of this fell short of the bar we set in advance,
-  so it is a strong lead, not a settled result.
+- **WITHDRAWN — the "it froze solid" explanation was wrong.** The test that produced it accidentally
+  measured the stripped-down recipe twice instead of comparing it against the full one. Measured
+  correctly, *both* recipes are equally frozen, so freezing cannot be what separates them.
+- **Warming it up does help, but does not close the gap.** Reaching an enclosed shape goes from 2 runs
+  in 20 to 6, then 9, as the mixture is warmed — but the full recipe still gets there far more often
+  (23 in 32), and the difference is real, not chance. So the deficit is genuinely in the *chemistry*,
+  not the temperature.
+- **CORRECTED — the stripped-down recipe does lose something after all.** On the strictest test it
+  makes a proper bubble 11 times in 20 against the fuller recipe's 18. Earlier we reported only the two
+  looser tests, on which it looked equal.
 - **NOW — a problem with our own older result.** See Results. It needs a human decision, not more runs. Each is either swapped for a
   physical or geometric mechanism, or shown to be irreducible. The one attraction between oily tails
   is declared irreducible up front: without it nothing sticks to anything and there is no liquid.
@@ -117,8 +119,11 @@ another run can settle. That decision is what the project needs next.
 
 ## Known gaps
 
-- Still **no bubble at all** under the strict test, in any recipe, in 100+ recent runs. Warming the
-  mixture out of the frozen state fixed the clumping but did not produce a bubble.
+- **A recent run did make a bubble by the strict test** — and we cannot look at it. One run (seed 509,
+  full recipe) passed every check for 26 consecutive snapshots starting at step 500,000, then fell apart
+  again by the end. The program only saved the *final* picture, so the bubble itself was never written
+  to disk. That is the same mistake that destroyed the original one. The program now saves the picture
+  the moment it passes, and that run is being repeated.
 
 - Two deviations from the reference model's known-good recipe were never reconciled: molecule density is
   about half the reference value, and the one architectural comparison the plan called for (soft

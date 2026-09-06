@@ -610,3 +610,48 @@ project wants.
 It is now cheap to test. Solvent-free runs at 0.55 ms/step against 2.2 with explicit water -- a 4x
 speedup on the ribbon, and roughly 12x on a self-assembly run, which turns a 3.3-hour job into ~17
 minutes. **That is the next experiment and it is registered below.**
+
+---
+
+# CORRECTION — 2026-09-06: the reduction LOSES on the strict endpoint
+
+The rung-6B verdict was reported on `closed` (19/20) and persistence (17/20). Recomputed from
+`docs/results/gap_closure.tsv` at gap 3.4, all three endpoints together:
+
+| rung | closed | persistence (`n_enc_final>=1`) | **`vesicle_call`** |
+|---|---|---|---|
+| 0 production | 10/10 | 9/10 | **9/10** |
+| 2B | 18/20 | 18/20 | **18/20** |
+| 6A | 16/20 | 16/20 | **16/20** |
+| **6B** | 19/20 | 17/20 | **11/20** |
+
+For every arm except 6B, persistence and `vesicle_call` are **identical**. 6B is the only arm where
+they diverge, and it diverges downward: **11/20 against 2B's 18/20, one-sided Fisher p = 0.0155.**
+
+So the reduced chemistry's rings pass "still enclosed" while failing the lumen-size gate nine times in
+twenty — they close into something too small or too misshapen to be a vesicle. The rung-6B section of
+this spec is the only rung write-up that omits the `vesicle_call` column that GATE I's and rung 3's
+tables both carry.
+
+**"Five affinities plus an explicit solvent reduce to one affinity plus a size ratio with no loss" is
+withdrawn.** The correct statement is: *the reduction preserves closure and persistence and costs the
+lumen-quality gate (11/20 against 18/20).*
+
+Two further defects in rung 6B, both real:
+
+- **`chi_TT = 1.00` is an unregistered hand-picked constant.** This spec declared `chi_TT = 0.70`
+  "kept, irreducible". 6A uses the *derived* `eff[TT] = 1.20`. 6B uses 1.00, which is Cooke's value —
+  chosen, not derived, and introduced at the final rung without a removal arm.
+- **`sigma_head = 0.95` was retired at rung 1 and silently reinstated at 6B.** Rung 1's own verdict
+  says *"adding a geometric parameter that buys nothing is a knob gained, not a knob removed"*. No arm
+  anywhere runs `(chi_TT = 1.0, sigma_head = 1.0, solvent-free)`, so the "one geometric ratio" half of
+  the headline has never been tested against its own registered control.
+
+## The Flory-Huggins "replacement" is not established either
+
+The claim was that deleting `chi_HW` costs persistence and solvent averaging *restores* it. But
+`chi_HW` is the head–**water** affinity: once the water is gone, its effect cannot exist. A control
+that deletes the solvent without any averaging reproduces the same 16/20. And by exact McNemar on the
+paired seeds — the pairing this spec's Amendment 2a claims as its power source — 6A vs 3B is
+**p = 0.0547**, over the line the restoration was declared on. (2B vs 3B survives at McNemar
+p = 0.0039, so the *cost* of removing `chi_HW` stands; only the *restoration* falls.)
