@@ -24,6 +24,8 @@ agreement with `field.forces()` to 1e-12 on a system exercising every head.
 
 import numpy as np
 
+from _scatter import scatter_add, scatter_add_pair
+
 from field import _core, _well
 
 
@@ -40,11 +42,8 @@ class AttentionHead:
 
     def __call__(self, X, L, pairs, sep, dist):
         s = self.score_fn(dist, pairs)
-        out = np.zeros_like(X)
         contrib = s[:, None] * sep
-        np.add.at(out, pairs[0], contrib)
-        np.add.at(out, pairs[1], -contrib)
-        return out
+        return scatter_add_pair(len(X), pairs[0], pairs[1], contrib)
 
 
 class VivariumTransformer:
@@ -155,9 +154,8 @@ class VivariumTransformer:
         channel is frozen and the dynamics is unchanged. This is where an MLP can act without
         approximating anything, unlike the radial functions.
         """
-        m = np.zeros(len(X))
-        np.add.at(m, pairs[0], scores)
-        np.add.at(m, pairs[1], scores)
+        m = (scatter_add(len(X), pairs[0], scores)
+             + scatter_add(len(X), pairs[1], scores))
         z = np.concatenate([self.h, m[:, None]], axis=1)
         return np.maximum(z @ self.W1, 0.0) @ self.W2
 

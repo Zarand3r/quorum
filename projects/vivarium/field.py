@@ -55,6 +55,8 @@ import os
 
 import numpy as np
 
+from _scatter import scatter_add, scatter_add_pair
+
 HEAD, TAIL, WATER = 0, 1, 2
 N_SPECIES = 3
 
@@ -576,17 +578,15 @@ class Field:
         safe = np.maximum(r, 1e-12)
         coef = (dudr / safe)[:, None]
         pf = -coef * d                       # force on i from j
-        F = np.zeros_like(X)
-        np.add.at(F, iu[0], pf)
-        np.add.at(F, iu[1], -pf)
+        # scatter_add_pair, not np.add.at: 8.4x on this shape, bit-identical. See _scatter.py.
+        F = scatter_add_pair(len(X), iu[0], iu[1], pf)
         for pairs, k, r0 in self._springs():
             bd = X[pairs[:, 0]] - X[pairs[:, 1]]
             bd -= self.L * np.round(bd / self.L)
             br = np.linalg.norm(bd, axis=1)
             bsafe = np.maximum(br, 1e-12)
             bf = (-k * (br - r0) / bsafe)[:, None] * bd
-            np.add.at(F, pairs[:, 0], bf)
-            np.add.at(F, pairs[:, 1], -bf)
+            F += scatter_add_pair(len(X), pairs[:, 0], pairs[:, 1], bf)
         return F
 
 
