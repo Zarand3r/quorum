@@ -319,16 +319,27 @@ def main(argv: list[str] | None = None) -> int:
                         "docs/PAPER.md came from (160 lipids, L=65, kT=0.45, explicit water), stepped "
                         "through the transformer path. This is a different system from --lipid2d, "
                         "which is the micelle configuration.")
-    p.add_argument("--vesicle-start", default="dispersed", choices=["dispersed", "formed"],
-                   help="dispersed (default) = the honest cold start; formation takes 6e5-1e6 steps "
-                        "and 16 of 18 seeds never close, so expect to watch aggregation, not "
-                        "closure. formed = load the best surviving saved aggregate and report the "
-                        "gate's verdict on it -- NOT a certified vesicle: no saved 2-D production "
-                        "state passes vesicle_call (see vesicle.py).")
+    p.add_argument("--vesicle-start", default="formed", choices=["dispersed", "formed"],
+                   help="'formed' (the DEFAULT since 2026-09-07) loads the CERTIFIED emergent vesicle: "
+                        "seed 509 at step 500,000, vesicle_call True, render-confirmed, self-assembled "
+                        "from a dispersed random start with nothing planted. It closed at constant "
+                        "size -- 56 lipids for 100,000 steps before and after -- i.e. two ends of a "
+                        "ribbon meeting. 'dispersed' is the honest cold start: formation takes ~500,000 "
+                        "steps and most seeds never close, so expect to watch aggregation. The default "
+                        "was 'dispersed' until a certified state existed; one does now.")
     args = p.parse_args(argv)
 
     cfg = load_config(args.config)
-    seed = cfg.seed if args.seed is None else args.seed
+    # The vesicle dish defaults to the seed that actually produced a certified vesicle. Any other
+    # seed shows aggregation without closure, which is the honest majority outcome but not what a
+    # viewer arriving at the page should be shown first.
+    if args.seed is not None:
+        seed = args.seed
+    elif getattr(args, "vesicle", False):
+        from vesicle import DEFAULT_SEED
+        seed = DEFAULT_SEED
+    else:
+        seed = cfg.seed
     make_engine = None
     knob_names = ("noise", "spin", "nonrecip", "scale", "rd")
     label = "force-based dock-and-morph"
