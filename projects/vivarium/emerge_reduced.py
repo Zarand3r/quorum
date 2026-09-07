@@ -78,7 +78,10 @@ def run_one(arm: str, seed: int, steps: int = STEPS, check_every: int = CHECK_EV
                     STATES.mkdir(parents=True, exist_ok=True)
                     np.savez_compressed(
                         STATES / f"VESICLE_{arm}_N{n_lip}_sd{seed}_s{i + 1}.npz",
-                        X=X, mols=mm, species=species, L=L_BOX, gap=-1.0, closed=1)
+                        X=X, mols=mm, species=species, L=L_BOX, gap=-1.0, closed=1,
+                        # steps and seed so the state is loadable by vesicle.py without a patch --
+                        # the first capture omitted them and could not be shipped as a control.
+                        steps=i + 1, seed=seed)
             # `_mixture.largest_cluster` is the SAME helper H5 used for its `largest` column, so
             # this number is directly comparable to the historical production baseline. An earlier
             # draft used count_vesicles()[1], which counts VESICLES not cluster size and read 0 on a
