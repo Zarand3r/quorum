@@ -327,6 +327,11 @@ def main(argv: list[str] | None = None) -> int:
                         "ribbon meeting. 'dispersed' is the honest cold start: formation takes ~500,000 "
                         "steps and most seeds never close, so expect to watch aggregation. The default "
                         "was 'dispersed' until a certified state existed; one does now.")
+    p.add_argument("--autopause", type=int, default=None,
+                   help="auto-pause once after this many steps so an unattended viewer does not run "
+                        "forever. 0 disables. Default depends on --vesicle-start: 200000 for 'formed' "
+                        "(the window the certified vesicle was observed to survive) and 600000 for "
+                        "'dispersed' (past the 500000 at which it formed).")
     args = p.parse_args(argv)
 
     cfg = load_config(args.config)
@@ -627,7 +632,24 @@ def main(argv: list[str] | None = None) -> int:
         # ~5 ms/step: one substep per frame already saturates a core, and each is held under the
         # state lock. More would starve /state without making a 1e6-step process look any faster.
         server.sim.substeps = 1
-        server.sim.autopause = 0          # nothing here has a transient worth freezing on
+        # AUTO-PAUSE, so a viewer left open does not run the dish indefinitely.
+        #
+        # The numbers come from the certified vesicle's own trajectory, not from taste. Seed 509 closed
+        # at step 500,000 and held for 22 checkpoints (~220,000 steps) before degrading back to a
+        # branched tangle by 1e6. So:
+        #
+        #   start=formed     200,000 steps -- the state loads AT its closure moment, and this keeps the
+        #                    run inside the window where that vesicle was observed to survive. Past it
+        #                    the honest expectation is decay, and a viewer should not be shown decay
+        #                    without being told.
+        #   start=dispersed  600,000 steps -- past the 500,000 at which this seed formed, so a cold
+        #                    start has room to actually produce the vesicle rather than being cut off
+        #                    just before it.
+        #
+        # It fires ONCE and the viewer can resume, so this is a guard against unattended running, not a
+        # hard stop. Override with --autopause; 0 disables.
+        server.sim.autopause = (args.autopause if args.autopause is not None
+                                else (200_000 if args.vesicle_start == "formed" else 600_000))
     print(f"serving: {label}")
     print(
         f"vivarium viewer on http://{args.host}:{server.server_address[1]}\n"
