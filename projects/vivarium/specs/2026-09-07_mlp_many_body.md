@@ -114,3 +114,53 @@ G4 PASSES iff  curl rate >= 3/10 with the MLP on  AND  0-1/10 with it off, same 
   conditional, and any result here must state that.
 - `chi_HW` only exists with explicit solvent. This mechanism is defined for the 2-D production
   chemistry and does NOT transfer to the solvent-free arms without a separate derivation.
+
+---
+
+## G2 and G3 — PASSED, 2026-09-07
+
+Planted geometries, N = 56 lipids (the size of the confirmed emergent vesicle), L = 100, phi = 0.55.
+
+| geometry | outer leaflet | inner leaflet | asymmetry |
+|---|---|---|---|
+| **FLAT bilayer (G2, the null)** | 0.5000 | 0.5000 | **0.0000 exactly** |
+| **RING, curved (G3)** | 0.5000 | 0.3821 | **+0.1179** |
+
+**G2 PASSES.** The term is identically zero on a flat membrane, so it cannot manufacture curvature --
+which is the check that it does not contain the answer. **G3 PASSES.** On a ring the inner leaflet is
+measurably more buried, so the mechanism engages.
+
+0.5000 for an exposed head is correct by inspection: a head on a flat surface has half its perimeter
+facing solvent.
+
+### A conceptual error the controls caught before it reached the dynamics
+
+The first implementation treated EVERY bead as an occluder, including water. But the probe *represents*
+a water molecule -- water cannot block water's access; it is the thing being granted access. With that
+error, heads in a normal flat bilayer read as 85% buried and the numbers inverted:
+
+    spurious FLAT asymmetry 0.0222   >   real RING signal 0.0093
+
+i.e. the noise exceeded the signal and both gates failed. Fixed by passing lipid beads as the only
+occluders. Had this gone straight into the dynamics it would have been a force term driven mostly by
+solvent packing noise.
+
+`_sasa.validate()` separates four known-answer cases, including one with an exact analytic value: two
+expanded circles of radius 1.0 whose centres are 1.0 apart occlude arccos(1/2) = 60 degrees either
+side, so 120 of 360 degrees are blocked and exactly 2/3 remains. It reads 0.6667.
+
+## Amendment 1 — the implementation scales ALL of a head's interactions, not only `chi_HW`
+
+The derivation above justifies `chi_HW_eff = chi_HW * f_exposed`. The natural implementation in this
+architecture scales the token's channel, `h_i <- f_i * h_i`, and since `q = h @ Wq`, that scales every
+interaction the head takes part in: `chi_HW` by `f_i`, and `chi_HH` by `f_i * f_j`.
+
+**Stated rather than hidden, because it is broader than what was derived.** The physical justification
+extends: if interactions are mediated by exposed surface, then a buried head engages less with
+everything, not only with water. A pair term scaling as `f_i * f_j` is the correct form for a
+surface-mediated interaction between two partially buried objects. But `chi_HT` and `chi_HH` are
+scaled as a consequence of the architecture rather than as a consequence of the SASA argument, and any
+result must say so.
+
+Tails are NOT scaled. The hydration shell is a property of the polar head group; tail beads are
+hydrophobic and carry none.
