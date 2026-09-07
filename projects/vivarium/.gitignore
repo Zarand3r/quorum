@@ -4,3 +4,16 @@ paper/project_context.md
 # accumulate fast. The per-run .log files ARE kept -- two batches of results were lost to /tmp
 # cleanup this session, so the text record is the durable one.
 docs/runs/states/
+
+# Saved states from the gap assay and the emergence sweeps. Same rationale as docs/runs/states above:
+# binary, regenerable from the harness + seed, and they accumulate fast (314 files / 6.7 MB by
+# 2026-09-07). Regenerability is demonstrated, not assumed: re-running seed 509 reproduced its vesicle
+# at the same step.
+#
+# docs/controls/ is deliberately NOT ignored. The certified emergent vesicle lives there and must be
+# tracked: this project has already destroyed one irreplaceable vesicle by letting a relaunch
+# overwrite it in place (states_protected/former_sd45007_*, filename says step 960,000, file reports
+# 1,600,000).
+docs/states_gap/
+docs/states_emerge/
+docs/states_3d/
