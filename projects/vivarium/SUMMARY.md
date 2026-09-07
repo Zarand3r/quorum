@@ -17,9 +17,13 @@ not emerged.
   forward pass equals one simulation step exactly, costs no extra time.
 - **DONE — a 2-D bubble emerges.** Rare (2 of 18 random starts), confirmed by picture and metric. It
   closes when two ends of a ribbon happen to meet, not by curling.
-- **DONE — found and fixed a real defect.** The spring meant to keep a molecule straight rested at its
-  own natural length, giving *zero* resistance to small bends — about 37,000x weaker than the reference
-  model. Before the fix, 3-D membranes dissolved to nothing; after it, they form by themselves and hold.
+- **RETRACTED — the "fix" to the straightening spring was not what we thought.** Lengthening its rest
+  length was supposed to make molecules resist bending. Measured directly, it instead **stretches every
+  bond by 67%**, inflating the molecule from 2 units long to 3.3. The reference model gets away with the
+  same trick only because its bonds cannot stretch; ours can. Consequence: the 3-D membranes we called
+  "reference quality" were measured against a yardstick for a *different, shorter* molecule — against
+  their own, they are about half as thick as a proper membrane. The 2-D results are unaffected: none of
+  them ever used the change.
 - **DONE — first hand-set number removed, now on a test that can actually tell.** The number said
   "heads dislike tails", and the code called it the thing that makes soap behave like soap. Removed
   entirely, ribbons still close 9 times in 10 against 10 in 10 with it — indistinguishable. So it was
