@@ -31,9 +31,11 @@ Formation is rare and slow: 2 of 18 fresh seeds, over 6e5 to 1e6 steps. At ~5 ms
 start is hours of wall clock and will usually show nothing. That is the state of the science, not a
 defect in the viewer, so `dispersed` is the DEFAULT.
 
-`start="formed"` loads the best surviving saved aggregate and reports the gate's verdict on it
-verbatim in `snapshot()["gate"]`. It does NOT ship a certified vesicle, because none is available:
-every saved 2-D production state was checked on 2026-08-27 and **not one passes `vesicle_call`**.
+`start="formed"` loads the certified emergent vesicle and reports the gate's verdict verbatim in
+`snapshot()["gate"]`. As of 2026-09-07 this DOES ship a certified vesicle -- seed 509 at step 500,000,
+`vesicle_call` True, render-confirmed. The paragraph below records the state of the evidence before
+that, and is kept because the reasons those earlier states failed are still the reasons to distrust a
+lumen ratio near threshold.
 
     docs/controls/stable_vesicle_sd9302.npz   n_enclosed 1 at bead 1.0-3.0; lumen ratio 0.070 (< 0.10)
     docs/controls/snap25_sd8801.npz           lumen ratio 0.021
@@ -76,7 +78,15 @@ DT = 8e-3                      # the validated timestep (same energy + ensemble 
 C_D = _mixture.C_D             # bead-count-per-unit-volume table, shared with the research path
 
 _HERE = pathlib.Path(__file__).resolve().parent
-FORMED_STATE = _HERE / "docs" / "controls" / "stable_vesicle_sd9302.npz"
+# The certified emergent vesicle. Seed 509, step 500,000, production chemistry, dispersed random
+# start, nothing planted. vesicle_call TRUE at dilations [1,1,1,1], lumen 136 = 0.136 of expected for
+# its 56-lipid enclosing cluster. Render-confirmed (docs/figures/emergent_sd509_captured.png) and
+# reproducible: re-running seed 509 gives the same closure at the same step.
+#
+# It closed at CONSTANT SIZE -- 56 lipids for 100,000 steps before closure and after -- which is two
+# ends of a ribbon meeting, not accretion bridging a gap. The historical vesicle did the same at 116.
+FORMED_STATE = _HERE / "docs" / "controls" / "emergent_vesicle_sd509_s500000.npz"
+DEFAULT_SEED = 509
 
 # viewer.html species codes: 5 = lipid head (blue), 6 = lipid tail (orange), 0 = solvent (dim).
 # field.py uses HEAD=0, TAIL=1, WATER=2, and 0 collides across the two schemes, so the mapping is
@@ -118,7 +128,7 @@ class VesicleEngine:
     Exposes the surface `server.Sim` needs: `.X`, `.t`, `.L`, `.step()`, `.snapshot()`.
     """
 
-    def __init__(self, seed=0, start="dispersed", n_lip=N_LIP, L=L_BOX, kT=KT, phi=PHI,
+    def __init__(self, seed=DEFAULT_SEED, start="dispersed", n_lip=N_LIP, L=L_BOX, kT=KT, phi=PHI,
                  chi_ht=None, chi_ww=None, chi_hh=None, chi_tw=None, engine="transformer"):
         self.seed = int(seed)
         self.start = start
