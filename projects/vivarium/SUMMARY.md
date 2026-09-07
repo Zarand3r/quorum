@@ -1,6 +1,6 @@
 # vivarium — executive summary
 
-*Updated 2026-09-06. Current state only — history lives in `RESEARCH_LOG.md`. Plain language, short.*
+*Updated 2026-09-07. Current state only — history lives in `RESEARCH_LOG.md`. Plain language, short.*
 
 ## Objective
 
@@ -119,11 +119,12 @@ another run can settle. That decision is what the project needs next.
 
 ## Known gaps
 
-- **A recent run did make a bubble by the strict test** — and we cannot look at it. One run (seed 509,
-  full recipe) passed every check for 26 consecutive snapshots starting at step 500,000, then fell apart
-  again by the end. The program only saved the *final* picture, so the bubble itself was never written
-  to disk. That is the same mistake that destroyed the original one. The program now saves the picture
-  the moment it passes, and that run is being repeated.
+- **A recent run made a bubble, and we have the picture.** Seed 509, full recipe, from scattered
+  molecules: at step 500,000 a closed ring with water inside, oily cores between two layers of heads.
+  It held for 22 consecutive snapshots. Re-running the same seed reproduced it exactly and this time
+  saved the picture at the moment it formed — the earlier version only kept the final picture, by which
+  time it had come apart, which is the same mistake that lost the original one years of runs ago.
+  The bubble is 56 of the 160 molecules; the rest are still scattered fragments around it.
 
 - Two deviations from the reference model's known-good recipe were never reconciled: molecule density is
   about half the reference value, and the one architectural comparison the plan called for (soft
