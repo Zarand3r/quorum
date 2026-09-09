@@ -164,3 +164,76 @@ result must say so.
 
 Tails are NOT scaled. The hydration shell is a property of the polar head group; tail beads are
 hydrophobic and carry none.
+
+---
+
+## Amendment 2 — 2026-09-08: the MLP IS usable. Demonstrated, not argued.
+
+Two objections were raised against a live MLP. One was real and one was not.
+
+**Not a blocker: the MLP.** `manybody.py` gives each token a scalar internal state -- a smooth
+coordination number over lipid beads, `n_i = sum_j (1 - (r/rc)^2)^2` -- and an MLP maps it to an
+exposure `f_i` that modulates the pair chemistry as `chi_ij = chi0_ij * f_i * f_j`. Symmetric in the
+pair, so antisymmetry of the pair force is preserved.
+
+**Real, and solved:** with `chi` configuration-dependent the force is no longer the radial derivative
+alone. `field.forces` and `transformer.attention` both compute `dudr = eps*(duc + duw*chi)/sig` with
+chi held constant, so both would silently omit
+
+    - sum_ij eps * well(r_ij) * chi0_ij * [ f_j * df_i/dx_k + f_i * df_j/dx_k ]
+
+Omitting it makes the dynamics non-conservative: energy drifts, temperature is undefined, and the
+thermostat fights a non-gradient force. This is the same embedding-density term EAM and many-body DPD
+carry, and it is why the descriptor is a smooth coordination number rather than exact SASA -- the arc
+geometry is more accurate but piecewise, and an underivable descriptor is exactly how a
+non-conservative force gets in unnoticed.
+
+### The gate: does F equal -grad U?
+
+Central differences at h = 1e-6, worst relative error over probed coordinates:
+
+| MLP scale | max rel. error |
+|---|---|
+| 0.0 (off) | 1.079e-06 |
+| 0.5 | 1.072e-06 |
+| 1.0 | 1.072e-06 |
+| 2.0 | 1.071e-06 |
+
+That is the central-difference truncation floor, flat in MLP strength. **The force is exact.** And the
+term is not inert: `||F_on - F_off|| / ||F_off|| = 0.0076`.
+
+### What still cannot cross over from polar_pack
+
+**Softmax.** Row-stochastic weights give `w_ij != w_ji`, so `F_ij != -F_ji`: Newton's third law fails
+and momentum is not conserved. Normalisation also makes the force INTENSIVE -- a bead with 100
+neighbours feels the same total as one with 3. Symmetrising restores the third law but destroys
+row-stochasticity, so it is no longer softmax. polar_pack can use it because it has no energy ledger.
+
+### Amendment 3 — the G4 gate as registered is too weak, corrected BEFORE any data
+
+Registered: `on >= 3/10 AND off <= 1/10`. Computed power:
+
+| true rate, if the MLP does nothing | P(false pass) |
+|---|---|
+| 0.10 | 0.052 |
+| 0.20 | **0.121** |
+
+and the boundary case the gate would PASS, 3/10 vs 1/10, is **Fisher p = 0.291** -- not significant.
+The gate licenses a non-result.
+
+**Corrected gate, no data yet seen:**
+
+```
+G4 PASSES iff  on >= 6/12  AND  off <= 1/12  AND  Fisher one-sided p <= 0.05
+```
+
+Twelve seeds per arm rather than ten, and an explicit significance clause. Changing a gate after
+seeing data would be the failure this spec exists to prevent; changing one found broken before any run
+is not, and the correction is recorded here rather than made silently.
+
+### Remaining free parameter, declared
+
+`ManyBodyMLP.scale` multiplies the coordination before the exposure map, and `n_ref = 6.0` is the
+close-packed 2-D coordination number (geometry). `scale = 1.0` is the natural value and is what the
+gradient gate was run at, but it IS a knob and must not be tuned to make G4 pass. If G4 is run at more
+than one `scale`, every value must be reported.
