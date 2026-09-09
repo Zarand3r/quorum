@@ -67,6 +67,72 @@ def coord_weight(r, rc):
     return u * u, (-4.0 * u * s) / rc          # w, dw/dr
 
 
+class ShapeMLP:
+    """Environment-dependent BEAD SIZE. The mechanism `ManyBodyMLP` should have used.
+
+    WHY THE FIRST ATTEMPT FAILED, DIAGNOSED
+
+    `ManyBodyMLP` modulates the interaction STRENGTH chi. G4 measured 0/12 against 0/12, and the
+    construction predicts it: a flat bilayer is symmetric, so an environment-dependent term gives both
+    leaflets the same value (G2 = 0.0000 exactly) and can only AMPLIFY an existing bend. The sign of
+    that feedback is wrong --
+
+        bend -> outer leaflet less crowded -> higher f -> STRONGER attraction on the outer leaflet
+             -> outer leaflet CONTRACTS -> the bend FLATTENS
+
+    i.e. it stabilises flatness. G4 was arguably predictable from the construction.
+
+    WHAT POLAR_PACK ACTUALLY MODULATES
+
+    Its MLP does not change affinity, it changes SHAPE: "induced-fit morph -- the block updates the
+    shape channels, so an agent deforms its contour to fit its binding partners." In lipid physics
+    shape is exactly what sets curvature, through the packing parameter P = v/(a0*l) -- `field.py:249`
+    already records that head area is the only geometric lever on it. A cone bends a membrane; a
+    cylinder does not; interaction strength does not enter.
+
+    So this modulates sigma_head, and the feedback reverses:
+
+        bend -> outer heads less crowded -> hydration shell expands -> sigma_head GROWS
+             -> wedge shape -> MORE bend
+
+    which is positive feedback, and is the standard mechanism for spontaneous curvature rather than an
+    analogy to it.
+
+    DERIVED, NOT FITTED. A hydration shell is compressed by lateral crowding:
+
+        sigma_i = sigma_0 * (1 + amp * (1 - n_i / n_ref)),  clamped to stay positive
+
+    `n_ref` is the close-packed 2-D coordination (geometry). At n = n_ref the bead is at its reference
+    size; less crowded means larger. `amp` is the one free parameter and is declared as such.
+    """
+
+    def __init__(self, sigma0, n_ref=6.0, amp=0.25, subject=(HEAD,), neighbours=(HEAD,)):
+        self.sigma0 = np.asarray(sigma0, dtype=np.float64)
+        self.n_ref = float(n_ref)
+        self.amp = float(amp)
+        self.subject = tuple(subject)
+        # WHICH beads compress the hydration shell. HEADS ONLY, and this is not cosmetic: with all
+        # lipid beads counted, the descriptor is dominated by TAIL packing, and on a curved bilayer the
+        # outer leaflet's tails are compressed into a converging region. Measured on a planted ring,
+        # outer-minus-inner coordination is
+        #     all lipid beads  +0.2004   (outer reads MORE crowded -> sigma shrinks -> flattens)
+        #     HEAD beads only  -0.0661   (outer reads LESS crowded -> sigma grows -> bends)
+        # i.e. the wrong descriptor inverts the feedback. A hydration shell is compressed by
+        # neighbouring HEAD GROUPS; tails are buried in the core and do not touch it.
+        self.neighbours = tuple(neighbours)
+
+    def sigma_and_dsigma(self, n, species):
+        """Per-BEAD sigma and d(sigma)/dn. Non-subject species keep their species default."""
+        sig = self.sigma0[species].astype(np.float64)
+        dsig = np.zeros_like(sig)
+        m = np.isin(species, self.subject)
+        u = 1.0 - n[m] / self.n_ref
+        sig[m] = self.sigma0[species[m]] * np.maximum(1.0 + self.amp * u, 0.25)
+        live = (1.0 + self.amp * u) > 0.25
+        dsig[m] = np.where(live, -self.sigma0[species[m]] * self.amp / self.n_ref, 0.0)
+        return sig, dsig
+
+
 class ManyBodyMLP:
     """Per-token exposure from coordination, as a real MLP with a residual on a one-hot channel.
 

@@ -96,31 +96,19 @@ class VivariumTransformer:
         # `f.pair_sigma` is the SAME helper `field.forces` uses, deliberately. Per-species bead size
         # enters the radial gate, so a second copy of the Lorentz rule here would be a place for the
         # attention identity to drift away from the force law without any test noticing.
-        sig = f.pair_sigma(*pairs)
+        # ONE source of truth for sigma and chi: `field._env`. Both are configuration-dependent once
+        # a shape or affinity modulator is attached, and `transformer.attention` is a SECOND
+        # implementation of the same force law -- on 2026-09-09 the many-body term went into
+        # `field.forces` only, so both G4 arms were the same simulation
+        # (max|X_off - X_mlp| = 0.000e+00). Recomputing sigma here from `pair_sigma`, which is
+        # per-SPECIES, would repeat that with the shape channel, which is per-BEAD.
+        sig, chi, extra = f._env(r, pairs)
         s = r / sig
         _, duc = _core(s, f.core_height)
         uw, duw = _well(s, f.rc)
-        chi = np.einsum("ic,ic->i", self.q()[pairs[0]], self.k()[pairs[1]])
-        # MANY-BODY MODULATION, if the field carries one. This branch exists because
-        # `transformer.attention` is a SECOND implementation of the same force law as `field.forces`,
-        # and on 2026-09-09 the many-body term was added to `field.forces` only. The production engine
-        # runs THIS path, so both arms of the G4 curl experiment were bit-identical
-        # (max|X_off - X_mlp| = 0.000e+00 after 400 steps) and the experiment was void. It would have
-        # reported "the MLP does nothing", which is exactly wrong.
-        #
-        # The duplication is the defect; this keeps the two paths in step until they are unified.
         self._mb = None
-        if getattr(f, "manybody", None) is not None:
-            from manybody import coord_weight
-            from _scatter import scatter_add
-            w, dw = coord_weight(r, f.rc * sig)
-            both = f._lipid_mask[pairs[0]] & f._lipid_mask[pairs[1]]
-            wl = np.where(both, w, 0.0)
-            n_co = (scatter_add(len(f.species), pairs[0], wl)
-                    + scatter_add(len(f.species), pairs[1], wl))
-            fx, dfx = f.manybody.f_and_df(n_co, f.species)
-            self._mb = (chi, uw, fx, dfx, w, dw, both, pairs, sig, r)
-            chi = chi * fx[pairs[0]] * fx[pairs[1]]
+        if extra is not None:
+            self._mb = (extra, uw, s, sig, r, pairs)
         dudr = f.eps * (duc + duw * chi) / sig
         dudr = np.where(r < f.rc * sig, dudr, 0.0)
         return -dudr / np.maximum(r, 1e-12)
@@ -145,15 +133,27 @@ class VivariumTransformer:
         pairs, sep, dist = self._nonbonded_pairs(X)
         out += AttentionHead("nonbonded", self._score_nonbonded)(X, self.f.L, pairs, sep, dist)
         if getattr(self, "_mb", None) is not None:
-            # dU/df . df/dn . dn/dx -- without it the force is not -grad U and energy drifts.
+            # dU/dq . dq/dn . dn/dx for every modulated quantity, matching field.forces exactly.
             from _scatter import scatter_add, scatter_add_pair
-            chi0, uw, fx, dfx, w, dw, both, pr, sig, r = self._mb
-            g = self.f.eps * uw * chi0
-            dU_df = (scatter_add(len(X), pr[0], g * fx[pr[1]])
-                     + scatter_add(len(X), pr[1], g * fx[pr[0]]))
-            chain = dU_df * dfx
-            cm = np.where(both, (chain[pr[0]] + chain[pr[1]]) * dw / np.maximum(r, 1e-12), 0.0)
-            out -= scatter_add_pair(len(X), pr[0], pr[1], cm[:, None] * sep)
+            (chi0, fx, dfx, dsb, dw, both), uw, sr, sig, r, pr = self._mb
+            n = len(X)
+            _, duc2 = _core(sr, self.f.core_height)
+            _, duw2 = _well(sr, self.f.rc)
+            chi_mod = chi0 * (fx[pr[0]] * fx[pr[1]] if fx is not None else 1.0)
+            dudr = self.f.eps * (duc2 + duw2 * chi_mod) / sig
+            dudr = np.where(r < self.f.rc * sig, dudr, 0.0)
+            safe = np.maximum(r, 1e-12)
+            chain = np.zeros(n)
+            if fx is not None:
+                g = self.f.eps * uw * chi0
+                chain = chain + (scatter_add(n, pr[0], g * fx[pr[1]])
+                                 + scatter_add(n, pr[1], g * fx[pr[0]])) * dfx
+            if dsb is not None:
+                half = -0.5 * sr * dudr
+                chain = chain + (scatter_add(n, pr[0], half)
+                                 + scatter_add(n, pr[1], half)) * dsb
+            cm = np.where(both, (chain[pr[0]] + chain[pr[1]]) * dw / safe, 0.0)
+            out -= scatter_add_pair(n, pr[0], pr[1], cm[:, None] * sep)
         for sp, k, r0 in self.f._springs():
             p, sep, dist = self._spring_pairs(X, sp)
             out += AttentionHead("spring", self._score_spring(k, r0))(X, self.f.L, p, sep, dist)

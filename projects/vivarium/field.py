@@ -239,7 +239,7 @@ class Field:
 
     def __init__(self, species, bonds, L, eps=1.0, sigma=1.0, rc=2.5, k_bond=200.0,
                  r_bond=1.0, chi=None, bend_frac=1.0, angles=None, core_height=None,
-                 sigma_species=None, bend_r0=None, manybody=None):
+                 sigma_species=None, bend_r0=None, manybody=None, shape=None):
         self.species = np.asarray(species, dtype=np.int64)
         self.bonds = np.asarray(bonds, dtype=np.int64).reshape(-1, 2)
         self.L = float(L)
@@ -295,6 +295,15 @@ class Field:
         # configuration-dependent and `forces` carries the extra dU/df . df/dn . dn/dx term;
         # omitting it would make the dynamics non-conservative.
         self.manybody = manybody
+        # SHAPE modulator (manybody.ShapeMLP): per-BEAD sigma from local coordination.
+        #
+        # This is the faithful adaptation of what polar_pack's MLP does. There the shape channels live
+        # in the state vector and the MLP deforms them ("induced-fit morph"), and because the contour
+        # IS the query/key, one channel drives both geometry and affinity. Here they are separate: chi
+        # is affinity, sigma is geometry. Curvature is set by GEOMETRY -- the packing parameter
+        # P = v/(a0*l), for which field.py:249 records head area as the only lever -- so the shape
+        # channel is the one that matters, and modulating chi instead gave 0/12 on G4.
+        self.shape = shape
         # which beads count toward coordination: everything that is not solvent
         self._lipid_mask = self.species != WATER
         self.angles = (self._infer_13() if angles is None else
@@ -540,31 +549,47 @@ class Field:
         return 0.5 * (self.sigma_species[self.species[i]] + self.sigma_species[self.species[j]])
 
 
-    def _modulated_chi(self, X, r, sig, iu):
-        """chi with the many-body modulation applied, plus (f, df, w, dw, both) for the force term.
+    def _env(self, r, iu):
+        """Per-pair (sigma, chi) with any coordination-dependent modulation, plus force extras.
 
-        Factored out because `energy` and `forces` computing chi DIFFERENTLY is exactly the bug the
+        BOTH `energy` and `forces` go through here. Computing them differently is exactly the bug the
         gradient gate caught on 2026-09-08: the force was modulated and the energy was not, so F was
-        the gradient of a potential nobody was evaluating (max rel err 1.6e-2 instead of 1e-6).
+        the gradient of a potential nobody was evaluating (1.6e-2 instead of 1e-6).
         """
+        base = 0.5 * (self.sigma_species[self.species[iu[0]]]
+                      + self.sigma_species[self.species[iu[1]]])
         chi0 = self.content_pairs(*iu)
-        if self.manybody is None:
-            return chi0, chi0, None, None, None, None, None
+        if self.manybody is None and self.shape is None:
+            return base, chi0, None
         from manybody import coord_weight
-        w, dw = coord_weight(r, self.rc * sig)
-        both = self._lipid_mask[iu[0]] & self._lipid_mask[iu[1]]
+        w, dw = coord_weight(r, self.rc * base)
+        # The modulator chooses which beads count as neighbours; see ShapeMLP.neighbours.
+        src = self.shape if self.shape is not None else self.manybody
+        nb_species = getattr(src, "neighbours", None)
+        mask = (np.isin(self.species, nb_species) if nb_species is not None
+                else self._lipid_mask)
+        both = mask[iu[0]] & mask[iu[1]]
         wl = np.where(both, w, 0.0)
-        n_co = scatter_add(len(X), iu[0], wl) + scatter_add(len(X), iu[1], wl)
-        f, df = self.manybody.f_and_df(n_co, self.species)
-        return chi0, chi0 * f[iu[0]] * f[iu[1]], f, df, w, dw, both
+        # len(self.species), not len(X): `transformer._score_nonbonded` has no X in scope,
+        # and routing both force paths through this one helper is the point.
+        nb = len(self.species)
+        n_co = scatter_add(nb, iu[0], wl) + scatter_add(nb, iu[1], wl)
+        chi, f, df = chi0, None, None
+        if self.manybody is not None:
+            f, df = self.manybody.f_and_df(n_co, self.species)
+            chi = chi0 * f[iu[0]] * f[iu[1]]
+        sig, dsb = base, None
+        if self.shape is not None:
+            sb, dsb = self.shape.sigma_and_dsigma(n_co, self.species)
+            sig = 0.5 * (sb[iu[0]] + sb[iu[1]])
+        return sig, chi, (chi0, f, df, dsb, dw, both)
 
     def energy(self, X):
         d, r, iu = self._pairs(X)
-        sig = self.pair_sigma(*iu)
+        sig, chi, _ = self._env(r, iu)
         s = r / sig
         uc, _ = _core(s, self.core_height)
         uw, _ = _well(s, self.rc)
-        _, chi, *_ = self._modulated_chi(X, r, sig, iu)
         u = self.eps * (uc + uw * chi)
         e = float(u[r < self.rc * sig].sum())
         for pairs, k, r0 in self._springs():
@@ -593,11 +618,10 @@ class Field:
         """-dU/dX, analytic. Verified against finite differences by `check_gradients`."""
         n = len(X)
         d, r, iu = self._pairs(X)
-        sig = self.pair_sigma(*iu)
+        sig, chi, extra = self._env(r, iu)
         s = r / sig
         _, duc = _core(s, self.core_height)
         uw, duw = _well(s, self.rc)
-        chi0, chi, f, df, w, dw, both = self._modulated_chi(X, r, sig, iu)
         # dU/dr, guarding r = 0 where the direction is undefined
         dudr = self.eps * (duc + duw * chi) / sig
         dudr = np.where(r < self.rc * sig, dudr, 0.0)
@@ -606,13 +630,22 @@ class Field:
         pf = -coef * d                       # force on i from j
         # scatter_add_pair, not np.add.at: 8.4x on this shape, bit-identical. See _scatter.py.
         F = scatter_add_pair(len(X), iu[0], iu[1], pf)
-        if self.manybody is not None:
-            # THE TERM THAT IS EASY TO FORGET. With chi configuration-dependent,
-            #   F -= sum_ij eps * uw * chi0 * [f_j df_i/dx + f_i df_j/dx]
-            # Without it the force is not -grad U: energy drifts and temperature stops being defined.
-            g = self.eps * uw * chi0
-            dU_df = (scatter_add(n, iu[0], g * f[iu[1]]) + scatter_add(n, iu[1], g * f[iu[0]]))
-            chain = dU_df * df
+        if extra is not None:
+            # THE TERMS THAT ARE EASY TO FORGET. With sigma and/or chi configuration-dependent,
+            # F picks up dU/dq . dq/dn . dn/dx for each modulated quantity q. Omitting them means the
+            # force is not -grad U: energy drifts and temperature stops being defined.
+            chi0, f, df, dsb, dw, both = extra
+            chain = np.zeros(n)
+            if f is not None:                                  # affinity channel
+                g = self.eps * uw * chi0
+                chain = chain + (scatter_add(n, iu[0], g * f[iu[1]])
+                                 + scatter_add(n, iu[1], g * f[iu[0]])) * df
+            if dsb is not None:                                # SHAPE channel
+                # dU/dsigma_ij = -s * dudr, and sigma_ij = (sigma_i + sigma_j)/2, so each bead takes
+                # half of it before the dsigma/dn chain rule.
+                half = -0.5 * s * dudr
+                chain = chain + (scatter_add(n, iu[0], half)
+                                 + scatter_add(n, iu[1], half)) * dsb
             cm = np.where(both, (chain[iu[0]] + chain[iu[1]]) * dw / safe, 0.0)
             F -= scatter_add_pair(len(X), iu[0], iu[1], cm[:, None] * d)
         for pairs, k, r0 in self._springs():

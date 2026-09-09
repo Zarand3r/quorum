@@ -43,7 +43,7 @@ import _mixture
 from _lumen_field import n_enclosed
 from field import Field, HEAD, N_SPECIES
 from gap_closure import chi_from, PRODUCTION
-from manybody import ManyBodyMLP
+from manybody import ManyBodyMLP, ShapeMLP
 
 _HERE = pathlib.Path(__file__).resolve().parent
 RESULTS = _HERE / "docs" / "results" / "curl.tsv"
@@ -100,8 +100,11 @@ def run_one(scale: float, seed: int, steps: int = STEPS) -> dict:
         0, N_LIP, nw, L_BOX, 2, plant="flat", branched=True, seed=seed)
     mm = np.array([np.asarray(m, dtype=np.int64) for m in mols], dtype=np.int64)
     X = np.ascontiguousarray(X, dtype=np.float64)
-    mb = ManyBodyMLP(scale=scale) if scale > 0 else None
-    f = Field(species, bonds, L_BOX, chi=chi_from(PRODUCTION), manybody=mb)
+    # `scale` selects the SHAPE channel now: sigma_head modulated by head-only coordination. The
+    # affinity channel (ManyBodyMLP) returned 0/12 on G4 and its feedback sign was diagnosed as
+    # stabilising flatness; shape is what sets the packing parameter and therefore curvature.
+    sh = (ShapeMLP(np.full(N_SPECIES, 1.0), amp=scale) if scale > 0 else None)
+    f = Field(species, bonds, L_BOX, chi=chi_from(PRODUCTION), shape=sh)
     ig = _mixture.make_step_engine(f, X, KT, DT, 1 + seed, engine="transformer")
 
     a0 = aspect(X, mm, L_BOX)
