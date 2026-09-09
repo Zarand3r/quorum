@@ -1,6 +1,6 @@
 # vivarium — executive summary
 
-*Updated 2026-09-07. Current state only — history lives in `RESEARCH_LOG.md`. Plain language, short.*
+*Updated 2026-09-09. Current state only — history lives in `RESEARCH_LOG.md`. Plain language, short.*
 
 ## Objective
 
@@ -120,6 +120,17 @@ and the old result was scored with a test closer to the loose one than the stric
 
 Deciding which test is the right one is a judgement about what should count as a bubble, not something
 another run can settle. That decision is what the project needs next.
+
+## The newest result: giving molecules an internal state did not make membranes bend
+
+Real molecules change shape depending on how crowded they are; ours were rigid. We gave each one a
+sense of how buried it is — computed from geometry, with no new tunable numbers — and let that change
+how it interacts. It provably does nothing on a flat sheet (so it cannot secretly force bending) and
+responds strongly on a curved one, which is exactly how an honest version of this should behave.
+
+Then we asked the question that matters: does a flat sheet now curl up? **No — 0 out of 12, same as
+without it.** That makes six different things we have tried that all fail to bend a flat membrane. The
+previous five had a shared explanation; this one does not fit it, so the explanation was incomplete.
 
 ## Known gaps
 

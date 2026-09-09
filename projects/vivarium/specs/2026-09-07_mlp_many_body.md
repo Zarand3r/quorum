@@ -275,3 +275,55 @@ and the arms now diverge: `max|X_off - X_mlp| = 9.7e-01` after 400 steps.
 each is internally conservative. Both were internally consistent; they were consistent with different
 physics. An off-state bit-identity check cannot catch that, because with the MLP off they agree
 trivially.
+
+---
+
+## G4 — RESULT: FAILS. The many-body term engages, and does not curl a flat ribbon.
+
+24 runs, seeds 700-711, both arms, N = 56, L = 100, 300,000 steps.
+
+| arm | curled (aspect_max >= 0.45) | mean aspect_max |
+|---|---|---|
+| MLP off | **0/12** | 0.0330 |
+| MLP on, scale 1.0 | **0/12** | 0.0378 |
+
+    Fisher one-sided p = 1.0000
+    GATE (on >= 6/12 AND off <= 1/12 AND p <= 0.05): FAILS
+
+No state crossed the threshold, so there was nothing to render. Every run started at aspect 0.0024 and
+the largest excursion in 24 runs was 0.0607 -- against 0.5042 for a planted arc. **The ribbons stayed
+flat.**
+
+**This is a real comparison, unlike attempt 1.** The arms differ seed by seed (sd 700: 0.0224 off
+against 0.0083 on), so the MLP demonstrably reached the dynamics.
+
+### The registered reading, written before the data
+
+> *"G4 fails, G3 passes. The mechanism engages but does not drive curvature. The many-body term is real
+> but this particular one is not the missing piece; ADE proper (an explicit leaflet-area-difference
+> term) becomes the next candidate, and it is a much harder sell under the no-smuggling rule."*
+
+That is exactly the outcome. G3 measured the term engaging on a curved membrane (+0.1179 against
+0.0000 flat); G4 shows it does not make a flat one bend.
+
+### What this sharpens
+
+The flat-ribbon protocol now has **six independent nulls**: `chi_TW` (null with power), `chi_HH` (0/5
+at two values), lipid shape, imposed leaflet THICKNESS asymmetry (0/5), imposed leaflet AREA asymmetry
+(0/5), and now a derived many-body solvation term (0/12).
+
+The first five were all symmetric pair interactions, and `docs/RESULTS.md` explains them structurally:
+a pair potential cannot express a difference between leaflets. **That explanation no longer covers the
+data.** This term is not a pair interaction -- it is a per-token aggregate over the neighbourhood --
+and it still does not curl the membrane. So the obstruction is narrower and more specific than "pair
+potentials are insufficient", and whatever it is, being many-body is not by itself enough to overcome
+it.
+
+### Honest limits
+
+- ONE value of `scale` was run (1.0, the declared natural value). It was not tuned, and no second
+  value was tried, so this does not exclude a stronger coupling working. Reporting a single value is
+  the honest description of what was done.
+- 300,000 steps. A slower instability would be missed.
+- The mean aspect_max is marginally HIGHER with the MLP on (0.0378 vs 0.0330), which is within noise
+  and is not evidence of anything.
