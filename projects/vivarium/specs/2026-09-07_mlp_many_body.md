@@ -237,3 +237,41 @@ is not, and the correction is recorded here rather than made silently.
 close-packed 2-D coordination number (geometry). `scale = 1.0` is the natural value and is what the
 gradient gate was run at, but it IS a knob and must not be tuned to make G4 pass. If G4 is run at more
 than one `scale`, every value must be reported.
+
+---
+
+## G4, FIRST ATTEMPT — VOID. The two arms were the same simulation.
+
+Caught 2026-09-09 01:12, 1h19m into a 2h run, before it produced a verdict.
+
+    max|X_off - X_mlp| after 400 steps = 0.000e+00
+
+**The MLP never reached the dynamics.** `manybody` was wired into `field.forces`, but the production
+engine runs `transformer.attention`, which is a SECOND implementation of the same force law and
+recomputes chi from its own frozen one-hot channel. It never consulted `field.manybody`.
+
+Had this run to completion it would have reported **"G4 fails, the MLP does nothing"** -- the exact
+opposite of the truth, backed by 24 runs and 48 CPU-hours.
+
+**This is the duplication defect, not a typo.** The same session's audit counted `def plant` in 18
+files, `def build` in 15, `def step` in 12, and `largest_cluster` in 5, and noted that competing
+implementations are how the wrong one gets called. Here there were two force laws and only one was
+changed. The signature was visible in the log an hour before the direct test confirmed it: `sd=700`,
+`sd=702`, `sd=703` and `sd=704` reported *character-identical* aspect values in both arms.
+
+### Fix, and the gate that should have existed from the start
+
+The many-body term is now carried by both paths, and they are checked against each other:
+
+| | field vs transformer, max abs diff / \|F\| |
+|---|---|
+| scale = 0.0 | **0.000e+00** |
+| scale = 1.0 | **0.000e+00** |
+| scale = 2.0 | **0.000e+00** |
+
+and the arms now diverge: `max|X_off - X_mlp| = 9.7e-01` after 400 steps.
+
+**G1 is amended to require agreement between the two force paths at every MLP scale**, not merely that
+each is internally conservative. Both were internally consistent; they were consistent with different
+physics. An off-state bit-identity check cannot catch that, because with the MLP off they agree
+trivially.
