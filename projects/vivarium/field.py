@@ -239,7 +239,7 @@ class Field:
 
     def __init__(self, species, bonds, L, eps=1.0, sigma=1.0, rc=2.5, k_bond=200.0,
                  r_bond=1.0, chi=None, bend_frac=1.0, angles=None, core_height=None,
-                 sigma_species=None, bend_r0=None):
+                 sigma_species=None, bend_r0=None, manybody=None):
         self.species = np.asarray(species, dtype=np.int64)
         self.bonds = np.asarray(bonds, dtype=np.int64).reshape(-1, 2)
         self.L = float(L)
@@ -290,6 +290,13 @@ class Field:
         # set it silently gave every arm the same value and produced a bit-identical A/B.
         self.bend_r0 = (float(os.environ.get("VIVARIUM_BEND_R0", 2.0))
                         if bend_r0 is None else float(bend_r0))
+        # OPTIONAL many-body modulator (manybody.ManyBodyMLP). None => the pair-only force,
+        # bit-identical to every result predating 2026-09-08. When set, chi becomes
+        # configuration-dependent and `forces` carries the extra dU/df . df/dn . dn/dx term;
+        # omitting it would make the dynamics non-conservative.
+        self.manybody = manybody
+        # which beads count toward coordination: everything that is not solvent
+        self._lipid_mask = self.species != WATER
         self.angles = (self._infer_13() if angles is None else
                        np.asarray(angles, dtype=np.int64).reshape(-1, 2))
         self.chi = default_chi() if chi is None else np.asarray(chi, dtype=float)
@@ -532,13 +539,32 @@ class Field:
         `transformer`, so the attention identity cannot drift from the force law."""
         return 0.5 * (self.sigma_species[self.species[i]] + self.sigma_species[self.species[j]])
 
+
+    def _modulated_chi(self, X, r, sig, iu):
+        """chi with the many-body modulation applied, plus (f, df, w, dw, both) for the force term.
+
+        Factored out because `energy` and `forces` computing chi DIFFERENTLY is exactly the bug the
+        gradient gate caught on 2026-09-08: the force was modulated and the energy was not, so F was
+        the gradient of a potential nobody was evaluating (max rel err 1.6e-2 instead of 1e-6).
+        """
+        chi0 = self.content_pairs(*iu)
+        if self.manybody is None:
+            return chi0, chi0, None, None, None, None, None
+        from manybody import coord_weight
+        w, dw = coord_weight(r, self.rc * sig)
+        both = self._lipid_mask[iu[0]] & self._lipid_mask[iu[1]]
+        wl = np.where(both, w, 0.0)
+        n_co = scatter_add(len(X), iu[0], wl) + scatter_add(len(X), iu[1], wl)
+        f, df = self.manybody.f_and_df(n_co, self.species)
+        return chi0, chi0 * f[iu[0]] * f[iu[1]], f, df, w, dw, both
+
     def energy(self, X):
         d, r, iu = self._pairs(X)
         sig = self.pair_sigma(*iu)
         s = r / sig
         uc, _ = _core(s, self.core_height)
         uw, _ = _well(s, self.rc)
-        chi = self.content_pairs(*iu)
+        _, chi, *_ = self._modulated_chi(X, r, sig, iu)
         u = self.eps * (uc + uw * chi)
         e = float(u[r < self.rc * sig].sum())
         for pairs, k, r0 in self._springs():
@@ -571,7 +597,7 @@ class Field:
         s = r / sig
         _, duc = _core(s, self.core_height)
         uw, duw = _well(s, self.rc)
-        chi = self.content_pairs(*iu)
+        chi0, chi, f, df, w, dw, both = self._modulated_chi(X, r, sig, iu)
         # dU/dr, guarding r = 0 where the direction is undefined
         dudr = self.eps * (duc + duw * chi) / sig
         dudr = np.where(r < self.rc * sig, dudr, 0.0)
@@ -580,6 +606,15 @@ class Field:
         pf = -coef * d                       # force on i from j
         # scatter_add_pair, not np.add.at: 8.4x on this shape, bit-identical. See _scatter.py.
         F = scatter_add_pair(len(X), iu[0], iu[1], pf)
+        if self.manybody is not None:
+            # THE TERM THAT IS EASY TO FORGET. With chi configuration-dependent,
+            #   F -= sum_ij eps * uw * chi0 * [f_j df_i/dx + f_i df_j/dx]
+            # Without it the force is not -grad U: energy drifts and temperature stops being defined.
+            g = self.eps * uw * chi0
+            dU_df = (scatter_add(n, iu[0], g * f[iu[1]]) + scatter_add(n, iu[1], g * f[iu[0]]))
+            chain = dU_df * df
+            cm = np.where(both, (chain[iu[0]] + chain[iu[1]]) * dw / safe, 0.0)
+            F -= scatter_add_pair(len(X), iu[0], iu[1], cm[:, None] * d)
         for pairs, k, r0 in self._springs():
             bd = X[pairs[:, 0]] - X[pairs[:, 1]]
             bd -= self.L * np.round(bd / self.L)
