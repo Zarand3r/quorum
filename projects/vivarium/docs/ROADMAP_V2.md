@@ -1,3 +1,6 @@
+> **SUPERSEDED 2026-09-10 by [`ROADMAP.md`](ROADMAP.md)**, the single consolidated roadmap.
+> Kept for history only. Do not update this file.
+
 # Roadmap v2: ablation from a working oracle
 
 **Adopted 2026-08-11**, replacing `ROADMAP_RESET.md`. Written after `pair_style ylz` in stock LAMMPS

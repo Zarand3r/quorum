@@ -1,3 +1,6 @@
+> **SUPERSEDED 2026-09-10 by [`ROADMAP.md`](ROADMAP.md)**, the single consolidated roadmap.
+> Kept for history only. Do not update this file.
+
 # Reset roadmap: reproduce emergence, then bound it, then transformerize it
 
 **Adopted 2026-08-10**, after F48/F49 withdrew the 2-D self-assembly result. Frozen baseline: `3a70fce`.

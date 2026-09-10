@@ -63,12 +63,27 @@ The autonomous overnight harness is the **`elves`** skill; per-project prerequis
   physics.
 - **Derive constants from the configuration; do not pick them.** A hand-chosen threshold there was
   wrong in both directions within hours.
-- **Keep `projects/vivarium/SUMMARY.md` current.** It is the living executive summary: one paragraph
-  of objective, a Roadmap bullet list, a Results bullet list. Update it **in the same commit** as any
-  significant development — a result, a retraction, a change of plan, a new blocker. Rules: plain
-  human language a non-specialist can follow, no jargon, as short as possible; state negatives and
-  withdrawn claims as plainly as positives; delete stale lines rather than accumulating history (the
-  research log is where history lives). If a reader can only read one file, this is the one.
+- **Keep `projects/vivarium/SUMMARY.md` and `projects/vivarium/docs/ROADMAP.md` current.** Update
+  both **in the same commit** as any significant development — a result, a retraction, a change of
+  plan, a new blocker. If a reader can only read one file, `SUMMARY.md` is the one.
+
+  `SUMMARY.md` has exactly four sections, in this order:
+  1. **Objective** — a single paragraph: what we are trying to do and the context needed to follow it.
+  2. **Requirements** — a bulleted list of what the system must satisfy, i.e. the engineering
+     constraints and the minimal feature set.
+  3. **System design** — a software block diagram, then subsections listing components, APIs and
+     interfaces, and the major design decisions (and why).
+  4. **Roadmap** — a bulleted list of every roadmap item with its status and what comes next, linking
+     to `docs/ROADMAP.md` for the full experiment record.
+
+  `docs/ROADMAP.md` is the **single consolidated roadmap**: every experiment and its result, grouped
+  by theme, each row traceable to a spec in `specs/` and a TSV in `docs/results/`. It supersedes all
+  earlier roadmap documents; do not start a new one.
+
+  Rules for both: plain human language a non-specialist can follow, no jargon, as short as possible;
+  state negatives and withdrawn claims as plainly as positives; report the verdict the registered gate
+  returned, not an interpretation of it; delete stale lines rather than accumulating history (the
+  research log is where history lives).
 - **Look at the artifact before believing the summary statistic.** Every time an image was rendered in
   that project it contradicted the scalar it was supposed to confirm.
 
