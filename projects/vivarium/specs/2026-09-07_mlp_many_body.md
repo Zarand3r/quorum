@@ -327,3 +327,30 @@ it.
 - 300,000 steps. A slower instability would be missed.
 - The mean aspect_max is marginally HIGHER with the MLP on (0.0378 vs 0.0330), which is within noise
   and is not evidence of anything.
+
+---
+
+## G4, SHAPE CHANNEL — ALSO FAILS, 2026-09-09
+
+24 runs, seeds 800-811, `ShapeMLP(amp=0.25)` modulating `sigma_head` from head-only coordination.
+
+| arm | curled | mean aspect_max |
+|---|---|---|
+| off | **0/12** | 0.0354 |
+| shape, amp 0.25 | **0/12** | 0.0317 |
+
+    Fisher p = 1.0000     GATE: FAILS
+
+**Both MLP channels are null.** Affinity (`chi`) 0/12; shape (`sigma_head`) 0/12. The shape channel was
+built specifically because the affinity channel's feedback sign was diagnosed as stabilising flatness,
+and its own sign was corrected (head-only descriptor, -0.0661 vs +0.2004) before it ran. It still does
+not curl a flat ribbon.
+
+**The flat-ribbon protocol now has seven nulls**: `chi_TW`, `chi_HH`, lipid shape, imposed leaflet
+thickness asymmetry, imposed leaflet area asymmetry, MLP-affinity, MLP-shape. The first five are
+symmetric pair terms and `docs/RESULTS.md` explains them structurally. **The last two are not pair
+terms and that explanation does not cover them.**
+
+What remains untested rather than refuted: only one `amp` was run (0.25, declared, untuned), 300,000
+steps, and the descriptor is instantaneous rather than relaxational. None of those is a reason to
+believe the mechanism works; they are the honest boundary of the negative.
