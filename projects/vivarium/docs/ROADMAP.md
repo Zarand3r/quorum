@@ -127,6 +127,46 @@ whether it is switched ON by default and at what `amp`, **not** whether it stays
 conditions: off by default while `amp` is underived, and any positive reported as "with a
 curvature-capable term present".
 
+### G5 witness — the term WORKS. It turns the bilayer into micelles. (1 seed/arm, 2026-09-11)
+
+Rendered and measured while the 12-seed sweep runs. One seed per arm, so this is a direction, not a
+rate — but the direction is unambiguous and it is the textbook one.
+
+| arm | step | clusters | roundness | heads outside tails | largest | reads as |
+|---|---|---|---|---|---|---|
+| amp 0.0 | 125 k | **1** | 0.013 | +0.327 | 56/56 | ribbon, intact throughout |
+| amp 1.0 | 75 k | **4** | **0.446** | +0.496 | 22/56 | **micelles** |
+| amp 4.0 | 75 k | **4** | **0.349** | +0.571 | 26/56 | micelles |
+
+(a planted flat ribbon reads roundness 0.002; a disc reads 1.0. Heads stay on the outside in every
+case, so the pieces are correctly-organised amphiphile aggregates, not damage.)
+
+**This is the packing parameter doing exactly what lipid physics says it should.** `P = v/(a₀·l)`:
+raise the head area `a₀` and `P` falls; below about 1/3 the stable phase is a micelle, not a bilayer.
+The term raises head area, and the bilayer becomes micelles. **The shape channel is not inert and not
+wrong — it moves the one geometric lever that sets curvature, in the direction the theory predicts.**
+
+**Why it still will not curl, diagnosed.** The planter builds the ribbon at 2.0500 σ against a relaxed
+1.7651 σ, so the term reads the starting membrane as under-crowded and inflates *every* head at step 0
+— measured mean `sigma_head` 1.094 / 1.360 / 1.631 / 1.898 at amp 0.25 / 1.0 / 2.0 / 4.0. That
+**global** inflation is first-order and lowers `P` everywhere. The **leaflet asymmetry** that produces
+curvature is second-order, and it is swamped. The term changes the phase before it can bend the phase
+it started in.
+
+**The registered gate will therefore FAIL, through G5b.** That clause — curl counts only if the
+largest aggregate still holds ≥ 90 % of the lipids — was registered on 2026-09-11 before any data
+precisely so that "it curled" could not be claimed for a cloud of micelles, which is isotropic and
+scores a high `aspect` for the opposite of the reason we care about. It is doing its job.
+
+**Under R9 this is a success, not a failure.** The term is physically correct, it moves the right
+lever, and it makes vesicles *less* likely at every amplitude tested. That is reported as a result.
+
+**Follow-up to register (a new experiment, not an amendment): plant at the relaxed spacing.** Build the
+ribbon at 1.7651 σ so the term starts neutral, isolating the second-order leaflet asymmetry from the
+first-order global inflation. This is not tuning a parameter to pass a gate — it corrects an initial
+condition that is 16 % more dilute than the model's own equilibrium, which under R9 is a fidelity
+defect in its own right and belongs in §5b regardless of what it does to the curl rate.
+
 ### G5 — the shape channel, actually tested. Registered 2026-09-11, RUNNING
 
 | | |
@@ -160,6 +200,7 @@ these is not conditional on them helping.** Ordered by how much they bear on the
 | D6 | **`amp` is a free parameter.** | declared in the spec | **No.** `n_ref` is now derived and measured; `amp` should be too — from a hydration-shell compressibility or an area-per-lipid response. |
 | D7 | **Head-size response bounded at 2σ₀.** A bound is physical (a hydration shell has a maximum thickness); the *value* 2 is not. | chosen 2026-09-11 for numerical safety, to remove a clamp that broke `F = −∇U` | **Partly** — existence justified, magnitude arbitrary. |
 | D8 | **Bounded repulsive core**, finite at full overlap (37.8ε) rather than divergent. | `_core = height·(1−s)²` | **Yes** — documented, and standard in CG/DPD. The one entry here that is defensible as-is. |
+| D9 | **The flat-ribbon planter builds 16 % more dilute than equilibrium**: head spacing 2.0500 σ against a relaxed 1.7651 σ (6 seeds, 100 k steps, modulator off). Every environment-dependent term therefore reads the starting membrane as under-crowded. | measured 2026-09-11 while deriving `n_ref` | **No — nobody checked.** It is the reason the G5 arms micellise from step 0. |
 
 **D1 is the one with data behind it.** Largest aggregate against system size, from the emergence runs:
 

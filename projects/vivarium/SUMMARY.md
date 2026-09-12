@@ -1,6 +1,6 @@
 # vivarium — executive summary
 
-*Updated 2026-09-11 (21:55). Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
+*Updated 2026-09-11 (23:50). Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
 results in **[`docs/ROADMAP.md`](docs/ROADMAP.md)** — the single consolidated roadmap.*
 
 ## Objective
@@ -141,7 +141,11 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
   is not the geometry we have been varying.
 - **NEXT** — (1) **running now**: molecules that change shape with their surroundings, this time with
   the reference number measured rather than guessed, at four strengths spanning sixteen-fold, with a
-  control that fails the test if the membrane only "curls" by falling apart; (2) decide which test
+  control that fails the test if the membrane only "curls" by falling apart. **First pictures are in,
+  and the idea works** — making the molecules' heads bigger turns the flat sheet into small round
+  balls, which is exactly what the standard theory of lipid shape predicts should happen. It is
+  changing the *kind* of structure rather than bending the one it started with, so the test will
+  record a failure; that failure is now understood rather than mysterious; (2) decide which test
   defines a vesicle, because the old headline used a looser one; (3) rebuild 3-D with inextensible
   bonds before spending compute there.
 
