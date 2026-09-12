@@ -111,7 +111,16 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
   size ratio, with no loss on closing a ready-made ribbon (19/20 vs 10/10). **But it loses on the
   strictest test** (11/20 vs 18/20) and it degrades self-assembly (2/20 vs 13/20).
 - **DONE — a live MLP inside real physics.** Molecules can now change with their surroundings while
-  forces stay exactly derivable from an energy.
+  forces stay exactly derivable from an energy. **Decision 2026-09-11: this is kept for the physics,
+  not for the vesicle count.** Before it, every force was a function of one distance between two
+  molecules and a molecule could know nothing about its own situation; now it can. That is the same
+  class of term established simulators use, and it is worth having whether or not it ever makes a
+  bubble. Two conditions attached: it stays **off by default** while its one remaining free number
+  (`amp`) is undetermined, and any vesicle that appears with it switched on is reported as "with a
+  curvature-capable term present", never as "from nothing".
+- **NOTE — one thing called "the MLP" does nothing.** There are two. The per-molecule channel inside
+  the transformer is disconnected from the forces (see Known gaps). The one described above, which
+  lives in the force law itself, is the live one.
 - **RETRACTED — "the MLP does not bend membranes".** Both of those experiments divided by a reference
   number that was wrong by a factor of about thirty, so the molecules' size barely changed at all: the
   thing being tested was, in effect, a constant. What one of them did test — making every head 24%

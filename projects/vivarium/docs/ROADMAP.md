@@ -120,6 +120,13 @@ same ring gives **+3.77%**.
 B7 did test something and it is kept as B6′: *a uniform 24% head enlargement does not curl a flat
 ribbon*. That is not the registered mechanism, which remains **untested**, not refuted.
 
+**Decision 2026-09-11 (user): the many-body term is kept for physical realism regardless of what G5
+returns.** It is the EAM / many-body-DPD class of term and the packing-parameter mechanism real lipids
+use; before it, no force in the model could depend on a molecule's environment. G5 therefore decides
+whether it is switched ON by default and at what `amp`, **not** whether it stays in the code. Two
+conditions: off by default while `amp` is underived, and any positive reported as "with a
+curvature-capable term present".
+
 ### G5 — the shape channel, actually tested. Registered 2026-09-11, RUNNING
 
 | | |
