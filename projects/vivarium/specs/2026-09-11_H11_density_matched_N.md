@@ -111,3 +111,60 @@ vesicle that closed while the rest of the system stayed as unincorporated ribbon
 looks right even where the rate has so far not moved.
 
 Running tally, cells complete: N=56 **1/20**, N=80 **0/20**. Neither clears the registered 4/20.
+
+---
+
+## H11 — VERDICT: FAILS, 2026-09-11 21:13
+
+80 runs, seeds 900-919, four cells at constant lipid density.
+
+| N | vesicle | any-enclosure | mean largest |
+|---|---|---|---|
+| 56 | **1/20** | 6/20 | 55.2 |
+| 80 | **0/20** | 5/20 | 69.8 |
+| 112 | **2/20** | 11/20 | 89.8 |
+| 160 | **1/20** | 13/20 | 104.0 |
+
+    GATE: some cell N<=112 gives >=4/20 AND Fisher p<=0.05 vs this sweep's N=160
+    N=56  1/20 vs 1/20  p=0.7564    N=80 0/20  p=1.0000    N=112 2/20  p=0.5000
+    ==> FAILS
+
+### Scoring the registered predictions
+
+| # | prediction | outcome |
+|---|---|---|
+| 1 | rate highest at N=56, falling with N | **WRONG** — flat (1, 0, 2, 1) |
+| 2 | N=160 reproduces its historical 0-2/20 | **RIGHT** — 1/20 |
+| 3 | mean largest scales with N | **RIGHT** — 55.2 / 69.8 / 89.8 / 104.0 |
+
+The manipulation worked and the rate did not follow. This is the registered second outcome verbatim:
+*"aggregate size is not the limiter. The race model is wrong and the 85-vs-132 observation was a
+coincidence of one seed."*
+
+### The one thing that DID scale
+
+**Any-enclosure rises with N: 6, 5, 11, 13 — while strict vesicles stay flat at 0-2.** Bigger systems
+enclose *more often* under the loose criterion and no more often under the strict one. Read together
+with the renders, that is bigger aggregates making more pockets, not more vesicles — and it is another
+reason the loose criterion must not be used as an emergence endpoint.
+
+---
+
+# H12 — WITHDRAWN BEFORE RUNNING, 2026-09-11 21:15
+
+`specs/2026-09-11_H12_density_at_fixed_N.md` was registered at 20:45, before H11's final cell
+reported. H11's completed result makes it largely redundant, and it is withdrawn rather than run.
+
+**Why.** H12 varies density at fixed N. Its mechanism is the merge rate, and the quantity it acts
+through is **the size of the largest aggregate** — exactly the mediating variable H11 just swept over
+a **1.9× range** (55.2 to 104.0) with **no movement in the rate**. Running H12 would test the same
+mediator through a different knob, and H11 is already powered enough to say that mediator does not
+move the endpoint.
+
+Withdrawing costs nothing and running it would have cost ~3 hours. Recorded here rather than deleted,
+because a registered experiment that is not run should leave a trace saying why.
+
+**What this does not rule out:** density has effects beyond aggregate size — solvent-mediated
+interactions, encounter statistics, the time to condense at all. If a later result makes density
+interesting for a reason other than the merge race, this spec can be revived on that basis, not this
+one.

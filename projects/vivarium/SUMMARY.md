@@ -1,6 +1,6 @@
 # vivarium — executive summary
 
-*Updated 2026-09-11. Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
+*Updated 2026-09-11 (21:15). Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
 results in **[`docs/ROADMAP.md`](docs/ROADMAP.md)** — the single consolidated roadmap.*
 
 ## Objective
@@ -113,7 +113,11 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
 - **BLOCKED — 3-D.** Its foundation needs redoing: the "bending fix" was found to stretch molecules 67%
   rather than stiffen them. Costs ~29× more per run than 2-D.
 - **NOT STARTED — fusing and dividing.** Never observed.
-- **NEXT** — (1) raise the 2-D emergence rate, since only ~1 run in 32 succeeds; (2) decide which test
+- **BLOCKED — making emergence reliable.** Three separate attempts to move the rate by changing the
+  system's size or crowding have now failed; it sits at 1-2 runs in 20 regardless. Whatever limits it
+  is not the geometry we have been varying.
+- **NEXT** — (1) test whether molecules that change shape with their surroundings help *while a membrane
+  is forming* — the one setting where that idea has never been tried; (2) decide which test
   defines a vesicle, because the old headline used a looser one; (3) rebuild 3-D with inextensible
   bonds before spending compute there.
 

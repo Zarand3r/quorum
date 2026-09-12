@@ -73,6 +73,8 @@ production no better on closure (p = 0.67) or persistence (p = 0.59).
 | E1 (H7) | reduced chemistry, dispersed start, n=20 | **0/20** vesicles, 0/20 enclosure, largest 78/160 | **FAIL** |
 | E2 (H8) | production vs reduced, contemporaneous, dense checkpoints | production **13/20** enclosure vs reduced **2/20**, p = 0.00039; both **0/20** strict | **the reduction costs assembly** |
 | E3 (H10) | does lowering N raise the rate? (spanning hypothesis) | N=50 **0/12**, N=80 **0/12**, N=116 0/12, N=160 1/32 — rate **rises** with N | **FAIL — all three predictions backwards** |
+| E4 (H11) | does system size raise the rate, at FIXED density? | N=56 **1/20**, N=80 **0/20**, N=112 **2/20**, N=160 **1/20**; mean largest 55→104 | **FAIL — rate flat over a 1.9× range of aggregate size** |
+| E5 (H12) | density at fixed N | **WITHDRAWN before running** — acts through the same mediator (aggregate size) that E4 just swept with no effect |
 
 E3's registered outcome-4 applies: the limit is **minimum viable vesicle size**, not the box. At N=50
 the largest aggregate reaches only 17.8 lipids.
@@ -152,10 +154,10 @@ registered gate. `np.add.at` → `bincount` gave a bit-identical **16–23%**.
 
 **Ordered by value, with cost.**
 
-1. **Raise the 2-D emergence rate.** Only ~1 in 32 succeeds, which is too rare to gate anything. The
-   one validated coordinate is the ribbon's **end-to-end gap** (5/5 at 3.4σ, 1/10 at 10.1σ). Untested
-   prediction from E2/E3: the successful seed made a **small** aggregate (85 vs a median of 132), so
-   *many small aggregates should beat one large one*. Cheap: an N-and-density sweep at 2-D cost.
+1. **Raise the 2-D emergence rate.** ~1-2 in 20, too rare to gate anything. **Three geometric levers
+   have now failed**: N at fixed box (E3), N at fixed density (E4), and density at fixed N (E5,
+   withdrawn as redundant with E4). Aggregate size does not move the endpoint over a 1.9× range. The
+   next candidate is not geometric — see item 3.
 2. **Decide which gate defines a vesicle** (§6). No further run can settle it; it needs a judgement.
    Blocks any claim about the historical result.
 3. **Explore the rest of the MLP.** Only the simplest form has been tried — an *instantaneous scalar
