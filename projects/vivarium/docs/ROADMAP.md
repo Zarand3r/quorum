@@ -198,12 +198,12 @@ The one raw `curled=1` is sd801 below — three micelles, excluded by the intact
 packing parameter, and the phase it selects is the micelle. That makes vesicles *less* likely, which
 is the case R9 was written for.
 
-**Amp 4.0 was NOT RUN.** At 24-way both remaining cells would have sat ~80 % complete at the session
-deadline — two unusable cells instead of one usable one. The registered run order exists for exactly
-this ("whole cells complete first if the machine runs out of time"), so the pool was killed by
-explicit PID (workers then parent, 24 rows verified preserved) and relaunched on **amp 0.25 alone** at
-12-way, the more informative rung: the registered natural value, the lowest perturbation, and the only
-one with a chance of staying intact. Amp 4.0 is reported as not run, not as null.
+**Amps 0.25 and 4.0 — sequenced, both expected to complete.** At 24-way both remaining cells would
+have sat ~80 % complete at the session deadline, so the pool was killed by explicit PID (workers then
+parent, 24 rows verified preserved) and relaunched on amp 0.25 alone. Measuring the relaunch then
+showed **12 workers out-throughputs 24 by 1.53×** (§5c) — the box has 16 physical cores, not 32 — so
+each cell takes ~1 h rather than the 3.3 h assumed. Amp 4.0 is chained to start when 0.25 lands.
+Whichever does not finish is reported as **NOT RUN**, never as a null.
 
 ### G5 — the control earned its keep. `aspect = 0.5997` on three micelles. (2026-09-12)
 
@@ -288,6 +288,25 @@ repulsion — which gives micro-phase separation at a selected size that stops c
 long-range repulsion is D1. **Falsifier:** add a screened-Coulomb head–head term with Debye length
 > `rc` and the largest aggregate must *saturate* with N instead of tracking it. If it still tracks N,
 this diagnosis is wrong. To be registered before running.
+
+---
+
+## 5c. Harness throughput — 24 workers is SLOWER than 12
+
+Measured 2026-09-12, mid-sweep, on the identical 300 000-step run:
+
+| workers | s/run | throughput |
+|---|---|---|
+| 24 | 11 662 | 0.00206 runs/s |
+| **12** | ~3 720 | **0.00323 runs/s** |
+
+**12-way is 1.53× the throughput of 24-way while using half the workers.** The box is an AMD Ryzen 9
+9950X3D — **16 physical cores, 2 threads each, 32 logical**. `nproc` reports 32, and the harness default
+of 24 workers oversubscribes the physical cores; the extra processes cost more in contention than they
+add in parallelism. G5's first wave therefore ran at ~65 % of achievable throughput for three hours.
+
+This is the fourth cost-model error on record in this project (see §8). The rule that keeps being
+relearned: **measure one run at the concurrency you intend to use, before planning around it.**
 
 ---
 
