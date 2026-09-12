@@ -1,6 +1,6 @@
 # vivarium — executive summary
 
-*Updated 2026-09-11 (22:00). Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
+*Updated 2026-09-11 (21:55). Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
 results in **[`docs/ROADMAP.md`](docs/ROADMAP.md)** — the single consolidated roadmap.*
 
 ## Objective
@@ -66,7 +66,8 @@ wrapping until its two ends meet, not by curving. Making that reliable, and reac
 - **`field.py`** — the potential and its exact gradient. `Field(species, bonds, L, chi=, sigma_species=,
   bend_r0=, manybody=, shape=)` → `.energy(X)`, `.forces(X)`. Verlet + cell-list neighbours.
 - **`transformer.py`** — the *same* force law as three masked attention heads (non-bonded, bond,
-  1-3 stiffener). `q·k` **is** the χ table. Unnormalised — no softmax.
+  1-3 stiffener). `q·k` equals the χ table to 1e-12 (pinned by a test). Unnormalised — no softmax.
+  **But the force law reads χ from `field._env`, not from `q·k`** — see the red test below.
 - **`_mixture.py`** — system builder (`build`) and step engine (`make_step_engine`), velocity Verlet
   with an exact Ornstein–Uhlenbeck thermostat.
 - **`manybody.py`** — optional per-token modulators: `ShapeMLP` (σ from coordination), `ManyBodyMLP`
@@ -79,7 +80,9 @@ wrapping until its two ends meet, not by curving. Making that reliable, and reac
 ### Design decisions
 
 - **One source of truth for σ and χ: `field._env()`**, called by *both* force paths. Two
-  implementations disagreeing silently is the most expensive defect this project has had.
+  implementations disagreeing silently is the most expensive defect this project has had. **That fix
+  has a cost that was not noticed at the time**: the token channel is no longer on the force path, so
+  the per-molecule channel cannot change interactions. See the red test below.
 - **No softmax.** Row-stochastic weights give `w_ij ≠ w_ji`, so `F_ij ≠ −F_ji` — momentum is not
   conserved and force becomes intensive. Required by R3.
 - **Weights are constructed, not learned.** `Wq`/`Wk` are the eigendecomposition of χ; the MLP
@@ -130,6 +133,17 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
   bonds before spending compute there.
 
 ## Known gaps
+
+- **The test suite is RED, and has been since 2026-09-09.** `1 failed, 253 passed`. The failure is
+  `tests/test_transformer.py::test_mlp_is_live_not_decorative`: changing a molecule's own channel no
+  longer changes the forces on it, because the force law now reads the interaction table directly
+  instead of through that channel. The two agree to twelve decimal places, so every number measured so
+  far is unaffected — what is lost is the *ability* for a molecule's channel to change its physics.
+  It was introduced by the commit that fixed a worse bug (two force routines that disagreed), and it
+  went unnoticed because nobody ran the suite. **Do not make it green by weakening the test**: putting
+  the channel back on the force path would shift every trajectory in the last decimal place and would
+  need every stored result re-derived. That is a decision about what the project claims, and it is
+  written up for review rather than taken unattended.
 
 - Emergence is rare and we cannot yet control it. The one lever that predicts closure — how close a
   ribbon's two ends are — is a property of a ribbon that already exists, not something we can set.

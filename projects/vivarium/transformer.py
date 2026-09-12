@@ -81,10 +81,15 @@ class VivariumTransformer:
     def _score_nonbonded(self, r, pairs):
         """a(r) + b(r) * (q_i . k_j), zeroed beyond the cutoff exactly as `field.forces` does.
 
-        The query and key come from the TOKEN CHANNEL h, not from a species lookup: q_i = h_i W_q and
-        k_i = h_i W_k. With h the one-hot species this is algebraically identical to the original
-        `content_pairs`, which is what lets the MLP below change interactions without changing anything
-        else.
+        NO LONGER TRUE, and left here as the correction rather than deleted: chi is read from
+        `field._env`, NOT from the token channel. `q()` and `k()` have no caller outside the tests, so
+        `self.h` does not reach the forces and the MLP below cannot change interactions by changing it.
+        `tests/test_transformer.py::test_qk_equals_the_chi_table` still pins q.k == the table to 1e-12,
+        so the FORMULATION claim holds; the WIRING claim does not. This was introduced by decf88c5
+        (2026-09-09) -- the commit that fixed two force paths disagreeing -- and is tracked as a red
+        test in SUMMARY.md. Do not "fix" it by weakening the test: routing chi through q.k would change
+        production trajectories at the eigendecomposition round-trip level, and that is a decision
+        about what the project claims, not a cleanup.
 
         a(r) and b(r) stay analytic. They are a fixed distance-dependent bias inside the attention
         score -- the same role ALiBi plays in a language model -- and that is a transformer component

@@ -150,6 +150,7 @@ Twenty-five defects on record, **all instruments or harness, none physics**.
 | I4 | `phase.py` gel/fluid/gas | validated (deep freeze→gel, Cooke point→fluid, boil→gas) |
 | I5 | `curl.aspect` | validated — flat 0.0024, arc 0.504, ring 1.000 |
 | I6 | `_sasa.exposure` | validated incl. an analytic case (2/3 exactly) |
+| I7 | the **test suite itself** | **RED since 2026-09-09**, `1 failed / 253 passed`, unnoticed for two days because it was not run — see below |
 | I7 | gradient gate (F = −∇U) | **~2e-08** for every modulator configuration |
 | I8 | cross-path gate (field vs transformer) | **0.000e+00** at every configuration |
 
@@ -157,6 +158,45 @@ Twenty-five defects on record, **all instruments or harness, none physics**.
 was added later and rejects *every* saved 2-D state. The two successful runs were overwritten on disk.
 So it is **unverifiable, not refuted**. Deciding which gate defines a vesicle is a judgement call, not
 a measurement — it is the top item in the reviewer handoff.
+
+---
+
+### I7 — the suite went red and nobody noticed, for two days
+
+`bazel test //projects/vivarium:test_suite` → **1 failed, 253 passed, 633 s**. The failure:
+
+```
+tests/test_transformer.py::test_mlp_is_live_not_decorative
+  assert np.abs(F_after - F_before).max() > 1e-6, "MLP changed h but not the forces"
+  AssertionError: assert np.float64(0.0) > 1e-06
+```
+
+`_score_nonbonded` reads χ from `field._env`. `q()` and `k()` have **no caller outside the tests**, so
+there is no path from the token channel `h` to the force law: an MLP that updates `h` changes nothing.
+
+**Introduced by `decf88c5` (2026-09-09)** — the commit that fixed *two force paths computing different
+physics*, which had already voided 24 runs and 48 CPU-hours. The fix was right; it silently cost this.
+
+What is and is not affected:
+
+- **Not affected: every number measured to date.** `test_qk_equals_the_chi_table` still pins
+  `q·k == content_pairs` to 1e-12, so the two routes agree numerically. The formulation claim
+  ("every force is a masked attention head whose `q·k` is the χ table") stands.
+- **Affected: the wiring claim.** A per-token channel cannot influence interactions. The live MLP is
+  the many-body modulator in `field` (`ShapeMLP`/`ManyBodyMLP`), which reaches the forces through
+  `_env`; the token-channel MLP (`W1`/`W2`) does not, and `transformer.forward` never calls `mlp()`.
+  The 2026-09-07 spec flagged the adjacent version of this as "a claim-vs-code gap" and it was never
+  closed.
+
+**Not fixed here, deliberately.** The two candidate fixes are not cleanups:
+
+1. route χ from `q·k` — restores the wiring, but changes production trajectories at the
+   eigendecomposition round-trip level (~1e-12, which over 300 000 chaotic steps is total divergence),
+   so every stored result would need re-deriving and the golden tests re-baselining;
+2. accept that the token channel is not the live MLP and rewrite the test to assert what is true.
+
+Both change what the project claims. Recorded for review; **weakening the test to get green is not an
+option**.
 
 ---
 
