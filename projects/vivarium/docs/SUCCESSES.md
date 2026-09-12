@@ -124,14 +124,41 @@ aggregates, one of which closes" picture directly, and the smallest vesicle obse
 
 ---
 
+## #4 — seed 915, N = 112. A clear ring with a tail.
+
+| | |
+|---|---|
+| config | `N=112, L=54.38` (2 071 beads) — density-matched, H11 |
+| first passed | **step 950 000** |
+| cluster | **67 of 112** lipids |
+| lumen ratio | 0.162 |
+| render | **a clear closed ring with a ribbon tail attached** — between #3's clean ring and #2's lasso |
+| state | `docs/controls/emergent_vesicle_N112_sd915_s950000.npz` |
+| figure | `docs/figures/h11_N112_sd915.png` |
+
+```bash
+$PY emerge_reduced.py --arm 0 --n-lip 112 --match-density --seeds 20 --seed0 900 --check-every 10000
+```
+
+Same command as #3 — the N = 112 cell produced **two of the twenty**. First passage at step 950 000,
+the latest on record, which is a reminder that a 300 k or even 800 k run would have missed it.
+
+---
+
 ## What is actually reproducible, stated plainly
 
 **The recipe is: production chemistry, dispersed start, run ~1e6 steps, and check often enough.**
 There is no trick beyond that, and no parameter was tuned to produce any of these.
 
-What we do **not** have is control. The rate is roughly 1 run in 20–30 and
-`specs/2026-09-11_H11_density_matched_N.md` is testing whether system size moves it — at the time of
-writing, **it does not** (N=56 1/20, N=80 0/20, against a registered bar of 4/20).
+What we do **not** have is control. The rate is roughly 1–2 runs in 20, and
+`specs/2026-09-11_H11_density_matched_N.md` tested whether system size moves it. At the time of
+writing three of four cells are complete — **N=56 1/20, N=80 0/20, N=112 2/20** — none clearing the
+registered bar of 4/20. System size is not the lever.
+
+A pattern worth watching as more arrive: **the cleanest rings are the ones made of a MINORITY of the
+system's lipids** (#3 is 35 of 112), while the ones made of nearly everything (#2 is 56 of 56) render
+as lassos. That is consistent with the closure mechanism — a short ribbon can reach its own ends —
+but it is four data points and is recorded as an observation, not a finding.
 
 Three things that matter for getting one at all, learned the expensive way:
 
