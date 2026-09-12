@@ -95,3 +95,19 @@ between those two.
 honest statement is "N=56 produces enclosed structures at rate X", and how many of those are clean
 rings is a separate question that requires looking at each one. A count of gate passes is not a count
 of vesicles, and this project has conflated the two before.
+
+## Second hit, 2026-09-11 19:15 — N = 112, and this one IS a clean ring
+
+`VESICLE_0_N112_sd903_s850000.npz`: ladder `[1,1,1,1]`, enclosing cluster **35 of 112** lipids, lumen
+ratio **0.454** — four and a half times the threshold, and more than double the N=56 lasso's 0.196.
+
+**The render (`docs/figures/h11_N112.png`) is a clean closed ring** with a visible lumen and heads on
+both faces, coexisting with several separate open ribbons. This is the third emergent vesicle on
+record (after seed 509 at N=160 and the N=56 lasso) and the cleanest of the small ones.
+
+Worth noting for the mechanism, separately from the rate: it is **35 lipids out of 112**, i.e. a small
+vesicle that closed while the rest of the system stayed as unincorporated ribbons. That is the
+"several small aggregates, one of which closes" picture the hypothesis was built on — the mechanism
+looks right even where the rate has so far not moved.
+
+Running tally, cells complete: N=56 **1/20**, N=80 **0/20**. Neither clears the registered 4/20.
