@@ -77,3 +77,21 @@ Smaller boxes bring the aggregate closer to its own periodic image. At N = 56, L
 vesicle of radius 56/(2*pi) = 8.9 has diameter 17.8 against a box of 38.45 -- it fits with room, but a
 ribbon extended before closure could span. `n_enclosed` is measured on the unwrapped cluster, so the
 detector is unaffected; the physics may not be. Reported alongside, not worked around.
+
+---
+
+## Pre-verdict observation, 2026-09-11 18:15 — the first hit is a LASSO, not a clean ring
+
+`VESICLE_0_N56_sd904_s600000.npz` passes the gate cleanly on the numbers: dilation ladder
+`[1,1,1,1]`, enclosing cluster 56/56, lumen ratio **0.196** (nearly twice the 0.10 threshold),
+sustained across consecutive checkpoints.
+
+**The render** (`docs/figures/h11_N56_sd904.png`) shows a **closed loop with a substantial tail** — a
+lasso — not the clean ring that seed 509 produced. The enclosure is genuine, and it is clearly better
+than the branched-net-with-a-pocket that `vesicle_call` correctly rejected at sd313. But it sits
+between those two.
+
+**Recorded before the verdict so the eventual count is read correctly.** If H11 passes its gate, the
+honest statement is "N=56 produces enclosed structures at rate X", and how many of those are clean
+rings is a separate question that requires looking at each one. A count of gate passes is not a count
+of vesicles, and this project has conflated the two before.
