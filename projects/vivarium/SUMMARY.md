@@ -1,6 +1,6 @@
 # vivarium — executive summary
 
-*Updated 2026-09-10. Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
+*Updated 2026-09-11. Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
 results in **[`docs/ROADMAP.md`](docs/ROADMAP.md)** — the single consolidated roadmap.*
 
 ## Objective
@@ -97,9 +97,9 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
 
 - **DONE — transformer formulation is exact and free.** Forces match the ordinary force law to 1e-13;
   one forward pass equals one step; no measurable time cost.
-- **DONE — a 2-D vesicle emerges, and we have the picture.** Seed 509, step 500 000, full chemistry,
-  scattered start, nothing planted. Held 22 consecutive checks. Reproducible. Shipped as the viewer's
-  default.
+- **DONE — 2-D vesicles emerge, and we have the pictures.** Three now, all from a scattered start with
+  nothing planted, all recorded with their exact recipe in **[`docs/SUCCESSES.md`](docs/SUCCESSES.md)**
+  so none can be lost the way the original was. The cleanest is 35 molecules out of 112.
 - **DONE — the mechanism is identified.** Two independent vesicles closed at *constant size* (56 and
   116 molecules) — two ends of a ribbon meeting, not curving.
 - **DONE — the chemistry reduces.** Five hand-set numbers plus the water become one attraction plus a

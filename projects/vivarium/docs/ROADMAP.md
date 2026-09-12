@@ -30,8 +30,11 @@ linear chains — **not** the production topology. Only the *force* identity was
 | V3 | How does it form? | cluster **constant at 56 lipids** for 100 k steps before *and* after closure | **ends meeting, not curving** |
 | V4 | Historical replication | 2/18 historically; **0/44** in recent runs under the strict gate | see §6 — criterion changed |
 
-Config: `N=160, L=65, kT=0.45, φ=0.55`, full six-affinity chemistry, `plant="random"`.
-Shipped as `docs/controls/emergent_vesicle_sd509_s500000.npz`, served at `/vivarium`.
+| V5 | Second and third vesicles (H11) | N=56 sd904 (lasso, ratio 0.196) and **N=112 sd903 — a clean ring, 35/112 lipids, ratio 0.454** | **YES — both render-checked** |
+
+Config: production chemistry, `plant="random"`, `bend_r0=2.0` (no bending stiffness).
+**Every confirmed vesicle, with the exact command to reproduce it, is recorded in
+[`SUCCESSES.md`](SUCCESSES.md)** — written because the original was lost for want of exactly that.
 
 ---
 
