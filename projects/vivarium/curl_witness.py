@@ -37,20 +37,46 @@ from gap_closure import PRODUCTION, chi_from
 from manybody import ShapeMLP, assert_calibrated
 
 _HERE = pathlib.Path(__file__).resolve().parent
-PANEL, PAD = 220, 6
+PANEL, PAD, WINDOW = 420, 8, 72.0
+# WINDOW: sigma of box shown per panel. The full L=100 box at 220 px gave 2.2 px/sigma, on which a
+# 5-sigma lipid is 11 px and the two leaflets are indistinguishable -- a picture too coarse to show
+# the structure it is meant to check. 72 sigma at 420 px is 5.8 px/sigma and holds the whole 57-sigma
+# ribbon plus room for it to curl.
 RGB_WATER, RGB_TAIL, RGB_HEAD, BG = (26, 32, 48), (255, 152, 64), (77, 181, 255), (10, 12, 18)
+
+
+def recentre(X, species, L):
+    """Put the lipid aggregate in the middle of the frame before wrapping.
+
+    `np.mod(X, L)` cuts whatever straddles the periodic boundary, and a membrane sitting on the seam
+    renders as two strips glued to opposite edges -- the same artifact that once made a vesicle look
+    like four fragments in the box corners. The CIRCULAR mean is the right centre because a plain mean
+    of wrapped coordinates lands in the middle of the box no matter where the aggregate is.
+    """
+    lip = species != WATER
+    ang = 2.0 * np.pi * X[lip] / L
+    cm = np.array([np.arctan2(np.sin(ang[:, k]).mean(), np.cos(ang[:, k]).mean()) * L / (2.0 * np.pi)
+                   for k in range(X.shape[1])])
+    return np.mod(X - cm + 0.5 * L, L)
 
 
 def panel(X, species, L):
     img = np.full((PANEL, PANEL, 3), BG, np.uint8)
-    sc = PANEL / L
-    P = np.mod(X, L) * sc
-    for sp, rgb, rad, alpha in ((WATER, RGB_WATER, 1.0, 0.55),
-                                (None, RGB_TAIL, 1.7, 0.95),
-                                (HEAD, RGB_HEAD, 2.1, 1.0)):
+    sc = PANEL / WINDOW
+    P = (recentre(X, species, L) - 0.5 * (L - WINDOW)) * sc
+    # Heads are drawn BIG and bright, tails small and dim. There are four tail beads per head, so at
+    # equal weight the orange swamps the two thin head lines and the leaflets cannot be read at all --
+    # which misled me into calling a correct bilayer inverted on 2026-09-11. Measured: heads sit at
+    # 2.0-2.4 sigma from the midplane against 1.0-1.8 for tails, i.e. heads face the water.
+    for sp, rgb, rad, alpha in ((WATER, RGB_WATER, 0.8, 0.40),
+                                (None, RGB_TAIL, 1.1, 0.70),
+                                (HEAD, RGB_HEAD, 2.6, 1.0)):
         m = (species == sp) if sp is not None else ((species != WATER) & (species != HEAD))
-        for x, y in P[m]:
-            disc(img, x, y, rad, rgb, alpha)
+        vis = P[m]
+        vis = vis[(vis[:, 0] > -4) & (vis[:, 0] < PANEL + 4)
+                  & (vis[:, 1] > -4) & (vis[:, 1] < PANEL + 4)]
+        for x, y in vis:
+            disc(img, x, y, rad * sc / 4.2, rgb, alpha)
     return img
 
 
