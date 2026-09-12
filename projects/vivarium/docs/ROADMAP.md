@@ -169,8 +169,16 @@ registered gate. `np.add.at` → `bincount` gave a bit-identical **16–23%**.
 4. **Rebuild 3-D on inextensible bonds (FENE)** before spending compute there. Its bending result is
    retracted and everything downstream of it needs re-deriving. ~29× the 2-D cost.
 5. **Run the oracle head-to-head** (AC-2, registered and never evaluated). 73.8 h/seed.
-6. **Quarantine `bicelle2d` and `bilayer3d`** to `_archive/` — legacy, no energy function, and
-   `bicelle2d` has **more importers than the production stack**. Requires deleting its `py_binary`
-   target at `BUILD.bazel:868`.
+6. ~~Quarantine `bicelle2d` and `bilayer3d`~~ — **WITHDRAWN 2026-09-11, the premise was wrong.**
+   They are not dead legacy stacks, they are **system builders**: `bicelle2d.build` constructs the
+   `--lipid2d` viewer mode in `server.py:436`, and four tests (`test_physics_invariants`,
+   `test_metric_truth`, `test_slider_ranges`, `test_polar3d`) use them to build systems for
+   invariant checks. They have no dynamics of their own — 0 energy and 0 force functions — so calling
+   them "simulation stacks" was a miscount on my part. Moving them breaks the test suite and the
+   viewer.
+
+   The underlying duplication problem is still real (`def plant` in 18 files, `def build` in 15,
+   `def step` in 12, and two force paths that once disagreed silently). But it needs a proper
+   consolidation, not a file move, and it is no longer a cheap item.
 
 **Not started:** fusion and division. Neither has ever been observed.

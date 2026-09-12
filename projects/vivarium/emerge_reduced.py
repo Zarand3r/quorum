@@ -35,18 +35,29 @@ COLUMNS = ("arm", "n_lip", "seed", "steps", "check_every", "vesicle_ckpts", "fir
 _LOCK = threading.Lock()
 
 
+def density_matched_L(n_lip: int) -> float:
+    """Box side that holds `n_lip` lipids at the PRODUCTION area density, 160 / 65^2.
+
+    H10 varied N at fixed L, which lowered the density too and starved the system (largest aggregate
+    17.8 lipids at N = 50). Holding density fixed separates "too few lipids" from "aggregate grew too
+    big for its own ends to meet" -- see specs/2026-09-11_H11_density_matched_N.md.
+    """
+    return float(np.sqrt(n_lip / (N_LIP / L_BOX ** 2)))
+
+
 def run_one(arm: str, seed: int, steps: int = STEPS, check_every: int = CHECK_EVERY,
-            n_lip: int = N_LIP) -> dict:
+            n_lip: int = N_LIP, match_density: bool = False) -> dict:
     t0 = time.perf_counter()
     label, spec, sig_head, phi, kT, rc = ARMS[arm]
     d = 2
+    L = density_matched_L(n_lip) if match_density else L_BOX
     lip = n_lip * 5
-    n_water = 0 if phi <= 0 else int(round(phi * L_BOX ** d / _mixture.C_D[d] * (2 ** d))) - lip
+    n_water = 0 if phi <= 0 else int(round(phi * L ** d / _mixture.C_D[d] * (2 ** d))) - lip
     X, species, bonds, mols, wi, chains = _mixture.build(
-        0, n_lip, n_water, L_BOX, d, plant="random", branched=True, seed=seed)
+        0, n_lip, n_water, L, d, plant="random", branched=True, seed=seed)
     sig = np.full(N_SPECIES, 1.0)
     sig[HEAD] = sig_head
-    f = Field(species, bonds, L_BOX, chi=chi_from(spec), sigma_species=sig, rc=rc)
+    f = Field(species, bonds, L, chi=chi_from(spec), sigma_species=sig, rc=rc)
     ig = _mixture.make_step_engine(f, X, kT, DT, 1 + seed, engine="transformer")
     mm = np.array([np.asarray(m, dtype=np.int64) for m in mols], dtype=np.int64)
     X = np.ascontiguousarray(X, dtype=np.float64)
@@ -57,8 +68,8 @@ def run_one(arm: str, seed: int, steps: int = STEPS, check_every: int = CHECK_EV
     for i in range(steps):
         X = ig.step(X)
         if (i + 1) % check_every == 0:
-            ne = n_enclosed(X, mm, L_BOX)[0]
-            ok, _ = vesicle_call(X, mm, L_BOX)
+            ne = n_enclosed(X, mm, L)[0]
+            ok, _ = vesicle_call(X, mm, L)
             if ne >= 1:
                 enc += 1
             if ok:
@@ -78,7 +89,7 @@ def run_one(arm: str, seed: int, steps: int = STEPS, check_every: int = CHECK_EV
                     STATES.mkdir(parents=True, exist_ok=True)
                     np.savez_compressed(
                         STATES / f"VESICLE_{arm}_N{n_lip}_sd{seed}_s{i + 1}.npz",
-                        X=X, mols=mm, species=species, L=L_BOX, gap=-1.0, closed=1,
+                        X=X, mols=mm, species=species, L=L, gap=-1.0, closed=1,
                         # steps and seed so the state is loadable by vesicle.py without a patch --
                         # the first capture omitted them and could not be shipped as a control.
                         steps=i + 1, seed=seed)
@@ -86,13 +97,13 @@ def run_one(arm: str, seed: int, steps: int = STEPS, check_every: int = CHECK_EV
             # this number is directly comparable to the historical production baseline. An earlier
             # draft used count_vesicles()[1], which counts VESICLES not cluster size and read 0 on a
             # perfectly healthy aggregating run.
-            lfin = int(_mixture.largest_cluster(X, mm, L_BOX))
+            lfin = int(_mixture.largest_cluster(X, mm, L))
             lmax = max(lmax, lfin)
             print(f"    [{arm} sd={seed}] {i+1}/{steps} largest={lfin} enc={ne} ves={ok} "
                   f"({time.perf_counter()-t0:.0f}s)", flush=True)
     STATES.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(STATES / f"{arm}_N{n_lip}_sd{seed}.npz", X=X, mols=mm, species=species,
-                        L=L_BOX, gap=-1.0, closed=int(ves > 0))
+                        L=L, gap=-1.0, closed=int(ves > 0))
     return {"arm": arm, "n_lip": n_lip, "seed": seed, "steps": steps,
             "check_every": check_every,
             "vesicle_ckpts": ves,
@@ -152,6 +163,8 @@ def main(argv=None):
                          "L lipids for a branched 4-tail lipid (lateral footprint 2 sigma),\n"
                          "so N below ~L cannot form a rimless spanning ribbon and must close\n"
                          "to shed its edges.")
+    ap.add_argument("--match-density", action="store_true",
+                    help="scale L with sqrt(N) so lipid area density stays at the production\n                         value; see specs/2026-09-11_H11_density_matched_N.md")
     ap.add_argument("--score", action="store_true")
     a = ap.parse_args(argv)
     if a.score:
@@ -173,7 +186,7 @@ def main(argv=None):
     # ~2x effective parallelism (8.6 ms/step against 1.02 solo, flat across the whole run, at load 11
     # on 32 cores). The result append happens here in the parent, so no cross-process lock is needed.
     with ProcessPoolExecutor(max_workers=a.workers) as ex:
-        futs = {ex.submit(run_one, ar, sd, a.steps, a.check_every, nl): (ar, nl, sd)
+        futs = {ex.submit(run_one, ar, sd, a.steps, a.check_every, nl, a.match_density): (ar, nl, sd)
                 for ar, nl, sd in todo}
         for fut in as_completed(futs):
             ar, nl, sd = futs[fut]

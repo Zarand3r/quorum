@@ -123,5 +123,7 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
   ribbon's two ends are — is a property of a ribbon that already exists, not something we can set.
 - The historical "2 of 18" result is **uncheckable**: it used a looser test and its saved states were
   overwritten. Not refuted; unverifiable.
-- Six simulation stacks live in this directory; two are legacy with more importers than the production
-  one. Quarantining them is pending.
+- The same concept is implemented many times over — `plant` in 18 files, `build` in 15, `step` in 12.
+  Two force paths that disagreed silently once voided a 48-CPU-hour experiment. Consolidating this is
+  real work, not a file move: the files that look like dead legacy are in fact the builders the viewer
+  and four tests depend on.
