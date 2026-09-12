@@ -167,6 +167,44 @@ first-order global inflation. This is not tuning a parameter to pass a gate — 
 condition that is 16 % more dilute than the model's own equilibrium, which under R9 is a fidelity
 defect in its own right and belongs in §5b regardless of what it does to the curl rate.
 
+### G5 — VERDICT at amps 1.0 and 2.0: FAILS to curl, DESTROYS the membrane. (2026-09-12)
+
+The gate's output, verbatim:
+
+```
+amp 1.0 (n_ref 0.3335): on 0/12 vs off 0/12, Fisher p = 1.0000
+  G4 gate (on>=6/12 AND off<=1/12 AND p<=0.05): False
+amp 2.0 (n_ref 0.3335): on 0/12 vs off 0/12, Fisher p = 1.0000
+  G4 gate (on>=6/12 AND off<=1/12 AND p<=0.05): False
+```
+
+| arm | curled (raw) | **curled AND intact** | intact | mean largest_final |
+|---|---|---|---|---|
+| off (amp 0) | 0/12 | 0/12 | **12/12** | 56 |
+| amp 1.0 | 0/12 | **0/12** | **0/12** | 19.2 / 56 |
+| amp 2.0 | 1/12 | **0/12** | **0/12** | 21.8 / 56 |
+
+**Two findings, and the second is far stronger than the first.**
+
+1. **The curl gate FAILS.** 0/12 at both amps, p = 1.0000. The shape channel does not bend a flat
+   ribbon.
+2. **The shape channel destroys membranes, with near-certainty.** Intact 12/12 in the off arm against
+   **0/24** across both MLP cells — **Fisher one-sided p = 8.0e-10**. Every single MLP run fragmented.
+   This effect was not what the experiment was gated on; it is what the experiment found.
+
+The one raw `curled=1` is sd801 below — three micelles, excluded by the intactness clause.
+
+**Under R9 this is a success and is reported as one.** The term is physically correct, it moves the
+packing parameter, and the phase it selects is the micelle. That makes vesicles *less* likely, which
+is the case R9 was written for.
+
+**Amp 4.0 was NOT RUN.** At 24-way both remaining cells would have sat ~80 % complete at the session
+deadline — two unusable cells instead of one usable one. The registered run order exists for exactly
+this ("whole cells complete first if the machine runs out of time"), so the pool was killed by
+explicit PID (workers then parent, 24 rows verified preserved) and relaunched on **amp 0.25 alone** at
+12-way, the more informative rung: the registered natural value, the lowest perturbation, and the only
+one with a chance of staying intact. Amp 4.0 is reported as not run, not as null.
+
 ### G5 — the control earned its keep. `aspect = 0.5997` on three micelles. (2026-09-12)
 
 One run in the ladder crossed the curl threshold:
