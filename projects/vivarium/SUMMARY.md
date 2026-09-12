@@ -30,6 +30,10 @@ wrapping until its two ends meet, not by curving. Making that reliable, and reac
 - **R6 — Criteria before data.** Gates are registered in `specs/` before the run and scored
   mechanically. Amendments are dated, never silent edits.
 - **R7 — Results are regenerable.** Every number traces to an append-only TSV in `docs/results/`.
+- **R9 — Faithful to nature before favourable to the result.** In any doubtful modelling choice, take
+  what nature does, even if it makes a vesicle less likely. Nature is not ideal, and a model tuned
+  toward the answer stops being evidence for it. Known departures are listed in the roadmap's fidelity
+  audit; a correct term that lowers the vesicle rate is reported as a success.
 - **R8 — One implementation per concept.** Two force paths that disagreed silently voided a
   48-CPU-hour experiment.
 

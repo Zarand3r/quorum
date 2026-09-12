@@ -84,6 +84,13 @@ The autonomous overnight harness is the **`elves`** skill; per-project prerequis
   state negatives and withdrawn claims as plainly as positives; report the verdict the registered gate
   returned, not an interpretation of it; delete stale lines rather than accumulating history (the
   research log is where history lives).
+- **Be faithful to physics, even when it costs the result.** When a modelling choice is in doubt,
+  take the one that matches what nature actually does — not the one that makes the target phenomenon
+  more likely. A term that is physically correct and makes vesicles *rarer* is a success, not a
+  regression, and must be reported as one. This matters because every gate in `projects/vivarium/`
+  measures "did the thing happen more often", so the metric can quietly pull the model away from
+  nature; this rule is the tiebreak. Known departures are catalogued in `docs/ROADMAP.md` §"Fidelity
+  audit" — add to it rather than letting one go unrecorded.
 - **Look at the artifact before believing the summary statistic.** Every time an image was rendered in
   that project it contradicted the scalar it was supposed to confirm.
 

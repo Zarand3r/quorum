@@ -145,6 +145,46 @@ calls it at step 0; `Field.coordination(X)` exposes the descriptor the force rea
 
 ---
 
+## 5b. Fidelity audit — where the model is NOT what nature does
+
+Added 2026-09-11 under R9. Every entry is a known departure, with how it was established. **Fixing
+these is not conditional on them helping.** Ordered by how much they bear on the vesicle question.
+
+| # | departure from nature | established by | deliberate? |
+|---|---|---|---|
+| D1 | **No electrostatics.** Real lipid heads are zwitterionic or charged; head–head repulsion is long-ranged next to the vdW well and sets head area, hence the packing parameter. | grep: no coulomb / yukawa / debye / ewald / charge term in `field.py`, `transformer.py`, `_mixture.py`. Every term is cut at `rc = 2.5σ` — `_core` zero beyond `s=1`, `_well` zero beyond `rc`. | **No — an omission.** The project's own goal names "excluded volume + van der Waals + electrostatics". |
+| D2 | **Chains have zero bending rigidity.** Real acyl chains resist bending; Cooke–Deserno keep the 1-3 stiffener permanently stretched (rest 4σ) precisely to straighten them. | F3: stiffener at rest length 2σ gives `V/δ² → 0.0004`. | **No — believed present, measured absent.** The `bend_r0=4.0` fix stretched bonds 67% and was retracted. |
+| D3 | **Two dimensions.** | by construction | **Yes** — ~29× cost in 3-D. |
+| D4 | **No hydrodynamics.** A membrane's undulation relaxation and fission dynamics are set by solvent hydrodynamics. A per-particle thermostat destroys them. | `integrate.py:75-76` — `v = c1*v + sqrt(kT/m*(1-c1²))·normal(size=X.shape)`: independent friction and noise per particle, so momentum is **not** conserved. DPD's pairwise thermostat conserves it. | **No — inherited, never chosen.** |
+| D5 | **Harmonic bonds, no maximum extension.** Under strong forces molecules stretch without limit. | `field.py` `k_bond`/`r_bond`, harmonic | **No — inherited.** FENE is the standard CG choice for exactly this. |
+| D6 | **`amp` is a free parameter.** | declared in the spec | **No.** `n_ref` is now derived and measured; `amp` should be too — from a hydration-shell compressibility or an area-per-lipid response. |
+| D7 | **Head-size response bounded at 2σ₀.** A bound is physical (a hydration shell has a maximum thickness); the *value* 2 is not. | chosen 2026-09-11 for numerical safety, to remove a clamp that broke `F = −∇U` | **Partly** — existence justified, magnitude arbitrary. |
+| D8 | **Bounded repulsive core**, finite at full overlap (37.8ε) rather than divergent. | `_core = height·(1−s)²` | **Yes** — documented, and standard in CG/DPD. The one entry here that is defensible as-is. |
+
+**D1 is the one with data behind it.** Largest aggregate against system size, from the emergence runs:
+
+| N | runs | mean largest | **max** | mean/N |
+|---|---|---|---|---|
+| 56 | 20 | 55.2 | **56** | 0.99 |
+| 80 | 32 | 57.7 | **80** | 0.72 |
+| 112 | 20 | 89.8 | **112** | 0.80 |
+| 160 | 52 | 120.2 | **160** | 0.75 |
+
+`max largest = N` exactly at every N — nothing stops an aggregate swallowing the whole system. **There
+is no selected size**: that is bulk coarsening, not pattern formation. It is what a single interaction
+range predicts, and it explains how vesicles are lost here — `SUCCESSES.md` records vesicle #1
+"later grew to 85 by accretion, which added appendages and no lumen", and the cleanest ring on record
+is a *minority* of the lipids (35 of 112) while the 56-of-56 one renders as a lasso. A vesicle is a
+finite size-selected object and this model selects no size.
+
+The equilibrium analogue of a Turing pattern is **SALR** — short-range attraction, long-range
+repulsion — which gives micro-phase separation at a selected size that stops coarsening. The
+long-range repulsion is D1. **Falsifier:** add a screened-Coulomb head–head term with Debye length
+> `rc` and the largest aggregate must *saturate* with N instead of tracking it. If it still tracks N,
+this diagnosis is wrong. To be registered before running.
+
+---
+
 ## 6. Instruments — the recurring failure mode
 
 Twenty-five defects on record, **all instruments or harness, none physics**.
