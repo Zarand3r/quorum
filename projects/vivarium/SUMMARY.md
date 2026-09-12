@@ -1,6 +1,6 @@
 # vivarium — executive summary
 
-*Updated 2026-09-11 (23:50). Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
+*Updated 2026-09-12 (01:00). Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
 results in **[`docs/ROADMAP.md`](docs/ROADMAP.md)** — the single consolidated roadmap.*
 
 ## Objective
@@ -27,6 +27,8 @@ wrapping until its two ends meet, not by curving. Making that reliable, and reac
   none physics. The newest: a constant described as "geometry" that was wrong by ~30×, which made two
   experiments report a null for a term that was not doing anything.
 - **R5 — Look at the picture before believing the number.** Every structural claim needs a render.
+  On 2026-09-12 a run scored 0.5997 on the curl metric against a 0.45 bar; the picture is three round
+  blobs, not a bent sheet. A second, pre-registered check caught it — not the metric.
 - **R6 — Criteria before data.** Gates are registered in `specs/` before the run and scored
   mechanically. Amendments are dated, never silent edits.
 - **R7 — Results are regenerable.** Every number traces to an append-only TSV in `docs/results/`.

@@ -167,6 +167,33 @@ first-order global inflation. This is not tuning a parameter to pass a gate — 
 condition that is 16 % more dilute than the model's own equilibrium, which under R9 is a fidelity
 defect in its own right and belongs in §5b regardless of what it does to the curl rate.
 
+### G5 — the control earned its keep. `aspect = 0.5997` on three micelles. (2026-09-12)
+
+One run in the ladder crossed the curl threshold:
+
+```
+mlp  amp 2.0  n_ref 0.3335  sd 801   aspect0 0.0024  aspect_max 0.5997   curled=1  intact=0
+```
+
+`aspect` 0.5997 against a 0.45 threshold — a clear pass on the metric the experiment was built around.
+The saved state, rendered (`docs/figures/g5_CURLED_sd801.png`):
+
+| | |
+|---|---|
+| separate lipid aggregates | **4** (110, 100, 60, 10 beads) |
+| one intact ribbon would be | ~280 beads in **one** cluster |
+| mean roundness of the aggregates | **0.478** (ribbon 0.002, disc 1.0) |
+| what it is | **three round micelles, heads out** |
+
+**It did not curl. It fell apart into micelles, and a scattered set of blobs is isotropic.** Without
+the `intact` clause — registered 2026-09-11, before any data, as the criterion the experiment could
+fail by winning — this row would have entered the record as the project's first membrane curl, on a
+protocol with five standing nulls. It is the clearest demonstration in this project that a validated
+metric can pass for the wrong reason, and the reason it was caught is that the clause existed before
+the number did.
+
+Every one of the first 21 rows reads `intact=0`, `largest_final` 14–26 of 56.
+
 ### G5 — the shape channel, actually tested. Registered 2026-09-11, RUNNING
 
 | | |

@@ -140,7 +140,9 @@ def run_one(scale: float, seed: int, steps: int = STEPS, n_ref: float = NA_N_REF
     intact = int(lf >= INTACT_FRACTION * N_LIP)
     if curled:
         STATES.mkdir(parents=True, exist_ok=True)
-        np.savez_compressed(STATES / f"CURL_s{scale}_sd{seed}.npz", X=X, mols=mm,
+        # n_ref in the name: without it a re-run at a different n_ref silently overwrites the state
+        # from the old one, and this project has already lost a vesicle to an in-place overwrite.
+        np.savez_compressed(STATES / f"CURL_s{scale}_nr{n_ref:.4f}_sd{seed}.npz", X=X, mols=mm,
                             species=species, L=L_BOX, gap=-1.0, closed=curled,
                             steps=steps, seed=seed)
     return {"arm": "mlp" if scale > 0 else "off", "scale": scale,
