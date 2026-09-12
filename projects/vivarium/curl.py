@@ -40,10 +40,10 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import numpy as np
 
 import _mixture
-from _lumen_field import n_enclosed
+from _lumen_field import largest_lipid_cluster, n_enclosed
 from field import Field, HEAD, N_SPECIES
 from gap_closure import chi_from, PRODUCTION
-from manybody import ManyBodyMLP, ShapeMLP
+from manybody import ManyBodyMLP, ShapeMLP, assert_calibrated
 
 _HERE = pathlib.Path(__file__).resolve().parent
 RESULTS = _HERE / "docs" / "results" / "curl.tsv"
@@ -51,10 +51,17 @@ STATES = _HERE / "docs" / "states_curl"
 
 N_LIP, L_BOX, KT, PHI, DT = 56, 100.0, 0.45, 0.55, 8e-3
 STEPS, CHECK_EVERY = 300_000, 10_000
-COLUMNS = ("arm", "scale", "seed", "steps", "aspect0", "aspect_max", "aspect_final",
-           "curled", "n_enc_max", "wall_s")
+COLUMNS = ("arm", "scale", "n_ref", "seed", "steps", "aspect0", "aspect_max", "aspect_final",
+           "curled", "intact", "largest_final", "n_enc_max", "wall_s")
+# `n_ref` joined the schema on 2026-09-11 (Amendment 4). The 24 pre-existing rows were migrated in
+# place to n_ref = 6.0 (mlp) / -1 (off, no modulator existed), row count asserted before and after --
+# a silent schema change with a column-count filter on read has eaten rows from this project twice.
+NA_N_REF = -1.0
 # Registered in specs/2026-09-07_mlp_many_body.md, Amendment 3, before any data existed.
 CURL_THRESHOLD = 0.45
+# A curl only counts if the ribbon is still ONE aggregate. 0.9 of N_LIP allows a couple of lipids to
+# evaporate, which the off arm already does; it does not allow the sheet to fall apart.
+INTACT_FRACTION = 0.9
 
 
 def centroids(X, mols, L):
@@ -93,7 +100,7 @@ def validate() -> int:
     return 0 if ok else 1
 
 
-def run_one(scale: float, seed: int, steps: int = STEPS) -> dict:
+def run_one(scale: float, seed: int, steps: int = STEPS, n_ref: float = NA_N_REF) -> dict:
     t0 = time.perf_counter()
     nw = int(round(PHI * L_BOX ** 2 / np.pi * 4)) - N_LIP * 5
     X, species, bonds, mols, wi, chains = _mixture.build(
@@ -103,8 +110,12 @@ def run_one(scale: float, seed: int, steps: int = STEPS) -> dict:
     # `scale` selects the SHAPE channel now: sigma_head modulated by head-only coordination. The
     # affinity channel (ManyBodyMLP) returned 0/12 on G4 and its feedback sign was diagnosed as
     # stabilising flatness; shape is what sets the packing parameter and therefore curvature.
-    sh = (ShapeMLP(np.full(N_SPECIES, 1.0), amp=scale) if scale > 0 else None)
+    sh = (ShapeMLP(np.full(N_SPECIES, 1.0), n_ref=n_ref, amp=scale) if scale > 0 else None)
     f = Field(species, bonds, L_BOX, chi=chi_from(PRODUCTION), shape=sh)
+    if sh is not None:
+        # Fail before burning 2.4 CPU-hours on a term that is a constant. n_ref = 6.0 against a
+        # descriptor of range ~0.2 is what made the first shape-channel G4 uninformative.
+        assert_calibrated(sh, f.coordination(X), f"ShapeMLP amp={scale} n_ref={n_ref}")
     ig = _mixture.make_step_engine(f, X, KT, DT, 1 + seed, engine="transformer")
 
     a0 = aspect(X, mm, L_BOX)
@@ -121,14 +132,22 @@ def run_one(scale: float, seed: int, steps: int = STEPS) -> dict:
                       f"max={amax:.3f} ({time.perf_counter()-t0:.0f}s)", flush=True)
     afin = aspect(X, mm, L_BOX)
     curled = int(amax >= CURL_THRESHOLD)
+    # The criterion this ladder can FAIL BY WINNING. A large enough head modulation will simply take
+    # the ribbon apart, and a cloud of fragments is isotropic -- it scores a high `aspect` for the
+    # opposite of the reason we care about. A run only counts as a curl if the membrane is still one
+    # aggregate. INTACT_FRACTION is the planted ribbon's own connectivity, not a chosen bar.
+    lf = largest_lipid_cluster(X, mm, L_BOX)
+    intact = int(lf >= INTACT_FRACTION * N_LIP)
     if curled:
         STATES.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(STATES / f"CURL_s{scale}_sd{seed}.npz", X=X, mols=mm,
                             species=species, L=L_BOX, gap=-1.0, closed=curled,
                             steps=steps, seed=seed)
-    return {"arm": "mlp" if scale > 0 else "off", "scale": scale, "seed": seed, "steps": steps,
+    return {"arm": "mlp" if scale > 0 else "off", "scale": scale,
+            "n_ref": round(n_ref, 6) if scale > 0 else NA_N_REF, "seed": seed, "steps": steps,
             "aspect0": round(a0, 4), "aspect_max": round(amax, 4), "aspect_final": round(afin, 4),
-            "curled": curled, "n_enc_max": nemax, "wall_s": round(time.perf_counter() - t0, 1)}
+            "curled": curled, "intact": intact, "largest_final": lf, "n_enc_max": nemax,
+            "wall_s": round(time.perf_counter() - t0, 1)}
 
 
 def score():
@@ -140,22 +159,28 @@ def score():
     from gap_closure import _fisher_1s
     by = {}
     for r in rows:
-        by.setdefault(float(r["scale"]), []).append(r)
-    print(f"  {'scale':>7} {'n':>4} {'curled':>9} {'mean aspect_max':>17}")
-    for sc in sorted(by):
-        v = by[sc]
+        by.setdefault((float(r["scale"]), float(r["n_ref"])), []).append(r)
+    print(f"  {'amp':>7} {'n_ref':>8} {'n':>4} {'curled':>9} {'mean aspect_max':>17} "
+          f"{'intact':>8}")
+    for k in sorted(by):
+        v = by[k]
         c = sum(int(r["curled"]) for r in v)
         am = sum(float(r["aspect_max"]) for r in v) / len(v)
-        print(f"  {sc:>7} {len(v):>4} {c:>4}/{len(v):<4} {am:>17.4f}")
-    off = by.get(0.0, [])
-    for sc in sorted(k for k in by if k > 0):
-        on = by[sc]
+        it = sum(int(r["intact"]) for r in v)
+        print(f"  {k[0]:>7} {k[1]:>8.4f} {len(v):>4} {c:>4}/{len(v):<4} {am:>17.4f} "
+              f"{it:>4}/{len(v):<3}")
+    off = [r for k, v in by.items() if k[0] == 0.0 for r in v]
+    for k in sorted(k for k in by if k[0] > 0):
+        on = by[k]
         if not off or len(on) < 12 or len(off) < 12:
             continue
-        a, b = sum(int(r["curled"]) for r in on), sum(int(r["curled"]) for r in off)
+        # curled AND intact: a fragmented cloud is isotropic for the wrong reason.
+        a = sum(int(r["curled"]) and int(r["intact"]) for r in on)
+        b = sum(int(r["curled"]) and int(r["intact"]) for r in off)
         p = _fisher_1s(a, len(on), b, len(off))
-        print(f"\n  G4 at scale {sc}: on {a}/{len(on)} vs off {b}/{len(off)}, Fisher p = {p:.4f}")
-        print(f"    PASSES (on>=6/12 AND off<=1/12 AND p<=0.05): "
+        print(f"\n  amp {k[0]} (n_ref {k[1]:.4f}): on {a}/{len(on)} vs off {b}/{len(off)}, "
+              f"Fisher p = {p:.4f}")
+        print(f"    G4 gate (on>=6/12 AND off<=1/12 AND p<=0.05): "
               f"{a >= 6 and b <= 1 and p <= 0.05}")
     return 0
 
@@ -164,7 +189,9 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--validate", action="store_true")
     ap.add_argument("--score", action="store_true")
-    ap.add_argument("--scales", default="0.0,1.0")
+    ap.add_argument("--scales", default="0.0,1.0", help="ShapeMLP amp per arm; 0.0 is the off arm")
+    ap.add_argument("--n-ref", type=float, default=None,
+                    help="REQUIRED for any arm with amp>0. Derive it; see ShapeMLP.n_ref_from.")
     ap.add_argument("--seeds", type=int, default=12)
     ap.add_argument("--seed0", type=int, default=700)
     ap.add_argument("--steps", type=int, default=STEPS)
@@ -174,20 +201,25 @@ def main(argv=None):
         return validate()
     if a.score:
         return score()
+    scales = [float(x) for x in a.scales.split(",")]
+    if any(s > 0 for s in scales) and a.n_ref is None:
+        raise SystemExit("--n-ref is required for any arm with amp>0: it is a DERIVED constant "
+                         "(ShapeMLP.n_ref_from), and leaving it defaulted is the defect of "
+                         "Amendment 4.")
+    nref = {s: (a.n_ref if s > 0 else NA_N_REF) for s in scales}
     done = set()
     if RESULTS.exists():
         for l in RESULTS.read_text().splitlines()[1:]:
             fl = l.split("\t")
             if len(fl) == len(COLUMNS):
-                done.add((float(fl[1]), int(fl[2])))
-    scales = [float(x) for x in a.scales.split(",")]
+                done.add((float(fl[1]), float(fl[2]), int(fl[3])))
     todo = [(s, sd) for s, sd in itertools.product(scales, range(a.seed0, a.seed0 + a.seeds))
-            if (s, sd) not in done]
-    print(f"G4 curl: {len(todo)} runs, N={N_LIP} L={L_BOX} {a.steps} steps, {a.workers} workers",
-          flush=True)
+            if (s, nref[s], sd) not in done]
+    print(f"G4 curl: {len(todo)} runs, N={N_LIP} L={L_BOX} {a.steps} steps, {a.workers} workers, "
+          f"n_ref={a.n_ref}", flush=True)
     rows = []
     with ProcessPoolExecutor(max_workers=a.workers) as ex:
-        futs = {ex.submit(run_one, s, sd, a.steps): (s, sd) for s, sd in todo}
+        futs = {ex.submit(run_one, s, sd, a.steps, nref[s]): (s, sd) for s, sd in todo}
         for fut in as_completed(futs):
             try:
                 r = fut.result()

@@ -56,6 +56,35 @@ from _scatter import scatter_add, scatter_add_pair
 from field import HEAD, N_SPECIES, _core, _well
 
 
+CALIBRATION_BAND = 4.0
+"""How far the reference state may sit from `n_ref` before the term is a constant, not a modulation.
+
+Both modulators have the form `g(n / n_ref)`. If the descriptor's actual mean is far from `n_ref`, the
+map is evaluated on a tiny interval of its domain and returns almost the same number for every bead:
+the term becomes a uniform offset to the chemistry plus noise. A factor of four either way is a sanity
+band on the derivation, not a threshold on a result.
+"""
+
+
+def assert_calibrated(mlp, n, tag=""):
+    """Fail loudly if a modulator's reference point does not match the descriptor it is fed.
+
+    This is the guard that `n_ref = 6.0` needed and did not have. It ran for two registered
+    experiments against a descriptor 18-29x smaller (0.207 planted, 0.334 relaxed, against n_ref 6.0)
+    and reported both as physics nulls.
+    """
+    live = n[n > 0.0]
+    if live.size == 0:
+        raise ValueError(f"{tag}: descriptor is identically zero; nothing to calibrate against")
+    ratio = float(live.mean()) / mlp.n_ref
+    if not (1.0 / CALIBRATION_BAND) <= ratio <= CALIBRATION_BAND:
+        raise ValueError(
+            f"{tag}: n_ref={mlp.n_ref:.4f} but the descriptor's mean over occupied beads is "
+            f"{live.mean():.4f} (ratio {ratio:.3f}, band 1/{CALIBRATION_BAND:g}..{CALIBRATION_BAND:g}). "
+            f"The term would be a constant offset, not a modulation. Re-derive n_ref.")
+    return ratio
+
+
 def coord_weight(r, rc):
     """Smooth, compactly supported coordination kernel and its derivative.
 
@@ -98,17 +127,53 @@ class ShapeMLP:
     which is positive feedback, and is the standard mechanism for spontaneous curvature rather than an
     analogy to it.
 
-    DERIVED, NOT FITTED. A hydration shell is compressed by lateral crowding:
+    DERIVED, NOT FITTED. A hydration shell is compressed by lateral crowding. Write the crowding
+    deviation as `u_i = 1 - n_i / n_ref`, zero in the reference state, and the response as
 
-        sigma_i = sigma_0 * (1 + amp * (1 - n_i / n_ref)),  clamped to stay positive
+        sigma_i = sigma_0 * 2 / (1 + exp(-2 * amp * u_i))
 
-    `n_ref` is the close-packed 2-D coordination (geometry). At n = n_ref the bead is at its reference
-    size; less crowded means larger. `amp` is the one free parameter and is declared as such.
+    which is the linear response `sigma_0 * (1 + amp*u)` near the reference (identical value AND slope
+    at u = 0) made BOUNDED and SMOOTH. Both properties are load-bearing, not cosmetic:
+
+      - a hydration shell cannot invert, so sigma must stay positive for any u. The linear form needs
+        a clamp, and a clamp is a KINK: d(sigma)/dn jumps to zero there, the force stops being
+        -grad U, and R3 -- the energy ledger the whole project rests on -- is lost exactly in the
+        regime a large `amp` explores.
+      - bounded above by 2*sigma_0: a head may at most double, never run away.
+
+    Changed 2026-09-11, before any data at a corrected `n_ref`, and recorded as such in
+    `specs/2026-09-07_mlp_many_body.md` Amendment 4.
+
+    At n = n_ref the bead is at its reference size; less crowded means larger. `amp` is the one free
+    parameter and is declared as such. `n_ref` is NOT free -- see `n_ref_from`.
     """
 
-    def __init__(self, sigma0, n_ref=6.0, amp=0.25, subject=(HEAD,), neighbours=(HEAD,)):
+    N_IN_LEAFLET_2D = 2      # a 2-D leaflet is a LINE of heads: two in-leaflet neighbours, exactly
+
+    @staticmethod
+    def n_ref_from(a0, rc, n_in_leaflet=N_IN_LEAFLET_2D):
+        """The descriptor's value in the state where sigma = sigma0. DERIVED, not chosen.
+
+        `n_ref` is not a coordination COUNT -- the descriptor is a sum of smooth kernel weights, and
+        `coord_weight` returns 0.107 at a spacing of 2.05 sigma, not 1. Equating the two is the defect
+        recorded as Amendment 4 in `specs/2026-09-07_mlp_many_body.md`: `n_ref = 6.0` against a
+        descriptor whose range is ~0.2 made the bracket 1.24 for every head in every state -- a
+        uniform 24% inflation with a 0.4% spread, i.e. inert.
+
+            n_ref = n_in_leaflet * w(a0; rc)
+
+        `n_in_leaflet` is geometry (2 in 2-D); `a0` is the equilibrium head-head spacing MEASURED in a
+        relaxed membrane, not taken from the planter, whose lattice constant is its own choice.
+        """
+        return float(n_in_leaflet) * float(coord_weight(np.asarray([float(a0)]), float(rc))[0][0])
+
+    def __init__(self, sigma0, n_ref, amp=0.25, subject=(HEAD,), neighbours=(HEAD,)):
+        # n_ref has NO DEFAULT on purpose. A default is how 6.0 survived the change of descriptor from
+        # all-lipid to head-only without ever being re-derived.
         self.sigma0 = np.asarray(sigma0, dtype=np.float64)
         self.n_ref = float(n_ref)
+        if not self.n_ref > 0.0:
+            raise ValueError(f"n_ref must be > 0, got {self.n_ref}")
         self.amp = float(amp)
         self.subject = tuple(subject)
         # WHICH beads compress the hydration shell. HEADS ONLY, and this is not cosmetic: with all
@@ -122,14 +187,23 @@ class ShapeMLP:
         self.neighbours = tuple(neighbours)
 
     def sigma_and_dsigma(self, n, species):
-        """Per-BEAD sigma and d(sigma)/dn. Non-subject species keep their species default."""
+        """Per-BEAD sigma and d(sigma)/dn. Non-subject species keep their species default.
+
+            s  = 2 / (1 + exp(-z)),   z = 2 * amp * (1 - n/n_ref)
+            ds/dn = -(amp / n_ref) * s * (2 - s)
+
+        No clamp, no branch: smooth for every n, so the many-body force term stays an exact gradient.
+        """
         sig = self.sigma0[species].astype(np.float64)
         dsig = np.zeros_like(sig)
         m = np.isin(species, self.subject)
-        u = 1.0 - n[m] / self.n_ref
-        sig[m] = self.sigma0[species[m]] * np.maximum(1.0 + self.amp * u, 0.25)
-        live = (1.0 + self.amp * u) > 0.25
-        dsig[m] = np.where(live, -self.sigma0[species[m]] * self.amp / self.n_ref, 0.0)
+        if self.amp == 0.0:
+            return sig, dsig
+        z = 2.0 * self.amp * (1.0 - n[m] / self.n_ref)
+        sc = 2.0 / (1.0 + np.exp(-np.clip(z, -700.0, 700.0)))    # clip guards exp overflow only
+        s0 = self.sigma0[species[m]]
+        sig[m] = s0 * sc
+        dsig[m] = -s0 * (self.amp / self.n_ref) * sc * (2.0 - sc)
         return sig, dsig
 
 
@@ -141,8 +215,13 @@ class ManyBodyMLP:
     reduces it to the identity, which is what makes the off-state test meaningful.
     """
 
-    def __init__(self, n_ref=6.0, scale=1.0, width=8, subject=(HEAD,)):
-        self.n_ref = float(n_ref)          # close-packed 2-D coordination: geometry, not a fit
+    def __init__(self, n_ref, scale=1.0, width=8, subject=(HEAD,)):
+        # No default, for the reason given in `ShapeMLP.n_ref_from`. This channel's descriptor counts
+        # ALL lipid beads (it declares no `neighbours`), so its reference value is the all-lipid
+        # coordination of a relaxed membrane, not the head-only one.
+        self.n_ref = float(n_ref)
+        if not self.n_ref > 0.0:
+            raise ValueError(f"n_ref must be > 0, got {self.n_ref}")
         self.scale = float(scale)
         self.subject = tuple(subject)
         self.width = int(width)

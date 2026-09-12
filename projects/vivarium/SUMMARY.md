@@ -1,6 +1,6 @@
 # vivarium — executive summary
 
-*Updated 2026-09-11 (21:15). Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
+*Updated 2026-09-11 (22:00). Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
 results in **[`docs/ROADMAP.md`](docs/ROADMAP.md)** — the single consolidated roadmap.*
 
 ## Objective
@@ -23,7 +23,9 @@ wrapping until its two ends meet, not by curving. Making that reliable, and reac
   line tension and bending modulus are undefined and nothing can be compared to published values.
   This is what forbids softmax attention (it breaks Newton's third law).
 - **R4 — Every instrument validated against cases it must SEPARATE**, not merely score well — a
-  known-answer case *and* a null case. Twenty-five defects on record, all instruments, none physics.
+  known-answer case *and* a null case. Twenty-six defects on record, all instruments or constants,
+  none physics. The newest: a constant described as "geometry" that was wrong by ~30×, which made two
+  experiments report a null for a term that was not doing anything.
 - **R5 — Look at the picture before believing the number.** Every structural claim needs a render.
 - **R6 — Criteria before data.** Gates are registered in `specs/` before the run and scored
   mechanically. Amendments are dated, never silent edits.
@@ -106,18 +108,24 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
   size ratio, with no loss on closing a ready-made ribbon (19/20 vs 10/10). **But it loses on the
   strictest test** (11/20 vs 18/20) and it degrades self-assembly (2/20 vs 13/20).
 - **DONE — a live MLP inside real physics.** Molecules can now change with their surroundings while
-  forces stay exactly derivable from an energy. **It does not bend membranes** (0/12 in both channels).
-- **BLOCKED — making anything bend.** Seven independent attempts, all null. The standing explanation
-  ("symmetric pair forces cannot differ between the two layers") no longer covers the last two, which
-  are not pair forces.
+  forces stay exactly derivable from an energy.
+- **RETRACTED — "the MLP does not bend membranes".** Both of those experiments divided by a reference
+  number that was wrong by a factor of about thirty, so the molecules' size barely changed at all: the
+  thing being tested was, in effect, a constant. What one of them did test — making every head 24%
+  bigger, everywhere — is kept as a genuine null. The idea itself has never been tested and is now
+  running (see NEXT).
+- **BLOCKED — making anything bend.** Five independent attempts, all null, all of them forces between
+  pairs of molecules. The standing explanation — a force between two molecules cannot tell the two
+  layers apart — covers all five again, which is a step back from the position taken two days ago.
 - **BLOCKED — 3-D.** Its foundation needs redoing: the "bending fix" was found to stretch molecules 67%
   rather than stiffen them. Costs ~29× more per run than 2-D.
 - **NOT STARTED — fusing and dividing.** Never observed.
 - **BLOCKED — making emergence reliable.** Three separate attempts to move the rate by changing the
   system's size or crowding have now failed; it sits at 1-2 runs in 20 regardless. Whatever limits it
   is not the geometry we have been varying.
-- **NEXT** — (1) test whether molecules that change shape with their surroundings help *while a membrane
-  is forming* — the one setting where that idea has never been tried; (2) decide which test
+- **NEXT** — (1) **running now**: molecules that change shape with their surroundings, this time with
+  the reference number measured rather than guessed, at four strengths spanning sixteen-fold, with a
+  control that fails the test if the membrane only "curls" by falling apart; (2) decide which test
   defines a vesicle, because the old headline used a looser one; (3) rebuild 3-D with inextensible
   bonds before spending compute there.
 

@@ -354,3 +354,161 @@ terms and that explanation does not cover them.**
 What remains untested rather than refuted: only one `amp` was run (0.25, declared, untuned), 300,000
 steps, and the descriptor is instantaneous rather than relaxational. None of those is a reason to
 believe the mechanism works; they are the honest boundary of the negative.
+
+---
+
+## Amendment 4 — 2026-09-11: `n_ref = 6.0` is a DEFECT. Both G4 verdicts are uninformative.
+
+**Written before any run at a corrected value.** This is not a reinterpretation of the data; it is a
+statement that the term the data was collected on was, by construction, nearly a constant.
+
+### What was registered
+
+> `n_ref = 6.0` is the close-packed 2-D coordination number (geometry), **not a fit**.
+
+### What the descriptor actually is
+
+`coord_weight` returns a smooth *kernel weight*, not a neighbour count:
+
+    w(r) = (1 - (r/rc)^2)^2,   rc = 2.5 sigma for a head-head pair
+
+Two things follow, and both were missed:
+
+1. **A weight is not a count.** At the head-head spacing of a planted flat bilayer, 2.050 sigma,
+   `w = 0.1073`. A head with two neighbours therefore scores 0.21, not 2.
+2. **A 2-D leaflet is a LINE.** Close packing in 2-D gives 6 neighbours to a bead in a *bulk*
+   arrangement. A leaflet is one-dimensional, so a head has exactly **two** in-leaflet head
+   neighbours, not six. The descriptor was also changed from all-lipid to **head-only** on 2026-09-09
+   to fix the feedback sign, and `n_ref` was never re-derived afterwards.
+
+### Measured consequence
+
+Head-only coordination, measured through `Field.coordination` (the same code the force reads):
+
+| state | mean head coordination |
+|---|---|
+| planted flat bilayer, N=56 L=100 | **0.2070** |
+| planted closed ring | 0.2603 |
+| dispersed, N=112 L=54.4 | 0.2557 |
+
+With `n_ref = 6.0` the shape channel's bracket is
+
+    1 + amp*(1 - n/n_ref) = 1 + 0.25*(1 - 0.035) = 1.2414
+
+for **every head in every state**, with a spread of 0.0045 across a curved membrane — a **uniform 24%
+inflation with a 0.4% modulation**. The outer-minus-inner wedge on a planted ring, which is the entire
+mechanism, is **+0.10%**. At a derived `n_ref` the same ring gives **+3.77%**, 38x larger.
+
+The affinity channel carries the identical error, less severely. Its descriptor counts **all** lipid
+beads (it declares no `neighbours`), so it reads 0.687 in a flat bilayer and 0.852 on a ring against
+the same `n_ref = 6.0`. The realised exposure `f = 1/(1 + n/n_ref)` spans 0.894-0.944 on the flat
+membrane and 0.866-0.892 on the ring: a **3-6% spread about ~0.9**, where the map's full range is
+(0, 1]. The measured engagement `||F_on - F_off||/||F_off|| = 0.0076` was recorded at the time and
+read as "small but non-zero" rather than as a calibration failure.
+
+### What this does to the two G4 verdicts
+
+Both are **withdrawn as tests of the registered mechanism**, and neither is replaced by a positive.
+
+- **G4 affinity, 0/12.** Tested a ~1% modulation of chi. Uninformative about a many-body affinity term.
+- **G4 shape, 0/12.** Tested, in effect, **uniformly 24% larger heads** — a chemistry change, not an
+  environment-dependent shape. That is a real null and is retained as one: *a uniform 24% head
+  enlargement does not curl a flat ribbon.* It is not the registered mechanism.
+
+The flat-ribbon protocol therefore has **five** nulls against pair terms plus one against a uniform
+head enlargement, not seven against seven distinct mechanisms. `docs/ROADMAP.md` and `SUMMARY.md` are
+corrected in the same commit.
+
+### The derivation, fixed
+
+    n_ref = n_in_leaflet * w(a0; rc),   n_in_leaflet = 2 (a 2-D leaflet is a line)
+
+`a0` is the **equilibrium** head-head spacing. It must not be taken from the planter, whose lattice
+constant is its own choice: the planter builds at 2.050 sigma while the four confirmed self-assembled
+vesicles sit at a median of **1.653 sigma**, 24% tighter. `a0` is therefore measured on a planted flat
+ribbon **relaxed under the dynamics with the modulator off** — the state in which `sigma = sigma0` is
+by definition correct.
+
+`amp` remains the one free parameter and is still declared as such.
+
+### The measurement, run before the ladder
+
+Six seeds, planted flat ribbon, 100 000 steps under the production chemistry with the modulator OFF,
+probed every 20 000 steps through `Field.coordination` — the same code the force reads.
+
+| quantity | planted (step 0) | relaxed (step 100 000) |
+|---|---|---|
+| head-head spacing `a0` | 2.0500 | **1.7651 ± 0.0732** |
+| head coordination `n` | 0.2070 | **0.3335 ± 0.0464** |
+
+**Registered value: `n_ref = 0.3335`** — the descriptor's own value in the state where `sigma = sigma0`
+is by definition correct. The geometric formula is a cross-check, not the source:
+`2 * w(1.7651) = 0.5031`, within 1.5× of the direct measurement. They differ because a real ribbon is
+not an ideal line — it has two ends, its spacing is not uniform, and it sheds a few lipids (56 heads
+at step 0, 46-49 at step 100 000, with the modulator off).
+
+Against the registered `n_ref = 6.0` this is **18× smaller**.
+
+### A declared property of the protocol, not hidden
+
+The planter builds the ribbon at 2.0500 σ, 16% more dilute than the relaxed 1.7651 σ. So every on-arm
+starts from a membrane the term reads as *under-crowded*, and every head is inflated at step 0 before
+any dynamics. Measured mean `sigma_head` at step 0: **1.094** at `amp = 0.25`, **1.360** at
+`amp = 1.0`, **1.631** at `amp = 2.0`, **1.898** at `amp = 4.0`, against 1.000 in the off arm.
+This is a real
+property of starting from a planted state and is the same for every amp; the off arm is unchanged, and
+the comparison is still paired seed by seed. It is also the main reason the top of the ladder is
+expected to fail the intactness control rather than the curl gate.
+
+### Guards added, so this class of defect fails loudly
+
+- `n_ref` has **no default** on either modulator. A default is how 6.0 survived the descriptor change.
+- `manybody.assert_calibrated` raises if the descriptor's mean is more than 4x from `n_ref`. `curl.py`
+  calls it at step 0, before spending 2.4 CPU-hours per run.
+- `Field.coordination(X)` exposes the descriptor the force actually reads, so a harness cannot check a
+  re-derivation of it.
+- `tests/test_manybody.py` — twelve gates, committed. It pins that `n_ref = 6.0` is rejected, that the
+  modulation is not a uniform offset, that `field.forces` and `transformer.attention` agree at every
+  amp, and that the force is `-grad U`. Three of these existed only as one-off scripts, each after it
+  had already caught a defect that voided an experiment.
+
+---
+
+## G5 — the shape channel at a DERIVED `n_ref`, as a dose-response. Registered 2026-09-11, no data.
+
+**Hypothesis.** An environment-dependent head size — the packing-parameter mechanism, `P = v/(a0*l)` —
+makes a planted flat ribbon curl, at some amplitude, without destroying it.
+
+**Strongest baseline, named:** the existing `amp = 0` arm, seeds 800-811, 0/12 curled, already on disk
+in `docs/results/curl.tsv`. Paired: the same seeds drive both the build and the thermostat.
+
+**Arms.** `amp` in **{0.25, 1.0, 2.0, 4.0}** — a factor-of-two ladder spanning 16x, declared here in
+full. 0.25 is the originally registered natural value, now evaluated at a `n_ref` that is not broken.
+12 seeds each (800-811), 300 000 steps, N=56, L=100, exactly the off arm's protocol. Run order is
+1.0, 2.0, 0.25, 4.0 so that whole cells complete first if the machine runs out of time; every value
+run is reported whatever it says.
+
+**G5 PASSES** iff **at least one amp** satisfies the G4 gate as amended:
+
+```
+curled AND intact >= 6/12   AND   off <= 1/12   AND   Fisher one-sided p <= 0.05
+```
+
+**G5b — the criterion this can fail by winning.** `curled` now requires `intact`: the largest lipid
+aggregate at the end must hold >= 90% of the lipids. A ribbon torn into fragments is isotropic and
+scores a high `aspect` for the opposite of the reason we care about. If curl appears **only** at an
+amp where intactness has collapsed, **G5 FAILS** — the term destroys membranes, it does not bend them.
+A method that merely perturbs harder cannot pass this; one that curves a membrane can.
+
+**G5c — shape, reported not gated.** A real mechanism should show curl rate rising with `amp` before
+intactness falls. A single amp winning with both neighbours at zero is recorded as suspect.
+
+**What each outcome means, written now.**
+
+- **PASSES at an amp with intactness held.** The packing parameter is the missing lever, the term was
+  derived rather than fitted, and the flat-ribbon protocol has its first positive.
+- **FAILS with intactness held at every amp.** The mechanism is genuinely null for this model at up to
+  16x its natural amplitude. That is a much stronger negative than the one being withdrawn, and it
+  closes the MLP-morphology line rather than leaving it open.
+- **Curl only where the membrane fragments.** Recorded as a FAIL and as evidence that `aspect` alone
+  is not a sufficient endpoint — which is why G5b exists.

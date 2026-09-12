@@ -81,7 +81,7 @@ the largest aggregate reaches only 17.8 lipids.
 
 ---
 
-## 5. Why won't a membrane bend? — SEVEN NULLS
+## 5. Why won't a membrane bend? — FIVE NULLS (was seven; two withdrawn 2026-09-11)
 
 The flat-planted-ribbon protocol. Every entry is a measured null with the membrane intact.
 
@@ -92,12 +92,49 @@ The flat-planted-ribbon protocol. Every entry is a measured null with the membra
 | B3 | lipid shape (2-tail) | dissolves to micelles |
 | B4 | imposed leaflet **thickness** asymmetry | 0/5, intact, render straight |
 | B5 | imposed leaflet **area** asymmetry | 0/5, intact |
-| B6 | **MLP affinity channel** (χ from coordination) | **0/12 vs 0/12**, p = 1.0 |
-| B7 | **MLP shape channel** (σ_head from head-only coordination) | **0/12 vs 0/12**, p = 1.0 |
+| ~~B6~~ | ~~MLP affinity channel~~ | **WITHDRAWN — the term was a constant, see below** |
+| ~~B7~~ | ~~MLP shape channel~~ | **WITHDRAWN — same defect** |
+| B6′ | *uniformly* 24% larger heads (what B7 actually ran) | **0/12 vs 0/12**, p = 1.0 |
 
 **B1–B5 are symmetric pair terms** and `RESULTS.md` explains them structurally: a pair potential cannot
-express a difference between leaflets. **B6 and B7 are not pair terms**, so that explanation no longer
-covers the data. The obstruction is narrower and more specific than "pair potentials are insufficient".
+express a difference between leaflets. **That explanation covers every surviving null**, which is a
+retreat from the position taken on 2026-09-09.
+
+### Why B6 and B7 were withdrawn — a free parameter that stopped matching its own derivation
+
+Both MLP channels divide their descriptor by `n_ref = 6.0`, registered as "the close-packed 2-D
+coordination number (geometry), not a fit". Two errors, compounding:
+
+- The descriptor is a sum of **smooth kernel weights**, not a neighbour count. At the head-head spacing
+  of a flat bilayer (2.05σ) the kernel returns **0.107**, so two neighbours score 0.21, not 2.
+- A 2-D leaflet is a **line**, so a head has **two** in-leaflet head neighbours, not six. And the
+  descriptor was narrowed from all-lipid to head-only on 2026-09-09 to fix the feedback sign;
+  `n_ref` was never re-derived after that change.
+
+Measured through `Field.coordination` — the same code the force reads — head coordination is **0.207**
+in a flat bilayer against an `n_ref` of 6.0. The shape channel's bracket is therefore `1.2414` for
+every head in every state, with a **0.4% spread**: a uniform 24% head inflation, not a modulation. The
+outer-minus-inner wedge on a ring, which *is* the mechanism, was **+0.10%**; at a derived `n_ref` the
+same ring gives **+3.77%**.
+
+B7 did test something and it is kept as B6′: *a uniform 24% head enlargement does not curl a flat
+ribbon*. That is not the registered mechanism, which remains **untested**, not refuted.
+
+### G5 — the shape channel, actually tested. Registered 2026-09-11, RUNNING
+
+| | |
+|---|---|
+| `n_ref` | **0.3335**, measured on a relaxed flat ribbon (6 seeds, 100 k steps, modulator off) |
+| response | `sigma = sigma0 * 2/(1 + exp(-2*amp*(1 - n/n_ref)))` — the linear law made smooth and bounded, so the clamp cannot break the energy ledger at large `amp` |
+| arms | `amp ∈ {0.25, 1.0, 2.0, 4.0}`, 12 seeds each (800-811), 300 k steps, paired against the existing 0/12 off arm |
+| gate | curled **and intact** ≥ 6/12, off ≤ 1/12, Fisher p ≤ 0.05, at **any** amp |
+| control | `intact` = largest aggregate holds ≥ 90% of lipids. **Curl that appears only where the ribbon fragments FAILS the gate** — the criterion this can fail by winning |
+
+Guards added so this fails loudly next time: `n_ref` has no default on either modulator;
+`manybody.assert_calibrated` raises when the descriptor's mean is >4× from `n_ref`, and `curl.py`
+calls it at step 0; `Field.coordination(X)` exposes the descriptor the force reads;
+`tests/test_manybody.py` pins all of it, including that `n_ref = 6.0` is rejected. See
+`specs/2026-09-07_mlp_many_body.md` Amendment 4.
 
 ---
 
@@ -169,8 +206,10 @@ registered gate. `np.add.at` → `bincount` gave a bit-identical **16–23%**.
      (internal coordinate with its own kinetic term) or the energy ledger is lost.
    - **explicit rigidity** — an elastic restoring pull toward a rest shape, with `morph` as the
      flexibility fighting it. Ours has no independent stiffness.
-   Note B6/B7 first: the two simplest channels are already null, so this is refinement of a mechanism
-   not yet shown to work.
+   B6/B7 are **withdrawn**, not null — they ran with `n_ref = 6.0` against a descriptor of range 0.2,
+   so the simplest channel has never actually been tested. **G5 (registered 2026-09-11)** runs the
+   shape channel at a derived `n_ref` as a dose-response over `amp ∈ {0.25, 1.0, 2.0, 4.0}`, with an
+   intactness control that fails the gate if curl appears only where the ribbon fragments.
 4. **Rebuild 3-D on inextensible bonds (FENE)** before spending compute there. Its bending result is
    retracted and everything downstream of it needs re-deriving. ~29× the 2-D cost.
 5. **Run the oracle head-to-head** (AC-2, registered and never evaluated). 73.8 h/seed.

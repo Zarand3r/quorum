@@ -549,18 +549,12 @@ class Field:
         return 0.5 * (self.sigma_species[self.species[i]] + self.sigma_species[self.species[j]])
 
 
-    def _env(self, r, iu):
-        """Per-pair (sigma, chi) with any coordination-dependent modulation, plus force extras.
+    def _coord(self, r, iu, base):
+        """Per-bead smooth coordination -- the ONE descriptor both modulators read.
 
-        BOTH `energy` and `forces` go through here. Computing them differently is exactly the bug the
-        gradient gate caught on 2026-09-08: the force was modulated and the energy was not, so F was
-        the gradient of a potential nobody was evaluating (1.6e-2 instead of 1e-6).
+        Public wrapper: `coordination(X)`. A harness that wants to check a modulator's calibration
+        must see the same number the force sees, not a re-derivation of it.
         """
-        base = 0.5 * (self.sigma_species[self.species[iu[0]]]
-                      + self.sigma_species[self.species[iu[1]]])
-        chi0 = self.content_pairs(*iu)
-        if self.manybody is None and self.shape is None:
-            return base, chi0, None
         from manybody import coord_weight
         w, dw = coord_weight(r, self.rc * base)
         # The modulator chooses which beads count as neighbours; see ShapeMLP.neighbours.
@@ -573,7 +567,26 @@ class Field:
         # len(self.species), not len(X): `transformer._score_nonbonded` has no X in scope,
         # and routing both force paths through this one helper is the point.
         nb = len(self.species)
-        n_co = scatter_add(nb, iu[0], wl) + scatter_add(nb, iu[1], wl)
+        return scatter_add(nb, iu[0], wl) + scatter_add(nb, iu[1], wl), dw, both
+
+    def coordination(self, X):
+        """The descriptor as the force law sees it, for calibration checks and instruments."""
+        d, r, iu = self._pairs(np.ascontiguousarray(X, dtype=np.float64))
+        return self._coord(r, iu, self.pair_sigma(iu[0], iu[1]))[0]
+
+    def _env(self, r, iu):
+        """Per-pair (sigma, chi) with any coordination-dependent modulation, plus force extras.
+
+        BOTH `energy` and `forces` go through here. Computing them differently is exactly the bug the
+        gradient gate caught on 2026-09-08: the force was modulated and the energy was not, so F was
+        the gradient of a potential nobody was evaluating (1.6e-2 instead of 1e-6).
+        """
+        base = 0.5 * (self.sigma_species[self.species[iu[0]]]
+                      + self.sigma_species[self.species[iu[1]]])
+        chi0 = self.content_pairs(*iu)
+        if self.manybody is None and self.shape is None:
+            return base, chi0, None
+        n_co, dw, both = self._coord(r, iu, base)
         chi, f, df = chi0, None, None
         if self.manybody is not None:
             f, df = self.manybody.f_and_df(n_co, self.species)
