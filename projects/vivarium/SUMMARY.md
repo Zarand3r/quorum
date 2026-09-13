@@ -1,6 +1,6 @@
 # vivarium — executive summary
 
-*Updated 2026-09-12 (01:15). Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
+*Updated 2026-09-12 (session close). Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
 results in **[`docs/ROADMAP.md`](docs/ROADMAP.md)** — the single consolidated roadmap.*
 
 ## Objective
@@ -141,7 +141,12 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
 - **BLOCKED — making emergence reliable.** Three separate attempts to move the rate by changing the
   system's size or crowding have now failed; it sits at 1-2 runs in 20 regardless. Whatever limits it
   is not the geometry we have been varying.
-- **NEXT** — (1) **running now**: molecules that change shape with their surroundings, this time with
+- **SESSION HANDOFF — [`docs/HANDOFF_2026-09-12.md`](docs/HANDOFF_2026-09-12.md)**. One decision needs
+  a person: a molecule's own internal channel is not wired to the forces, which makes a test fail and
+  has kept the test suite red since 2026-09-09. Nothing measured so far is affected, but it changes
+  what the project can claim, so it was written up rather than patched unattended. **Nothing is pushed
+  until it is settled.**
+- **NEXT** — (1) **done, verdict in**: molecules that change shape with their surroundings, this time with
   the reference number measured rather than guessed, at four strengths spanning sixteen-fold, with a
   control that fails the test if the membrane only "curls" by falling apart. **First pictures are in,
   and the idea works** — making the molecules' heads bigger turns the flat sheet into small round

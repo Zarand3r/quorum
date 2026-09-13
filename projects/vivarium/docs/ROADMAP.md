@@ -167,7 +167,32 @@ first-order global inflation. This is not tuning a parameter to pass a gate — 
 condition that is 16 % more dilute than the model's own equilibrium, which under R9 is a fidelity
 defect in its own right and belongs in §5b regardless of what it does to the curl rate.
 
-### G5 — VERDICT at amps 1.0 and 2.0: FAILS to curl, DESTROYS the membrane. (2026-09-12)
+### G5 — FINAL: fails to curl at every amplitude run; destroys the membrane, dose-dependently
+
+*Session handoff: [`HANDOFF_2026-09-12.md`](HANDOFF_2026-09-12.md).*
+
+| amp | σ_head at t=0 | **curled AND intact** | intact | mean largest | p vs off (intact) |
+|---|---|---|---|---|---|
+| 0.0 (off) | 1.000 | 0/12 | **12/12** | 56 | — |
+| 0.25 | 1.094 | **0/12** | 2/12 | 38.8 | 3.4e-05 |
+| 1.0 | 1.360 | **0/12** | 0/12 | 19.2 | 3.7e-07 |
+| 2.0 | 1.631 | **0/12** | 0/12 | 21.8 | 3.7e-07 |
+| 4.0 | 1.898 | **NOT RUN** | — | — | — |
+
+The off arm's `largest_final` reads −1 in the TSV — that column did not exist when those rows were
+written and was back-filled as "not measured" rather than invented; its intactness comes from the
+render and from a witness run that held 56/56 through 150 000 steps.
+
+**Gate verdict at every completed amp: `curled AND intact ≥ 6/12` → 0/12. FAILS.**
+
+Two findings, the second far stronger than the one gated on: the shape channel **does not bend a flat
+ribbon**, and it **destroys membranes dose-dependently** — pooled p = 8.0e-10, mean largest aggregate
+falling 56 → 38.8 → 19.2 as σ_head rises. Under R9 that is a success and is reported as one.
+
+**Amp 4.0 is NOT RUN, not null.** Resume: `curl.py --scales 4.0 --n-ref 0.3335 --seeds 12 --seed0 800
+--workers 12` (dedups on `(scale, n_ref, seed)`; use 12 workers, see §5c).
+
+### G5 — earlier partial verdict, amps 1.0 and 2.0 (2026-09-12)
 
 The gate's output, verbatim:
 
@@ -265,7 +290,7 @@ these is not conditional on them helping.** Ordered by how much they bear on the
 | D6 | **`amp` is a free parameter.** | declared in the spec | **No.** `n_ref` is now derived and measured; `amp` should be too — from a hydration-shell compressibility or an area-per-lipid response. |
 | D7 | **Head-size response bounded at 2σ₀.** A bound is physical (a hydration shell has a maximum thickness); the *value* 2 is not. | chosen 2026-09-11 for numerical safety, to remove a clamp that broke `F = −∇U` | **Partly** — existence justified, magnitude arbitrary. |
 | D8 | **Bounded repulsive core**, finite at full overlap (37.8ε) rather than divergent. | `_core = height·(1−s)²` | **Yes** — documented, and standard in CG/DPD. The one entry here that is defensible as-is. |
-| D9 | **The flat-ribbon planter builds 16 % more dilute than equilibrium**: head spacing 2.0500 σ against a relaxed 1.7651 σ (6 seeds, 100 k steps, modulator off). Every environment-dependent term therefore reads the starting membrane as under-crowded. | measured 2026-09-11 while deriving `n_ref` | **No — nobody checked.** It is the reason the G5 arms micellise from step 0. |
+| D9 | **The flat-ribbon planter builds 16 % more dilute than equilibrium**: head spacing 2.0500 σ against a relaxed 1.7651 σ (6 seeds, 100 k steps, modulator off). Every environment-dependent term therefore reads the starting membrane as under-crowded. | measured 2026-09-11 while deriving `n_ref`; the source is a hard-coded default, `_mixture._plant_flat_ribbon(..., gap=1.05, ...)`, against a measured equilibrium of 0.883 per lipid. Its docstring justifies the ribbon being FINITE, and says nothing about the spacing value. | **No — a picked constant.** "Derive constants from the configuration; do not pick them", in one literal. It is why the G5 arms micellise from step 0. |
 
 **D1 is the one with data behind it.** Largest aggregate against system size, from the emergence runs:
 
