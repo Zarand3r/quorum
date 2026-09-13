@@ -1,6 +1,6 @@
 # vivarium — executive summary
 
-*Updated 2026-09-12 (session close). Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
+*Updated 2026-09-13. Current state only; history lives in `docs/RESEARCH_LOG.md`, experiments and their
 results in **[`docs/ROADMAP.md`](docs/ROADMAP.md)** — the single consolidated roadmap.*
 
 ## Objective
@@ -32,12 +32,12 @@ wrapping until its two ends meet, not by curving. Making that reliable, and reac
 - **R6 — Criteria before data.** Gates are registered in `specs/` before the run and scored
   mechanically. Amendments are dated, never silent edits.
 - **R7 — Results are regenerable.** Every number traces to an append-only TSV in `docs/results/`.
+- **R8 — One implementation per concept.** Two force paths that disagreed silently voided a
+  48-CPU-hour experiment.
 - **R9 — Faithful to nature before favourable to the result.** In any doubtful modelling choice, take
   what nature does, even if it makes a vesicle less likely. Nature is not ideal, and a model tuned
   toward the answer stops being evidence for it. Known departures are listed in the roadmap's fidelity
   audit; a correct term that lowers the vesicle rate is reported as a success.
-- **R8 — One implementation per concept.** Two force paths that disagreed silently voided a
-  48-CPU-hour experiment.
 
 ## System design
 
@@ -108,7 +108,7 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
 
 - **DONE — transformer formulation is exact and free.** Forces match the ordinary force law to 1e-13;
   one forward pass equals one step; no measurable time cost.
-- **DONE — 2-D vesicles emerge, and we have the pictures.** Three now, all from a scattered start with
+- **DONE — 2-D vesicles emerge, and we have the pictures.** Four now, all from a scattered start with
   nothing planted, all recorded with their exact recipe in **[`docs/SUCCESSES.md`](docs/SUCCESSES.md)**
   so none can be lost the way the original was. The cleanest is 35 molecules out of 112.
 - **DONE — the mechanism is identified.** Two independent vesicles closed at *constant size* (56 and
@@ -116,47 +116,44 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
 - **DONE — the chemistry reduces.** Five hand-set numbers plus the water become one attraction plus a
   size ratio, with no loss on closing a ready-made ribbon (19/20 vs 10/10). **But it loses on the
   strictest test** (11/20 vs 18/20) and it degrades self-assembly (2/20 vs 13/20).
-- **DONE — a live MLP inside real physics.** Molecules can now change with their surroundings while
-  forces stay exactly derivable from an energy. **Decision 2026-09-11: this is kept for the physics,
-  not for the vesicle count.** Before it, every force was a function of one distance between two
-  molecules and a molecule could know nothing about its own situation; now it can. That is the same
-  class of term established simulators use, and it is worth having whether or not it ever makes a
-  bubble. Two conditions attached: it stays **off by default** while its one remaining free number
-  (`amp`) is undetermined, and any vesicle that appears with it switched on is reported as "with a
-  curvature-capable term present", never as "from nothing".
-- **NOTE — one thing called "the MLP" does nothing.** There are two. The per-molecule channel inside
-  the transformer is disconnected from the forces (see Known gaps). The one described above, which
-  lives in the force law itself, is the live one.
-- **RETRACTED — "the MLP does not bend membranes".** Both of those experiments divided by a reference
-  number that was wrong by a factor of about thirty, so the molecules' size barely changed at all: the
-  thing being tested was, in effect, a constant. What one of them did test — making every head 24%
-  bigger, everywhere — is kept as a genuine null. The idea itself has never been tested and is now
-  running (see NEXT).
-- **BLOCKED — making anything bend.** Five independent attempts, all null, all of them forces between
-  pairs of molecules. The standing explanation — a force between two molecules cannot tell the two
-  layers apart — covers all five again, which is a step back from the position taken two days ago.
+- **DONE — a live MLP inside real physics, and it demonstrably works.** Molecules can now change with
+  their surroundings while forces stay exactly derivable from an energy. Making a molecule's head
+  bigger when it is less crowded turns a flat sheet into small round balls — which is precisely what
+  the standard theory of molecular shape says should happen, and it is the first time anything in this
+  project has been shown to move that lever. The effect grows with the strength of the term and is
+  overwhelming (the sheet survives 12 times out of 12 with the term off, and 2, 0 and 0 times out of 12
+  as it is turned up).
+  **Kept for the physics, not for the vesicle count** (decision 2026-09-11): before it, every force was
+  a function of one distance between two molecules and a molecule could know nothing about its own
+  situation. It stays **off by default** while its one free number is undetermined, and any vesicle
+  appearing with it on is reported as "with a curvature-capable term present", never as "from nothing".
+- **RETRACTED — the two earlier "the MLP does nothing" results.** Both divided by a reference number
+  wrong by a factor of about thirty, so the molecule's size barely changed: the thing being tested was
+  effectively a constant. Re-derived from measurement and re-run.
+- **BLOCKED — making anything bend.** Six attempts, all null. Five are forces between pairs of
+  molecules, and the standing explanation covers them: a force between two molecules cannot tell the
+  two layers apart. The sixth — the shape term above — is *not* a pair force, so that explanation does
+  not cover it, **but it is not a clean test either**: the term took the sheet apart before it could
+  bend it, so "would it bend a sheet that stayed whole?" is still unanswered. Answering it needs the
+  starting sheet built at the spacing the model itself settles at, which is the top of the next list.
 - **BLOCKED — 3-D.** Its foundation needs redoing: the "bending fix" was found to stretch molecules 67%
   rather than stiffen them. Costs ~29× more per run than 2-D.
 - **NOT STARTED — fusing and dividing.** Never observed.
 - **BLOCKED — making emergence reliable.** Three separate attempts to move the rate by changing the
   system's size or crowding have now failed; it sits at 1-2 runs in 20 regardless. Whatever limits it
   is not the geometry we have been varying.
-- **SESSION HANDOFF — [`docs/HANDOFF_2026-09-12.md`](docs/HANDOFF_2026-09-12.md)**. One decision needs
-  a person: a molecule's own internal channel is not wired to the forces, which makes a test fail and
-  has kept the test suite red since 2026-09-09. Nothing measured so far is affected, but it changes
-  what the project can claim, so it was written up rather than patched unattended. **Nothing is pushed
-  until it is settled.**
-- **NEXT** — (1) **done, verdict in**: molecules that change shape with their surroundings, this time with
-  the reference number measured rather than guessed, at four strengths spanning sixteen-fold, with a
-  control that fails the test if the membrane only "curls" by falling apart. **First pictures are in,
-  and the idea works** — making the molecules' heads bigger turns the flat sheet into small round
-  balls, which is exactly what the standard theory of lipid shape predicts should happen. It is
-  changing the *kind* of structure rather than bending the one it started with. **Verdict is in for
-  two of the four strengths: it does not bend the sheet (0 out of 12, twice), and it takes the sheet
-  apart every single time** — 24 runs out of 24, against 12 out of 12 left whole when it is switched
-  off. That is a far stronger effect than the one we were testing for, and it is the molecule-shape
-  theory behaving exactly as textbooks say it should; (2) decide which test
-  defines a vesicle, because the old headline used a looser one; (3) rebuild 3-D with inextensible
+- **NEEDS A DECISION — [`docs/HANDOFF_2026-09-12.md`](docs/HANDOFF_2026-09-12.md).** A molecule's own
+  internal channel is not wired to the forces. Details in Known gaps; **nothing is pushed until it is
+  settled.**
+- **NEXT**, in order — (1) settle the one open decision in the handoff, because everything else is
+  downstream of what the project claims, then get the test suite green and push; (2) finish the last
+  untested strength of the shape term (it is set up and takes about an hour); (3) build the starting
+  sheet at the spacing the model settles at rather than a hand-picked one — it is 16% too spread out,
+  which is why the term wrecks the sheet before it can bend it, and this is the single experiment most
+  likely to move the bending question; (4) try adding the repulsion between charged heads that real
+  lipids have and this model is missing — clumps here grow without limit, which is the signature of a
+  model with no preferred size, and a vesicle is an object with a preferred size; (5) decide which test
+  defines a vesicle, because the old headline used a looser one; (6) rebuild 3-D with inextensible
   bonds before spending compute there.
 
 ## Known gaps
@@ -171,7 +168,6 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
   the channel back on the force path would shift every trajectory in the last decimal place and would
   need every stored result re-derived. That is a decision about what the project claims, and it is
   written up for review rather than taken unattended.
-
 - Emergence is rare and we cannot yet control it. The one lever that predicts closure — how close a
   ribbon's two ends are — is a property of a ribbon that already exists, not something we can set.
 - The historical "2 of 18" result is **uncheckable**: it used a looser test and its saved states were
