@@ -426,40 +426,58 @@ registered gate. `np.add.at` → `bincount` gave a bit-identical **16–23%**.
 
 ## 9. What comes next
 
-**Ordered by value, with cost.**
+*Updated 2026-09-13. **Ordered by value.** This list got LONGER over 2026-09-11/12: one item closed,
+the fidelity audit (§5b) opened four substantive ones. That is normal for research and is stated
+rather than hidden.*
 
-1. **Raise the 2-D emergence rate.** ~1-2 in 20, too rare to gate anything. **Three geometric levers
-   have now failed**: N at fixed box (E3), N at fixed density (E4), and density at fixed N (E5,
-   withdrawn as redundant with E4). Aggregate size does not move the endpoint over a 1.9× range. The
-   next candidate is not geometric — see item 3.
-2. **Decide which gate defines a vesicle** (§6). No further run can settle it; it needs a judgement.
-   Blocks any claim about the historical result.
-3. **Explore the rest of the MLP.** Only the simplest form has been tried — an *instantaneous scalar
-   function of a coordination count*. `polar_pack` does three further things, none tested here:
-   - **induced fit** — shape adapts to *which* neighbours you are bound to (`A_fit` attention),
-     not merely how many. The lipid analogue is hydrophobic matching.
-   - **history-dependent state** — its shape channel evolves through residual + LayerNorm, so it has
-     a relaxation time. Ours is memoryless. Doing this properly needs an **extended Lagrangian**
-     (internal coordinate with its own kinetic term) or the energy ledger is lost.
-   - **explicit rigidity** — an elastic restoring pull toward a rest shape, with `morph` as the
-     flexibility fighting it. Ours has no independent stiffness.
-   B6/B7 are **withdrawn**, not null — they ran with `n_ref = 6.0` against a descriptor of range 0.2,
-   so the simplest channel has never actually been tested. **G5 (registered 2026-09-11)** runs the
-   shape channel at a derived `n_ref` as a dose-response over `amp ∈ {0.25, 1.0, 2.0, 4.0}`, with an
-   intactness control that fails the gate if curl appears only where the ribbon fragments.
-4. **Rebuild 3-D on inextensible bonds (FENE)** before spending compute there. Its bending result is
-   retracted and everything downstream of it needs re-deriving. ~29× the 2-D cost.
-5. **Run the oracle head-to-head** (AC-2, registered and never evaluated). 73.8 h/seed.
-6. ~~Quarantine `bicelle2d` and `bilayer3d`~~ — **WITHDRAWN 2026-09-11, the premise was wrong.**
-   They are not dead legacy stacks, they are **system builders**: `bicelle2d.build` constructs the
-   `--lipid2d` viewer mode in `server.py:436`, and four tests (`test_physics_invariants`,
-   `test_metric_truth`, `test_slider_ranges`, `test_polar3d`) use them to build systems for
-   invariant checks. They have no dynamics of their own — 0 energy and 0 force functions — so calling
-   them "simulation stacks" was a miscount on my part. Moving them breaks the test suite and the
-   viewer.
+### Closed this session
 
-   The underlying duplication problem is still real (`def plant` in 18 files, `def build` in 15,
-   `def step` in 12, and two force paths that once disagreed silently). But it needs a proper
-   consolidation, not a file move, and it is no longer a cheap item.
+- **The MLP's simplest channel is now actually tested.** Was item 3 below, previously untestable
+  because both earlier attempts ran against a broken constant. G5: fails to curl at amps 0.25 / 1.0 /
+  2.0, destroys the membrane dose-dependently (p = 8.0e-10). See §5.
+
+### Open, in order
+
+1. **Settle the token-channel decision** (`HANDOFF_2026-09-12.md` §1). Blocks the push and defines
+   what the project claims. Needs a person, not a run. **Note it is also a prerequisite for item 4** —
+   induced fit and history-dependent state both require the channel to reach the forces.
+2. **Plant the ribbon at the spacing the model settles at** (D9). 1.7651 σ, not the hand-picked 2.05.
+   The shape term currently wrecks the sheet before it can bend it because the starting sheet reads as
+   16 % under-crowded; this isolates the second-order leaflet asymmetry from the first-order global
+   inflation. **The single cheapest experiment most likely to move the bending question**, and under R9
+   a fidelity fix worth doing regardless. ~1 h at 12-way.
+3. **Raise the 2-D emergence rate.** Still ~1–2 in 20. Three *geometric* levers failed (E3, E4, E5).
+   The strongest untested candidate is now **D1, electrostatics**: `max largest aggregate = N` exactly
+   at N = 56, 80, 112, 160, so the model selects **no size** — bulk coarsening, which is what a single
+   interaction range predicts. A vesicle is a finite size-selected object. **Falsifier:** add a
+   screened-Coulomb head–head term with Debye length > `rc`; largest must *saturate* with N rather than
+   track it. To be registered before running.
+4. **The rest of the MLP** — none of these tested, and all three need item 1 first:
+   - **induced fit** — shape adapts to *which* neighbours, not how many. The current descriptor is a
+     rotationally-invariant count, so it cannot tell a molecule which *side* it is crowded on — and
+     one-sidedness is what curvature is. A first-moment (vector) descriptor would; it stays zero on a
+     flat symmetric bilayer by symmetry, so it passes the no-smuggling null.
+   - **history-dependent state** — needs an extended Lagrangian or the energy ledger is lost.
+   - **explicit rigidity** — an elastic pull toward a rest shape.
+5. **Finish the registered ladder: amp 4.0.** NOT RUN, not null. `curl.py --scales 4.0 --n-ref 0.3335
+   --seeds 12 --seed0 800 --workers 12`. ~1 h.
+6. **Fix the fidelity defects that are not experiments** (§5b): D2 chains have zero bending rigidity
+   (needs FENE + a proper stiffener), D4 no hydrodynamics (needs a pairwise DPD thermostat), D5
+   harmonic bonds. Under R9 these are owed regardless of what they do to the vesicle rate.
+7. **Build a validated leaflet splitter** — by lipid axis, not head radius. Needed to say *why* any
+   curl happens; the radius-based attempt failed its controls (2026-09-11) and was withdrawn.
+8. **Decide which gate defines a vesicle** (§6). No run can settle it. Blocks any claim about the
+   historical 2/18.
+9. **Rebuild 3-D on inextensible bonds (FENE).** Its bending result is retracted and everything
+   downstream needs re-deriving. ~29× the 2-D cost.
+10. **Run the oracle head-to-head** (AC-2, registered, never evaluated). 73.8 h/seed.
+11. **Consolidation.** `def plant` in 18 files, `def build` in 15, `def step` in 12, and two force
+    paths that once disagreed silently. Real work, not a file move — ~~quarantining `bicelle2d` /
+    `bilayer3d`~~ was **WITHDRAWN 2026-09-11**: they are live builders for the viewer (`server.py:436`)
+    and four tests, not dead legacy. That was a miscount on my part.
 
 **Not started:** fusion and division. Neither has ever been observed.
+
+**The objective itself is not met.** A 2-D vesicle emerges rarely; the stated goal is a self-assembled
+bilayer in 3-D from excluded volume + van der Waals + electrostatics, and of those three the model has
+the first two.
