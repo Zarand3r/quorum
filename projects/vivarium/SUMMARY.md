@@ -104,28 +104,23 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
   planted, each with its exact recipe in **[`docs/SUCCESSES.md`](docs/SUCCESSES.md)**. The cleanest is
   35 molecules out of 112.
 - **QUALIFIED — how the vesicle closes is only half understood.** Two closed at *constant size*, by
-  their two ends meeting. That has been written up as "ends meeting, **not** curving", and that phrasing
-  is wrong: in 2-D a sheet's rim **is** its two ends, and a ribbon cannot bring its ends together
-  without curving. They are the same event, not alternatives.
-  What is genuinely unresolved is what *drives* it. In real membranes a flat patch closes when the cost
-  of its exposed rim beats the cost of bending — a quantitative competition that fixes a critical size.
-  Here one side of that competition was **measured as indistinguishable from zero** (the rim costs
-  nothing, ±100%), and the other is recorded as **not measurable by any of three routes**. So closure
-  here may not be the natural mechanism at all: with no rim cost there is no drive to close, and what
-  we see is consistent with two floppy ends happening to meet. That would explain the 1-in-20 rate and
-  why the one predictive coordinate is how close the ends already are. **Measuring the bending
-  stiffness is the way to settle it, and it has never been done.**
+  their two ends meeting. This was written up as "ends meeting, **not** curving"; that is wrong — in
+  2-D a sheet's rim *is* its two ends, so those are the same event, not alternatives. What is really
+  unresolved is what *drives* it. Real membranes close when the cost of an exposed rim beats the cost
+  of bending, a competition that fixes a critical size. Here the rim cost was **measured as
+  indistinguishable from zero** and the bending stiffness is **not measurable by any of three routes** —
+  so what we see is equally consistent with two floppy ends meeting by chance, which would explain the
+  1-in-20 rate. **Measuring the bending stiffness would settle it and has never been done.**
 - **DONE — the chemistry reduces.** Five hand-set numbers plus the water become one attraction plus a
   size ratio, with no loss on closing a ready-made ribbon (19/20 vs 10/10). **But it loses the
   strictest test** (11/20 vs 18/20) and degrades self-assembly (2/20 vs 13/20).
-- **DONE — the good idea from the other simulation was ported over, with gates.** `polar_pack` is the
-  sister stack: expressive and elegant, but with no energy ledger, so nothing measured in it is a
-  physical quantity. What it had that we wanted is that its network changes a molecule's *shape*, not
-  its stickiness — and shape is what sets curvature. That idea is now in our force law and passes
-  every check we could put on it: the two force routines agree exactly, the term is provably zero on a
-  flat sheet so it cannot smuggle in the answer, it measurably engages on a curved one, and the force
-  is still the exact derivative of an energy. What did **not** come across, on purpose: the softmax
-  (it breaks Newton's third law) and the electrostatic head (it was found not to conserve momentum).
+- **DONE — the good idea from the sister simulation was ported over, with gates.** `polar_pack` is
+  expressive but has no energy ledger, so nothing measured in it is a physical quantity. What it had
+  that we wanted: its network changes a molecule's *shape*, not its stickiness — and shape is what sets
+  curvature. That is now in our force law and passes every check we could put on it (the two force
+  routines agree exactly; the term is provably zero on a flat sheet so it cannot smuggle in the answer;
+  it measurably engages on a curved one; the force is still the exact derivative of an energy). Left
+  behind on purpose: the softmax, and the electrostatic head that was found not to conserve momentum.
 - **DONE — a live MLP inside real physics, and it works.** Molecules change with their surroundings
   while forces stay exactly derivable from an energy. Making a head bigger when it is less crowded
   turns a flat sheet into small round balls — exactly what the standard theory of molecular shape
