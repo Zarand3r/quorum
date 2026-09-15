@@ -297,6 +297,36 @@ calls it at step 0; `Field.coordination(X)` exposes the descriptor the force rea
 
 ---
 
+## 5a. What came across from `polar_pack`, and what did not
+
+The two stacks were compared and deliberately combined (2026-09-07 onward). `polar_pack` is
+transformer-only and expressive but has **no energy ledger**; vivarium has the ledger. The transfer was
+of an *idea*, gated at every step.
+
+**Transferred — the mechanism.** polar_pack's MLP does not modulate interaction strength, it modulates
+**shape**: "induced-fit morph — the block updates the shape channels, so an agent deforms its contour to
+fit its binding partners." In lipid physics shape is exactly what sets curvature, through `P = v/(a₀·l)`.
+That became `manybody.ShapeMLP`, and it is the live MLP in this project.
+
+**The gates it passed, all registered before the data:**
+
+| gate | result |
+|---|---|
+| G1 — `field.forces` vs `transformer.attention`, every MLP scale | **0.000e+00** |
+| G2 — flat bilayer must show NO leaflet asymmetry (cannot manufacture curvature) | **0.0000 exactly** |
+| G3 — curved ring must show one (mechanism engages) | **+0.1179** |
+| F = −∇U with the many-body term, central differences | **1.07e-06**, the truncation floor, flat in MLP strength |
+| 2026-09-12 — does it move the packing parameter? | **yes**: bilayer → micelles, p = 8.0e-10 |
+
+**Not transferred, deliberately.** *Softmax*: row-stochastic weights give `w_ij ≠ w_ji`, so Newton's
+third law fails and force becomes intensive — polar_pack can afford it because it has no ledger, and we
+cannot. *The electrostatic head*: non-conservative as built (Finding 5) and softmax-based; see §5b D1.
+
+**What it has not delivered: a curl or a vesicle.** The mechanism is sound and verified; the outcome is
+still null.
+
+---
+
 ## 5b. Fidelity audit — where the model is NOT what nature does
 
 Added 2026-09-11 under R9. Every entry is a known departure, with how it was established. **Fixing
@@ -304,7 +334,7 @@ these is not conditional on them helping.** Ordered by how much they bear on the
 
 | # | departure from nature | established by | deliberate? |
 |---|---|---|---|
-| D1 | **No electrostatics.** Real lipid heads are zwitterionic or charged; head–head repulsion is long-ranged next to the vdW well and sets head area, hence the packing parameter. | grep: no coulomb / yukawa / debye / ewald / charge term in `field.py`, `transformer.py`, `_mixture.py`. Every term is cut at `rc = 2.5σ` — `_core` zero beyond `s=1`, `_well` zero beyond `rc`. | **No — an omission.** The project's own goal names "excluded volume + van der Waals + electrostatics". |
+| D1 | **No electrostatics *in the vivarium stack*.** Real lipid heads are zwitterionic or charged; head–head repulsion is long-ranged next to the vdW well and sets head area, hence the packing parameter. | grep: no coulomb / yukawa / debye / ewald / charge term in `field.py`, `transformer.py`, `_mixture.py`. Every term is cut at `rc = 2.5σ` — `_core` zero beyond `s=1`, `_well` zero beyond `rc`. | **No — an omission.** But **not untried**: see the note below. |
 | D2 | **Chains have zero bending rigidity.** Real acyl chains resist bending; Cooke–Deserno keep the 1-3 stiffener permanently stretched (rest 4σ) precisely to straighten them. | F3: stiffener at rest length 2σ gives `V/δ² → 0.0004`. | **No — believed present, measured absent.** The `bend_r0=4.0` fix stretched bonds 67% and was retracted. |
 | D3 | **Two dimensions.** | by construction | **Yes** — ~29× cost in 3-D. |
 | D4 | **No hydrodynamics.** A membrane's undulation relaxation and fission dynamics are set by solvent hydrodynamics. A per-particle thermostat destroys them. | `integrate.py:75-76` — `v = c1*v + sqrt(kT/m*(1-c1²))·normal(size=X.shape)`: independent friction and noise per particle, so momentum is **not** conserved. DPD's pairwise thermostat conserves it. | **No — inherited, never chosen.** |
@@ -314,7 +344,27 @@ these is not conditional on them helping.** Ordered by how much they bear on the
 | D8 | **Bounded repulsive core**, finite at full overlap (37.8ε) rather than divergent. | `_core = height·(1−s)²` | **Yes** — documented, and standard in CG/DPD. The one entry here that is defensible as-is. |
 | D9 | **The flat-ribbon planter builds 16 % more dilute than equilibrium**: head spacing 2.0500 σ against a relaxed 1.7651 σ (6 seeds, 100 k steps, modulator off). Every environment-dependent term therefore reads the starting membrane as under-crowded. | measured 2026-09-11 while deriving `n_ref`; the source is a hard-coded default, `_mixture._plant_flat_ribbon(..., gap=1.05, ...)`, against a measured equilibrium of 0.883 per lipid. Its docstring justifies the ribbon being FINITE, and says nothing about the spacing value. | **No — a picked constant.** "Derive constants from the configuration; do not pick them", in one literal. It is why the G5 arms micellise from step 0. |
 
-**D1 is the one with data behind it.** Largest aggregate against system size, from the emergence runs:
+**D1 has been attempted before, in the other stack — read this before re-attempting it.**
+`polar_pack.py` carries an electrostatic head: a bounded, bearing-aware attention on near-face charges
+`nf_i(j) = ⟨C_i, basis(θ_{i→j})⟩`, deliberately **not** a `1/d²` Coulomb kernel. Two things happened to
+it, both recorded in `docs/BILAYER_REVIEW.md`:
+
+- **Finding 5 (2026-07-25): it was not conservative.** `nf_j` was read along the wrong bearing, so
+  `prod` was asymmetric (`max|P − Pᵀ| = 0.29`), giving `F_ij ≠ −F_ji` and a phantom net force
+  `Σ F_i = 2.1` — while being documented as "CONSERVATIVE … relaxes to a free-energy minimum". Found by
+  a momentum test, **not** by any result looking wrong. After the fix the tuned configurations
+  **collapsed** (3-D occupancy 63 → 19 of 64 cells), so the prior space-filling behaviour was partly
+  the spurious term stirring the dish.
+- **It never produced emergence.** On the frozen benchmark the best `emergence_score` is the
+  **baseline, +0.0057**; every row since is negative (2-D −0.0367; 3-D −0.0179 to −0.0703). `demix`
+  improved (0.061 → 0.101 in 2-D, 0.512 in 3-D) — the hydrophobic effect works, assembly does not.
+
+So electrostatics is **not** an untried idea. What is untried is electrostatics **inside an energy
+ledger**: polar_pack's head is row-stochastic softmax, which fails R3 by construction, and its one
+implementation was non-conservative for three months without anyone noticing. Any vivarium version must
+carry a momentum test and a gradient gate from the first commit.
+
+**The size-selection argument below is what is new, and it stands on its own data.** Largest aggregate against system size, from the emergence runs:
 
 | N | runs | mean largest | **max** | mean/N |
 |---|---|---|---|---|
@@ -469,11 +519,13 @@ rather than hidden.*
    inflation. **The single cheapest experiment most likely to move the bending question**, and under R9
    a fidelity fix worth doing regardless. ~1 h at 12-way.
 3. **Raise the 2-D emergence rate.** Still ~1–2 in 20. Three *geometric* levers failed (E3, E4, E5).
-   The strongest untested candidate is now **D1, electrostatics**: `max largest aggregate = N` exactly
-   at N = 56, 80, 112, 160, so the model selects **no size** — bulk coarsening, which is what a single
-   interaction range predicts. A vesicle is a finite size-selected object. **Falsifier:** add a
+   The strongest candidate is **D1, long-range head–head repulsion**: `max largest aggregate = N`
+   exactly at N = 56, 80, 112, 160, so the model selects **no size** — bulk coarsening, which is what a
+   single interaction range predicts. A vesicle is a finite size-selected object. **Falsifier:** add a
    screened-Coulomb head–head term with Debye length > `rc`; largest must *saturate* with N rather than
-   track it. To be registered before running.
+   track it. **Read §5b D1 first** — polar_pack already tried an electrostatic head, it was
+   non-conservative for three months undetected, and it never produced emergence. A vivarium version
+   needs a momentum test and a gradient gate from the first commit, not added later.
 4. **The rest of the MLP** — none of these tested, and all three need item 1 first:
    - **induced fit** — shape adapts to *which* neighbours, not how many. The current descriptor is a
      rotationally-invariant count, so it cannot tell a molecule which *side* it is crowded on — and
