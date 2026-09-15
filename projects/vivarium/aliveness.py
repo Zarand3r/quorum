@@ -98,12 +98,24 @@ def _deformation(P: np.ndarray, period=None) -> float:
     T, N = P.shape[0], P.shape[1]
     if T < 2 or N < 2:
         return 0.0
-    diff = P[:, :, None, :] - P[:, None, :, :]            # (T, N, N, 2)
-    diff = _min_image(diff, period)                       # min-image on a torus (no-op if None)
-    D = np.sqrt(np.einsum("tijc,tijc->tij", diff, diff) + 1e-12)  # (T, N, N) pairwise dists
+    # STREAMED OVER FRAMES, not materialised as (T, N, N). The whole-window form allocated
+    # T*N*N*8 for D plus twice that for `diff` -- at the production size (T=40, N=2959) that is
+    # 8.4 GB, in a VIEWER, every 0.7 s once the buffer filled. It spiked the box to 7.9 GB RSS and
+    # killed two unrelated background jobs before anyone looked. Only each pair's mean and variance
+    # over time are needed, so running sums give the identical number with (N, N) peak instead:
+    # ~250 MB, a 34x reduction.
     iu = np.triu_indices(N, k=1)
-    pair = D[:, iu[0], iu[1]]                              # (T, P) each pair's distance over time
-    cov = pair.std(axis=0) / (pair.mean(axis=0) + 1e-6)   # per-pair coefficient of variation
+    s1 = np.zeros(iu[0].shape[0], dtype=np.float64)
+    s2 = np.zeros(iu[0].shape[0], dtype=np.float64)
+    for t in range(T):
+        d = P[t][:, None, :] - P[t][None, :, :]           # (N, N, 2)
+        d = _min_image(d, period)
+        Dt = np.sqrt(np.einsum("ijc,ijc->ij", d, d) + 1e-12)[iu]
+        s1 += Dt
+        s2 += Dt * Dt
+    mean = s1 / T
+    var = np.maximum(s2 / T - mean * mean, 0.0)           # population variance, matches .std(ddof=0)
+    cov = np.sqrt(var) / (mean + 1e-6)                    # per-pair coefficient of variation
     return float(np.clip(np.mean(cov), 0.0, 1.0))
 
 

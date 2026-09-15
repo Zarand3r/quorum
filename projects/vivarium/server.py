@@ -26,6 +26,10 @@ from pathlib import Path
 import numpy as np
 
 from aliveness import score
+
+# Beads the viewer's aliveness indicator is allowed to look at. Cost is O(T * N^2); 400 keeps one
+# call near 0.15 s against the 0.7 s cadence. Raising it buys nothing a viewer can see.
+ALIVE_MAX_BEADS = 400
 from config import VivariumConfig, load_config
 from engine import Engine
 
@@ -162,6 +166,15 @@ class Sim:
                 if len(self._buf) >= 10:
                     states = np.stack(self._buf)
                     period = getattr(self.engine, "L", None)
+            if states is not None and states.shape[1] > ALIVE_MAX_BEADS:
+                # VIEWER-SIDE COST CAP, and it is a cap on cost only -- `aliveness.score` is unchanged
+                # and `tests/test_aliveness.py` still pins its values. The score is O(T * N^2): at the
+                # production size (T=40, N=2959) one call costs 8.1 s of CPU, and this loop asks for
+                # one every 0.7 s, so it saturated a core forever for a number that is a qualitative
+                # liveness indicator in a web page -- it appears in no spec and no results TSV.
+                # A deterministic stride keeps it representative and reproducible run to run.
+                stride = int(np.ceil(states.shape[1] / ALIVE_MAX_BEADS))
+                states = states[:, ::stride, :]
             if states is not None:
                 self._alive = round(float(score(states, self.cfg, period)["aliveness"]), 3)
             time.sleep(0.7)
