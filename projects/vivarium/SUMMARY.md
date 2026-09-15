@@ -17,6 +17,8 @@ Waals *and electrostatics*, and the model has the first two; 3-D is blocked; eme
 ## Requirements
 
 - **R1 — Transformer-only.** Every force is a masked attention head; one forward pass equals one step.
+  Verified end-to-end by `tests/test_physical_realism.py`, which checks each head against the equation
+  it claims to compute and cross-checks a published membrane potential expressed in the same primitives.
 - **R2 — Nothing that contains the answer.** No spontaneous-curvature term, no "bend here" knob. New
   terms are *derived* from geometry or standard physics, never fitted to make a vesicle appear.
 - **R3 — An energy ledger.** Forces must be `−grad U`. Without it, temperature, line tension and
@@ -163,6 +165,16 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
   number is affected** — what is lost is the *ability* for a molecule's channel to change its physics,
   which the next MLP work needs. Introduced by the commit that fixed a worse bug, and unnoticed
   because nobody ran the suite. **Do not make it green by weakening the test.**
+- Emergence is rare and uncontrolled. The one lever that predicts closure — how close a ribbon's two
+  ends are — is a property of a ribbon that already exists, not something we can set.
+- The historical "2 of 18" result is **uncheckable**: a looser test, and its states were overwritten.
+  Not refuted; unverifiable.
+- ~~The tree is not consolidated~~ — **DONE 2026-09-13.** 59 dead files / 4 999 lines removed
+  (146 → 87 modules) after building the real dependency graph: the keep-set is the production path,
+  the oracles, the live harnesses, the instruments, and everything the tests import. Verified by
+  build + full suite before and after — identical result, so nothing load-bearing went. Kept on merit
+  despite having no callers: `_kappa` and `_linetension` (they measure the two quantities the open
+  bending question needs) and the renderers (R5).
 - Emergence is rare and uncontrolled. The one lever that predicts closure — how close a ribbon's two
   ends are — is a property of a ribbon that already exists, not something we can set.
 - The historical "2 of 18" result is **uncheckable**: a looser test, and its states were overwritten.

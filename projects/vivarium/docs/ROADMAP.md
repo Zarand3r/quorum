@@ -555,7 +555,14 @@ rather than hidden.*
 9. **Rebuild 3-D on inextensible bonds (FENE).** Its bending result is retracted and everything
    downstream needs re-deriving. ~29× the 2-D cost.
 10. **Run the oracle head-to-head** (AC-2, registered, never evaluated). 73.8 h/seed.
-11. **Consolidation.** `def plant` in 18 files, `def build` in 15, `def step` in 12, and two force
+11. ~~**Consolidation.**~~ **DONE 2026-09-13** — 59 files / 4 999 lines removed, 146 → 87 modules.
+    Method: build the import graph, take the closure of five seed sets (production path, oracles, live
+    harnesses, instruments, everything `tests/` imports), delete the complement. Two safeguards that
+    mattered: `_kappa` and `_linetension` were kept on merit despite zero callers, because they measure
+    the two quantities `R_c = 2κ/λ` needs; and a first pass deleted `fig2d` while four survivors still
+    imported it — caught by re-closing over the survivors, not by the build, which passed anyway.
+    Full suite identical before and after (1 failed / 253 passed, the same pre-existing failure).
+    ~~Original wording:~~ `def plant` in 18 files, `def build` in 15, `def step` in 12, and two force
     paths that once disagreed silently. Real work, not a file move — ~~quarantining `bicelle2d` /
     `bilayer3d`~~ was **WITHDRAWN 2026-09-11**: they are live builders for the viewer (`server.py:436`)
     and four tests, not dead legacy. That was a miscount on my part.

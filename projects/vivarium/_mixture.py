@@ -839,15 +839,21 @@ class _TransformerEngine:
     on the production topology.
     """
 
-    def __init__(self, tf, X, kT, dt, seed):
+    def __init__(self, tf, X, kT, dt, seed, gamma=1.0, mass=1.0):
         self.tf, self.kT, self.dt = tf, kT, dt
+        # `gamma` and `m` are held HERE and passed through, so this engine and `Inertial` expose the
+        # same knobs. They did not: this class took no gamma and `forward` defaulted to 1.0, so
+        # `engine.gamma = 0.0` silently set an attribute nothing read while the same line on
+        # `Inertial` really did turn friction off. Two "interchangeable" engines then integrated
+        # different physics, which is exactly what the one-forward-pass-equals-one-step claim denies.
+        self.gamma, self.m = float(gamma), float(mass)
         self.rng = np.random.default_rng(seed)
-        self.v = self.rng.normal(size=X.shape) * np.sqrt(kT)
+        self.v = self.rng.normal(size=X.shape) * np.sqrt(kT / self.m)
         self.F = tf.attention(X)
 
     def step(self, X):
-        X, self.v, self.F = self.tf.forward(X, self.v, self.dt, self.kT,
-                                            rng=self.rng, F=self.F)
+        X, self.v, self.F = self.tf.forward(X, self.v, self.dt, self.kT, gamma=self.gamma,
+                                            mass=self.m, rng=self.rng, F=self.F)
         return X
 
     def temperature(self):
@@ -871,6 +877,8 @@ def make_step_engine(f, X, kT, dt, noise_seed, engine=None):
     if engine == "transformer":
         from transformer import VivariumTransformer
         return _TransformerEngine(VivariumTransformer(f), X, kT, dt, noise_seed)
+        # NOTE: gamma/mass default to 1.0 here exactly as `Inertial` does; callers that change them
+        # must do so on the engine object, and both engines now honour that.
     return Inertial(f, kT, dt, seed=noise_seed)
 
 

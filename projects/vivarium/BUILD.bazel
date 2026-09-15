@@ -110,14 +110,6 @@ py_binary(
     deps = [":vivarium"],
 )
 
-py_binary(
-    name = "toy_bilayer",
-    srcs = ["toy_bilayer.py"],
-    main = "toy_bilayer.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
 
 
 py_binary(
@@ -138,14 +130,6 @@ py_binary(
     deps = [":vivarium"],
 )
 
-py_binary(
-    name = "rung2",
-    srcs = ["rung2.py", "micelle_probe.py"],
-    main = "rung2.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
 
 py_binary(
     name = "cooke_deserno",
@@ -164,14 +148,6 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
-    name = "rung1d",
-    srcs = ["rung1d.py", "micelle_probe.py"],
-    main = "rung1d.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
     name = "rung1c",
     srcs = ["rung1c.py", "micelle_probe.py"],
     main = "rung1c.py",
@@ -179,23 +155,7 @@ py_binary(
     imports = ["."],
     deps = [":vivarium"],
 )
-py_binary(
-    name = "rung1b",
-    srcs = ["rung1b.py", "micelle_probe.py"],
-    main = "rung1b.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
 
-py_binary(
-    name = "rung1",
-    srcs = ["rung1.py"],
-    main = "rung1.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
 
 py_binary(
     name = "toy2d",
@@ -206,38 +166,6 @@ py_binary(
     deps = [":vivarium"],
 )
 
-py_binary(
-    name = "search2d",
-    srcs = ["search2d.py"],
-    main = "search2d.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_probe4",
-    srcs = ["_probe4.py"],
-    main = "_probe4.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_probe5",
-    srcs = ["_probe5.py"],
-    main = "_probe5.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_probe6",
-    srcs = ["_probe6.py"],
-    main = "_probe6.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
 py_binary(
     name = "bench_step",
     srcs = ["bench_step.py"],
@@ -255,121 +183,9 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
-    name = "_probe3d",
-    srcs = ["_probe3d.py"],
-    main = "_probe3d.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_dpd_gate1",
-    srcs = ["_dpd_gate1.py"],
-    main = "_dpd_gate1.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_dpd_gate2",
-    srcs = ["_dpd_gate2.py"],
-    main = "_dpd_gate2.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_dpd_gate3",
-    srcs = ["_dpd_gate3.py"],
-    main = "_dpd_gate3.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_dpd_render",
-    srcs = ["_dpd_render.py"],
-    main = "_dpd_render.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_dpd_vesicle",
-    srcs = ["_dpd_vesicle.py"],
-    main = "_dpd_vesicle.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_bd",
-    srcs = ["_bd.py"],
-    main = "_bd.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_dpd_big",
-    srcs = ["_dpd_big.py"],
-    main = "_dpd_big.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
     name = "_lumen",
     srcs = ["_lumen.py"],
     main = "_lumen.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_dpd3d",
-    srcs = ["_dpd3d.py"],
-    main = "_dpd3d.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_v2d",
-    srcs = ["_v2d.py"],
-    main = "_v2d.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_bilayer_dpd",
-    srcs = ["_bilayer_dpd.py"],
-    main = "_bilayer_dpd.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_slice",
-    srcs = ["_slice.py"],
-    main = "_slice.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_lit_dpd",
-    srcs = ["_lit_dpd.py"],
-    main = "_lit_dpd.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_tchk",
-    srcs = ["_tchk.py"],
-    main = "_tchk.py",
     data = [":configs"],
     imports = ["."],
     deps = [":vivarium"],
@@ -383,41 +199,9 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
-    name = "_selfassm",
-    srcs = ["_selfassm.py"],
-    main = "_selfassm.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
     name = "_sl_model",
     srcs = ["_sl_model.py"],
     main = "_sl_model.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_bilipid_run",
-    srcs = ["_bilipid_run.py"],
-    main = "_bilipid_run.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_solvent_check",
-    srcs = ["_solvent_check.py"],
-    main = "_solvent_check.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_field_run",
-    srcs = ["_field_run.py"],
-    main = "_field_run.py",
     data = [":configs"],
     imports = ["."],
     deps = [":vivarium"],
@@ -431,52 +215,9 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
-    name = "_legacy_run",
-    srcs = ["_legacy_run.py"],
-    main = "_legacy_run.py",
-    data = [":configs"],
-    imports = ["legacy"],
-    deps = [":legacy"],
-)
-py_binary(
-    name = "_solvent3d",
-    srcs = ["_solvent3d.py"],
-    main = "_solvent3d.py",
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_throughput",
-    srcs = ["_throughput.py"],
-    main = "_throughput.py",
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_perfcheck",
-    srcs = ["_perfcheck.py"],
-    main = "_perfcheck.py",
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
     name = "_integrate",
     srcs = ["integrate.py"],
     main = "integrate.py",
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_clusterdiff",
-    srcs = ["_clusterdiff.py"],
-    main = "_clusterdiff.py",
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_dtladder",
-    srcs = ["_dtladder.py"],
-    main = "_dtladder.py",
     imports = ["."],
     deps = [":vivarium"],
 )
@@ -503,78 +244,6 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
-    name = "_rescale",
-    srcs = ["_rescale.py"],
-    main = "_rescale.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_anneal",
-    srcs = ["_anneal.py"],
-    main = "_anneal.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_rebalance",
-    srcs = ["_rebalance.py"],
-    main = "_rebalance.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_edge_close",
-    srcs = ["_edge_close.py"],
-    main = "_edge_close.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_patch_close",
-    srcs = ["_patch_close.py"],
-    main = "_patch_close.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_steric",
-    srcs = ["_steric.py"],
-    main = "_steric.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_packing",
-    srcs = ["_packing.py"],
-    main = "_packing.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_solvent_significance",
-    srcs = ["_solvent_significance.py"],
-    main = "_solvent_significance.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_ring_sweep2",
-    srcs = ["_ring_sweep2.py"],
-    main = "_ring_sweep2.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
     name = "ring_assay",
     srcs = ["ring_assay.py"],
     main = "ring_assay.py",
@@ -586,14 +255,6 @@ py_binary(
     name = "_curl_cal",
     srcs = ["_curl_cal.py"],
     main = "_curl_cal.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_curl_audit",
-    srcs = ["_curl_audit.py"],
-    main = "_curl_audit.py",
     data = [":configs"],
     imports = ["."],
     deps = [":vivarium"],
@@ -639,30 +300,6 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
-    name = "_prof",
-    srcs = ["_prof.py"],
-    main = "_prof.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_perf",
-    srcs = ["_perf.py"],
-    main = "_perf.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_viv_water",
-    srcs = ["_viv_water.py"],
-    main = "_viv_water.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
     name = "_viv_morph",
     srcs = ["_viv_morph.py"],
     main = "_viv_morph.py",
@@ -698,30 +335,6 @@ py_binary(
     name = "ylz",
     srcs = ["ylz.py"],
     main = "ylz.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_lammps_import",
-    srcs = ["_lammps_import.py"],
-    main = "_lammps_import.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_best_hollow",
-    srcs = ["_best_hollow.py"],
-    main = "_best_hollow.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_tjunction",
-    srcs = ["_tjunction.py"],
-    main = "_tjunction.py",
     data = [":configs"],
     imports = ["."],
     deps = [":vivarium"],
@@ -767,28 +380,6 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
-    name = "_oracle_render",
-    srcs = ["_oracle_render.py"],
-    main = "_oracle_render.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_oracle_pfuse",
-    srcs = ["_oracle_pfuse.py"],
-    main = "_oracle_pfuse.py",
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_pfuse",
-    srcs = ["_pfuse.py"],
-    main = "_pfuse.py",
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
     name = "_kappa",
     srcs = ["_kappa.py"],
     main = "_kappa.py",
@@ -799,21 +390,6 @@ py_binary(
     name = "_linetension",
     srcs = ["_linetension.py"],
     main = "_linetension.py",
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_closure_energy",
-    srcs = ["_closure_energy.py"],
-    main = "_closure_energy.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "_regime",
-    srcs = ["_regime.py"],
-    main = "_regime.py",
     imports = ["."],
     deps = [":vivarium"],
 )
@@ -850,22 +426,6 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
-    name = "_profile",
-    srcs = ["_profile.py"],
-    main = "_profile.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "fig2d",
-    srcs = ["fig2d.py"],
-    main = "fig2d.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
     name = "bicelle2d",
     srcs = ["bicelle2d.py"],
     main = "bicelle2d.py",
@@ -874,25 +434,9 @@ py_binary(
     deps = [":vivarium"],
 )
 py_binary(
-    name = "autoloop",
-    srcs = ["autoloop.py"],
-    main = "autoloop.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
     name = "inspect_raw",
     srcs = ["inspect_raw.py"],
     main = "inspect_raw.py",
-    data = [":configs"],
-    imports = ["."],
-    deps = [":vivarium"],
-)
-py_binary(
-    name = "run_admissible",
-    srcs = ["run_admissible.py"],
-    main = "run_admissible.py",
     data = [":configs"],
     imports = ["."],
     deps = [":vivarium"],
@@ -950,6 +494,15 @@ py_binary(
     name = "_lumen_overlay",
     srcs = ["_lumen_overlay.py"],
     main = "_lumen_overlay.py",
+    imports = ["."],
+    deps = [":vivarium"],
+)
+
+py_binary(
+    name = "fig2d",
+    srcs = ["fig2d.py"],
+    main = "fig2d.py",
+    data = [":configs"],
     imports = ["."],
     deps = [":vivarium"],
 )
