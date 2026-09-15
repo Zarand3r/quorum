@@ -146,6 +146,12 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
   ends are — is a property of a ribbon that already exists, not something we can set.
 - The historical "2 of 18" result is **uncheckable**: a looser test, and its states were overwritten.
   Not refuted; unverifiable.
-- The same concept is implemented many times over — `plant` in 18 files, `build` in 15, `step` in 12.
-  Consolidating is real work, not a file move: the files that look like dead legacy are the builders
-  the viewer and four tests depend on.
+- **The tree is NOT consolidated.** The production *path* is single and clear —
+  `_mixture.make_step_engine(engine="transformer")` → `transformer.VivariumTransformer(field.Field)`.
+  But several other force laws live alongside it with real dependents: `dpd_reference.py`
+  (Groot–Warren DPD, **18 importers**), `polar_pack.py` (softmax-based, **12**), `ylz.py` /
+  `attention_ylz.py`, `bilipid.py`, `cooke_deserno.py`. Two of those are *deliberate* controls, written
+  to sit outside the transformer constraint so the transformer results have something to be checked
+  against — they are not cruft. The rest is genuine duplication (`plant` in 18 files, `build` in 15,
+  `step` in 12), and consolidating is real work, not a file move: what looks like dead legacy is
+  usually a builder the viewer or four tests depend on.
