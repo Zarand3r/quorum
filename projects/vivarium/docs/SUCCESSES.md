@@ -72,8 +72,26 @@ appendages and no lumen.
 
 **How it was nearly lost.** The first run saved only the *final* state, and by step 1e6 the vesicle
 had decayed back to a branched tangle — so the render showed an artifact and the vesicle itself was
-never on disk. The harness now saves at the moment the gate first passes. Re-running seed 509
-reproduced closure at the same step exactly.
+never on disk. The harness now saves at the moment the gate first passes.
+
+> **AMENDMENT 2026-09-14 — "re-running seed 509 reproduced closure at the same step exactly" no
+> longer holds, and the reason matters more than the fact.** Re-run today on current code with the
+> identical call, seed 509 passed 510 000 steps with `enc=0`, `ves=False`, largest cluster 80 — against
+> a recorded first pass at 500 000 with a 56-lipid cluster. The configuration is identical (the saved
+> state reports 2 959 beads, L = 65.0, 160 lipids, seed 509). What changed is **floating-point
+> summation order**: `b3d496f8` factored `field._env` and `90ebee24` replaced `np.add.at` with
+> `bincount`. Both were verified bit-identical *at the time, on one step*. Over 500 000 steps of
+> chaotic dynamics a last-bit difference is a completely different trajectory.
+>
+> **The physics is intact — this was checked, not assumed.** Loading this saved state under today's
+> code gives `vesicle_call = True`, cluster 56, and it is still a vesicle after 12 000 further steps.
+> The capability survived; the trajectory did not.
+>
+> **Consequence for how success is claimed.** "Seed X gives a vesicle at step Y" is not a durable
+> claim — it cannot survive any change that touches summation order, including changes proven
+> equivalent on a single step. The durable evidence is the **saved state**, which is on disk and
+> tracked in git. Reproducibility of the *recipe* must therefore be stated statistically — a rate over
+> N seeds — never as a specific seed reaching a specific step.
 
 This one is shipped as the viewer's default (`server.py --vesicle`, `--vesicle-start formed`).
 
