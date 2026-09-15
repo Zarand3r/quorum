@@ -33,7 +33,7 @@ def null(n_mol=16, n_bead=5, radius=2.5, trials=4000, seed=0):
         out[t] = (u * rhat).sum(1).mean()
         rc = cen - com                                             # rhat from the molecular CENTRE
         rc /= np.maximum(np.linalg.norm(rc, axis=1, keepdims=True), 1e-9)
-        fix[t] = (u * rc).sum(1).mean()
+        fix[t] = (u * rhat).sum(1).mean()
         rcp = rc - np.outer(rc @ ax0, ax0)             # perpendicular to the cluster's long axis,
         ucp = u - np.outer(u @ ax0, ax0)               # with rhat still taken at the CENTRE
         rcp /= np.maximum(np.linalg.norm(rcp, axis=1, keepdims=True), 1e-9)

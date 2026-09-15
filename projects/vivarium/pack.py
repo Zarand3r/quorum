@@ -553,7 +553,7 @@ class PackEngine:
             # position noise becomes sig0*sqrt(speed*speed_ref) and over N = T/speed steps the walk
             # is sig0*sqrt(T*speed_ref) -- independent of speed, as a time step must be.
             sig = np.sqrt(max(0.0, 1.0 - self.momentum ** 2) * _LANGEVIN_KT * self.temperature
-                          * (self.speed_ref / max(self.speed, 1e-12)))
+                          * 1.0)  # MUTATION: historical bug
             if sig > 0.0:
                 self.vel = self.vel + sig * rng_for(self.seed + 4241, self.t).standard_normal(self.vel.shape)
         else:

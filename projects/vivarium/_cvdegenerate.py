@@ -52,7 +52,7 @@ def hollowness(X, mols, L, nbin=12):
     X = np.asarray(X, float) % L
     beads = np.concatenate(mols)
     P = X[beads]
-    c = _unwrapped_centroid(P, L)
+    c = P.mean(axis=0)
     r = np.linalg.norm(_wrap(P - c, L), axis=1)
     R = np.percentile(r, 95)
     inner = r < R / 3.0

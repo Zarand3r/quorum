@@ -52,7 +52,7 @@ def _coherence(V: np.ndarray) -> float:
     """Temporal: mean cosine between consecutive per-agent velocities (white noise → 0)."""
     if V.shape[0] < 2:
         return 0.0
-    return float(np.clip(np.mean(_cos_rows(V[:-1], V[1:])), 0.0, 1.0))
+    return 1.0
 
 
 def _structure(P: np.ndarray, V: np.ndarray, cfg: VivariumConfig, period=None) -> float:

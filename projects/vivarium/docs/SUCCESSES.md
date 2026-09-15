@@ -75,23 +75,39 @@ had decayed back to a branched tangle — so the render showed an artifact and t
 never on disk. The harness now saves at the moment the gate first passes.
 
 > **AMENDMENT 2026-09-14 — "re-running seed 509 reproduced closure at the same step exactly" no
-> longer holds, and the reason matters more than the fact.** Re-run today on current code with the
-> identical call, seed 509 passed 510 000 steps with `enc=0`, `ves=False`, largest cluster 80 — against
-> a recorded first pass at 500 000 with a 56-lipid cluster. The configuration is identical (the saved
-> state reports 2 959 beads, L = 65.0, 160 lipids, seed 509). What changed is **floating-point
-> summation order**: `b3d496f8` factored `field._env` and `90ebee24` replaced `np.add.at` with
-> `bincount`. Both were verified bit-identical *at the time, on one step*. Over 500 000 steps of
-> chaotic dynamics a last-bit difference is a completely different trajectory.
+> longer holds.** Re-run today with the identical call, seed 509 passed 510 000 steps with `enc=0`,
+> `ves=False`, largest cluster 80 — against a recorded first pass at 500 000 with a 56-lipid cluster.
+> The configuration is identical (the saved state reports 2 959 beads, L = 65.0, 160 lipids, seed 509).
 >
-> **The physics is intact — this was checked, not assumed.** Loading this saved state under today's
-> code gives `vesicle_call = True`, cluster 56, and it is still a vesicle after 12 000 further steps.
-> The capability survived; the trajectory did not.
+> **CORRECTION, same day.** A first version of this amendment blamed `bincount` replacing `np.add.at`
+> and the `field._env` refactor changing summation order. **Both attributions are wrong**, and the
+> measurements that refute them are:
+>
+> | comparison | result |
+> |---|---|
+> | `bincount` commit `90ebee24` | dated 09-06 20:46, **before** this vesicle was recorded on 09-07 09:39 — it cannot be the cause |
+> | `field.forces`, vesicle-commit vs checkpoint vs today | **bit-identical**, 0.000e+00 |
+> | `transformer.attention` (what the harness actually runs), same three | **bit-identical**, 0.000e+00 |
+> | 3 000-step trajectory, vesicle-commit vs pushed checkpoint | **diverged** — all 2 959 beads, median 2.6 σ (minimum-image, so not a wrap artifact) |
+> | 3 000-step trajectory, **pushed checkpoint vs today** | **bit-identical**, 0.000e+00 |
+>
+> So: the trajectory changed somewhere between `9b2fa6f6` (this vesicle) and `f96c717e` (the pushed
+> checkpoint), the forces did **not** change at step 0 on either path, and the only code diffs in that
+> range (`field.py`, `transformer.py`) are guarded no-ops when `manybody is None`. **The mechanism is
+> not isolated.** Recorded as unexplained rather than given a plausible-sounding cause — the first
+> attempt at a cause was confidently stated and wrong.
+>
+> **Two things this does establish.** *Nothing in the 2026-09-13/14 consolidation changed the physics*
+> — today is bit-identical to the pushed checkpoint. And *referencing the last pushed checkpoint does
+> not recover this run*: the divergence is already present at that checkpoint.
+>
+> **The physics is intact — checked, not assumed.** Loading this saved state under today's code gives
+> `vesicle_call = True`, cluster 56, still a vesicle after 12 000 further steps.
 >
 > **Consequence for how success is claimed.** "Seed X gives a vesicle at step Y" is not a durable
-> claim — it cannot survive any change that touches summation order, including changes proven
-> equivalent on a single step. The durable evidence is the **saved state**, which is on disk and
-> tracked in git. Reproducibility of the *recipe* must therefore be stated statistically — a rate over
-> N seeds — never as a specific seed reaching a specific step.
+> claim: it did not survive changes that are provably no-ops on the force law. The durable evidence is
+> the **saved state**, tracked in git. Recipe reproducibility must be stated statistically — a rate
+> over N seeds — never as one seed reaching one step.
 
 This one is shipped as the viewer's default (`server.py --vesicle`, `--vesicle-start formed`).
 

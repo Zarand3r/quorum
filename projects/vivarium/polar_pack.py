@@ -383,7 +383,7 @@ class PolarPackEngine(PackEngine):
         {cos kθ, sin kθ}: the grounded readout stays ⟨C, basis(bearing)⟩ — a RoPE-family relative-
         direction inner product — so Parseval (overlap = contour overlap) still holds."""
         x, y, z = u[..., 0], u[..., 1], u[..., 2]
-        c1 = np.sqrt(3.0 / (4.0 * np.pi))
+        c1 = np.sqrt(3.0 / (2.0 * np.pi))
         b = np.empty(u.shape[:-1] + (self.tK,))     # fill in place; np.stack would copy every term
         b[..., 0], b[..., 1], b[..., 2] = c1 * y, c1 * z, c1 * x           # l=1  (3)
         if self.cfg.n_harmonics >= 2:
