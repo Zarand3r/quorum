@@ -186,3 +186,32 @@ construction; it would pass against a guard that returned 1.0 unconditionally. N
 defect in their name. Neither is lazy; both read as careful. The only thing that separates them from
 evidence is running the mutation — which is cheap, and which this project's own rule has demanded
 since before either test existed.
+
+
+## Rule 21 — classify a test by what it EXERCISES, never by its filename
+
+Added 2026-09-14, from getting it wrong within minutes of the scope decision that 3-D is archived.
+
+`test_polar3d.py` sounds 3-D-only. It is not. A whole-file `pytestmark` skip disabled **eight tests
+that had nothing to do with dimensionality**:
+
+| test | what it actually is |
+|---|---|
+| `test_every_dynamical_method_is_transformer_only` | **dimension-agnostic — the enforcement point for the project's central hard requirement** |
+| `test_no_divergent_distance_kernel_in_polar_forces` | dimension-agnostic |
+| `test_vdw_is_charge_independent` | dimension-agnostic |
+| `test_speed_cap_is_the_only_momentum_breaking_op` | **2-D only** |
+| four more | MIXED — each loops over a 2-D arm *and* a 3-D arm |
+
+A survey that read every test body found **57 items 3-D-only, 11 mixed, and 4 that are 2-D or
+dimension-agnostic while living in a 3-D-named file**. A `grep` for `3d`/`pos_dim` cannot separate
+those, and one was run anyway. The same pass was also too NARROW in the other direction:
+`test_structure_discrimination.py` is 3-D-only as a whole file and was left running.
+
+Measured cost of the error: the suite read `255 passed / 22 skipped` with the blanket skip, and
+`263 passed / 14 skipped` after per-test classification. Eight tests were silently off, and a green
+suite said nothing was wrong — including the test that enforces "every force is an attention head".
+
+**The rule.** Skipping is a per-test judgement about what the body builds, not a per-file one about
+what the file is called. And a skip that removes coverage of an invariant unrelated to the reason for
+skipping is a defect, even though the suite goes green.

@@ -24,10 +24,6 @@ from test_transformer_only import _FORBIDDEN, _strip_comments  # noqa: E402
 
 import manifest
 
-pytestmark = pytest.mark.skipif(
-    not manifest.THREE_D,
-    reason="3-D is ARCHIVED (manifest.THREE_D = False, scope decision 2026-09-14). Kept, not deleted: flip THREE_D to re-enable. These were failing on 3-D paths BEFORE the scope decision "
-           "(net momentum NaN, wrap NaN) and that is recorded rather than deleted with them.")
 
 
 def _cfg3(**over):
@@ -41,6 +37,8 @@ def _cfg2(**over):
 
 # ---------------------------------------------------------------- spherical-harmonic correctness
 
+@pytest.mark.skipif(not manifest.THREE_D,
+                    reason="3-D only; archived 2026-09-14 (manifest.THREE_D)")
 def test_axial_coeffs_reproduce_legendre():
     """_axial_coeffs uses the SH addition theorem: coefficients = the basis at the molecule's OWN
     axis, scaled by 4π/(2l+1). The readout must then be exactly q·P_l(u·v̂) for any viewing
@@ -62,6 +60,8 @@ def test_axial_coeffs_reproduce_legendre():
         assert np.allclose(got, want, atol=1e-10), f"amps={amps} max err {np.abs(got-want).max()}"
 
 
+@pytest.mark.skipif(not manifest.THREE_D,
+                    reason="3-D only; archived 2026-09-14 (manifest.THREE_D)")
 def test_amphiphile_has_polar_head_and_neutral_tail():
     """The whole point of the 3-D amphiphile: amps=[q/2, q/2] makes P1+P2 cancel behind, giving
     +q at the head and ~0 at the TAIL — bulky but NEUTRAL, the molecule 2-D could not express.
@@ -78,6 +78,8 @@ def test_amphiphile_has_polar_head_and_neutral_tail():
     assert side < 0.0                              # net neutral ⇒ the belt carries the balance
 
 
+@pytest.mark.skipif(not manifest.THREE_D,
+                    reason="3-D only; archived 2026-09-14 (manifest.THREE_D)")
 def test_water_dipole_is_symmetric_head_to_tail():
     """Water is a pure dipole (amps=[q,0]): +q one way, −q the other. Unlike the amphiphile it has
     no neutral face — that asymmetry between the two species is what drives the assembly."""
@@ -88,6 +90,8 @@ def test_water_dipole_is_symmetric_head_to_tail():
     assert float(c[0] @ e._sh_basis(-u)[0]) == pytest.approx(-0.7, abs=1e-9)
 
 
+@pytest.mark.skipif(not manifest.THREE_D,
+                    reason="3-D only; archived 2026-09-14 (manifest.THREE_D)")
 def test_rotate_toward_keeps_axes_unit_and_moves_toward_field():
     e = PolarPackEngine(_cfg3(), 0, water_frac=0.0, polarity=0.0)
     rng = np.random.default_rng(1)
@@ -100,6 +104,8 @@ def test_rotate_toward_keeps_axes_unit_and_moves_toward_field():
     assert np.all(np.sum(out * fhat, axis=1) >= np.sum(u * fhat, axis=1) - 1e-12)
 
 
+@pytest.mark.skipif(not manifest.THREE_D,
+                    reason="3-D only; archived 2026-09-14 (manifest.THREE_D)")
 def test_zero_field_leaves_orientation_unchanged():
     """No field ⇒ no torque. Otherwise molecules would drift toward an arbitrary direction."""
     e = PolarPackEngine(_cfg3(), 0, water_frac=0.0, polarity=0.0)
@@ -152,6 +158,8 @@ def test_base_case_identity_holds_in_3d():
         assert np.max(np.abs(a.X - b.X)) == 0.0, f"pos_dim={cfg.pos_dim} diverged"
 
 
+@pytest.mark.skipif(not manifest.THREE_D,
+                    reason="3-D only; archived 2026-09-14 (manifest.THREE_D)")
 def test_3d_rejects_unimplemented_harmonics():
     """_sh_basis implements l=1,2. Anything higher must fail loudly at construction rather than
     silently returning too few coefficients for the declared shape_dim."""
@@ -159,6 +167,8 @@ def test_3d_rejects_unimplemented_harmonics():
         _cfg3(n_harmonics=3)
 
 
+@pytest.mark.skipif(not manifest.THREE_D,
+                    reason="3-D only; archived 2026-09-14 (manifest.THREE_D)")
 def test_3d_shape_dim_matches_basis_width():
     for K in (1, 2):
         cfg = _cfg3(n_harmonics=K)
@@ -175,6 +185,8 @@ def test_radius_channel_does_not_overlap_the_contour():
         assert e.rad_idx < cfg.d
 
 
+@pytest.mark.skipif(not manifest.THREE_D,
+                    reason="3-D only; archived 2026-09-14 (manifest.THREE_D)")
 def test_species_radii_are_rewritten_every_step():
     """Fixed species are rigid: their size is a constant of the species, not something the MLP
     may drift. If this stopped holding, dispersion strengths would wander mid-run."""
@@ -224,6 +236,8 @@ def test_every_dynamical_method_is_transformer_only():
         assert required in seen, f"{required} escaped the transformer-only audit"
 
 
+@pytest.mark.skipif(not manifest.THREE_D,
+                    reason="3-D only; archived 2026-09-14 (manifest.THREE_D)")
 def test_bond_force_is_masked_attention_not_a_spring():
     """A bond must be a FIXED PAIR MASK carrying a BOUNDED symmetric kernel — masked/local attention,
     which the requirement allows — and emphatically not an unbounded harmonic spring."""
@@ -250,6 +264,8 @@ def test_no_divergent_distance_kernel_in_polar_forces():
     assert "np.exp(" in src or "np.tanh(" in src
 
 
+@pytest.mark.skipif(not manifest.THREE_D,
+                    reason="3-D only; archived 2026-09-14 (manifest.THREE_D)")
 def test_forces_stay_bounded_far_apart():
     """A real 1/d² kernel blows up as d→0 and never vanishes as d→∞. Ours must do neither."""
     e = PolarPackEngine(_cfg3(N=12, pos_bound=50.0), 0, water_frac=1.0, polarity=1.0)
@@ -291,6 +307,8 @@ def test_packing_fraction_is_physically_possible():
         assert 0.0 < pf < limit, f"pos_dim={cfg.pos_dim} packing {pf:.2f} exceeds {limit}"
 
 
+@pytest.mark.skipif(not manifest.THREE_D,
+                    reason="3-D only; archived 2026-09-14 (manifest.THREE_D)")
 def test_micelle_metric_null_is_zero():
     """The radial-order metric must read ~0 on random molecules, or its threshold is meaningless.
 
@@ -310,6 +328,8 @@ def test_micelle_metric_null_is_zero():
     assert abs(cyl_c.mean()) < 0.05, f"cyl_c must be unbiased under the null, got {cyl_c.mean()}"
 
 
+@pytest.mark.skipif(not manifest.THREE_D,
+                    reason="3-D only; archived 2026-09-14 (manifest.THREE_D)")
 def test_micelle_metric_detects_a_planted_micelle():
     """The other half of the calibration: unbiased is worthless if it cannot see the real structure.
 
