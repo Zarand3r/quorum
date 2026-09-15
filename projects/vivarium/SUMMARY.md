@@ -69,7 +69,35 @@ in the roadmap's fidelity audit (no electrostatics, zero chain bending rigidity,
 2-D) would pass it. And it does not test the *measurements*, which is where every failure this project
 has had actually lives.
 
-### 2. Is it a vesicle? — UNRESOLVED, and the number depends on the answer
+### 2. Is it a vesicle? — `vesicle_gate.vesicle()`, two clauses, no free parameters
+
+**A vesicle is a connected lipid aggregate whose enclosed void is bounded by that aggregate arranged
+as a bilayer.** That is the whole definition, and both clauses are physical:
+
+- **CLOSED** — *some* connected aggregate encloses exactly one void, stably across a dilation ladder.
+  Existential, not "the largest": in the flagship sd509 state the largest aggregate is an **open
+  ribbon** and the vesicle is a smaller separate cluster. Requiring *one* aggregate is what rejects
+  three micelles that jointly surround a pocket.
+- **BILAYER** — of that aggregate's lipids, the fraction whose head points inward. Two leaflets sit
+  near 0.5; a monolayer loop sits at 0 or 1. Per-molecule, which is why it survives thermal noise
+  where three distributional attempts did not.
+
+Score is graded (`closure × bilayer`), so a sweep can be gated on it where a 3 % binary event cannot.
+
+| | score |
+|---|---|
+| sd915 / sd904 / sd903 / planted ring / sd509 | **0.955 / 0.857 / 0.848 / 0.750 / 0.737** |
+| three micelles (scored 0.5997 on the old curl metric) | **0.000** |
+| arc 0.75 — open but nearly closed, the hardest negative | **0.000** |
+| flat ribbon, dispersed | **0.000** |
+
+**Margin 0.737.** `vesicle_gate.validate()` is the panel and runs in the suite.
+
+**What this replaced.** `vesicle_call` needed a lumen-ratio threshold of 0.10 whose own docstring says
+it exists to reject "a branched network that happens to enclose one incidental pocket" — a *size*
+proxy for a *structural* question. Asking the structural question directly removes the constant.
+
+### The older pair, kept for comparison — and they disagree by fourteen-fold
 
 Two gates are applied to the same runs and disagree by fourteen-fold:
 

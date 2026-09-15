@@ -1,0 +1,9 @@
+state	truth	score	verdict_at_threshold_1	note
+dish_2ves_2mono	VESICLE	0.0863	not a vesicle	2 x pos_ring_N70 + 2 x ctl_monolayer_N70_s1000, one L=90 box
+inverted_monolayer_N70	NOT	0.0000	not a vesicle	180 deg rigid flip of every lipid; clashes -- metric correctly rejects
+pos_emergent_N112_sd903_tile2x2	VESICLE	0.4799	not a vesicle	4 copies of a panel VESICLE, 2x2 periodic replication (1 copy = 1.920)
+pos_emergent_N112_sd915_inner_leaflet_only	NOT	2.1454	VESICLE	outer leaflet deleted, 53 of 112 kept, ONE leaflet
+pos_emergent_N56_sd904_tile2x2	VESICLE	0.4717	not a vesicle	4 copies of a panel VESICLE, 2x2 periodic replication (1 copy = 1.887)
+pos_ring_N70_inner_leaflet_only	NOT	4.0637	VESICLE	outer leaflet deleted, 30 of 70 molecules kept, ONE leaflet
+pos_ring_N70_tile2x2	VESICLE	1.0248	VESICLE	4 copies of a panel VESICLE, 2x2 periodic replication (1 copy = 4.034); 3x3 = 0.453
+pos_ring_healed_N66_inner_leaflet_only	NOT	0.0000	not a vesicle	outer leaflet deleted; shell tore open -- metric correctly rejects
