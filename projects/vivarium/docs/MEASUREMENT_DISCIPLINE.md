@@ -153,3 +153,36 @@ the throughput on half the workers.** Three hours ran at ~65 % of achievable spe
 
 This is the fourth cost-model error recorded here. The rule is the same every time: measure ONE run at
 the concurrency you intend to use, before planning around it.
+
+
+## Rule 20 — audit the TESTS for failability, not just the metrics
+
+Added 2026-09-14 after a 34-file audit in which agents ran real mutations rather than reading code.
+Result: **14 KEEP, 19 REWRITE, 1 PRUNE — and the single PRUNE was overturned** by an agent assigned to
+argue against it. Almost nothing deserved deleting. What the audit found instead was ~20 individual
+assertions that **cannot fail**, scattered through otherwise-good files. Two examples, both load-bearing:
+
+**`test_token_channel_reproduces_chi_exactly` did not test chi.** It compared
+`f.content_pairs(i, j)` against `einsum(tf.q()[i], tf.k()[j])`. But `content_pairs` *is*
+`einsum(f.q[species], f.k[species])`, and `tf.q()` is `h @ Wq` with `h` one-hot — which selects the
+same rows. It compared `q·k` against `q·k`: a one-hot-matmul-equals-direct-indexing identity that holds
+whatever `q` and `k` contain. Proof, by reintroducing the bug it names (drop the sign matrix from
+`qk_factors`, so negative eigenvalues are wrong):
+
+| | correct | **sign dropped** |
+|---|---|---|
+| old assertion | 0.00e+00 | **0.00e+00 — passes** |
+| against the real chi matrix | 3.33e-16 | **4.05e-01 — fails** |
+
+`SUMMARY.md` had cited that test as the evidence for "q·k **is** the χ table". The real check existed
+only in `field.py`'s `__main__`, outside the suite.
+
+**`test_calibration_guard_accepts_a_derived_value`** — written the same day, by me, three hours after
+citing this file — set `n_ref` to the descriptor's own mean and asserted the ratio was 1.0. True by
+construction; it would pass against a guard that returned 1.0 unconditionally. Now it tests the
+*band*: accept just inside, reject just outside in both directions.
+
+**The pattern.** Both tests assert something real *about the code as written* and nothing about the
+defect in their name. Neither is lazy; both read as careful. The only thing that separates them from
+evidence is running the mutation — which is cheap, and which this project's own rule has demanded
+since before either test existed.

@@ -383,7 +383,7 @@ class PolarPackEngine(PackEngine):
         {cos kθ, sin kθ}: the grounded readout stays ⟨C, basis(bearing)⟩ — a RoPE-family relative-
         direction inner product — so Parseval (overlap = contour overlap) still holds."""
         x, y, z = u[..., 0], u[..., 1], u[..., 2]
-        c1 = np.sqrt(3.0 / (2.0 * np.pi))
+        c1 = np.sqrt(3.0 / (4.0 * np.pi))
         b = np.empty(u.shape[:-1] + (self.tK,))     # fill in place; np.stack would copy every term
         b[..., 0], b[..., 1], b[..., 2] = c1 * y, c1 * z, c1 * x           # l=1  (3)
         if self.cfg.n_harmonics >= 2:
@@ -443,8 +443,7 @@ class PolarPackEngine(PackEngine):
         fhat = np.where(fn > 1e-9, f / np.where(fn > 1e-9, fn, 1.0), 0.0)
         tang = fhat - (np.sum(fhat * u, axis=1, keepdims=True)) * u
         v = u + rate * tang * (fn > 1e-9)
-        n = np.linalg.norm(v, axis=1, keepdims=True)
-        return np.where(n > 1e-9, v / np.where(n > 1e-9, n, 1.0), u)
+        return v  # MUTANT: no renormalisation
 
     def _amphi_template(self, scale):
         """Body-frame contour for an AMPHIPHILE: a single localized + HEAD bump toward +x, fading to a

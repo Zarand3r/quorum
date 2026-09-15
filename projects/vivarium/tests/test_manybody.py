@@ -26,7 +26,7 @@ import pytest
 import _mixture
 from field import Field, HEAD, N_SPECIES
 from gap_closure import PRODUCTION, chi_from
-from manybody import ManyBodyMLP, ShapeMLP, assert_calibrated
+from manybody import CALIBRATION_BAND, ManyBodyMLP, ShapeMLP, assert_calibrated
 from transformer import VivariumTransformer
 
 N_LIP, L_BOX, PHI, RC = 24, 40.0, 0.55, 2.5
@@ -87,11 +87,30 @@ def test_calibration_guard_rejects_the_registered_value():
 
 
 def test_calibration_guard_accepts_a_derived_value():
+    """The guard must accept a derived n_ref AND reject just outside its band.
+
+    REWRITTEN 2026-09-14: the first version set `n_ref` to the descriptor's own mean and then asserted
+    the ratio was 1.0. That is true by construction — it could not fail for any implementation of
+    `assert_calibrated`, including one that returned 1.0 unconditionally. Testing the BAND is the
+    thing that has content: the guard exists to separate a calibrated term from a constant one, so it
+    must be shown to do both.
+    """
     X, species, bonds, _, L = _system()
     sh = ShapeMLP(np.ones(N_SPECIES), n_ref=1.0)
-    sh.n_ref = _n_ref(X, species, bonds, L, sh)
+    derived = _n_ref(X, species, bonds, L, sh)
+    sh.n_ref = derived
     n = Field(species, bonds, L, chi=chi_from(PRODUCTION), shape=sh).coordination(X)
     assert assert_calibrated(sh, n, "derived") == pytest.approx(1.0, abs=0.05)
+
+    # just INSIDE the band: accepted
+    sh.n_ref = derived * (CALIBRATION_BAND * 0.9)
+    assert_calibrated(sh, n, "inside band")
+
+    # just OUTSIDE it, both directions: rejected. Without these the guard could return a constant.
+    for factor in (CALIBRATION_BAND * 1.1, 1.0 / (CALIBRATION_BAND * 1.1)):
+        sh.n_ref = derived * factor
+        with pytest.raises(ValueError, match="constant offset"):
+            assert_calibrated(sh, n, f"outside band x{factor:.2f}")
 
 
 # ---------------------------------------------------------------------------------------------

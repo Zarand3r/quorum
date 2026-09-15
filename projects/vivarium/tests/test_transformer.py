@@ -97,17 +97,31 @@ def test_attention_output_is_equivariant_when_no_pair_wraps():
 
 
 def test_token_channel_reproduces_chi_exactly():
-    """q_i . k_j built from the token channel equals the Field's species lookup, to floating point.
+    """q_i . k_j from the token channel equals the CHI MATRIX ITSELF, entry by entry.
 
-    This is what makes the MLP insertable without changing anything: the interaction matrix is now read
-    out of h rather than out of a table, and at h = one-hot species the two are the same numbers.
+    REWRITTEN 2026-09-14. The previous version compared `f.content_pairs(i, j)` against
+    `einsum(tf.q()[i], tf.k()[j])` and asserted they matched to 1e-12. But `content_pairs` IS
+    `einsum(f.q[species], f.k[species])` (field.py:375), and `tf.q()` is `h @ Wq` with `h` one-hot,
+    which selects the same rows. So it compared q.k against q.k — a one-hot-matmul-equals-direct-
+    indexing identity that holds whatever q and k contain, including if they had nothing to do with
+    chi. It could not fail on the defect its name claims, and SUMMARY.md cited it as the evidence that
+    `q.k` equals the chi table.
+
+    The real check lived only in `field.py`'s `__main__` block, outside the suite. It is here now:
+    compare against the ORIGINAL chi matrix that `qk_factors` was asked to factorise.
     """
     X, f = _system(n=60)
     tf = VivariumTransformer(f)
     _, _, iu = f._pairs(X)
-    from_table = f.content_pairs(iu[0], iu[1])
+
+    chi_table = f.chi[f.species[iu[0]], f.species[iu[1]]]          # the matrix itself
     from_channel = np.einsum("ic,ic->i", tf.q()[iu[0]], tf.k()[iu[1]])
-    assert np.abs(from_table - from_channel).max() < 1e-12
+    assert np.abs(chi_table - from_channel).max() < 1e-12, (
+        "the token channel does not reproduce the chi matrix — the eigendecomposition round-trip "
+        "in qk_factors is broken, which is the claim 'q.k IS the chi table' rests on")
+
+    # and the Field's own fast path must agree with the table too, since forces read it
+    assert np.abs(chi_table - f.content_pairs(iu[0], iu[1])).max() < 1e-12
 
 
 def test_mlp_is_live_not_decorative():
