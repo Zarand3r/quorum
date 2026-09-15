@@ -102,8 +102,18 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
 - **DONE — 2-D vesicles emerge, with pictures.** Four, all from a scattered start with nothing
   planted, each with its exact recipe in **[`docs/SUCCESSES.md`](docs/SUCCESSES.md)**. The cleanest is
   35 molecules out of 112.
-- **DONE — the mechanism is identified.** Two vesicles closed at *constant size* — two ends of a
-  ribbon meeting, not an aggregate curving.
+- **QUALIFIED — how the vesicle closes is only half understood.** Two closed at *constant size*, by
+  their two ends meeting. That has been written up as "ends meeting, **not** curving", and that phrasing
+  is wrong: in 2-D a sheet's rim **is** its two ends, and a ribbon cannot bring its ends together
+  without curving. They are the same event, not alternatives.
+  What is genuinely unresolved is what *drives* it. In real membranes a flat patch closes when the cost
+  of its exposed rim beats the cost of bending — a quantitative competition that fixes a critical size.
+  Here one side of that competition was **measured as indistinguishable from zero** (the rim costs
+  nothing, ±100%), and the other is recorded as **not measurable by any of three routes**. So closure
+  here may not be the natural mechanism at all: with no rim cost there is no drive to close, and what
+  we see is consistent with two floppy ends happening to meet. That would explain the 1-in-20 rate and
+  why the one predictive coordinate is how close the ends already are. **Measuring the bending
+  stiffness is the way to settle it, and it has never been done.**
 - **DONE — the chemistry reduces.** Five hand-set numbers plus the water become one attraction plus a
   size ratio, with no loss on closing a ready-made ribbon (19/20 vs 10/10). **But it loses the
   strictest test** (11/20 vs 18/20) and degrades self-assembly (2/20 vs 13/20).

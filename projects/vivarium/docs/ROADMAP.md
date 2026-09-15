@@ -27,10 +27,30 @@ linear chains — **not** the production topology. Only the *force* identity was
 |---|---|---|---|
 | V1 | Does a vesicle emerge from a scattered start? | **seed 509, step 500 000**: `vesicle_call` True, dilations `[1,1,1,1]`, lumen ratio 0.136, 56-lipid cluster, held 22 consecutive checkpoints | **YES — render-confirmed** |
 | V2 | Is it reproducible? | re-running seed 509 reproduced closure at the same step | **YES** |
-| V3 | How does it form? | cluster **constant at 56 lipids** for 100 k steps before *and* after closure | **ends meeting, not curving** |
+| V3 | How does it form? | cluster **constant at 56 lipids** for 100 k steps before *and* after closure | **ends meeting** — see the correction below |
 | V4 | Historical replication | 2/18 historically; **0/44** in recent runs under the strict gate | see §6 — criterion changed |
 
 | V5 | Second and third vesicles (H11) | N=56 sd904 (lasso, ratio 0.196) and **N=112 sd903 — a clean ring, 35/112 lipids, ratio 0.454** | **YES — both render-checked** |
+
+**Correction 2026-09-13 — "ends meeting, NOT curving" is a false dichotomy.** In 2-D a sheet's rim *is*
+its two ends; a ribbon cannot bring its ends together without curving. The two descriptions name the
+same event. The real question is what drives it, and the literature answer is a competition between
+edge line tension λ (favours closing, grows with rim length) and bending rigidity κ (resists, and is
+size-independent), giving a critical radius `R_c = 2κ/λ` above which closure wins — the criterion this
+project already recorded in `docs/REVIEWER_HANDOFF_2026-08-31.md`.
+
+**Neither side of that criterion is pinned here.** λ was measured directly, ring against arc at N=300,
+time-averaged over the plateau: **+2.8 ± 2.8 ε, consistent with zero** — and `field.py` draws the
+conclusion in its own comment, *"with no cost to an exposed edge there is no drive to close one, which
+is why every arc in this project has unrolled."* κ is recorded in `docs/RESULTS.md` as **"not
+measurable by any of three routes"**.
+
+So closure here is **not demonstrably the natural mechanism**. It is consistent with two floppy ends
+meeting by chance, which would explain both the ~1-in-20 rate and why end-to-end gap is the one
+coordinate that predicts closure. **Measuring κ is what would settle it, and it has never been done.**
+One caveat against over-reading this: λ ≈ 0 is not obviously a defect — the ribbon's ends appear to
+self-cap with heads (which is why tip-counting metrics failed on a closed ring), and real bicelle rims
+are also partly capped, which is what makes bicelles metastable rather than spontaneously closing.
 
 Config: production chemistry, `plant="random"`, `bend_r0=2.0` (no bending stiffness).
 **Every confirmed vesicle, with the exact command to reproduce it, is recorded in
