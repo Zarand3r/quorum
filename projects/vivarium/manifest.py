@@ -33,6 +33,7 @@ ORACLE = {
 }
 
 ARCHIVED = {
+    "_lumen3d",   # 3-D enclosure detector; archived with the 3-D scope 2026-09-14
     "_cgrad", "_flat2", "_geom", "_pairing",
     "_ring_sweep", "_viv_hunt", "_viv_morph", "_viv_vacuum",
     "aliveness", "bench_emergence", "bench_emergence3d", "bicelle2d",
@@ -45,7 +46,7 @@ ARCHIVED = {
 SUPPORT = {
     "_curl_cal", "_cvcontrol", "_cvdegenerate", "_disk_closure",
     "_emerge2d", "_eos_check", "_fluidity", "_kappa",
-    "_linetension", "_lumen", "_lumen3d", "_lumen_field",
+    "_linetension", "_lumen", "_lumen_field",
     "_lumen_overlay", "_micelle_pole", "_sasa", "_shot",
     "_sizing3d", "_solvent_gate", "_thermal_ref", "_vesicle_calib",
     "_ylz_run", "bench_step", "bilayer_metrics", "chemistry",
@@ -56,5 +57,22 @@ SUPPORT = {
     "phase_diagram", "references", "render_state", "server",
     "sweep_head_area", "vesicle", "vesicle_assembly", "xsection",
 }
+
+# ---------------------------------------------------------------------------------------------
+# SCOPE: TWO DIMENSIONS ONLY.
+#
+# Decision 2026-09-14. 3-D is ARCHIVED -- kept readable and re-enablable, not developed, not tested.
+# The reasons, all already on record:
+#   * its foundation is retracted: the "bending fix" was measured to STRETCH molecules 67% rather
+#     than stiffen them, so everything downstream of it needs re-deriving (ROADMAP 9 item 9);
+#   * ~29x the 2-D cost per run, against a 2-D emergence rate of 1-2 in 20 that is itself not yet
+#     understood -- spending 29x on an unsolved question is the wrong order;
+#   * every open question that matters (does a patch bend? what selects a size? which gate defines a
+#     vesicle?) is answerable in 2-D and unanswered there.
+#
+# Flip this to True to re-enable. Tests that exercise 3-D skip on it rather than being deleted, so
+# the coverage is visible and comes back with the flag -- deleting a failing test to make a suite
+# green is the exact move `docs/MEASUREMENT_DISCIPLINE.md` exists to prevent.
+THREE_D = False
 
 TIERS = {"ACTIVE": ACTIVE, "ORACLE": ORACLE, "ARCHIVED": ARCHIVED, "SUPPORT": SUPPORT}

@@ -552,8 +552,10 @@ rather than hidden.*
    curl happens; the radius-based attempt failed its controls (2026-09-11) and was withdrawn.
 8. **Decide which gate defines a vesicle** (§6). No run can settle it. Blocks any claim about the
    historical 2/18.
-9. **Rebuild 3-D on inextensible bonds (FENE).** Its bending result is retracted and everything
-   downstream needs re-deriving. ~29× the 2-D cost.
+9. ~~**Rebuild 3-D on inextensible bonds (FENE).**~~ **REMOVED 2026-09-14 — 3-D is archived.**
+   Scope is 2-D only. Gated by `manifest.THREE_D = False`; 22 tests skipped, none deleted, all
+   restored by flipping that flag. This was the most expensive item on the list (~29× per run) resting
+   on a retracted foundation, and every question it would have answered is open in 2-D.
 10. **Run the oracle head-to-head** (AC-2, registered, never evaluated). 73.8 h/seed.
 11. ~~**Consolidation.**~~ **DONE 2026-09-13** — 59 files / 4 999 lines removed, 146 → 87 modules.
     Method: build the import graph, take the closure of five seed sets (production path, oracles, live

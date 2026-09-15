@@ -8,6 +8,7 @@ differences mean nothing.
 
 from __future__ import annotations
 
+import manifest
 import numpy as np
 import pytest
 
@@ -86,6 +87,8 @@ def test_free_modes_get_no_thermal_kick():
 
 # ------------------------------------------------------------------ species behaviour
 
+@pytest.mark.skipif(not manifest.THREE_D,
+                    reason="uses the pos_dim=3 config; 3-D archived 2026-09-14")
 def test_rigid_species_hold_their_rest_conformation():
     """At k=1 and zero temperature a rigid molecule sits exactly on its rest shape — reproducing
     the old hard overwrite, so rigidity is now the stiff LIMIT of one mechanism, not a special case."""
@@ -98,6 +101,8 @@ def test_rigid_species_hold_their_rest_conformation():
         assert np.allclose(C[e._wi], e.c_rest[e._wi], atol=1e-9), "water drifted off its rest shape"
 
 
+@pytest.mark.skipif(not manifest.THREE_D,
+                    reason="uses the pos_dim=3 config; 3-D archived 2026-09-14")
 def test_amphiphile_head_is_rigid_but_splay_is_floppy():
     """The physically-motivated split: the l=1 head dipole is the molecule's chemical identity and
     stays rigid, while the higher modes (axial elongation = tail splay) are soft. Real lipid tails

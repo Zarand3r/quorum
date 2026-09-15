@@ -1,6 +1,6 @@
 # vivarium — executive summary
 
-*Updated 2026-09-13. Current state only. History lives in `docs/RESEARCH_LOG.md`; every experiment and
+*Updated 2026-09-14. **Scope: 2-D only** — 3-D is archived, see Roadmap. Current state only. History lives in `docs/RESEARCH_LOG.md`; every experiment and
 its result in **[`docs/ROADMAP.md`](docs/ROADMAP.md)**, the single consolidated roadmap.*
 
 ## Objective
@@ -12,7 +12,10 @@ put in that already contains the answer, so a "make the membrane bend" term is r
 forms because we told it to bend has not emerged. **A 2-D vesicle does emerge**, verified by picture
 and metric, from a scattered start with nothing planted; it forms by a ribbon wrapping until its two
 ends meet, not by curving. **The full objective is not met**: the goal names excluded volume, van der
-Waals *and electrostatics*, and the model has the first two; 3-D is blocked; emergence is rare.
+Waals *and electrostatics*, and the model has the first two; emergence is rare. **Scope narrowed to
+2-D on 2026-09-14** — every open question that matters (does a patch bend? what selects a size? which
+gate defines a vesicle?) is answerable in 2-D and unanswered there, so 3-D at ~29× the cost is the
+wrong order.
 
 ## Requirements
 
@@ -199,12 +202,14 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
   because the term took the sheet apart before it could bend it.
 - **BLOCKED — making emergence reliable.** Still 1–2 runs in 20. Three geometric levers failed;
   whatever limits it is not the geometry we have been varying.
-- **BLOCKED — 3-D.** Its foundation needs redoing: the "bending fix" stretches molecules 67% rather
-  than stiffening them. ~29× the 2-D cost.
+- **ARCHIVED — 3-D.** Not blocked, *descoped*, 2026-09-14. Its foundation was already retracted (the
+  "bending fix" stretches molecules 67% rather than stiffening them) and it costs ~29× per run. It is
+  kept and reversible: `manifest.THREE_D = False` gates it, and every 3-D test is **skipped, not
+  deleted** — 22 of them — so the coverage returns by flipping one line.
 - **NOT STARTED — fusing and dividing.** Never observed.
 - **NEEDS A DECISION — [`docs/HANDOFF_2026-09-12.md`](docs/HANDOFF_2026-09-12.md).** A molecule's own
   internal channel is not wired to the forces. **Nothing is pushed until it is settled.**
-- **NEXT** — the order is [`docs/ROADMAP.md`](docs/ROADMAP.md) §9; the first four are:
+- **NEXT** — the order is [`docs/ROADMAP.md`](docs/ROADMAP.md) §9; 3-D is no longer on it. The first four:
   (1) settle the open decision above, then get the suite green and push;
   (2) build the starting sheet at the spacing the model settles at rather than a hand-picked one that
   is 16% too spread out — the cheapest experiment most likely to move the bending question, ~1 h;
@@ -216,7 +221,12 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
   (4) the rest of the network's abilities, which need (1) first.
 ## Known gaps
 
-- **The test suite is RED, and has been since 2026-09-09** (`1 failed, 253 passed`). Changing a
+- **The test suite is RED** (`1 failed, 255 passed, 22 skipped`), and has been since 2026-09-09.
+  The 22 skips are the archived 3-D tests. Five of those were FAILING before they were skipped
+  (net momentum NaN, wrap NaN, unit-axis drift) for reasons never isolated — `aliveness.py` was
+  cleared by direct comparison (identical to 1.11e-16 in 2-D *and* 3-D) and the new test files by a
+  run without them (248 passed / same 6 failed). Recorded as unexplained rather than given a cause;
+  it is archived code and every 2-D arm of those tests passes. The one real failure is: Changing a
   molecule's own channel no longer changes the forces on it: the force law reads the interaction table
   directly instead of through that channel. The two agree to twelve decimal places, so **no measured
   number is affected** — what is lost is the *ability* for a molecule's channel to change its physics,

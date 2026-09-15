@@ -22,6 +22,13 @@ from polar_pack import AMPHI, WATER, PolarPackEngine
 sys.path.insert(0, os.path.dirname(__file__))       # sibling test module (tests/ is not a package)
 from test_transformer_only import _FORBIDDEN, _strip_comments  # noqa: E402
 
+import manifest
+
+pytestmark = pytest.mark.skipif(
+    not manifest.THREE_D,
+    reason="3-D is ARCHIVED (manifest.THREE_D = False, scope decision 2026-09-14). Kept, not deleted: flip THREE_D to re-enable. These were failing on 3-D paths BEFORE the scope decision "
+           "(net momentum NaN, wrap NaN) and that is recorded rather than deleted with them.")
+
 
 def _cfg3(**over):
     return VivariumConfig(**{**DEFAULTS, "N": 24, "pos_dim": 3, "n_harmonics": 2,
@@ -313,7 +320,6 @@ def test_micelle_metric_detects_a_planted_micelle():
     from bilayer3d import build
     from micelle_probe import probe
     from rung1c import plant_cylinder
-
     e = build(seed=1, n_lip=24, bound=4.0, kt=0.0, speed=0.08, repel=12.0, k_bond=8.0,
               satt=0.55, spol=0.90, plant=False, n_tail=4)
     plant_cylinder(e)

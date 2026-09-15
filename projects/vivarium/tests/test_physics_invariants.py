@@ -5,6 +5,7 @@ conservative") and to use only bounded kernels. Those are the properties the who
 and nothing checked them. Every one of these is a property of the PHYSICS, not of a metric, so a
 violation would corrupt every result regardless of how well the measurement side behaves.
 """
+import manifest
 import numpy as np
 import pytest
 
@@ -19,8 +20,16 @@ KW3 = dict(n_lip=16, bound=4.0, kt=0.0, speed=0.001, repel=12.0, k_bond=30.0, sa
 
 
 def _engines():
+    """The 2-D arm always runs. The 3-D arm is gated on `manifest.THREE_D`.
+
+    3-D was ARCHIVED on 2026-09-14 (scope: 2-D only). The 3-D arm is kept here rather than deleted so
+    that flipping `manifest.THREE_D` restores the coverage — and so it stays visible that these
+    invariants are only being checked in one dimension. Both 3-D arms were FAILING at the time of the
+    decision (net momentum NaN, wrap NaN); that is recorded, not hidden, and is not a 2-D defect.
+    """
     yield "2-D", build2d(0, plant=False, **KW2)
-    yield "3-D", build3d(0, plant=False, **KW3)
+    if manifest.THREE_D:
+        yield "3-D", build3d(0, plant=False, **KW3)
 
 
 def test_no_net_drift_newtons_third_law():
