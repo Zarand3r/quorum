@@ -22,7 +22,8 @@ Waals *and electrostatics*, and the model has the first two; 3-D is blocked; eme
 - **R3 — An energy ledger.** Forces must be `−grad U`. Without it, temperature, line tension and
   bending modulus are undefined. This is what forbids softmax (it breaks Newton's third law).
 - **R4 — Instruments must SEPARATE their controls**, not merely score the intended case well — a
-  known-answer case *and* a null case. Twenty-six defects on record, all instruments or constants.
+  known-answer case *and* a null case. Nineteen rules in `docs/MEASUREMENT_DISCIPLINE.md`, each bought
+  with a defect; in every case the physics was fine and the instrument was wrong.
 - **R5 — Look at the picture before believing the number.** Every structural claim needs a render.
 - **R6 — Criteria before data.** Gates registered in `specs/` before the run, scored mechanically,
   amendments dated.
@@ -143,15 +144,16 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
 - **NOT STARTED — fusing and dividing.** Never observed.
 - **NEEDS A DECISION — [`docs/HANDOFF_2026-09-12.md`](docs/HANDOFF_2026-09-12.md).** A molecule's own
   internal channel is not wired to the forces. **Nothing is pushed until it is settled.**
-- **NEXT**, in order — (1) settle that decision, then get the suite green and push; (2) build the
-  starting sheet at the spacing the model settles at rather than a hand-picked one that is 16% too
-  spread out — the cheapest experiment most likely to move the bending question, ~1 h; (3) finish the
-  last untested strength of the shape term, ~1 h; (4) add the repulsion between charged heads that
-  real lipids have and this model lacks — clumps here grow without limit, the signature of a model
-  with no preferred size, and a vesicle is an object with a preferred size; (5) the rest of the MLP,
-  which needs (1) first; (6) decide which test defines a vesicle; (7) rebuild 3-D on inextensible
-  bonds before spending compute there.
-
+- **NEXT** — the order is [`docs/ROADMAP.md`](docs/ROADMAP.md) §9; the first four are:
+  (1) settle the open decision above, then get the suite green and push;
+  (2) build the starting sheet at the spacing the model settles at rather than a hand-picked one that
+  is 16% too spread out — the cheapest experiment most likely to move the bending question, ~1 h;
+  (3) give the molecules the long-range repulsion between charged heads that real ones have, because
+  clumps here grow without limit and a vesicle is an object with a preferred size. **Not a fresh
+  idea** — the sister simulation already tried it, its version turned out not to conserve momentum for
+  three months undetected, and it never produced assembly. Any version here needs that check from the
+  first commit;
+  (4) the rest of the network's abilities, which need (1) first.
 ## Known gaps
 
 - **The test suite is RED, and has been since 2026-09-09** (`1 failed, 253 passed`). Changing a

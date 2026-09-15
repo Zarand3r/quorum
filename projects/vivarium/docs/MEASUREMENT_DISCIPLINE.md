@@ -1,7 +1,7 @@
 # Measurement discipline
 
-Lessons paid for in this project, written down so they are not paid for twice. Roughly fifteen
-measurement defects were found here, several introduced by fixes to earlier defects. In every case the
+Lessons paid for in this project, written down so they are not paid for twice. Nineteen rules, each
+bought with a defect, several of them introduced by fixes to earlier defects. In every case the
 physics was fine and the instrument was wrong.
 
 ## The core failure mode
@@ -105,3 +105,51 @@ this plateaued, which is what a thermodynamic constraint looks like from inside 
 
 Ask first whether the target phase is REACHABLE for this molecule's geometry. If it is not, the
 search is over before it starts.
+
+---
+
+*Rules 17–19 added 2026-09-13, from the MLP many-body work. **Rule 16 was confirmed in the same
+session and is worth re-reading first**: G5 raised head area and the bilayer became micelles, exactly
+as Rule 16 predicts for `P = v/(a0*l) < 1/3`. The result was already written down here three weeks
+before it was measured.*
+
+## Rule 17 — a free parameter must be calibrated against the descriptor it divides
+
+`ShapeMLP` used `n_ref = 6.0`, registered as "the close-packed 2-D coordination number — geometry, not
+a fit". The descriptor it divides is a sum of smooth kernel weights, not a neighbour count: at the real
+head spacing the kernel returns 0.107, so two neighbours score **0.21, not 2**. And a 2-D leaflet is a
+*line*, so the count is 2, not 6. Measured coordination: **0.207 against an `n_ref` of 6.0**.
+
+The whole term therefore evaluated to `1.2414` for every bead in every state, with **0.4 % spread** — a
+uniform inflation, not a modulation. **Two registered experiments reported a physics null for a term
+that was a constant**, and the descriptor had been changed from all-lipid to head-only in between
+without anyone re-deriving the reference.
+
+The guard: `manybody.assert_calibrated` raises when the descriptor's mean sits more than 4× from
+`n_ref`, and the harness calls it at step 0, before spending CPU-hours on a constant. Neither modulator
+has a default `n_ref` any more — a default is how the stale value survived the change of descriptor.
+
+## Rule 18 — register a second criterion the experiment can fail BY WINNING
+
+The curl experiment scored a single number, `aspect` — validated, separating flat (0.002) from a ring
+(1.000). One run returned **0.5997 against a 0.45 threshold**: a clean pass.
+
+The state was **three micelles**. Four aggregates of 110/100/60/10 beads, roundness 0.478, where one
+intact ribbon is ~280 beads in a single cluster reading 0.002. A scattered set of blobs is isotropic,
+so the metric rose for the opposite of the reason it was built to detect.
+
+It was caught because an `intact` clause — largest aggregate ≥ 90 % of the lipids — had been registered
+**before any data existed**, explicitly as the criterion the experiment could fail by winning. Without
+it, that row enters the record as the project's first membrane curl on a protocol carrying five nulls.
+
+A validated metric is not enough. The question to ask at registration time is: *what else could make
+this number move, and what second check would separate it?*
+
+## Rule 19 — measure throughput at the concurrency you intend to use
+
+The sweep ran 24 workers because `nproc` reports 32. The box has **16 physical cores** with 2 threads
+each. Measured on identical 300 000-step runs: **11 662 s/run at 24-way, ~3 720 s at 12-way — 1.53×
+the throughput on half the workers.** Three hours ran at ~65 % of achievable speed.
+
+This is the fourth cost-model error recorded here. The rule is the same every time: measure ONE run at
+the concurrency you intend to use, before planning around it.
