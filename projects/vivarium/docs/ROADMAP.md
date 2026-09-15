@@ -81,7 +81,7 @@ the largest aggregate reaches only 17.8 lipids.
 
 ---
 
-## 5. Why won't a membrane bend? — FIVE NULLS (was seven; two withdrawn 2026-09-11)
+## 5. Why won't a membrane bend? — SIX NULLS, five of them clean (was seven; two withdrawn, one replaced)
 
 The flat-planted-ribbon protocol. Every entry is a measured null with the membrane intact.
 
@@ -97,8 +97,10 @@ The flat-planted-ribbon protocol. Every entry is a measured null with the membra
 | B6′ | *uniformly* 24% larger heads (what B7 actually ran) | **0/12 vs 0/12**, p = 1.0 |
 
 **B1–B5 are symmetric pair terms** and `RESULTS.md` explains them structurally: a pair potential cannot
-express a difference between leaflets. **That explanation covers every surviving null**, which is a
-retreat from the position taken on 2026-09-09.
+express a difference between leaflets. **G5 is the sixth null and is NOT a pair term**, so that
+explanation does not cover it — but G5 is also **not a clean test**: the term destroyed the membrane
+before it could bend it (0/24 intact), so "would it bend a sheet that stayed whole?" is unanswered.
+Item 2 of §9 is the experiment that would answer it.
 
 ### Why B6 and B7 were withdrawn — a free parameter that stopped matching its own derivation
 
