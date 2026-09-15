@@ -80,14 +80,17 @@ as a bilayer.** That is the whole definition, and both clauses are physical:
   three micelles that jointly surround a pocket.
 - **BILAYER** — of that aggregate's lipids, the fraction whose head points inward. Two leaflets sit
   near 0.5; a monolayer loop sits at 0 or 1. Per-molecule, which is why it survives thermal noise
-  where three distributional attempts did not.
+  where three distributional attempts did not. **Measured contribution: none, on current data.** All
+  24 enclosing states score 0.368–0.540, so closure alone yields the same set. It is carried on its
+  physics — it would reject a closed monolayer — not on demonstrated discrimination, and no monolayer
+  loop occurs in this data to test it against.
 
 Score is graded (`closure × bilayer`), so a sweep can be gated on it where a 3 % binary event cannot.
 
 | | score |
 |---|---|
 | sd915 / sd904 / sd903 / planted ring / sd509 | **0.955 / 0.857 / 0.848 / 0.750 / 0.737** |
-| three micelles (scored 0.5997 on the old curl metric) | **0.000** |
+| three micelles (scored 0.5997 on the old curl metric) | **0.000** — rejected by closure; its bilayer reads 0.41 |
 | arc 0.75 — open but nearly closed, the hardest negative | **0.000** |
 | flat ribbon, dispersed | **0.000** |
 

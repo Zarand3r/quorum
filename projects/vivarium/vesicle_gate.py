@@ -14,6 +14,15 @@ BILAYER  of the lipids in that aggregate, some point their head toward the void 
          thermal noise -- three distributional attempts on 2026-09-14 did not, because a relaxed
          bilayer and a relaxed monolayer have the same radial spread once kT blurs them.
 
+WHAT THE BILAYER CLAUSE ACTUALLY CONTRIBUTES, measured 2026-09-14 and weaker than it looks. On all
+237 saved emergence states, every one of the 24 that enclose has inward fraction 0.368-0.540 -- inside
+any reasonable band, and tracking the geometric prediction (a ring of radius R with bilayer thickness
+d has inner/(inner+outer) = (R-d/2)/2R, so a SMALL vesicle is legitimately well below 0.5). So the
+clause rejects NOTHING on this data: closure alone yields the same set. It would reject a closed
+MONOLAYER loop, which is what it is for -- but no such state occurs here, so the clause is carried on
+its physics rather than on demonstrated discrimination. Said plainly because the alternative is to
+let it look load-bearing when it is not.
+
 WHAT THIS REPLACES. `vesicle_call` needed a lumen-ratio threshold of 0.10, whose own docstring says
 it exists to reject "a branched network that happens to enclose one incidental pocket". That is a
 SIZE proxy for a STRUCTURAL question. Ask the structural question and the constant is not needed --
@@ -100,12 +109,17 @@ def vesicle(X, species, mols, L, dilations=(1.0, 1.5, 2.0, 2.5, 3.0), bilayer_ba
       closure  fraction of the dilation ladder at which the aggregate encloses EXACTLY one void
       bilayer  1 - |inward_fraction - 0.5| / 0.5   -- 1.0 at a perfect two-leaflet split, 0 at one leaflet
     """
-    best = (False, 0.0, {"n_lipids": 0, "closure": 0.0, "inward_fraction": 0.0, "bilayer": 0.0})
-    for members in _aggregates(X, mols, L):
-        got = _score_one(X, species, mols, L, members, dilations, bilayer_band)
-        if got[1] > best[1]:
-            best = got
-    return best
+    aggs = _aggregates(X, mols, L)
+    if not aggs:
+        return False, 0.0, {"n_lipids": 0, "closure": 0.0, "inward_fraction": float("nan"),
+                            "bilayer": 0.0}
+    # Rank by score, but ALWAYS report a measured inward_fraction. A first version defaulted the
+    # detail dict to zeros when every aggregate scored 0, and those zeros were then read as evidence
+    # that the bilayer clause had REJECTED the state. It had not: arc0.75 actually measures 0.393 and
+    # the three-micelle state 0.409 -- both are made of bilayer. Closure alone does the rejecting
+    # here. A default that looks like a measurement is worse than no measurement.
+    scored = [_score_one(X, species, mols, L, m, dilations, bilayer_band) for m in aggs]
+    return max(scored, key=lambda t: (t[1], t[2]["closure"]))
 
 
 def _score_one(X, species, mols, L, members, dilations, bilayer_band):
