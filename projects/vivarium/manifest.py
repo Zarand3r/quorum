@@ -1,5 +1,8 @@
 """THE SINGLE SOURCE OF TRUTH for what this project runs, and what it merely keeps.
 
+Companion: `SUMMARY.md` "How success is measured" is the single source of truth for what COUNTS as
+a result. This file says which code is live; that section says which number is real.
+
 Every `.py` at the top level belongs to exactly one tier. `tests/test_manifest.py` enforces that, so
 a new file cannot appear unclassified and the ACTIVE stack cannot quietly grow a dependency on an
 archived one. The tiers exist because this directory has, at various times, held eleven things that

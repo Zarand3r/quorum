@@ -16,16 +16,6 @@ filegroup(
     srcs = glob(["configs/*.yaml"]),
 )
 
-py_library(
-    name = "legacy",
-    srcs = glob(["legacy/*.py"], allow_empty = True),
-    data = [":configs"],
-    imports = ["legacy"],  # legacy modules import each other by bare name, as they did at the tag
-    deps = [
-        requirement("numpy"),
-        requirement("pyyaml"),
-    ],
-)
 
 py_library(
     name = "vivarium",

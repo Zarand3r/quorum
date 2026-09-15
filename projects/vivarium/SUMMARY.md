@@ -36,6 +36,63 @@ Waals *and electrostatics*, and the model has the first two; 3-D is blocked; eme
   what nature does even if it makes a vesicle less likely. A correct term that lowers the vesicle rate
   is a success and is reported as one. Departures are catalogued in the roadmap's fidelity audit.
 
+## How success is measured
+
+Two separate questions, two separate answers. Conflating them is how this project has repeatedly
+claimed more than it had.
+
+### 1. Is the physics real? — `tests/test_physical_realism.py`, 13 gates, all passing
+
+Every force is checked against the equation it claims to compute, not against a docstring:
+
+| what is checked | against | result |
+|---|---|---|
+| non-bonded head | `−(1/r)·dU/dr` for `U = ε[core(s) + well(s)·χ]` analytically | < 1e-12 |
+| bond head | Hooke's law `−k(r−r₀)/r` | < 1e-12 |
+| the content term `q·k` | the χ interaction table | < 1e-12 |
+| all heads summed | `field.forces` | exact |
+| Newton's third law | `ΣF = 0` | < 1e-9 |
+| force is a gradient | `F = −∇U`, central differences | < 1e-4 |
+| translational + rotational invariance | space has no origin and no preferred direction | < 1e-8 |
+| energy conservation | thermostat off | < 2% |
+| equipartition | the temperature requested | < 10% |
+| **the oracle** | a published membrane potential (Yuan–Li–Zhang) rewritten *exactly* as attention | < 1e-10 |
+
+`core(s) = h(1−s)²` is excluded volume; `well(s)` is the van der Waals term; `χ_ij = q_i·k_j` is the
+interaction matrix *and* the query–key inner product — they are the same numbers.
+
+**This settles realism of the LAW only.** It does not test realism of the *molecule* — every departure
+in the roadmap's fidelity audit (no electrostatics, zero chain bending rigidity, no hydrodynamics,
+2-D) would pass it. And it does not test the *measurements*, which is where every failure this project
+has had actually lives.
+
+### 2. Is it a vesicle? — UNRESOLVED, and the number depends on the answer
+
+Two gates are applied to the same runs and disagree by fourteen-fold:
+
+| gate | what it requires | rate over 148 production runs |
+|---|---|---|
+| enclosure | any enclosed pocket at any checkpoint | **60/148 — 41%** |
+| `vesicle_call` | enclosure stable across *every* dilation 1.0–3.0, **and** lumen ratio ≥ 0.10 | **5/148 — 3%** |
+
+Both numbers are real and describe the same physics; they ask different questions. The strict gate
+exists because the loose one once passed a 69-cell pocket that vanished under dilation, and a
+branched network that enclosed an incidental hole. **Which one defines a vesicle has never been
+decided, and no further run can decide it.**
+
+Neither gate checks that the shell is a **bilayer** — two leaflets, heads facing out. Three attempts
+to measure that on 2026-09-14 all failed their controls (one could not fail at all; one rejected a
+genuine thin bilayer; one could not tell a relaxed planted ring from an emergent state). **So the
+defining structural property of the headline result is currently unmeasured.**
+
+### The rule that would have caught all of it
+
+Every gate must ship with a control panel of **positives and negatives it must separate, at the
+thermal noise of real data, including a marginal case.** Validating on clean planted states at step 0
+is what produced all four broken metrics: a flat ribbon and a closed ring both read ≈0.6 on a
+curvature metric once relaxed, and `aspect` survives only because it is a global shape measure rather
+than a local one.
+
 ## System design
 
 ```

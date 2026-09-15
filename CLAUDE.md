@@ -67,14 +67,20 @@ The autonomous overnight harness is the **`elves`** skill; per-project prerequis
   both **in the same commit** as any significant development — a result, a retraction, a change of
   plan, a new blocker. If a reader can only read one file, `SUMMARY.md` is the one.
 
-  `SUMMARY.md` has exactly four sections, in this order:
+  `SUMMARY.md` has exactly six sections, in this order:
   1. **Objective** — a single paragraph: what we are trying to do and the context needed to follow it.
   2. **Requirements** — a bulleted list of what the system must satisfy, i.e. the engineering
      constraints and the minimal feature set.
-  3. **System design** — a software block diagram, then subsections listing components, APIs and
+  3. **How success is measured** — the gates, what each one actually requires, and what it does NOT
+     establish. Added 2026-09-14: two gates for "is it a vesicle" disagreed by fourteen-fold on the
+     same 148 runs and nobody had written down which one counts, so the headline number depended on
+     an undocumented choice. Realism of the LAW and realism of the RESULT are separate and are stated
+     separately.
+  4. **System design** — a software block diagram, then subsections listing components, APIs and
      interfaces, and the major design decisions (and why).
-  4. **Roadmap** — a bulleted list of every roadmap item with its status and what comes next, linking
+  5. **Roadmap** — a bulleted list of every roadmap item with its status and what comes next, linking
      to `docs/ROADMAP.md` for the full experiment record.
+  6. **Known gaps** — what is unresolved, unverifiable, or blocked, stated as plainly as the wins.
 
   `docs/ROADMAP.md` is the **single consolidated roadmap**: every experiment and its result, grouped
   by theme, each row traceable to a spec in `specs/` and a TSV in `docs/results/`. It supersedes all
