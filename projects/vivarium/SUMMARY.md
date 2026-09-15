@@ -121,11 +121,17 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
   routines agree exactly; the term is provably zero on a flat sheet so it cannot smuggle in the answer;
   it measurably engages on a curved one; the force is still the exact derivative of an energy). Left
   behind on purpose: the softmax, and the electrostatic head that was found not to conserve momentum.
-- **DONE — a live MLP inside real physics, and it works.** Molecules change with their surroundings
-  while forces stay exactly derivable from an energy. Making a head bigger when it is less crowded
-  turns a flat sheet into small round balls — exactly what the standard theory of molecular shape
-  predicts, and the first time anything here has been shown to move that lever. **Kept for the physics,
-  not the vesicle count**; off by default until its one free number is derived.
+- **DONE — molecules can now change with their surroundings, and it works.** A molecule's head grows
+  when it is less crowded, and the forces stay exactly derivable from an energy. Turning that up turns
+  a flat sheet into small round balls — exactly what the standard theory of molecular shape predicts,
+  and the first time anything here has been shown to move that lever.
+  **Two things this is NOT, because the name has been misleading.** It is not an "MLP": it is one
+  number in, one number out, through a fixed curve — there is no network, no hidden layer, no learned
+  weight, and no matrix multiply anywhere in the file. And it is not *running*: it is **off in every
+  production run**, including all four vesicles, and is switched on only by the experiment that tests
+  it. The one thing in the project that *is* architecturally a network — a hidden layer with a
+  residual, inside the transformer — is wired to nothing and has a single caller, a test. **So no
+  network is in the loop, in either sense.**
 - **RETRACTED — the two earlier "the MLP does nothing" results.** Both divided by a reference number
   wrong by ~30×, so the thing tested was effectively a constant.
 - **BLOCKED — making anything bend.** Six attempts, all null. Five are pair forces, and the standing

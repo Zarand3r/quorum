@@ -303,6 +303,16 @@ The two stacks were compared and deliberately combined (2026-09-07 onward). `pol
 transformer-only and expressive but has **no energy ledger**; vivarium has the ledger. The transfer was
 of an *idea*, gated at every step.
 
+**Naming caveat, recorded 2026-09-13 because it has already misled.** `ShapeMLP` and `ManyBodyMLP` are
+**not MLPs**. Each is one scalar in, one scalar out, through a fixed curve —
+`sigma = 2 sigma0/(1+exp(-2 amp u))` and `f = 1/(1+x)`. There is **no matrix multiply anywhere in
+`manybody.py`**, no hidden layer, no learned weight. `ManyBodyMLP.__init__` even takes `width=8`, stores
+it, and never uses it: designed as a network, implemented as a constitutive relation. The only true MLP
+in the project is `transformer.mlp` (`max(z @ W1, 0) @ W2`, width 8, ReLU, residual on `h`) — and it has
+**one caller, a test**, because the token channel is off the force path. Both are also **off in every
+production run**, including all four vesicles. Statements of the form "the MLP does/doesn't work" should
+say which of the three things they mean.
+
 **Transferred — the mechanism.** polar_pack's MLP does not modulate interaction strength, it modulates
 **shape**: "induced-fit morph — the block updates the shape channels, so an agent deforms its contour to
 fit its binding partners." In lipid physics shape is exactly what sets curvature, through `P = v/(a₀·l)`.
