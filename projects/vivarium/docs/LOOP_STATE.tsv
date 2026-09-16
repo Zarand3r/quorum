@@ -3,3 +3,8 @@ tick	utc	mode	item	action	outcome	pid
 1	2026-09-16T21:04:40Z	mode1	D9	named RIBBON_GAP_BRANCHED (was bare 2.05); env override; two instrument bugs found and recorded	default unchanged 2.0500, override verified 1.7651	-
 2	2026-09-16T21:05:34Z	mode1	D9	suite run KILLED for low memory -- other users pytest 2.9GB + verilog sim on this box, not ours	environment not code; plan updated with shared-box rule	-
 3	2026-09-16T21:09:48Z	mode2	D9	review found import-time env read (all other knobs are call-time); fixed; 3 tests added, all 3 verified failable	suite 1F/276P/14S unchanged	-
+4	2026-09-16T21:15:36Z	mode3	D9	RECONCILE: mode3 completed last cycle but was never logged -- ROADMAP D9 + item 2 updated, committed a7a5f36b	not significant enough to stop; continue to mode1	-
+5	2026-09-16T21:18:21Z	mode1	D9-derive	spanning-ribbon energy scan launched (16/24/32 lipids per leaflet, spacing 1.50-2.46, T=0 relax)	RUNNING	3243686
+6	2026-09-16T21:30:40Z	mode1	D9-derive	scan finished: interior min 1.9035 sigma at per=16/24/32, spread 0.0000, |F|max 1e-6, plant strain -7.39/lipid	suspicious: zero spread	-
+7	2026-09-16T21:36:18Z	mode2	D9-derive	system-size check PROVEN powerless (diffs 1e-15, periodic crystal); direction check timed out at 280s	needs cheaper minimiser	-
+8	2026-09-16T21:38:45Z	mode3	D9-derive	direction check 4/4 PASS; minimiser 30000->2000 steps (8x waste removed); TSV 189 rows written	T=0 optimum 1.903; NOT installed, finite-T still needed; continue to mode1	-
