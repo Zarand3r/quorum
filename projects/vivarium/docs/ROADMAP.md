@@ -402,7 +402,7 @@ these is not conditional on them helping.** Ordered by how much they bear on the
 | D6 | **`amp` is a free parameter.** | declared in the spec | **No.** `n_ref` is now derived and measured; `amp` should be too — from a hydration-shell compressibility or an area-per-lipid response. |
 | D7 | **Head-size response bounded at 2σ₀.** A bound is physical (a hydration shell has a maximum thickness); the *value* 2 is not. | chosen 2026-09-11 for numerical safety, to remove a clamp that broke `F = −∇U` | **Partly** — existence justified, magnitude arbitrary. |
 | D8 | **Bounded repulsive core**, finite at full overlap (37.8ε) rather than divergent. | `_core = height·(1−s)²` | **Yes** — documented, and standard in CG/DPD. The one entry here that is defensible as-is. |
-| D9 | **The flat-ribbon planter builds 16 % more dilute than equilibrium**: head spacing 2.0500 σ against a relaxed 1.7651 σ (6 seeds, 100 k steps, modulator off). Every environment-dependent term therefore reads the starting membrane as under-crowded. | measured 2026-09-11 while deriving `n_ref`; the source is a hard-coded default, `_mixture._plant_flat_ribbon(..., gap=1.05, ...)`, against a measured equilibrium of 0.883 per lipid. Its docstring justifies the ribbon being FINITE, and says nothing about the spacing value. | **No — a picked constant.** "Derive constants from the configuration; do not pick them", in one literal. It is why the G5 arms micellise from step 0. |
+| D9 | **The flat-ribbon planter builds 16 % more dilute than equilibrium**: head spacing 2.0500 σ against a relaxed 1.7651 σ (6 seeds, 100 k steps, modulator off). Every environment-dependent term therefore reads the starting membrane as under-crowded. | measured 2026-09-11 while deriving `n_ref`, against a measured equilibrium of 0.883 per lipid. **Source corrected 2026-09-16:** it is NOT the `gap=1.05` default, which never reaches a two-tailed lipid — it is the clamp `gap = max(gap, 2.05)` inside `_plant_flat_ribbon`. Now the named constant `_mixture.RIBBON_GAP_BRANCHED`, with a `VIVARIUM_RIBBON_GAP` override and `tests/test_ribbon_gap.py` pinning both. | **No — a picked constant.** "Derive constants from the configuration; do not pick them", in one literal. **Still picked:** the value is unchanged at 2.05 pending a derivation, so no existing result moves. Two attempts on 2026-09-16 failed on instrument bugs, not physics — a finite ribbon buckles as it relaxes, breaking any x-projected spacing metric, and planting with `branched=False` to dodge the clamp reintroduces the linear-plant strain defect (read 40 ε/lipid). |
 
 **D1 has been attempted before, in the other stack — read this before re-attempting it.**
 `polar_pack.py` carries an electrostatic head: a bounded, bearing-aware attention on near-face charges
@@ -578,10 +578,13 @@ after its physics turned out to have been read wrong; see §5b D2.*
 
 1. **Settle the token-channel decision** (`HANDOFF_2026-09-12.md` §1). Blocks the push and defines
    what the project claims. Needs a person, not a run. **Prerequisite for item 5.**
-2. **Plant the ribbon at the spacing the model settles at** (D9). 1.7651 σ, not the hand-picked 2.05.
-   The starting sheet currently reads as 16% under-crowded, so every environment-dependent term sees a
-   membrane that is not the one the model equilibrates to. **Cheapest experiment on the list (~1 h at
-   12-way), a fidelity fix owed under R9 regardless, and now a prerequisite for BF's AC-4.**
+2. **Plant the ribbon at the spacing the model settles at** (D9). **PART DONE 2026-09-16.** The
+   constant is now named (`_mixture.RIBBON_GAP_BRANCHED`) and overridable, with tests; the **value is
+   still 2.05 and still underived**. What remains is the derivation, and it needs one of two things,
+   because a finite ribbon buckles and breaks a naive spacing metric: either the **axis-based leaflet
+   splitter** (item 8 below, unbuilt) or a **tensionless-membrane calculation on a SPANNING ribbon**,
+   which cannot buckle. The spanning route is the cheaper of the two and is the next attempt.
+   Prerequisite for BF's AC-4.
 3. **BF — replace the 1-3 distance spring with an explicit angle potential.**
    Registered: `specs/2026-09-16_chain_bending_form.md`. The departure is the **functional form**: the
    current term is quartic (`V = 2.083·δ⁴`, zero harmonic coefficient, modulus 2.69 ε/rad² at

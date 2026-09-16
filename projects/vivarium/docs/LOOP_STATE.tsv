@@ -1,0 +1,5 @@
+tick	utc	mode	item	action	outcome	pid
+0	2026-09-16T21:00:24Z	setup	-	plan written, tree committed at 2c844318	loop armed	-
+1	2026-09-16T21:04:40Z	mode1	D9	named RIBBON_GAP_BRANCHED (was bare 2.05); env override; two instrument bugs found and recorded	default unchanged 2.0500, override verified 1.7651	-
+2	2026-09-16T21:05:34Z	mode1	D9	suite run KILLED for low memory -- other users pytest 2.9GB + verilog sim on this box, not ours	environment not code; plan updated with shared-box rule	-
+3	2026-09-16T21:09:48Z	mode2	D9	review found import-time env read (all other knobs are call-time); fixed; 3 tests added, all 3 verified failable	suite 1F/276P/14S unchanged	-

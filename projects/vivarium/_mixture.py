@@ -413,6 +413,24 @@ def _plant_sphere(X, mols, chains, d):
         k += count
 
 
+# Lateral spacing the flat-ribbon planter gives a two-tailed lipid. This was a bare `2.05` inside
+# `_plant_flat_ribbon`, justified by the comment "lateral footprint of a two-tailed lipid" -- an
+# ASSERTION, not a measurement, and the repo rule is "derive constants from the configuration; do not
+# pick them". It is named here so the D9 experiment can vary it without monkeypatching the planter,
+# and so that changing it is a visible edit rather than a magic number.
+#
+# NOT YET DERIVED. The value is unchanged at 2.05, so no existing result moves. `docs/ROADMAP.md` D9
+# records a relaxed flat ribbon settling at 1.7651 sigma, i.e. the planted sheet reads ~16% more dilute
+# than equilibrium, but that number came from a different route and has not been reproduced here.
+# Two attempts on 2026-09-16 failed on instrument bugs, not physics, and both are worth knowing about:
+# a finite ribbon BUCKLES as it relaxes, which breaks any spacing metric that projects onto x; and
+# planting with `branched=False` to dodge this clamp lays all five beads in a line, which is the
+# ~800 eps/lipid strain defect the plant loop below already warns about (it read 40 eps/lipid).
+# Deriving it properly needs either a leaflet splitter by lipid AXIS (ROADMAP.md 9, item 8, unbuilt)
+# or a tensionless-membrane calculation on a SPANNING ribbon, which cannot buckle.
+RIBBON_GAP_BRANCHED = 2.05
+
+
 def _plant_flat_ribbon(X, mols, chains, d, gap=1.05, L=None, branched=True, spanning=False):
     """Two flat leaflets, tails meeting, heads out on both faces. No curvature planted.
 
@@ -425,7 +443,10 @@ def _plant_flat_ribbon(X, mols, chains, d, gap=1.05, L=None, branched=True, span
     n = len(mols)
     nb = len(mols[0])
     if branched and nb - 1 >= 2:
-        gap = max(gap, 2.05)                # lateral footprint of a two-tailed lipid
+        # Read at CALL time, not import time: every other knob in this tree does the same
+        # (`default_chi`, `Field.__init__`, `build`), and an import-time read cannot be set by a
+        # test -- verifying the override needed an `importlib.reload`, which was the tell.
+        gap = max(gap, float(os.environ.get("VIVARIUM_RIBBON_GAP", RIBBON_GAP_BRANCHED)))
     per = n // 2
     if spanning:
         # A ribbon that wraps the box seamlessly has NO ends. Comparing it with a finite ribbon of the
