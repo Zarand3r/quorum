@@ -239,7 +239,7 @@ class Field:
 
     def __init__(self, species, bonds, L, eps=1.0, sigma=1.0, rc=2.5, k_bond=200.0,
                  r_bond=1.0, chi=None, bend_frac=1.0, angles=None, core_height=None,
-                 sigma_species=None, bend_r0=None, manybody=None, shape=None):
+                 sigma_species=None, bend_r0=None, manybody=None, shape=None, k_theta=0.0):
         self.species = np.asarray(species, dtype=np.int64)
         self.bonds = np.asarray(bonds, dtype=np.int64).reshape(-1, 2)
         self.L = float(L)
@@ -308,6 +308,17 @@ class Field:
         self._lipid_mask = self.species != WATER
         self.angles = (self._infer_13() if angles is None else
                        np.asarray(angles, dtype=np.int64).reshape(-1, 2))
+        # BF (specs/2026-09-16_chain_bending_form.md). An explicit angle potential
+        # V = 0.5*k_theta*(theta - pi)^2, as an ALTERNATIVE to the 1-3 distance spring. The distance
+        # spring is quartic once the bonds relax (V = 2.083*delta^4), so it has zero harmonic
+        # coefficient at straight, where a real acyl chain restores at every deviation. An angle term
+        # has NO algebraic coupling to bond length, which is the mechanism that sank bend_r0 = 4.0
+        # (it inflated every bond 67% instead of straightening the chain).
+        #
+        # OFF BY DEFAULT (k_theta = 0). Nothing changes until it is switched on, so no existing
+        # result moves. Same triples as the 1-3 spring, so head-centred triples are dropped here too.
+        self.k_theta = float(os.environ.get("VIVARIUM_K_THETA", k_theta))
+        self.triples = self._infer_triples()
         self.chi = default_chi() if chi is None else np.asarray(chi, dtype=float)
         if not np.allclose(self.chi, self.chi.T):
             raise ValueError("chi must be symmetric: U_ij and U_ji are the same pair")
@@ -351,6 +362,43 @@ class Field:
                     out.add((i, k))
         return (np.array(sorted(out), dtype=np.int64) if out
                 else np.zeros((0, 2), dtype=np.int64))
+
+    def _infer_triples(self):
+        """(i, j, k) with j the CENTRE, for every bonded angle. Head-centred triples dropped.
+
+        Identical selection to `_infer_13` -- which drops triples centred on a HEAD, because pinning
+        a branched lipid's two tail roots makes the head sit in the middle of a linear five-bead
+        chain and every planted bilayer scrambled. The only difference is that this keeps the centre,
+        which an angle potential needs and a distance spring does not.
+        """
+        if not len(self.bonds):
+            return np.zeros((0, 3), dtype=np.int64)
+        nbr = {}
+        for a, b in self.bonds:
+            nbr.setdefault(int(a), []).append(int(b))
+            nbr.setdefault(int(b), []).append(int(a))
+        out = set()
+        for mid, ends in nbr.items():
+            if self.species[mid] == HEAD:
+                continue
+            for x in range(len(ends)):
+                for y in range(x + 1, len(ends)):
+                    i, k = sorted((ends[x], ends[y]))
+                    out.add((i, int(mid), k))
+        return (np.array(sorted(out), dtype=np.int64) if out
+                else np.zeros((0, 3), dtype=np.int64))
+
+    def _angle_geometry(self, X):
+        """(u, v, |u|, |v|, theta) for every triple, minimum-imaged. u = r_i - r_j, v = r_k - r_j."""
+        t = self.triples
+        u = X[t[:, 0]] - X[t[:, 1]]
+        v = X[t[:, 2]] - X[t[:, 1]]
+        u -= self.L * np.round(u / self.L)
+        v -= self.L * np.round(v / self.L)
+        nu = np.maximum(np.linalg.norm(u, axis=1), 1e-12)
+        nv = np.maximum(np.linalg.norm(v, axis=1), 1e-12)
+        cos = np.clip((u * v).sum(axis=1) / (nu * nv), -1.0, 1.0)
+        return u, v, nu, nv, np.arccos(cos), cos
 
     # ---- the attention view -------------------------------------------------
 
@@ -610,6 +658,9 @@ class Field:
             bd -= self.L * np.round(bd / self.L)
             br = np.linalg.norm(bd, axis=1)
             e += float((0.5 * k * (br - r0) ** 2).sum())
+        if self.k_theta > 0.0 and len(self.triples):
+            _, _, _, _, th, _ = self._angle_geometry(X)
+            e += float((0.5 * self.k_theta * (th - np.pi) ** 2).sum())
         return e
 
     def _springs(self):
@@ -677,6 +728,36 @@ class Field:
             bsafe = np.maximum(br, 1e-12)
             bf = (-k * (br - r0) / bsafe)[:, None] * bd
             F += scatter_add_pair(len(X), pairs[:, 0], pairs[:, 1], bf)
+        if self.k_theta > 0.0 and len(self.triples):
+            F += self._angle_forces(X)
+        return F
+
+    def _angle_forces(self, X):
+        """-dV/dX for V = 0.5*k_theta*(theta - pi)^2, analytic.
+
+        dtheta/dr carries a 1/sin(theta). The end that LOOKS dangerous, theta = pi, is not: sin(pi)
+        evaluates to 1.22e-16 rather than 0, phi is exactly 0 there, and the geometric factor du
+        vanishes identically, so the force is 0 by three independent routes. An earlier version
+        carried a series expansion for that case; it guarded nothing and was removed.
+        The end that DOES bite is theta = 0 -- a chain folded back onto itself -- where sin is exactly
+        0.0 and the ratio is -pi/0 = NaN, which would silently poison the whole force array. Excluded
+        volume should prevent that configuration, but "should" is not a guarantee, so clamp.
+        """
+        t = self.triples
+        u, v, nu, nv, th, cos = self._angle_geometry(X)
+        phi = np.pi - th
+        sin = np.sin(th)
+        # ratio = (theta - pi)/sin(theta), by series where sin(theta) underflows
+        ratio = -phi / np.maximum(sin, 1e-12)
+        pref = self.k_theta * ratio
+        du = v / (nu * nv)[:, None] - (cos / (nu * nu))[:, None] * u
+        dv = u / (nu * nv)[:, None] - (cos / (nv * nv))[:, None] * v
+        fi = pref[:, None] * du
+        fk = pref[:, None] * dv
+        F = np.zeros_like(X)
+        np.add.at(F, t[:, 0], fi)
+        np.add.at(F, t[:, 2], fk)
+        np.add.at(F, t[:, 1], -(fi + fk))
         return F
 
 

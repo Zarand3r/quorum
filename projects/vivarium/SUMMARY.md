@@ -20,6 +20,10 @@ defines a vesicle was the third such question and was settled on 2026-09-15; see
 ## Requirements
 
 - **R1 — Transformer-only.** Every force is a masked attention head; one forward pass equals one step.
+  A force that is genuinely three-body (an angle, or the many-body term) is **two** composed passes —
+  accumulate a per-bead quantity from a masked neighbourhood, then redistribute it — not one head.
+  That is a real part of the architecture, not a workaround: the many-body term has always been
+  written that way and sits in the production path.
   Verified end-to-end by `tests/test_physical_realism.py`, which checks each head against the equation
   it claims to compute and cross-checks a published membrane potential expressed in the same primitives.
 - **R2 — Nothing that contains the answer.** No spontaneous-curvature term, no "bend here" knob. New
@@ -269,7 +273,8 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
   (2) build the starting sheet at the spacing the model settles at rather than a hand-picked one that
   is 16% too spread out — the cheapest experiment, ~1 h, and a prerequisite for (3);
   (3) give the chains the *right kind* of bending resistance, registered in
-  `specs/2026-09-16_chain_bending_form.md`. **We expect this to make vesicles rarer, not commoner**,
+  `specs/2026-09-16_chain_bending_form.md` and now **built, checked, and switched off** — it passes
+  every test the other forces pass, and turning it on is a separate, later decision. **We expect this to make vesicles rarer, not commoner**,
   and are doing it anyway because it is what real molecules do — the rim cost that drives closure here
   measures as zero, so stiffer chains should close less readily. That prediction is written down in
   advance so a lower number cannot later be reported as a disappointment;

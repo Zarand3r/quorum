@@ -162,6 +162,46 @@ class VivariumTransformer:
         for sp, k, r0 in self.f._springs():
             p, sep, dist = self._spring_pairs(X, sp)
             out += AttentionHead("spring", self._score_spring(k, r0))(X, self.f.L, p, sep, dist)
+        if self.f.k_theta > 0.0 and len(self.f.triples):
+            out += self._angle_head(X)
+        return out
+
+    def _angle_head(self, X):
+        """The bending term as a TWO-PASS masked operation: gather at the centre, scatter to the ends.
+
+        An angle is irreducibly three-body and a single attention head is pairwise, so this cannot be
+        one head. It is the same shape as the many-body term above, which is already in this file and
+        already in the production path: accumulate a per-bead quantity from a masked neighbourhood,
+        then redistribute it. Here pass 1 gathers the two bond vectors at the centre bead j, pass 2
+        scatters the resulting force to i, j and k.
+
+        REIMPLEMENTED, not delegated to `field._angle_forces`. That is the convention in this file --
+        the springs and the many-body term are both written out again here -- because the point of
+        `test_physical_realism`'s cross-path gate is that two INDEPENDENT routes agree. Calling
+        field's version would make that gate unfalsifiable.
+        """
+        from _scatter import scatter_add
+        t = self.f.triples
+        L = self.f.L
+        u = X[t[:, 0]] - X[t[:, 1]]
+        v = X[t[:, 2]] - X[t[:, 1]]
+        u -= L * np.round(u / L)
+        v -= L * np.round(v / L)
+        nu = np.maximum(np.linalg.norm(u, axis=1), 1e-12)
+        nv = np.maximum(np.linalg.norm(v, axis=1), 1e-12)
+        cos = np.clip((u * v).sum(axis=1) / (nu * nv), -1.0, 1.0)
+        phi = np.pi - np.arccos(cos)
+        # 1/sin(theta) is harmless at theta = pi (sin evaluates to 1.22e-16, phi is 0, and the
+        # geometric factor vanishes) but is a true NaN at theta = 0, a chain folded onto itself.
+        ratio = -phi / np.maximum(np.sin(np.arccos(cos)), 1e-12)
+        pref = self.f.k_theta * ratio
+        fi = pref[:, None] * (v / (nu * nv)[:, None] - (cos / (nu * nu))[:, None] * u)
+        fk = pref[:, None] * (u / (nu * nv)[:, None] - (cos / (nv * nv))[:, None] * v)
+        n = len(X)
+        out = np.zeros_like(X)
+        for col, f in ((0, fi), (2, fk), (1, -(fi + fk))):
+            for dim in range(X.shape[1]):
+                out[:, dim] += scatter_add(n, t[:, col], f[:, dim])
         return out
 
     # ---- forward pass ------------------------------------------------------------------------
