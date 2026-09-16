@@ -44,6 +44,7 @@ ARCHIVED = {
 }
 
 SUPPORT = {
+    "emerge_gate2",
     "vesicle_gate",
     "_curl_cal", "_cvcontrol", "_cvdegenerate", "_disk_closure",
     "_emerge2d", "_eos_check", "_fluidity", "_kappa",

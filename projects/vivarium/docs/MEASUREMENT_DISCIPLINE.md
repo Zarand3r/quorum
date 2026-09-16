@@ -215,3 +215,66 @@ suite said nothing was wrong — including the test that enforces "every force i
 **The rule.** Skipping is a per-test judgement about what the body builds, not a per-file one about
 what the file is called. And a skip that removes coverage of an invariant unrelated to the reason for
 skipping is a defect, even though the suite goes green.
+
+---
+
+## Rule 22 — expand a potential only around a configuration the system actually occupies
+
+**Bought 2026-09-16.** An external analysis reported that the chain stiffener has a **negative**
+bending coefficient, making the straight chain a local *maximum* with minima at ±20° — a
+"kink-promoter with degenerate handedness". The arithmetic was correct and reproduced to four
+decimals. The premise was not.
+
+It computed `V(δ)` with the bond length **held at 1.0155 σ**, the value measured in relaxed melt
+configurations. But the bonds are harmonic springs, not constraints. A straight trimer held at
+1.0155 σ is not an equilibrium: it sits 0.144 ε above the minimum with **9.3 ε/σ of unbalanced force**
+on each end bead. Let the bonds relax and the double well vanishes — the energy is monotonic from
+δ = 0 and the minimum is exactly at straight:
+
+| kink | 0° | 10° | 20° | 30° | 40° |
+|---|---|---|---|---|---|
+| bonds pinned at 1.0155 (wrong) | +0.096 | +0.054 | **0.000** | +0.146 | +0.837 |
+| **bonds relaxed (right)** | **0.000** | 0.002 | 0.031 | 0.162 | 0.526 |
+| `b*` at that kink | 1.0000 | 1.0026 | 1.0102 | 1.0230 | 1.0410 |
+
+The third row is the tell, and it inverts the causality: **bond length grows with kink angle**. The
+1.0155 σ seen in relaxed data is a *consequence* of chains being thermally kinked, not a cause of
+kinking. The analysis took a correlated equilibrium property, froze it, and rediscovered it as a
+mechanism.
+
+**The rule.** Before expanding an energy around a configuration, check that the configuration is
+stationary — `max |dE/dx|` must be ~0 there. If it is not, the expansion describes a constrained
+system nobody is simulating. Freezing one degree of freedom at its *mean* value is not the same as
+integrating it out, and when the frozen coordinate is correlated with the one under study, the two
+answers differ qualitatively rather than slightly.
+
+## Rule 23 — a modulus is a free-energy second derivative, not the curve's curvature
+
+**Bought the same day, from the same investigation.** Having found the harmonic coefficient at
+straight to be ~0, the conclusion drawn was that chain stiffness contributes "essentially nothing" to
+the membrane's bending rigidity, and that the variance estimator `kT/Var(δ)` — which read 5.4 against
+a target of 10 — was *flattering* the model by letting steep walls truncate the variance.
+
+That is backwards. An elastic modulus is `∂²F/∂strain²`, a **free-energy** response at temperature.
+For any potential, the long-wavelength result is `F''(0) = kT/Var(δ)`. `V''(0)` equals the modulus
+**only when V is harmonic**. Verified by quadrature against a harmonic control:
+
+| potential | Var(δ) | `kT/Var` | `1/χ` (free-energy curvature) | `V''(0)` |
+|---|---|---|---|---|
+| harmonic k=10 *(known answer)* | 0.04500 | 10.0000 | **10.0000** | 10.0000 |
+| quartic 6.25 (rigid bonds) | 0.09069 | 4.9618 | **4.9618** | **0.0000** |
+| quartic 2.083 (free bonds) | 0.15708 | 2.8647 | **2.8647** | **0.0000** |
+
+`1/χ` tracks `kT/Var` exactly and `V''(0)` never. A quartic well has `V''(0) = 0` and a perfectly
+finite modulus; the "zero stiffness" reading silently evaluated the T → 0 limit of a system running at
+kT = 0.45. The estimator called flattering was the correct one, and the chains are ~1.5–4× floppier
+than the reference model rather than infinitely floppier.
+
+A third error rode along: the calculation used **kT = 1.0** when these states were generated at
+**kT = 0.45** (`gap_closure.py:70`) — a 2.2× error on top of a qualitative one.
+
+**The rule.** For any elastic or response quantity, ask what is held fixed and at what temperature,
+and validate the estimator on a **harmonic known-answer case** where the two definitions must agree.
+If an estimator disagrees with `kT/Var` on a harmonic control, it is not measuring a modulus. And read
+the temperature out of the code that produced the data, never from the default in the file you happen
+to be editing.

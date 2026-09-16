@@ -451,6 +451,11 @@ py_test(
     data = [
         ":configs",
         "pytest.ini",
+        # test_docs_match_data.py recomputes every documented rate from the result file and compares
+        # it to what the docs claim, so the docs and that TSV are inputs to the suite, not prose.
+        "SUMMARY.md",
+        "docs/ROADMAP.md",
+        "docs/results/emerge_gate2.tsv",
     ],
     imports = ["."],
     deps = [

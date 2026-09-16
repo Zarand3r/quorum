@@ -1,10 +1,25 @@
 # vivarium — consolidated roadmap
 
-*The single list of experiments and their results. Updated 2026-09-10. Supersedes `ROADMAP_V2.md` and
+*The single list of experiments and their results. Updated 2026-09-16. Supersedes `ROADMAP_V2.md` and
 `ROADMAP_RESET.md`. Referenced from [`../SUMMARY.md`](../SUMMARY.md).*
 
 Every row has a registered spec in `specs/` and an append-only result file in `docs/results/`.
 Verdicts are what the pre-registered gate returned, not an interpretation of it.
+
+**Scope, fixed 2026-09-14.** One active simulation, **2-D only**, transformer-only. `manifest.py` is
+the single source of truth for what is live: 8 ACTIVE modules, 6 ORACLE, the rest ARCHIVED or SUPPORT,
+enforced by `tests/test_manifest.py` (ACTIVE may import neither ARCHIVED nor ORACLE). 3-D is archived
+behind `manifest.THREE_D = False`, not deleted. Anything not in ACTIVE is a reference, not a result.
+
+**Every row must name the gate it was scored against.** This project's single largest source of
+confusion has been comparing rows scored under different definitions of "vesicle" — two gates
+disagreed fourteen-fold on the same 148 runs. The gate is defined once, in
+[`../SUMMARY.md`](../SUMMARY.md) § "How success is measured"; this file does not redefine it. Rows
+predating a gate change keep their original verdict and say which gate produced it.
+
+**Two kinds of success, never merged.** Realism of the *law* (does each force compute the equation it
+claims? — `tests/test_physical_realism.py`, 13 gates) is separate from realism of the *result* (did a
+vesicle form? — `vesicle_gate`). A change can improve one and cost the other; under R9 fidelity wins.
 
 ---
 
@@ -14,7 +29,7 @@ Verdicts are what the pre-registered gate returned, not an interpretation of it.
 |---|---|---|---|
 | F1 | Is the transformer formulation exact? | forces match `field.forces` to **1.4e-16**; one forward pass vs `Inertial.step` **exactly 0.0**; token-channel `q·k` vs the χ table **0.000e+00** over 30 186 pairs | **PASS** |
 | F2 | Does it cost anything? | 21.17 ± 2.42 vs 20.65 ± 1.66 ms/step | **free** |
-| F3 | Chain-bending defect | 1-3 stiffener at rest length 2σ gives **zero** harmonic stiffness (V/δ⁴ = 0.9375 constant, V/δ² → 0.0004) | defect confirmed |
+| F3 | Chain-bending defect | 1-3 stiffener at rest length 2σ gives **zero** harmonic stiffness (V/δ⁴ = 0.9375 constant, V/δ² → 0.0004) | defect confirmed — but see §5b D2: **zero harmonic stiffness is not zero bending modulus**, and reading it as such was an error corrected 2026-09-16 |
 
 **Caveat on F1:** the bit-exact *step* identity was measured on 120 beads in L = 12 with hand-built
 linear chains — **not** the production topology. Only the *force* identity was checked at 2 959 beads.
@@ -55,6 +70,40 @@ are also partly capped, which is what makes bicelles metastable rather than spon
 Config: production chemistry, `plant="random"`, `bend_r0=2.0` (no bending stiffness).
 **Every confirmed vesicle, with the exact command to reproduce it, is recorded in
 [`SUCCESSES.md`](SUCCESSES.md)** — written because the original was lost for want of exactly that.
+
+---
+
+## 2a. Which gate defines a vesicle — SETTLED 2026-09-15
+
+Open since the project began and named for months as "a judgement call no run can settle". It was
+settled by writing down what a vesicle *is* rather than by another run.
+
+**A vesicle is a connected lipid aggregate whose enclosed void is bounded by that aggregate arranged
+as a bilayer.** Two clauses, no free parameters, both physical — `vesicle_gate.vesicle()`. The
+definition and its control panel live in `../SUMMARY.md`; what belongs here is the evidence.
+
+| # | experiment | result | verdict |
+|---|---|---|---|
+| W1 | Do the three gates agree? 20 seeds, N=160, 1e6 steps, seeds 300–319, **same trajectories scored by all three** | enclosure **9/20 (45%)**, `vesicle_call` **2/20 (10%)**, `vesicle_gate` **3/20 (15%)** — seeds 302, 308, 316 | **they do not** |
+| W2 | Is the new gate different from the old one? | Fisher **p = 0.50** vs `vesicle_call` | **not distinguishable on 20 seeds** |
+| W3 | Is it different from enclosure? | Fisher **p = 0.041** vs enclosure | **yes** |
+| W4 | Does it hold the call longer on the same object? | sd308: **69 consecutive checkpoints** under the new gate vs 8 under the old | **yes** |
+| W5 | **Look at the artifact.** All 9 enclosure hits rendered and inspected by eye (`docs/figures/enclosure9.png`) | **7 of 9 are branched tangles** — Y-junctions and forked ribbons trapping solvent incidentally. Only sd308 and sd316 are genuine rings — exactly the two the new gate keeps | **enclosure counts 9 vesicles where there are 2** |
+
+W5 is why enclosure is not the headline number despite being the most flattering, and it is the
+project's standing rule earning its keep again: look at the artifact before believing the statistic.
+
+**Honest gaps in this row.** (a) W1 was **not pre-registered** — it is a re-scoring of existing
+trajectories under three gates, not a hypothesis test, but the roadmap's own rule is that every row
+has a spec in `specs/` and this one does not. (b) The bilayer clause **does no work on this data**:
+all 24 enclosing states score 0.368–0.540, so closure alone yields the same set. It is carried on its
+physics — it would reject a closed monolayer — and no monolayer loop occurs here to test it against.
+(c) `emerge_gate2.py` saves no state at first pass, so W1's positives cannot be re-rendered without
+re-running.
+
+**The headline number is therefore 3/20 = 15%** (95% CI [5.2, 36.0]) under `vesicle_gate`, on 2-D
+production chemistry at N=160. The historical "2 of 18" remains **unverifiable, not refuted** — those
+states were overwritten on disk and cannot be re-scored under any gate.
 
 ---
 
@@ -345,7 +394,8 @@ these is not conditional on them helping.** Ordered by how much they bear on the
 | # | departure from nature | established by | deliberate? |
 |---|---|---|---|
 | D1 | **No electrostatics *in the vivarium stack*.** Real lipid heads are zwitterionic or charged; head–head repulsion is long-ranged next to the vdW well and sets head area, hence the packing parameter. | grep: no coulomb / yukawa / debye / ewald / charge term in `field.py`, `transformer.py`, `_mixture.py`. Every term is cut at `rc = 2.5σ` — `_core` zero beyond `s=1`, `_well` zero beyond `rc`. | **No — an omission.** But **not untried**: see the note below. |
-| D2 | **Chains have zero bending rigidity.** Real acyl chains resist bending; Cooke–Deserno keep the 1-3 stiffener permanently stretched (rest 4σ) precisely to straighten them. | F3: stiffener at rest length 2σ gives `V/δ² → 0.0004`. | **No — believed present, measured absent.** The `bend_r0=4.0` fix stretched bonds 67% and was retracted. |
+| D2 | **Chain bending is the wrong FUNCTIONAL FORM, not absent — and the lipid is permanently kinked as a result.** ~~Chains have zero bending rigidity.~~ **Corrected 2026-09-16.** The 1-3 spring is *quartic* (`V = 2.083·δ⁴` with bonds free), so its harmonic coefficient is zero but its modulus is not. Real acyl chains resist harmonically at every deviation; this one is soft near straight, stiff far from it — and with nothing resisting small bends, **the molecule's own two tails pull it into a 23.9° kink at zero temperature.** | Quartic confirmed on the shipped `Field` (bend-mode Hessian eigenvalue 6e-6 vs 600 for stretch). Modulus by applied torque **2.69 ε/rad²** at kT = 0.45, matching `kT/Var(δ)` to 1%, ~1.5–4× below Cooke depending on temperature matching. T = 0 ground state of the isolated 5-bead lipid: bend **23.86°**, ⟨b⟩ **1.014390** = 91% of the pooled melt excess (1.01586 over 133 files, 60 456 bonds); with `chi_TT = 0` it is 0.61° and 1.000012. | **No — inherited.** `bend_r0 = 4.0` stretched bonds 67% and was retracted (§7). Fix registered: `specs/2026-09-16_chain_bending_form.md`. |
+| D2b | **Bond length is not an independent quantity.** It is slaved to bend angle by `b*(δ) = (1+2c)/(1+2c²)`, `c = cos(δ/2)` — so any statement about molecule size must be read against the bend angle that produced it. | Fits 30 228 real triples to ±0.0026; near-straight triples in the real melt read 0.99950, recovering the ideal 1.0000 inside the melt. The rival "rigid 1-3" model misses by −0.028 at high angle. | **Not a departure** — recorded because a gate written against bond length alone (the first draft of the BF spec's AC-3) would void a correct experiment. |
 | D3 | **Two dimensions.** | by construction | **Yes** — ~29× cost in 3-D. |
 | D4 | **No hydrodynamics.** A membrane's undulation relaxation and fission dynamics are set by solvent hydrodynamics. A per-particle thermostat destroys them. | `integrate.py:75-76` — `v = c1*v + sqrt(kT/m*(1-c1²))·normal(size=X.shape)`: independent friction and noise per particle, so momentum is **not** conserved. DPD's pairwise thermostat conserves it. | **No — inherited, never chosen.** |
 | D5 | **Harmonic bonds, no maximum extension.** Under strong forces molecules stretch without limit. | `field.py` `k_bond`/`r_bond`, harmonic | **No — inherited.** FENE is the standard CG choice for exactly this. |
@@ -433,10 +483,10 @@ Twenty-five defects on record, **all instruments or harness, none physics**.
 | I7 | gradient gate (F = −∇U) | **~2e-08** for every modulator configuration |
 | I8 | cross-path gate (field vs transformer) | **0.000e+00** at every configuration |
 
-**The open question this creates:** the historical "2 of 18" used **gate 1 only**; gate 2 (lumen size)
-was added later and rejects *every* saved 2-D state. The two successful runs were overwritten on disk.
-So it is **unverifiable, not refuted**. Deciding which gate defines a vesicle is a judgement call, not
-a measurement — it is the top item in the reviewer handoff.
+**This is now closed — see §2a.** `vesicle_gate` defines a vesicle: one aggregate, one enclosed void,
+arranged as a bilayer. It was settled by definition, not by a run, which is what the earlier wording
+("a judgement call no run can settle") was pointing at. The historical "2 of 18" is still
+**unverifiable, not refuted** — it used gate 1 only, and those states were overwritten on disk.
 
 ---
 
@@ -508,69 +558,67 @@ registered gate. `np.add.at` → `bincount` gave a bit-identical **16–23%**.
 
 ## 9. What comes next
 
-*Updated 2026-09-13. **Ordered by value.** This list got LONGER over 2026-09-11/12: one item closed,
-the fidelity audit (§5b) opened four substantive ones. That is normal for research and is stated
-rather than hidden.*
+*Updated 2026-09-16. **Ordered by value.** Two items closed since 2026-09-13 and one was reordered
+after its physics turned out to have been read wrong; see §5b D2.*
 
-### Closed this session
+### Closed
 
-- **The MLP's simplest channel is now actually tested.** Was item 3 below, previously untestable
-  because both earlier attempts ran against a broken constant. G5: fails to curl at amps 0.25 / 1.0 /
-  2.0, destroys the membrane dose-dependently (p = 8.0e-10). See §5.
+- **Which gate defines a vesicle.** Settled 2026-09-15 — §2a. `vesicle_gate`, 3/20 = 15%.
+- **Consolidation.** 59 files / 4 999 lines removed, 146 → 87 modules, then `legacy/` (67 files).
+  `manifest.py` + `tests/test_manifest.py` now hold the line: ACTIVE may import neither ARCHIVED nor
+  ORACLE. Two saves worth keeping: `_kappa` and `_linetension` were retained on merit despite zero
+  callers because they measure the two quantities `R_c = 2κ/λ` needs, and a first pass deleted `fig2d`
+  while four survivors still imported it — caught by re-closing over the survivors, not by the build,
+  which passed anyway.
+- **The MLP's simplest channel is now actually tested.** G5: fails to curl at amps 0.25 / 1.0 / 2.0,
+  destroys the membrane dose-dependently (p = 8.0e-10). See §5.
+- **3-D.** Descoped 2026-09-14, archived behind `manifest.THREE_D`, not deleted.
 
 ### Open, in order
 
 1. **Settle the token-channel decision** (`HANDOFF_2026-09-12.md` §1). Blocks the push and defines
-   what the project claims. Needs a person, not a run. **Note it is also a prerequisite for item 4** —
-   induced fit and history-dependent state both require the channel to reach the forces.
+   what the project claims. Needs a person, not a run. **Prerequisite for item 5.**
 2. **Plant the ribbon at the spacing the model settles at** (D9). 1.7651 σ, not the hand-picked 2.05.
-   The shape term currently wrecks the sheet before it can bend it because the starting sheet reads as
-   16 % under-crowded; this isolates the second-order leaflet asymmetry from the first-order global
-   inflation. **The single cheapest experiment most likely to move the bending question**, and under R9
-   a fidelity fix worth doing regardless. ~1 h at 12-way.
-3. **Raise the 2-D emergence rate.** Still ~1–2 in 20. Three *geometric* levers failed (E3, E4, E5).
-   The strongest candidate is **D1, long-range head–head repulsion**: `max largest aggregate = N`
-   exactly at N = 56, 80, 112, 160, so the model selects **no size** — bulk coarsening, which is what a
-   single interaction range predicts. A vesicle is a finite size-selected object. **Falsifier:** add a
-   screened-Coulomb head–head term with Debye length > `rc`; largest must *saturate* with N rather than
-   track it. **Read §5b D1 first** — polar_pack already tried an electrostatic head, it was
-   non-conservative for three months undetected, and it never produced emergence. A vivarium version
-   needs a momentum test and a gradient gate from the first commit, not added later.
-4. **The rest of the MLP** — none of these tested, and all three need item 1 first:
+   The starting sheet currently reads as 16% under-crowded, so every environment-dependent term sees a
+   membrane that is not the one the model equilibrates to. **Cheapest experiment on the list (~1 h at
+   12-way), a fidelity fix owed under R9 regardless, and now a prerequisite for BF's AC-4.**
+3. **BF — replace the 1-3 distance spring with an explicit angle potential.**
+   Registered: `specs/2026-09-16_chain_bending_form.md`. The departure is the **functional form**: the
+   current term is quartic (`V = 2.083·δ⁴`, zero harmonic coefficient, modulus 2.69 ε/rad² at
+   kT = 0.45), where a real chain restores harmonically at every deviation. An angle term delivers
+   Cooke's physics with **zero coupling to bond length**, which is the precise mechanism that sank
+   `bend_r0 = 4.0` (§7). Five acceptance criteria, all registered before data; AC-3 (bond length must
+   not move) is the one it can **fail by winning**.
+   **Do not expect this to raise the vesicle rate, and it is worth doing anyway.** λ was measured
+   indistinguishable from zero (B1) and closure needs `R_c = 2κ/λ`, so raising κ at λ ≈ 0 may make
+   closure *rarer*. Under R9 that outcome is a pass and is pre-registered as one.
+4. **Raise the 2-D emergence rate — D1, long-range head–head repulsion.** Still the strongest
+   candidate, and it rests on this project's own data rather than on literature: `max largest
+   aggregate = N` exactly at N = 56, 80, 112, 160, so the model **selects no size** — bulk coarsening,
+   which is what a single interaction range predicts. A vesicle is a finite size-selected object.
+   **Falsifier:** add a screened-Coulomb head–head term with Debye length > `rc`; largest must
+   *saturate* with N rather than track it. **Read §5b D1 first** — `polar_pack` already tried an
+   electrostatic head, it was non-conservative for three months undetected, and it never produced
+   emergence. A vivarium version needs a momentum test and a gradient gate from the first commit.
+5. **The rest of the MLP** — none tested, all need item 1 first:
    - **induced fit** — shape adapts to *which* neighbours, not how many. The current descriptor is a
-     rotationally-invariant count, so it cannot tell a molecule which *side* it is crowded on — and
-     one-sidedness is what curvature is. A first-moment (vector) descriptor would; it stays zero on a
+     rotationally-invariant count, so it cannot tell a molecule which *side* it is crowded on, and
+     one-sidedness is what curvature is. A first-moment (vector) descriptor would, and stays zero on a
      flat symmetric bilayer by symmetry, so it passes the no-smuggling null.
    - **history-dependent state** — needs an extended Lagrangian or the energy ledger is lost.
    - **explicit rigidity** — an elastic pull toward a rest shape.
-5. **Finish the registered ladder: amp 4.0.** NOT RUN, not null. `curl.py --scales 4.0 --n-ref 0.3335
-   --seeds 12 --seed0 800 --workers 12`. ~1 h.
-6. **Fix the fidelity defects that are not experiments** (§5b): D2 chains have zero bending rigidity
-   (needs FENE + a proper stiffener), D4 no hydrodynamics (needs a pairwise DPD thermostat), D5
-   harmonic bonds. Under R9 these are owed regardless of what they do to the vesicle rate.
-7. **Build a validated leaflet splitter** — by lipid axis, not head radius. Needed to say *why* any
-   curl happens; the radius-based attempt failed its controls (2026-09-11) and was withdrawn.
-8. **Decide which gate defines a vesicle** (§6). No run can settle it. Blocks any claim about the
-   historical 2/18.
-9. ~~**Rebuild 3-D on inextensible bonds (FENE).**~~ **REMOVED 2026-09-14 — 3-D is archived.**
-   Scope is 2-D only. Gated by `manifest.THREE_D = False`; 22 tests skipped, none deleted, all
-   restored by flipping that flag. This was the most expensive item on the list (~29× per run) resting
-   on a retracted foundation, and every question it would have answered is open in 2-D.
-10. **Run the oracle head-to-head** (AC-2, registered, never evaluated). 73.8 h/seed.
-11. ~~**Consolidation.**~~ **DONE 2026-09-13** — 59 files / 4 999 lines removed, 146 → 87 modules.
-    Method: build the import graph, take the closure of five seed sets (production path, oracles, live
-    harnesses, instruments, everything `tests/` imports), delete the complement. Two safeguards that
-    mattered: `_kappa` and `_linetension` were kept on merit despite zero callers, because they measure
-    the two quantities `R_c = 2κ/λ` needs; and a first pass deleted `fig2d` while four survivors still
-    imported it — caught by re-closing over the survivors, not by the build, which passed anyway.
-    Full suite identical before and after (1 failed / 253 passed, the same pre-existing failure).
-    ~~Original wording:~~ `def plant` in 18 files, `def build` in 15, `def step` in 12, and two force
-    paths that once disagreed silently. Real work, not a file move — ~~quarantining `bicelle2d` /
-    `bilayer3d`~~ was **WITHDRAWN 2026-09-11**: they are live builders for the viewer (`server.py:436`)
-    and four tests, not dead legacy. That was a miscount on my part.
+6. **Finish the registered ladder: amp 4.0.** NOT RUN, not null.
+   `curl.py --scales 4.0 --n-ref 0.3335 --seeds 12 --seed0 800 --workers 12`. ~1 h.
+7. **The fidelity defects that are not experiments** (§5b): D4 no hydrodynamics (needs a pairwise DPD
+   thermostat), D5 harmonic bonds with no maximum extension. Owed under R9 regardless of effect.
+8. **Build a validated leaflet splitter** — by lipid axis, not head radius. Needed to say *why* any
+   curl happens; the radius-based attempt failed its controls and was withdrawn.
+9. **Run the oracle head-to-head** (AC-2, registered, never evaluated). 73.8 h/seed.
 
 **Not started:** fusion and division. Neither has ever been observed.
 
-**The objective itself is not met.** A 2-D vesicle emerges rarely; the stated goal is a self-assembled
-bilayer in 3-D from excluded volume + van der Waals + electrostatics, and of those three the model has
-the first two.
+**The objective is not met.** Scope is 2-D, and within it a vesicle emerges in **3 runs of 20** under
+a gate that requires one aggregate, one void, and a bilayer shell. The stated goal names excluded
+volume, van der Waals **and electrostatics**; the model has the first two, which is item 4. Whether a
+flat patch can be made to bend at all remains the central open question — six nulls, none of them a
+clean test.

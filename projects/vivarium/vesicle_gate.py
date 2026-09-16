@@ -102,12 +102,21 @@ def inward_fraction(X, species, mols, L, members):
     return float((np.einsum("ij,ij->i", ht, out) < 0).mean())    # head points inward
 
 
-def vesicle(X, species, mols, L, dilations=(1.0, 1.5, 2.0, 2.5, 3.0), bilayer_band=(0.25, 0.75)):
+def vesicle(X, species, mols, L, dilations=(1.0, 1.5, 2.0, 2.5, 3.0), bilayer_band=(0.20, 0.80)):
     """(is_vesicle, score, detail). `score` is graded so a sweep can be gated on it.
 
-    score = closure * bilayer, each in [0, 1]:
-      closure  fraction of the dilation ladder at which the aggregate encloses EXACTLY one void
-      bilayer  1 - |inward_fraction - 0.5| / 0.5   -- 1.0 at a perfect two-leaflet split, 0 at one leaflet
+    score = closure, with the bilayer clause acting as a VETO rather than a factor:
+
+      closure  fraction of the dilation ladder at which ONE connected aggregate encloses EXACTLY one
+               void. This is what actually discriminates -- measured 2026-09-14, all 24 enclosing
+               states among 237 pass the bilayer clause, so closure alone yields the same set.
+      veto     inward fraction outside the band -> score 0. The band is GEOMETRIC, not picked: a ring
+               of radius R and bilayer thickness d has inner/(inner+outer) = (R - d/2)/2R, so the
+               smallest plausible vesicle here (R~5, d~4) sits at 0.30 and a monolayer at 0 or 1.
+               (0.20, 0.80) brackets every real bilayer with margin and excludes one leaflet.
+
+    A binary call, when one is needed, is closure == 1.0 -- unanimity across the ladder, which is the
+    only non-arbitrary cut point. Everything else would be a number somebody chose.
     """
     aggs = _aggregates(X, mols, L)
     if not aggs:
@@ -137,11 +146,12 @@ def _score_one(X, species, mols, L, members, dilations, bilayer_band):
     closure = hits / len(dilations)
 
     frac = inward_fraction(X, species, mols, L, members)
-    bilayer = max(0.0, 1.0 - abs(frac - 0.5) / 0.5)
     lo, hi = bilayer_band
-    ok = closure == 1.0 and lo <= frac <= hi
-    return ok, closure * bilayer, {"n_lipids": len(members), "closure": closure,
-                                   "inward_fraction": round(frac, 3), "bilayer": round(bilayer, 3)}
+    passes_veto = lo <= frac <= hi
+    score = closure if passes_veto else 0.0
+    ok = closure == 1.0 and passes_veto
+    return ok, score, {"n_lipids": len(members), "closure": closure,
+                       "inward_fraction": round(frac, 3), "bilayer_veto": bool(passes_veto)}
 
 
 def validate() -> int:

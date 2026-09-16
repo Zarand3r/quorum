@@ -13,9 +13,9 @@ forms because we told it to bend has not emerged. **A 2-D vesicle does emerge**,
 and metric, from a scattered start with nothing planted; it forms by a ribbon wrapping until its two
 ends meet, not by curving. **The full objective is not met**: the goal names excluded volume, van der
 Waals *and electrostatics*, and the model has the first two; emergence is rare. **Scope narrowed to
-2-D on 2026-09-14** — every open question that matters (does a patch bend? what selects a size? which
-gate defines a vesicle?) is answerable in 2-D and unanswered there, so 3-D at ~29× the cost is the
-wrong order.
+2-D on 2026-09-14** — every open question that matters (does a patch bend? what selects a size?) is
+answerable in 2-D and unanswered there, so 3-D at ~29× the cost is the wrong order. *Which* gate
+defines a vesicle was the third such question and was settled on 2026-09-15; see below.
 
 ## Requirements
 
@@ -27,12 +27,17 @@ wrong order.
 - **R3 — An energy ledger.** Forces must be `−grad U`. Without it, temperature, line tension and
   bending modulus are undefined. This is what forbids softmax (it breaks Newton's third law).
 - **R4 — Instruments must SEPARATE their controls**, not merely score the intended case well — a
-  known-answer case *and* a null case. Nineteen rules in `docs/MEASUREMENT_DISCIPLINE.md`, each bought
+  known-answer case *and* a null case. Twenty-three rules in `docs/MEASUREMENT_DISCIPLINE.md`, each bought
   with a defect; in every case the physics was fine and the instrument was wrong.
 - **R5 — Look at the picture before believing the number.** Every structural claim needs a render.
 - **R6 — Criteria before data.** Gates registered in `specs/` before the run, scored mechanically,
   amendments dated.
 - **R7 — Results are regenerable.** Every number traces to an append-only TSV in `docs/results/`.
+  Enforced for the headline rates by `tests/test_docs_match_data.py`, which recomputes them from the
+  TSV and fails the suite if this file or the roadmap has drifted from the data — added 2026-09-16
+  after both documents were found stating a rate no run had produced, and after the first version of
+  that test passed against three injected errors because it grepped for substrings instead of parsing
+  the claim.
 - **R8 — One implementation per concept.** Two force paths that disagreed silently voided a
   48-CPU-hour experiment.
 - **R9 — Faithful to nature before favourable to the result.** In a doubtful modelling choice, take
@@ -100,24 +105,30 @@ Score is graded (`closure × bilayer`), so a sweep can be gated on it where a 3 
 it exists to reject "a branched network that happens to enclose one incidental pocket" — a *size*
 proxy for a *structural* question. Asking the structural question directly removes the constant.
 
-### The older pair, kept for comparison — and they disagree by fourteen-fold
+### 3. How often does it happen? — **3 in 20**
 
-Two gates are applied to the same runs and disagree by fourteen-fold:
+20 seeds, N=160, 1e6 steps, seeds 300–319, 2-D production chemistry, every trajectory scored by all
+three gates so the numbers are comparable:
 
-| gate | what it requires | rate over 148 production runs |
+| gate | what it requires | rate |
 |---|---|---|
-| enclosure | any enclosed pocket at any checkpoint | **60/148 — 41%** |
-| `vesicle_call` | enclosure stable across *every* dilation 1.0–3.0, **and** lumen ratio ≥ 0.10 | **5/148 — 3%** |
+| enclosure | any enclosed pocket at any checkpoint | 9/20 — 45% |
+| `vesicle_call` (superseded) | enclosure across every dilation **and** lumen ratio ≥ 0.10 | 2/20 — 10% |
+| **`vesicle_gate`** | **one aggregate, one void, arranged as a bilayer** | **3/20 — 15%**, CI [5.2, 36.0] |
 
-Both numbers are real and describe the same physics; they ask different questions. The strict gate
-exists because the loose one once passed a 69-cell pocket that vanished under dilation, and a
-branched network that enclosed an incidental hole. **Which one defines a vesicle has never been
-decided, and no further run can decide it.**
+**15% is the headline number.** Not 45%: all 9 enclosure hits were rendered and looked at, and **7 of
+the 9 are branched tangles** — Y-junctions and forked ribbons trapping solvent incidentally. Only
+sd308 and sd316 are genuine rings, which is exactly the set the strict gate keeps. Against
+`vesicle_call` the difference is **not** significant (Fisher p = 0.50); against enclosure it is
+(p = 0.041). Full record in `docs/ROADMAP.md` §2a, including three honest gaps in it.
 
-Neither gate checks that the shell is a **bilayer** — two leaflets, heads facing out. Three attempts
-to measure that on 2026-09-14 all failed their controls (one could not fail at all; one rejected a
-genuine thin bilayer; one could not tell a relaxed planted ring from an emergent state). **So the
-defining structural property of the headline result is currently unmeasured.**
+### The older pair, kept only to read historical rows
+
+`vesicle_call` and bare enclosure are **superseded**. They are retained because rows in the roadmap
+predating 2026-09-15 were scored against them and must stay readable, not because either is a live
+criterion. Over 148 earlier production runs they disagreed fourteen-fold — enclosure 60/148 (41%),
+`vesicle_call` 5/148 (3%) — and that unresolved disagreement is what `vesicle_gate` was written to
+end. Neither of the two checks that the shell is a bilayer at all.
 
 ### The rule that would have caught all of it
 
@@ -231,7 +242,11 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
   explanation covers them: a force between two molecules cannot tell the two layers apart. The sixth
   is not a pair force, so that explanation does not cover it — **but it is not a clean test either**,
   because the term took the sheet apart before it could bend it.
-- **BLOCKED — making emergence reliable.** Still 1–2 runs in 20. Three geometric levers failed;
+- **DONE — there is now one definition of success, and one number.** A vesicle is one aggregate
+  enclosing one void, arranged as a bilayer. Scored on 20 fresh seeds: **3 in 20 (15%)**. The looser
+  test says 45%, but all nine of its hits were rendered and seven are branched tangles, not vesicles.
+  Settled by writing down the definition, not by another run.
+- **BLOCKED — making emergence reliable.** Still 3 runs in 20. Three geometric levers failed;
   whatever limits it is not the geometry we have been varying.
 - **ARCHIVED — 3-D.** Not blocked, *descoped*, 2026-09-14. Its foundation was already retracted (the
   "bending fix" stretches molecules 67% rather than stiffening them) and it costs ~29× per run. It is
@@ -240,20 +255,33 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
 - **NOT STARTED — fusing and dividing.** Never observed.
 - **NEEDS A DECISION — [`docs/HANDOFF_2026-09-12.md`](docs/HANDOFF_2026-09-12.md).** A molecule's own
   internal channel is not wired to the forces. **Nothing is pushed until it is settled.**
+- **CORRECTED — what the chain stiffener actually does.** It was recorded for months as giving the
+  molecules **no** stiffness at all. That is wrong, and the error was in the measurement, not the
+  model. The term has no *harmonic* stiffness at straight, which is true and was already known, but a
+  stiffness is a property of free energy at temperature, not of the curve's shape at one point — and
+  measured properly the chains are about **1.5–4× floppier than the published model they copy**, not
+  infinitely floppier. The real departure is the *shape* of the resistance: a real chain resists
+  bending a little bit at every angle, this one barely resists small bends and strongly resists large
+  ones. **A separate claim that the stiffener actively encouraged kinks was also wrong** — it came
+  from holding the bonds at a fixed length they do not actually sit at.
 - **NEXT** — the order is [`docs/ROADMAP.md`](docs/ROADMAP.md) §9; 3-D is no longer on it. The first four:
   (1) settle the open decision above, then get the suite green and push;
   (2) build the starting sheet at the spacing the model settles at rather than a hand-picked one that
-  is 16% too spread out — the cheapest experiment most likely to move the bending question, ~1 h;
-  (3) give the molecules the long-range repulsion between charged heads that real ones have, because
+  is 16% too spread out — the cheapest experiment, ~1 h, and a prerequisite for (3);
+  (3) give the chains the *right kind* of bending resistance, registered in
+  `specs/2026-09-16_chain_bending_form.md`. **We expect this to make vesicles rarer, not commoner**,
+  and are doing it anyway because it is what real molecules do — the rim cost that drives closure here
+  measures as zero, so stiffer chains should close less readily. That prediction is written down in
+  advance so a lower number cannot later be reported as a disappointment;
+  (4) give the molecules the long-range repulsion between charged heads that real ones have, because
   clumps here grow without limit and a vesicle is an object with a preferred size. **Not a fresh
   idea** — the sister simulation already tried it, its version turned out not to conserve momentum for
   three months undetected, and it never produced assembly. Any version here needs that check from the
-  first commit;
-  (4) the rest of the network's abilities, which need (1) first.
+  first commit.
 ## Known gaps
 
-- **The test suite is RED** (`1 failed, 255 passed, 22 skipped`), and has been since 2026-09-09.
-  The 22 skips are the archived 3-D tests. Five of those were FAILING before they were skipped
+- **The test suite is RED** (`1 failed, 263 passed, 14 skipped`), and has been since 2026-09-09.
+  The 14 skips are the archived 3-D tests. Five of those were FAILING before they were skipped
   (net momentum NaN, wrap NaN, unit-axis drift) for reasons never isolated — `aliveness.py` was
   cleared by direct comparison (identical to 1.11e-16 in 2-D *and* 3-D) and the new test files by a
   run without them (248 passed / same 6 failed). Recorded as unexplained rather than given a cause;

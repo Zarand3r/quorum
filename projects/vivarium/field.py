@@ -620,6 +620,15 @@ class Field:
             # ZERO harmonic bending stiffness: with r13 = 2r cos(d/2) ~ 2r - r d^2/4, the energy is
             # (K/32) r^2 d^4 -- purely QUARTIC, second derivative zero at d = 0. Verified numerically:
             # V/d^4 = 0.9375 constant, V/d^2 = 0.0004 at d = 0.02.
+            #
+            # CORRECTION 2026-09-16, two ways this comment misleads.
+            # (a) (K/32) is the stiffness at FIXED bond length. The bonds are springs, so they relax as
+            #     the chain bends, and the true quartic coefficient is K/96 -- 3x SOFTER than written.
+            # (b) "Zero harmonic stiffness" is not zero bending MODULUS. A modulus is a free-energy
+            #     second derivative, F''(0) = kT/Var(delta), which is finite for a quartic; measured by
+            #     applied torque it is 2.69 eps/rad^2 at kT = 0.45, ~1.5-4x below Cooke depending on
+            #     temperature matching. Reading V''(0) = 0 as "the chains have no stiffness" was an
+            #     error; see docs/MEASUREMENT_DISCIPLINE.md Rule 23 and ROADMAP.md 5b D2.
             # Cooke-Deserno pre-stretch it to 4 sigma, which makes the leading term quadratic with
             # k_theta = k * sigma^2 (V/d^2 = 15.0 constant), i.e. an ordinary bending potential.
             # Default keeps the old value so existing results are unchanged; set VIVARIUM_BEND_R0=4.0
