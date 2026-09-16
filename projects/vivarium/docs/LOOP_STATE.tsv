@@ -8,3 +8,11 @@ tick	utc	mode	item	action	outcome	pid
 6	2026-09-16T21:30:40Z	mode1	D9-derive	scan finished: interior min 1.9035 sigma at per=16/24/32, spread 0.0000, |F|max 1e-6, plant strain -7.39/lipid	suspicious: zero spread	-
 7	2026-09-16T21:36:18Z	mode2	D9-derive	system-size check PROVEN powerless (diffs 1e-15, periodic crystal); direction check timed out at 280s	needs cheaper minimiser	-
 8	2026-09-16T21:38:45Z	mode3	D9-derive	direction check 4/4 PASS; minimiser 30000->2000 steps (8x waste removed); TSV 189 rows written	T=0 optimum 1.903; NOT installed, finite-T still needed; continue to mode1	-
+9	2026-09-16T21:46:04Z	mode1	D9-finiteT	starting: buckling-robust NN-head metric, to be validated vs known answer AND vs deliberate buckling	-	-
+10	2026-09-16T21:47:22Z	mode1	D9-finiteT	NN-head metric validated: rotation +0.0%, arc-bend -0.1%, x-proj -50%/-56%; finite-T run launched (3 start gaps x 3 seeds, 100k steps)	RUNNING	3287363
+11	2026-09-16T22:01:21Z	mode2	D9-finiteT	BUG: mode1 run had n_water=0, no hydrophobic effect, ribbon dissolved to 3-8/40 (guard caught it); relaunched WITH solvent phi=0.55	RUNNING	3296919
+12	2026-09-16T22:15:27Z	mode2	D9-finiteT	no-op: run in flight 834s, 4/9 arms done. CONCERN: largest still 4-8/28 WITH solvent -- fragmentation not fixed by water	waiting, no parallel work	3296919
+13	2026-09-16T22:30:22Z	mode2	D9-finiteT	no-op: in flight 1738s, 8/9 arms. Arms are NOT converging (1.8->1.824, 2.05->2.015) and largest stays 4-7/28 -- reads as fragmentation, not frozen equilibrium	waiting	3296919
+14	2026-09-16T22:45:28Z	mode3	D9-finiteT	all 9 arms done: 1.8->1.8239+-0.056, 2.05->2.0145+-0.107, 2.3->1.9606+-0.051; largest 4-8/28 every arm	no convergence; rendering before any structural claim	-
+15	2026-09-16T22:48:13Z	mode3	D9-finiteT	rendering 4 frames (0/2k/10k/40k) to check fragmentation visually -- R5, no structural claim without the image	RUNNING	3313854
+16	2026-09-16T23:03:34Z	mode3	D9-finiteT	GUARD was broken: heads@2.6 reads 14 on a planted 28-lipid ribbon (known answer). Validated beads@1.4 says 28 intact to 2k steps then splits to 2x14. R8 violation: 3rd clustering impl.	D9c recorded; Rule 24; continue	-

@@ -278,3 +278,38 @@ and validate the estimator on a **harmonic known-answer case** where the two def
 If an estimator disagrees with `kT/Var` on a harmonic control, it is not measuring a modulus. And read
 the temperature out of the code that produced the data, never from the default in the file you happen
 to be editing.
+
+---
+
+## Rule 24 — validate the GUARD, not just the metric
+
+**Bought 2026-09-16.** A finite-temperature spacing measurement carried a fragmentation guard: if the
+ribbon falls apart, the spacing number is meaningless, so report the largest aggregate alongside it.
+Good instinct. The guard was then never validated, while the metric it guards was validated three
+ways (known answer at three plants, invariance under rotation and under an arc-length-preserving
+bend, response to genuine compression).
+
+The guard clustered **heads only at cut 2.6**. The project's validated clustering is **bead-level at
+cut 1.4** (`vesicle_gate._aggregates`), and that file's own docstring records an earlier version that
+clustered molecule centroids at a different cut and "disagreed with the recorded sizes (28 against a
+recorded 56) -- R8, one implementation per concept, broken in the file that quotes it". This was the
+third implementation of the same concept, written without reading the second.
+
+Measured on the same states:
+
+| step | guard (heads, 2.6) | validated (beads, 1.4) |
+|---|---|---|
+| 0 — the **planted** ribbon, one aggregate by construction | **14** | **28** |
+| 2 000 | 5 | **28** |
+| 10 000 | 5 | 14 |
+| 40 000 | 3 | 14 |
+
+It fails at **step 0**, on a configuration whose answer is known by construction — the cheapest
+possible test, never run. Two conclusions were drawn from it and both were wrong: that a dry ribbon
+"dissolved to 3-8 lipids", and that a solvated one "fragmented anyway". The ribbon in fact stays
+whole for 2 000 steps and then splits cleanly in two.
+
+**The rule.** A guard that decides whether a measurement is valid is itself a measurement, and gets
+the same treatment: a known-answer case first. Plant the structure whose answer you know and check
+the guard reads it. And before writing any clustering, connectivity, or aggregate-size helper, grep
+for the existing one -- in this repo `vesicle_gate._aggregates` is it.

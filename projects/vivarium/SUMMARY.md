@@ -27,7 +27,7 @@ defines a vesicle was the third such question and was settled on 2026-09-15; see
 - **R3 — An energy ledger.** Forces must be `−grad U`. Without it, temperature, line tension and
   bending modulus are undefined. This is what forbids softmax (it breaks Newton's third law).
 - **R4 — Instruments must SEPARATE their controls**, not merely score the intended case well — a
-  known-answer case *and* a null case. Twenty-three rules in `docs/MEASUREMENT_DISCIPLINE.md`, each bought
+  known-answer case *and* a null case. Twenty-four rules in `docs/MEASUREMENT_DISCIPLINE.md`, each bought
   with a defect; in every case the physics was fine and the instrument was wrong.
 - **R5 — Look at the picture before believing the number.** Every structural claim needs a render.
 - **R6 — Criteria before data.** Gates registered in `specs/` before the run, scored mechanically,
