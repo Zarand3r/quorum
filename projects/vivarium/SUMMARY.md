@@ -274,7 +274,10 @@ Full experiment list with results: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**.
   is 16% too spread out — the cheapest experiment, ~1 h, and a prerequisite for (3);
   (3) give the chains the *right kind* of bending resistance, registered in
   `specs/2026-09-16_chain_bending_form.md` and now **built, checked, and switched off** — it passes
-  every test the other forces pass, and turning it on is a separate, later decision. **We expect this to make vesicles rarer, not commoner**,
+  every test the other forces pass. **Blocked on a decision:** the registered check on its strength
+  came back undecidable — the allowed band is as wide as a real effect it does not account for — and
+  that criterion cannot be rewritten now it has been run against. See
+  [`docs/REVIEWER_HANDOFF_2026-09-16_loop.md`](docs/REVIEWER_HANDOFF_2026-09-16_loop.md). **We expect this to make vesicles rarer, not commoner**,
   and are doing it anyway because it is what real molecules do — the rim cost that drives closure here
   measures as zero, so stiffer chains should close less readily. That prediction is written down in
   advance so a lower number cannot later be reported as a disappointment;

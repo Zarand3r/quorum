@@ -594,8 +594,14 @@ after its physics turned out to have been read wrong; see §5b D2.*
    Registered: `specs/2026-09-16_chain_bending_form.md`. **AC-1 PASSED 2026-09-16** — the term is
    implemented in both force paths and satisfies every gate the model's other forces satisfy:
    `F = −∇U` 9.6e-07, `ΣF = 0` 1.1e-13, and **field vs attention 0.000e+00** at `k_θ` = 0, 1, 10, 50.
-   **It ships OFF (`k_θ = 0`), bit-identical to before, so no existing result moves.** Next is AC-2,
-   deriving `k_θ` temperature-matched to Cooke's `k_bend σ² = 10 ε` — nothing has been run yet. The departure is the **functional form**: the
+   **It ships OFF (`k_θ = 0`), bit-identical to before, so no existing result moves.** **AC-2 INDETERMINATE 2026-09-16 — BF is blocked on a human decision.** `k_θ` derived as
+   **4.091 ε/rad²** (Cooke's 10 ε at their kT = 1.1, matched to our kT = 0.45). Twelve seeds give
+   `kT/Var(δ)` = **3.3859 ± 0.0766 sem**, 2sem interval [3.2328, 3.5391] against the registered band
+   3.2727–4.9091 — it **straddles** the lower bound, so the gate cannot decide. More seeds would be
+   p-hacking; n was pre-committed. The criterion targets `k_θ` but measures the chain's **net**
+   stiffness, and those differ by ~17% because `chi_TT` bends the molecule (T=0 ground state 23.86°,
+   0.61° with `chi_TT` off) — the offset is as wide as the band. Re-specify, widen, or accept: a
+   person's call, and **not amendable now the data exists**. `docs/REVIEWER_HANDOFF_2026-09-16_loop.md`. The departure is the **functional form**: the
    current term is quartic (`V = 2.083·δ⁴`, zero harmonic coefficient, modulus 2.69 ε/rad² at
    kT = 0.45), where a real chain restores harmonically at every deviation. An angle term delivers
    Cooke's physics with **zero coupling to bond length**, which is the precise mechanism that sank
