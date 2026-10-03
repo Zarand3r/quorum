@@ -51,7 +51,7 @@ SUPPORT = {
     "_linetension", "_lumen", "_lumen_field",
     "_lumen_overlay", "_micelle_pole", "_sasa", "_shot",
     "_sizing3d", "_solvent_gate", "_thermal_ref", "_vesicle_calib",
-    "_ylz_run", "bench_step", "bilayer_metrics", "chemistry",
+    "_ylz_run", "bench_production", "bench_step", "bilayer_metrics", "chemistry",
     "cluster_shot", "curl", "curl_witness", "emerge_reduced",
     "fig_state", "gap_closure", "gap_shot", "harness",
     "inspect_raw", "make_figures", "metrics_membrane", "metrics_pack",

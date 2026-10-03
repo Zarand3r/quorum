@@ -72,6 +72,13 @@ py_binary(
     imports = ["."],
     deps = [":vivarium"],
 )
+py_binary(
+    name = "bench_production",
+    srcs = ["bench_production.py"],
+    main = "bench_production.py",
+    imports = ["."],
+    deps = [":vivarium"],
+)
 
 py_binary(
     name = "polar_pack",
@@ -456,6 +463,8 @@ py_test(
         "SUMMARY.md",
         "docs/ROADMAP.md",
         "docs/results/emerge_gate2.tsv",
+        ":vesicle_states",
+        "viewer.html",
     ],
     imports = ["."],
     deps = [

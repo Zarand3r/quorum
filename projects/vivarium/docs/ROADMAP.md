@@ -579,7 +579,9 @@ after its physics turned out to have been read wrong; see §5b D2.*
 ### Open, in order
 
 1. **Settle the token-channel decision** (`HANDOFF_2026-09-12.md` §1). Blocks the push and defines
-   what the project claims. Needs a person, not a run. **Prerequisite for item 5.**
+   what the project claims. Needs a person, not a run. **Prerequisite for item 5.** The preserved
+   design backlog, candidate physical roles, and acceptance gates are in
+   [`MLP_FUTURE_WORK.md`](MLP_FUTURE_WORK.md); do not connect the existing MLP without those gates.
 2. **Plant the ribbon at the spacing the model settles at** (D9). **PART DONE 2026-09-16.** The
    constant is named (`_mixture.RIBBON_GAP_BRANCHED`) and overridable, with tests; the **value is
    still 2.05**. The spanning-ribbon route now works and is validated — see D9b in §5b — and gives a
@@ -625,6 +627,7 @@ after its physics turned out to have been read wrong; see §5b D2.*
      flat symmetric bilayer by symmetry, so it passes the no-smuggling null.
    - **history-dependent state** — needs an extended Lagrangian or the energy ledger is lost.
    - **explicit rigidity** — an elastic pull toward a rest shape.
+   Implementation and production admission criteria: [`MLP_FUTURE_WORK.md`](MLP_FUTURE_WORK.md).
 6. **Finish the registered ladder: amp 4.0.** NOT RUN, not null.
    `curl.py --scales 4.0 --n-ref 0.3335 --seeds 12 --seed0 800 --workers 12`. ~1 h.
 7. **The fidelity defects that are not experiments** (§5b): D4 no hydrodynamics (needs a pairwise DPD

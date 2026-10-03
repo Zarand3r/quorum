@@ -431,21 +431,40 @@ function paintToken(ctx, X, Y, base, radAt, fill, stroke, alpha){
   if(stroke){ ctx.strokeStyle = stroke; ctx.lineWidth = 1.1; ctx.stroke(); }
 }
 
+function paintCircle(ctx, X, Y, radius, fill, stroke, alpha){
+  // The molecular production dish carries exactly flat contour coefficients. Drawing those circles
+  // through the 28-bearing harmonic path spent hundreds of thousands of trig calls per frame to
+  // rediscover radius=constant. Native arcs are both the faithful bead geometry and much faster;
+  // non-flat/morphing tokens continue through paintToken above.
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = fill;
+  ctx.beginPath(); ctx.arc(X, Y, radius, 0, 2*Math.PI); ctx.fill();
+  if(stroke){ ctx.strokeStyle = stroke; ctx.lineWidth = 1.1; ctx.stroke(); }
+}
+
 function draw(al){
   const s = CUR; if(!s) return;
-  document.getElementById('tick').textContent = s.tick;
-  const h3 = document.getElementById('hint3d');
-  if(h3) h3.style.display = (s.pos_dim === 3) ? '' : 'none';
-  document.getElementById('n').textContent = s.n;
-  const ae = document.getElementById('alive');
-  ae.textContent = (s.aliveness ?? 0).toFixed(3);
-  ae.style.color = s.aliveness > 0.02 ? '#34d399' : '#f59e0b';
-  buildKnobs(s.knobs, s.ranges, s.mins);
-  renderArch(s.dims);
-  drawFastWeights(s);
-
   const N = s.tokens.length;
   const canInterp = PREV && PREV.tokens.length === N;
+  // Positions are drawn between PREV and CUR, so the tick must use the same visual clock. Showing
+  // CUR.tick immediately made the counter jump ~25 steps at every 20 Hz network frame while the
+  // canvas was still displaying PREV's geometry.
+  document.getElementById('tick').textContent = canInterp
+    ? Math.round(lerp(PREV.tick, s.tick, al)) : s.tick;
+  // Snapshot metadata changes at 20 Hz, not at the display's 60+ Hz. Avoid repeated DOM writes and
+  // fast-weight image construction on every interpolation frame.
+  if(draw._meta !== s){
+    const h3 = document.getElementById('hint3d');
+    if(h3) h3.style.display = (s.pos_dim === 3) ? '' : 'none';
+    document.getElementById('n').textContent = s.n;
+    const ae = document.getElementById('alive');
+    ae.textContent = (s.aliveness ?? 0).toFixed(3);
+    ae.style.color = s.aliveness > 0.02 ? '#34d399' : '#f59e0b';
+    buildKnobs(s.knobs, s.ranges, s.mins);
+    renderArch(s.dims);
+    drawFastWeights(s);
+    draw._meta = s;
+  }
   const B = s.pos_bound || 6.0;
   const sc = (W*0.46)/B, cx = W/2, cy = H/2;
   const X = p => cx + p*sc, Y = p => cy - p*sc;
@@ -616,10 +635,13 @@ function draw(al){
           for(let k=1;k<=K;k++) nf += c[2*(k-1)]*Math.cos(k*th) + c[2*(k-1)+1]*Math.sin(k*th);
           return 1 + 0.42*Math.tanh(nf);
         };
-        paintToken(ctx, px[idx], py[idx], SP_RAD[sp]*sc, radAt,
-                   `rgb(${col[0]},${col[1]},${col[2]})`,
-                   sp===0 ? null : `rgba(226,232,240,0.55)`,
-                   SP_ALPHA[sp] ?? 0.95);
+        const fill = `rgb(${col[0]},${col[1]},${col[2]})`;
+        const stroke = sp===0 ? null : `rgba(226,232,240,0.55)`;
+        const alpha = SP_ALPHA[sp] ?? 0.95;
+        if(c.every(v => v === 0))
+          paintCircle(ctx, px[idx], py[idx], SP_RAD[sp]*sc, fill, stroke, alpha);
+        else
+          paintToken(ctx, px[idx], py[idx], SP_RAD[sp]*sc, radAt, fill, stroke, alpha);
       }
     }
     ctx.globalAlpha = 1.0;
@@ -682,11 +704,23 @@ function connectPoll(){
   const tick = () => {
     fetch(BASE + '/state').then(r => r.json()).then(d => {
       const now = performance.now();
-      if(CUR_T) pollDt = 0.7*pollDt + 0.3*Math.max(20, Math.min(400, now - CUR_T));
-      PREV = CUR; CUR = d; CUR_T = now;
+      acceptSnapshot(d, now);
     }).catch(()=>{}).finally(() => setTimeout(tick, 120));
   };
   tick();
+}
+function acceptSnapshot(d, now){
+  if(CUR && CUR.instance_id === d.instance_id && d.state_seq < CUR.state_seq) return;
+  const sameRun = CUR && CUR.run_id === d.run_id;
+  // A restart can take longer than a normal stream interval. Feeding that one-off gap into the
+  // interpolation EMA stretches subsequent frames across hundreds of milliseconds; each new SSE
+  // frame then overtakes the unfinished interpolation and produces the apparent freeze/burst.
+  if(sameRun && CUR_T)
+    pollDt = 0.7*pollDt + 0.3*Math.max(20, Math.min(400, now - CUR_T));
+  else if(!sameRun)
+    pollDt = 50;                         // primary stream cadence (20 Hz), fresh visual timeline
+  PREV = sameRun ? CUR : null;
+  CUR = d; CUR_T = now;
 }
 function connect(){
   if(new URLSearchParams(location.search).get('poll') === '1') return connectPoll();
@@ -694,14 +728,20 @@ function connect(){
   ev.onmessage = (e) => {
     let d; try { d = JSON.parse(e.data); } catch(_) { return; }
     const now = performance.now();
-    if(CUR_T) pollDt = 0.7*pollDt + 0.3*Math.max(20, Math.min(400, now - CUR_T)); // EMA of real gap
-    PREV = CUR; CUR = d; CUR_T = now;
+    acceptSnapshot(d, now);
   };
   ev.onerror = () => { ev.close(); setTimeout(connect, 1000); };  // auto-reconnect on drop
 }
+let lastDraw = null;
 function render(){
   const al = CUR ? Math.min(1, (performance.now() - CUR_T)/pollDt) : 0;
-  draw(al);
+  // Repaint interpolation and camera changes, but not an unchanged, settled frame at 60 Hz.
+  const settled = al === 1 && lastDraw && lastDraw.state === CUR
+    && lastDraw.al === 1 && lastDraw.yaw === ROT3D && lastDraw.tilt === TILT3D;
+  if(!settled){
+    draw(al);
+    lastDraw = {state:CUR, al, yaw:ROT3D, tilt:TILT3D};
+  }
   requestAnimationFrame(render);
 }
 connect(); render();

@@ -20,6 +20,10 @@ import numpy as np
 
 def scatter_add(n: int, idx: np.ndarray, vals: np.ndarray) -> np.ndarray:
     """Sum `vals` into `n` rows at `idx`. Accepts (m,) or (m, d) values."""
+    # np.bincount([], weights=[]) returns int64 despite float weights. Preserve the declared value
+    # dtype so an empty attention mask can still be combined with floating spring/angle heads.
+    if len(idx) == 0:
+        return np.zeros((n,) + vals.shape[1:], dtype=vals.dtype)
     if vals.ndim == 1:
         return np.bincount(idx, weights=vals, minlength=n)
     return np.stack([np.bincount(idx, weights=vals[:, c], minlength=n)
@@ -28,6 +32,8 @@ def scatter_add(n: int, idx: np.ndarray, vals: np.ndarray) -> np.ndarray:
 
 def scatter_add_pair(n: int, i: np.ndarray, j: np.ndarray, vals: np.ndarray) -> np.ndarray:
     """The Newton's-third-law pattern: +vals at i, -vals at j, in one pass per component."""
+    if len(i) == 0:
+        return np.zeros((n,) + vals.shape[1:], dtype=vals.dtype)
     if vals.ndim == 1:
         return (np.bincount(i, weights=vals, minlength=n)
                 - np.bincount(j, weights=vals, minlength=n))

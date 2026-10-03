@@ -9,6 +9,8 @@ viewer, so each property below pins one way that drift happened or could happen 
 
 from __future__ import annotations
 
+import time
+
 import numpy as np
 import pytest
 
@@ -16,6 +18,53 @@ import _mixture
 import vesicle
 from chemistry import AMPHIPHILE
 from field import HEAD, TAIL, WATER
+
+
+def _gate(engine):
+    """Request and await the asynchronous observational gate."""
+    deadline = time.monotonic() + 5.0
+    while time.monotonic() < deadline:
+        gate = engine.snapshot()["gate"]
+        if gate is not None:
+            return gate
+        time.sleep(0.005)
+    raise AssertionError("vesicle gate did not complete")
+
+
+def test_viewer_restarts_saved_vesicle_as_seeded_dispersed_run(monkeypatch):
+    import threading
+    from config import load_config
+    from server import Sim
+
+    monkeypatch.setattr(threading.Thread, "start", lambda self: None)
+    sim = Sim(load_config(vesicle._HERE / "configs" / "vivarium.yaml"), 509, 30,
+              make_engine=lambda seed: vesicle.VesicleEngine(seed=seed, start="formed"),
+              knob_names=())
+    saved = sim.engine.X.copy()
+    sim.pseudo = sim.engine.pseudo_knobs()
+    sim.pseudo["kT"][1](0.6)
+    sim.pseudo["chi_HT"][1](-0.4)
+    sim.restart(seed=509)
+    initial = sim.engine.X.copy()
+    assert sim.engine.start == "dispersed"
+    # Classification is observational and deferred; a restart must not retain the formed source's
+    # cached verdict or block construction to compute a new one.
+    assert sim.engine.gate is None
+    assert sim.engine.t == 0
+    assert not np.array_equal(initial, saved)
+    assert sim.engine.kT == 0.6
+    assert sim.engine.chi[HEAD, TAIL] == -0.4
+    sim.engine.step()
+    sim.restart(seed=509)
+    np.testing.assert_array_equal(sim.engine.X, initial)
+    sim.restart()
+    assert sim.seed == sim.engine.seed == 510
+    assert not np.array_equal(sim.engine.X, initial)
+    assert sim.state()["seed"] == 510
+    sim.pseudo["kT"][1](0.7)
+    assert sim.engine.ig.kT == sim.engine.kT == 0.7
+    sim.pseudo["chi_HT"][1](-0.3)
+    assert sim.engine.chi[HEAD, TAIL] == -0.3
 
 
 def test_engine_factory_is_importable():
@@ -158,19 +207,25 @@ def test_default_start_is_dispersed_and_claims_nothing():
     """
     e = vesicle.VesicleEngine(seed=0)
     assert e.start == "dispersed"
-    assert e.snapshot()["gate"] is None
+    gate = _gate(e)
+    assert gate["criterion"] == "vesicle_gate"
+    assert gate["tick"] == 0
+    assert e.snapshot()["source_gate"] is None
 
 
 def test_formed_start_reports_the_gate_verdict_rather_than_asserting_one():
-    """No saved 2-D production state passes `vesicle_call`. The viewer must say so, not hide it."""
+    """Distinguish the recorded state's verdict from the current geometry."""
     if not vesicle.FORMED_STATE.exists():
         pytest.skip("docs/controls/ not present")
     e = vesicle.VesicleEngine(seed=0, start="formed")
-    gate = e.snapshot()["gate"]
+    gate = _gate(e)
     assert gate is not None
-    assert set(gate) >= {"source", "steps", "vesicle_call", "reason", "largest", "n_mol"}
-    assert isinstance(gate["vesicle_call"], bool)
-    assert gate["reason"]                      # a verdict always carries its reason
+    assert gate["criterion"] == "vesicle_gate"
+    assert gate["vesicle"] is True
+    assert gate["score"] > 0.7
+    assert gate["tick"] == 0
+    assert e.source_gate["steps"] == 500000
+    assert e.source_gate["seed"] == 509
     assert len(e.X) == 2959
     assert np.all(np.isfinite(e.X))
     assert np.abs(e.X).max() <= 32.5 + 1e-6

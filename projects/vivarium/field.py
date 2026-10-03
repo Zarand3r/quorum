@@ -198,6 +198,15 @@ def _core(s, height):
     return u, du
 
 
+def _core_derivative(s, height):
+    """Derivative-only core path for force evaluations; algebra/order match `_core` exactly."""
+    du = np.zeros_like(s)
+    m = s < 1.0
+    x = 1.0 - s[m]
+    du[m] = -2.0 * height * x
+    return du
+
+
 def _well(s, rc):
     """Attractive well and its derivative: a smooth cosine tail from contact out to the cutoff.
 
@@ -213,6 +222,15 @@ def _well(s, rc):
     inner = s < 1.0
     u[inner] = -1.0
     return u, du
+
+
+def _well_derivative(s, rc):
+    """Derivative-only well path; avoids the unused cosine evaluation in every force step."""
+    du = np.zeros_like(s)
+    m = (s >= 1.0) & (s < rc)
+    z = (s[m] - 1.0) / (rc - 1.0)
+    du[m] = 0.5 * np.pi * np.sin(np.pi * z) / (rc - 1.0)
+    return du
 
 
 # The core barrier at full overlap, in units of the well depth `eps`. THE RATIO core/well IS THE
@@ -465,7 +483,10 @@ class Field:
     # is no longer a superset and must be rebuilt. `check_neighbor_list` proves the sparse path agrees
     # with the dense one.
 
-    SKIN = 0.6
+    # Measured on the 2,959-bead production dish: 0.40 minimizes rebuild work plus the cost of
+    # carrying inactive candidates (0.15..1.20 tested). This changes only the zero-force superset;
+    # tests pin every trajectory value against the former 0.60 skin.
+    SKIN = 0.4
     CHUNK = 512
 
     def _rebuild(self, X):
@@ -528,6 +549,7 @@ class Field:
         srt = np.lexsort((pj, pi))
         self._pi, self._pj = pi[srt], pj[srt]
         self._anchor = X.copy()
+        self._cache_pair_features()
 
     def _rebuild_dense(self, X):
         """Candidate pairs within rc + skin, built in row blocks so memory is bounded.
@@ -558,6 +580,14 @@ class Field:
             pi, pj = pi[keep], pj[keep]
         self._pi, self._pj = pi, pj
         self._anchor = X.copy()
+        self._cache_pair_features()
+
+    def _cache_pair_features(self):
+        """Cache invariant QK chemistry and bead size until the neighbour mask is rebuilt."""
+        self._pair_sigma = self.pair_sigma(self._pi, self._pj)
+        self._pair_chi = self.content_pairs(self._pi, self._pj)
+        self._pair_feature_state = (self.q.tobytes(), self.k.tobytes(),
+                                    self.sigma_species.tobytes())
 
     def _pairs(self, X):
         need = not hasattr(self, "_pi") or len(self._anchor) != len(X)
@@ -629,9 +659,18 @@ class Field:
         gradient gate caught on 2026-09-08: the force was modulated and the energy was not, so F was
         the gradient of a potential nobody was evaluating (1.6e-2 instead of 1e-6).
         """
-        base = 0.5 * (self.sigma_species[self.species[iu[0]]]
-                      + self.sigma_species[self.species[iu[1]]])
-        chi0 = self.content_pairs(*iu)
+        owned_pairs = iu[0] is getattr(self, "_pi", None) and iu[1] is getattr(self, "_pj", None)
+        if owned_pairs and getattr(self, "_pair_feature_state", None) != (
+                self.q.tobytes(), self.k.tobytes(), self.sigma_species.tobytes()):
+            # Field parameters are construction-time constants in production, but they remain public
+            # arrays. Do not silently serve stale cached physics if a research harness mutates one.
+            self._cache_pair_features()
+        if owned_pairs and hasattr(self, "_pair_sigma"):
+            base, chi0 = self._pair_sigma, self._pair_chi
+        else:
+            base = 0.5 * (self.sigma_species[self.species[iu[0]]]
+                          + self.sigma_species[self.species[iu[1]]])
+            chi0 = self.content_pairs(*iu)
         if self.manybody is None and self.shape is None:
             return base, chi0, None
         n_co, dw, both = self._coord(r, iu, base)
@@ -693,8 +732,12 @@ class Field:
         d, r, iu = self._pairs(X)
         sig, chi, extra = self._env(r, iu)
         s = r / sig
-        _, duc = _core(s, self.core_height)
-        uw, duw = _well(s, self.rc)
+        duc = _core_derivative(s, self.core_height)
+        if extra is None:
+            uw = None
+            duw = _well_derivative(s, self.rc)
+        else:
+            uw, duw = _well(s, self.rc)
         # dU/dr, guarding r = 0 where the direction is undefined
         dudr = self.eps * (duc + duw * chi) / sig
         dudr = np.where(r < self.rc * sig, dudr, 0.0)

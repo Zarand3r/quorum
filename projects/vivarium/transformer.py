@@ -26,7 +26,7 @@ import numpy as np
 
 from _scatter import scatter_add, scatter_add_pair
 
-from field import _core, _well
+from field import _core, _core_derivative, _well, _well_derivative
 
 
 class AttentionHead:
@@ -69,7 +69,9 @@ class VivariumTransformer:
 
     def _nonbonded_pairs(self, X):
         sep, dist, iu = self.f._pairs(X)
-        return np.asarray(iu), sep, dist
+        # Keep the Field's pair arrays rather than stacking them into a new (2, M) allocation. This
+        # also lets `_env` reuse the fixed QK and size values cached for this exact neighbour mask.
+        return iu, sep, dist
 
     def _spring_pairs(self, X, pairs):
         sep = X[pairs[:, 0]] - X[pairs[:, 1]]
@@ -109,8 +111,12 @@ class VivariumTransformer:
         # per-SPECIES, would repeat that with the shape channel, which is per-BEAD.
         sig, chi, extra = f._env(r, pairs)
         s = r / sig
-        _, duc = _core(s, f.core_height)
-        uw, duw = _well(s, f.rc)
+        duc = _core_derivative(s, f.core_height)
+        if extra is None:
+            uw = None
+            duw = _well_derivative(s, f.rc)
+        else:
+            uw, duw = _well(s, f.rc)
         self._mb = None
         if extra is not None:
             self._mb = (extra, uw, s, sig, r, pairs)

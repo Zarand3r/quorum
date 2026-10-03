@@ -19,9 +19,11 @@ import json
 import sys
 import threading
 import time
+import uuid
 from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 import numpy as np
 
@@ -104,7 +106,12 @@ class Sim:
         #   latch: without the flag it re-pauses on every subsequent tick, so pressing resume looks
         #   like it does nothing (which is exactly what happened once substepping sped the sim up).
         self._autopaused = False
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
+        self.run_id = uuid.uuid4().hex
+        self.instance_id = uuid.uuid4().hex
+        self.state_seq = 0
+        self._stream_cache = None
+        self.error = None
         self._edges, self._edges_at = None, 0.0
         self.engine = self._make(seed)
         self.paused = False
@@ -119,19 +126,25 @@ class Sim:
 
     def set_knobs(self, updates: dict) -> None:
         with self.lock:
+            # Validate the whole request before changing any parameter.
+            values = {}
+            for name, raw in updates.items():
+                if name not in self.knob_names and name not in self.pseudo:
+                    raise ValueError(f"unknown parameter: {name}")
+                value = float(raw)
+                if not np.isfinite(value):
+                    raise ValueError(f"{name} must be finite")
+                lo, hi = self.mins.get(name, 0.0), self.ranges.get(name, float("inf"))
+                if not lo <= value <= hi:
+                    raise ValueError(f"{name} must be between {lo:g} and {hi:g}")
+                values[name] = value
             for k in self.knob_names:
-                if k in updates and hasattr(self.engine, k):
-                    try:
-                        setattr(self.engine, k, max(0.0, float(updates[k])))
-                    except (TypeError, ValueError):
-                        pass
-        # pseudo-knobs are applied OUTSIDE the lock — their setter may call restart() (re-acquires it).
-        for name, (_get, setr) in self.pseudo.items():
-            if name in updates:
-                try:
-                    setr(float(updates[name]))
-                except (TypeError, ValueError):
-                    pass
+                if k in values and hasattr(self.engine, k):
+                    setattr(self.engine, k, values[k])
+            # Reentrant lock also permits the legacy setters that call restart().
+            for name, value in values.items():
+                if name in self.pseudo:
+                    self.pseudo[name][1](value)
 
     def _run(self) -> None:
         """The hot loop: step + buffer positions, nothing else. Paced to a steady cadence."""
@@ -147,13 +160,28 @@ class Sim:
                     if self.paused:            # honour pause between substeps, not just per frame
                         break
                     with self.lock:
-                        self.engine.step()
-                with self.lock:
-                    self._buf.append(self.engine.X[:, :2].copy())  # positions only (cheap)
-                if (self.autopause and not self._autopaused
-                        and self.engine.t >= self.autopause):
-                    self._autopaused = True
-                    self.paused = True                # fires once; resume then works normally
+                        if self.paused:
+                            break
+                        previous = self.engine.X.copy()
+                        try:
+                            self.engine.step()
+                            if not np.isfinite(self.engine.X).all():
+                                raise FloatingPointError("non-finite particle positions")
+                        except Exception as exc:
+                            self.engine.X = previous
+                            self.error = f"{type(exc).__name__}: {exc}"
+                            self.paused = True
+                            break
+                        if (self.autopause and not self._autopaused
+                                and self.engine.t >= self.autopause):
+                            self._autopaused = True
+                            self.paused = True
+                # Molecular dishes expose their validated geometry gate and never use the legacy
+                # O(T*N^2) blob-aliveness metric. Avoid copying every bead every step for a buffer
+                # that `_alive_loop` will deliberately ignore.
+                if not hasattr(self.engine, "source_gate"):
+                    with self.lock:
+                        self._buf.append(self.engine.X[:, :2].copy())
             # sleep the *remaining* time so the cadence is stable regardless of step cost
             time.sleep(max(0.0, dt - (time.perf_counter() - t0)))
 
@@ -163,7 +191,8 @@ class Sim:
         while not self._stop:
             states = period = None
             with self.lock:
-                if len(self._buf) >= 10:
+                run_id = self.run_id
+                if len(self._buf) >= 10 and not hasattr(self.engine, "source_gate"):
                     states = np.stack(self._buf)
                     period = getattr(self.engine, "L", None)
             if states is not None and states.shape[1] > ALIVE_MAX_BEADS:
@@ -176,10 +205,32 @@ class Sim:
                 stride = int(np.ceil(states.shape[1] / ALIVE_MAX_BEADS))
                 states = states[:, ::stride, :]
             if states is not None:
-                self._alive = round(float(score(states, self.cfg, period)["aliveness"]), 3)
+                value = round(float(score(states, self.cfg, period)["aliveness"]), 3)
+                with self.lock:
+                    if self.run_id == run_id:
+                        self._alive = value
             time.sleep(0.7)
 
     def state(self) -> dict:
+        with self.lock:
+            return self._state_locked()
+
+    def stream_frame(self):
+        """Serialize a changed frame once for all viewers; paused frames need only a heartbeat."""
+        with self.lock:
+            knobs = tuple((k, float(getattr(self.engine, k))) for k in self.knob_names
+                          if hasattr(self.engine, k))
+            pseudo = tuple((k, float(get())) for k, (get, _) in self.pseudo.items())
+            gate = getattr(self.engine, "gate", None)
+            gate_signature = (None if gate is None else
+                              (gate.get("tick"), gate.get("vesicle"), gate.get("score")))
+            signature = (self.run_id, self.engine.t, self.paused, self.error,
+                         self._alive, gate_signature, knobs, pseudo)
+            if self._stream_cache is None or self._stream_cache[0] != signature:
+                self._stream_cache = (signature, json.dumps(self._state_locked()).encode())
+            return self._stream_cache
+
+    def _state_locked(self) -> dict:
         """Build the snapshot on demand (only when the viewer polls) — off the step hot loop."""
         with self.lock:
             snap = self.engine.snapshot(with_edges=self._edges is None
@@ -191,9 +242,17 @@ class Sim:
             snap["edges"] = self._edges
         else:
             self._edges, self._edges_at = snap["edges"], time.perf_counter()
-        snap["status"] = "paused" if self.paused else "running"  # honest: reflect the real pause state
+        snap["status"] = "error" if self.error else ("paused" if self.paused else "running")
+        snap["error"] = self.error
+        snap["run_id"] = self.run_id
+        self.state_seq += 1
+        snap["instance_id"] = self.instance_id
+        snap["state_seq"] = self.state_seq
         snap["aliveness"] = self._alive
-        snap["pos_bound"] = self.cfg.pos_bound
+        if hasattr(self.engine, "source_gate"):
+            snap["aliveness"] = None  # archived blob metric is not a membrane-life measurement
+        snap["seed"] = self.seed
+        snap.setdefault("pos_bound", self.cfg.pos_bound)
         snap["knobs"] = {k: float(getattr(self.engine, k)) for k in self.knob_names
                          if hasattr(self.engine, k)}
         snap["ranges"] = self.ranges
@@ -210,7 +269,10 @@ class Sim:
         return snap
 
     def set_paused(self, paused: bool) -> None:
-        self.paused = paused
+        with self.lock:
+            if not paused and self.error:
+                raise ValueError("restart the simulation after an error")
+            self.paused = paused
 
     def restart(self, seed: int | None = None) -> None:
         with self.lock:
@@ -218,16 +280,23 @@ class Sim:
             # revert to defaults, silently ignoring the sliders (e.g. attract snapping back to 0.35).
             knobs = {k: getattr(self.engine, k) for k in self.knob_names
                      if hasattr(self.engine, k)}
-            self.seed = self.seed + 1 if seed is None else seed
-            self.engine = self._make(self.seed)
+            next_seed = self.seed + 1 if seed is None else seed
+            new_run = getattr(self.engine, "new_run", self._make)
+            engine = new_run(next_seed)
+            self.seed, self.engine = next_seed, engine
+            if hasattr(self.engine, "pseudo_knobs"):
+                self.pseudo = self.engine.pseudo_knobs()
             for k, v in knobs.items():
                 if hasattr(self.engine, k):
                     setattr(self.engine, k, v)
             self.vel_reset()
             self._alive = 0.0
             self._buf.clear()
-        self._autopaused = False   # a fresh run may auto-pause again
-        self.paused = False        # a restart resumes (past any auto-pause)
+            self._edges, self._edges_at = None, 0.0
+            self.run_id = uuid.uuid4().hex
+            self.error = None
+            self._autopaused = False
+            self.paused = False
 
     def vel_reset(self) -> None:
         if hasattr(self.engine, "vel"):
@@ -252,13 +321,28 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
         self.send_header("Pragma", "no-cache")
         self.end_headers()
-        self.wfile.write(body)
+        if self.command != "HEAD":
+            self.wfile.write(body)
+
+    def do_HEAD(self) -> None:
+        self.do_GET()
 
     def do_GET(self) -> None:
+        path = urlparse(self.path).path
+        if path.rstrip("/").endswith("/vivarium/3d"):
+            self.send_response(302)
+            self.send_header("Location", "/vivarium")
+            self.send_header("Content-Length", "0")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            return
         # suffix-match so we work whether mounted at / or under a path prefix (e.g. /vivarium/).
-        if self.path.endswith("/stream"):
-            self._stream()
-        elif self.path.endswith("/state"):
+        if path.endswith("/stream"):
+            if self.command == "HEAD":
+                self._send(200, b"", "text/event-stream")
+            else:
+                self._stream()
+        elif path.endswith("/state"):
             self._send(200, json.dumps(self.server.sim.state()).encode(), "application/json")
         else:
             self._send(200, _VIEWER.read_bytes(), "text/html; charset=utf-8")
@@ -273,15 +357,30 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("X-Accel-Buffering", "no")   # ask proxies not to buffer the stream
             self.end_headers()
             dt = 1.0 / self.server.sim.stream_hz
+            previous = None
+            heartbeat = time.monotonic()
             while not self.server.sim._stop:
-                payload = json.dumps(self.server.sim.state())
-                self.wfile.write(f"data: {payload}\n\n".encode())
-                self.wfile.flush()
+                signature, payload = self.server.sim.stream_frame()
+                if signature != previous:
+                    self.wfile.write(b"data: " + payload + b"\n\n")
+                    self.wfile.flush()
+                    previous = signature
+                    heartbeat = time.monotonic()
+                elif time.monotonic() - heartbeat >= 15:
+                    self.wfile.write(b": keepalive\n\n")
+                    self.wfile.flush()
+                    heartbeat = time.monotonic()
                 time.sleep(dt)
         except (BrokenPipeError, ConnectionResetError, OSError):
             pass  # client went away — end this stream thread
 
     def do_POST(self) -> None:
+        try:
+            self._post()
+        except (ValueError, TypeError) as exc:
+            self._send(400, json.dumps({"error": str(exc)}).encode(), "application/json")
+
+    def _post(self) -> None:
         sim = self.server.sim
         path = self.path.split("?", 1)[0]
         if path.endswith("/pause"):
@@ -289,13 +388,12 @@ class Handler(BaseHTTPRequestHandler):
         elif path.endswith("/resume"):
             sim.set_paused(False)
         elif path.endswith("/restart"):
-            from urllib.parse import parse_qs, urlparse
             same = "same" in parse_qs(urlparse(self.path).query)
-            sim.restart(seed=sim.seed if same else None)  # same seed → replay identical run
+            with sim.lock:
+                sim.restart(seed=sim.seed if same else None)
         elif path.endswith("/reset"):
             sim.set_knobs(sim.defaults)     # restore canonical showcase defaults (server-side truth)
         elif path.endswith("/set"):
-            from urllib.parse import parse_qs, urlparse
             q = parse_qs(urlparse(self.path).query)
             sim.set_knobs({k: v[0] for k, v in q.items()})
         else:
@@ -332,20 +430,26 @@ def main(argv: list[str] | None = None) -> int:
                         "docs/PAPER.md came from (160 lipids, L=65, kT=0.45, explicit water), stepped "
                         "through the transformer path. This is a different system from --lipid2d, "
                         "which is the micelle configuration.")
-    p.add_argument("--vesicle-start", default="formed", choices=["dispersed", "formed"],
-                   help="'formed' (the DEFAULT since 2026-09-07) loads the CERTIFIED emergent vesicle: "
+    p.add_argument("--vesicle-start", default="dispersed", choices=["dispersed", "formed"],
+                   help="'formed' loads the recorded emergent vesicle: "
                         "seed 509 at step 500,000, vesicle_call True, render-confirmed, self-assembled "
                         "from a dispersed random start with nothing planted. It closed at constant "
                         "size -- 56 lipids for 100,000 steps before and after -- i.e. two ends of a "
                         "ribbon meeting. 'dispersed' is the honest cold start: formation takes ~500,000 "
                         "steps and most seeds never close, so expect to watch aggregation. The default "
-                        "was 'dispersed' until a certified state existed; one does now.")
+                        "is 'dispersed'. Both restart buttons begin dispersed.")
     p.add_argument("--autopause", type=int, default=None,
                    help="auto-pause once after this many steps so an unattended viewer does not run "
                         "forever. 0 disables. Default depends on --vesicle-start: 200000 for 'formed' "
-                        "(the window the certified vesicle was observed to survive) and 600000 for "
-                        "'dispersed' (past the 500000 at which it formed).")
+                        "(the window the certified vesicle was observed to survive) and 1000000 for "
+                        "'dispersed' (the full 1,000,000-step assembly horizon).")
     args = p.parse_args(argv)
+    if not np.isfinite(args.hz) or args.hz <= 0:
+        p.error("--hz must be positive and finite")
+    if args.vesicle and (args.polar or args.pack or args.pure or args.lipid2d or args.dim3 or args.plant):
+        p.error("--vesicle cannot be combined with another engine, 3-D, or planted geometry")
+    if args.autopause is not None and args.autopause < 0:
+        p.error("--autopause must be non-negative")
 
     cfg = load_config(args.config)
     # The vesicle dish defaults to the seed that actually produced a certified vesicle. Any other
@@ -655,14 +759,13 @@ def main(argv: list[str] | None = None) -> int:
         #                    run inside the window where that vesicle was observed to survive. Past it
         #                    the honest expectation is decay, and a viewer should not be shown decay
         #                    without being told.
-        #   start=dispersed  600,000 steps -- past the 500,000 at which this seed formed, so a cold
-        #                    start has room to actually produce the vesicle rather than being cut off
-        #                    just before it.
+        #   start=dispersed  1,000,000 steps -- the current assembly trials' full horizon; confirmed
+        #                    rings first appeared as late as 950,000 steps.
         #
         # It fires ONCE and the viewer can resume, so this is a guard against unattended running, not a
         # hard stop. Override with --autopause; 0 disables.
         server.sim.autopause = (args.autopause if args.autopause is not None
-                                else (200_000 if args.vesicle_start == "formed" else 600_000))
+                                else (200_000 if args.vesicle_start == "formed" else 1_000_000))
     print(f"serving: {label}")
     print(
         f"vivarium viewer on http://{args.host}:{server.server_address[1]}\n"

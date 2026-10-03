@@ -1,9 +1,9 @@
 # Performance: deferred work, ordered by measured payoff
 
-**Status: NOT STARTED, deliberately.** Correctness comes first. Every item below changes either the
-trajectory statistics or the numerical guarantees the project's verification rests on, so none of it
-should land until the physics questions are settled. This file exists so the analysis is not re-derived
-later.
+**Status updated 2026-09-22.** Exact optimizations that preserve the float64 force and trajectory have
+landed; model-changing items below remain deferred. Correctness comes first. Solvent removal, float32,
+multiple timestepping, biased sampling, and learned propagation change either trajectory statistics or
+the numerical guarantees the project's verification rests on.
 
 **Do not start here.** Start at Section 5, which argues that raw speed is the wrong lever for the
 bottleneck this project actually has.
@@ -31,6 +31,25 @@ dense reference path. **Do not "add a neighbour list."** It is there.
 
 Engine cost is the same either way, so none of this is a transformer tax: 5 matched 400-step replicates
 gave integrator **20.65 +- 1.66** and transformer **21.17 +- 2.42** ms/step under load.
+
+### Exact production-path optimization completed 2026-09-22
+
+Profiling the current 2,959-bead production dish, rather than the older benchmark engine, found three
+costs that carry no physical information: computing the cosine well energy when a force step needs
+only its sine derivative, rebuilding fixed species QK and bead-size values while the neighbour mask is
+unchanged, and carrying an unnecessarily large zero-force neighbour superset. The production skin was
+measured over 0.15--1.20 and set to 0.40. Ordered nonzero pair contributions remain unchanged.
+
+The isolated benchmark moved from **3.023 ms/step (331 steps/s)** to **2.012 ms/step (497 steps/s)**. Exact gates
+compare the derivative-only functions with the original functions and compare old-skin and new-skin
+positions, velocities, and forces at every step. The hosted loop now targets above the compute ceiling
+and measured **about 400--493 steps/s** externally depending on snapshot/classifier work and host load;
+`dt`, precision, RNG, potential, and thermostat are unchanged. A 2,000-step full-production audit
+against a reconstructed former hot path was bit-identical for positions, velocities, and forces.
+
+The optimization exposed and fixed an empty-mask bug: `numpy.bincount` returns an integer accumulator
+for empty weighted input, which could make a spring-only force update fail. Scatter operations now
+preserve the value dtype for empty masks and have a regression test.
 
 ---
 
